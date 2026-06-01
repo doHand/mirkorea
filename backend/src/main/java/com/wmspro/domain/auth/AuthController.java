@@ -1,7 +1,10 @@
 package com.wmspro.domain.auth;
 
 import com.wmspro.common.ApiResponse;
+import com.wmspro.common.exception.BusinessException;
+import com.wmspro.common.exception.ErrorCode;
 import com.wmspro.common.security.WmsPrincipal;
+import com.wmspro.domain.user.UserRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
@@ -17,7 +20,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final AuthService authService;
+    private final AuthService    authService;
+    private final UserRepository userRepo;
 
     @PostMapping("/login")
     public ApiResponse<Map<String, Object>> login(@Valid @RequestBody LoginRequest req) {
@@ -30,8 +34,16 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ApiResponse<WmsPrincipal> me(@AuthenticationPrincipal WmsPrincipal principal) {
-        return ApiResponse.ok(principal);
+    public ApiResponse<Map<String, Object>> me(@AuthenticationPrincipal WmsPrincipal principal) {
+        var user = userRepo.findById(principal.getUuid())
+            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        return ApiResponse.ok(Map.of(
+            "id",          user.getId().toString(),
+            "username",    user.getUsername(),
+            "fullName",    user.getFullName(),
+            "role",        user.getRole().name(),
+            "warehouseId", user.getWarehouseId() != null ? user.getWarehouseId().toString() : ""
+        ));
     }
 
     @Getter @Setter

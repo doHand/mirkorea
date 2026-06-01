@@ -7,6 +7,7 @@ import { QUERY_KEYS } from '@/constants/query-keys'
 import { TX_TYPE_LABEL, TX_TYPE_COLOR } from '@/constants/stock.constants'
 import { formatDateTime, formatQtyDelta, formatNumber } from '@/utils/format'
 import { cn } from '@/utils/cn'
+import { ExportButton } from '@/components/ExportButton'
 import type { TxType } from '@/types/api.types'
 
 export default function TransactionsPage() {
@@ -32,14 +33,40 @@ export default function TransactionsPage() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold">거래 로그</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">거래 로그</h2>
+        <ExportButton
+          filename="거래로그"
+          getData={async () => {
+            const all = await stockApi.getTransactions({
+              warehouseId: warehouse?.id,
+              txType: txType as TxType || undefined,
+              from: from || undefined,
+              to:   to   || undefined,
+              limit: 9999,
+            })
+            return all.items.map((t) => ({
+              '거래번호': t.txnNo,
+              '유형':     TX_TYPE_LABEL[t.txType],
+              '상품명':   t.product?.name ?? '',
+              '상품코드': t.product?.code ?? '',
+              '위치':     t.location?.code ?? '',
+              '변동수량': t.qty,
+              '이전재고': t.qtyBefore,
+              '이후재고': t.qtyAfter,
+              '취소여부': t.isCancelled ? 'Y' : 'N',
+              '일시':     formatDateTime(t.createdAt),
+            }))
+          }}
+        />
+      </div>
 
       {/* 필터 */}
-      <div className="bg-white rounded-xl border border-gray-200 p-3 flex flex-wrap gap-3">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 flex flex-wrap gap-3">
         <select
           value={txType}
           onChange={(e) => { setTxType(e.target.value as TxType | ''); setPage(1) }}
-          className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500"
+          className="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
         >
           <option value="">전체 유형</option>
           {Object.entries(TX_TYPE_LABEL).map(([k, v]) => (
@@ -47,52 +74,52 @@ export default function TransactionsPage() {
           ))}
         </select>
         <input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1) }}
-          className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none" />
-        <span className="text-gray-400 self-center">~</span>
+          className="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1.5 focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+        <span className="text-gray-400 dark:text-gray-500 self-center">~</span>
         <input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1) }}
-          className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none" />
-        <span className="text-xs text-gray-400 self-center">총 {formatNumber(data?.total)}건</span>
+          className="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1.5 focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+        <span className="text-xs text-gray-400 dark:text-gray-500 self-center">총 {formatNumber(data?.total)}건</span>
       </div>
 
       {/* 테이블 */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="text-left px-4 py-3 font-medium text-gray-600 w-36">거래번호</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-600 w-28">유형</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-600">상품</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-600 w-28">위치</th>
-              <th className="text-right px-4 py-3 font-medium text-gray-600 w-20">변동</th>
-              <th className="text-right px-4 py-3 font-medium text-gray-600 w-20">이전</th>
-              <th className="text-right px-4 py-3 font-medium text-gray-600 w-20">이후</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-600 w-36">일시</th>
+            <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+              <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-36">거래번호</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-28">유형</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">상품</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-28">위치</th>
+              <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-20">변동</th>
+              <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-20">이전</th>
+              <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-20">이후</th>
+              <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-36">일시</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
             {isLoading && (
-              <tr><td colSpan={8} className="text-center py-10 text-gray-400">로딩 중...</td></tr>
+              <tr><td colSpan={8} className="text-center py-10 text-gray-400 dark:text-gray-500">로딩 중...</td></tr>
             )}
             {data?.items.map((txn) => (
-              <tr key={txn.id} className={cn(txn.isCancelled && 'opacity-50 line-through')}>
-                <td className="px-4 py-3 font-mono text-xs text-gray-500">{txn.txnNo}</td>
+              <tr key={txn.id} className={cn('hover:bg-gray-50 dark:hover:bg-gray-700/50', txn.isCancelled && 'opacity-50 line-through')}>
+                <td className="px-4 py-3 font-mono text-xs text-gray-500 dark:text-gray-400">{txn.txnNo}</td>
                 <td className="px-4 py-3">
                   <span className={cn('text-xs px-2 py-0.5 rounded-full', TX_TYPE_COLOR[txn.txType])}>
                     {TX_TYPE_LABEL[txn.txType]}
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  <p className="font-medium truncate max-w-40">{txn.product?.name}</p>
-                  <p className="text-xs text-gray-400">{txn.product?.code}</p>
+                  <p className="font-medium truncate max-w-40 text-gray-900 dark:text-gray-100">{txn.product?.name}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">{txn.product?.code}</p>
                 </td>
-                <td className="px-4 py-3 font-mono text-xs">{txn.location?.code}</td>
+                <td className="px-4 py-3 font-mono text-xs text-gray-700 dark:text-gray-300">{txn.location?.code}</td>
                 <td className={cn('px-4 py-3 text-right font-bold tabular-nums',
-                  txn.qty > 0 ? 'text-green-600' : 'text-red-600')}>
+                  txn.qty > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400')}>
                   {formatQtyDelta(txn.qty)}
                 </td>
-                <td className="px-4 py-3 text-right tabular-nums text-gray-500">{formatNumber(txn.qtyBefore)}</td>
-                <td className="px-4 py-3 text-right tabular-nums font-medium">{formatNumber(txn.qtyAfter)}</td>
-                <td className="px-4 py-3 text-xs text-gray-500">{formatDateTime(txn.createdAt)}</td>
+                <td className="px-4 py-3 text-right tabular-nums text-gray-500 dark:text-gray-400">{formatNumber(txn.qtyBefore)}</td>
+                <td className="px-4 py-3 text-right tabular-nums font-medium text-gray-900 dark:text-gray-100">{formatNumber(txn.qtyAfter)}</td>
+                <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">{formatDateTime(txn.createdAt)}</td>
               </tr>
             ))}
           </tbody>
@@ -103,10 +130,10 @@ export default function TransactionsPage() {
       {data && data.totalPages > 1 && (
         <div className="flex items-center justify-center gap-2">
           <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
-            className="px-3 py-1 text-sm border rounded disabled:opacity-40 hover:bg-gray-50">이전</button>
-          <span className="text-sm text-gray-600">{page} / {data.totalPages}</span>
+            className="px-3 py-1 text-sm border border-gray-200 dark:border-gray-600 rounded disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">이전</button>
+          <span className="text-sm text-gray-600 dark:text-gray-400">{page} / {data.totalPages}</span>
           <button onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))} disabled={page === data.totalPages}
-            className="px-3 py-1 text-sm border rounded disabled:opacity-40 hover:bg-gray-50">다음</button>
+            className="px-3 py-1 text-sm border border-gray-200 dark:border-gray-600 rounded disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">다음</button>
         </div>
       )}
     </div>

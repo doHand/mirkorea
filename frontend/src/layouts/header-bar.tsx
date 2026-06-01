@@ -1,63 +1,82 @@
 'use client'
-import { useRouter } from 'next/navigation'
-import { LogOut, User, ChevronDown } from 'lucide-react'
+import { Menu, Warehouse, Sun, Moon } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth.store'
 import { useWarehouseStore } from '@/stores/warehouse.store'
 import { useQuery } from '@tanstack/react-query'
 import { warehouseApi } from '@/api/warehouse.api'
 import { QUERY_KEYS } from '@/constants/query-keys'
+import { format } from 'date-fns'
+import { ko } from 'date-fns/locale'
+import { useTheme } from 'next-themes'
 
-export function HeaderBar() {
-  const router = useRouter()
-  const { user, clearAuth } = useAuthStore()
+interface Props {
+  onMenuClick?: () => void
+}
+
+export function HeaderBar({ onMenuClick }: Props) {
+  const { user } = useAuthStore()
   const { selectedWarehouse, setWarehouse } = useWarehouseStore()
+  const { resolvedTheme, setTheme } = useTheme()
 
   const { data: warehouses = [] } = useQuery({
     queryKey: QUERY_KEYS.warehouses(),
-    queryFn:  warehouseApi.findAll,
+    queryFn: warehouseApi.findAll,
   })
 
-  const handleLogout = () => {
-    clearAuth()
-    router.push('/login')
-  }
+  const today = format(new Date(), 'yyyy년 M월 d일 EEEE', { locale: ko })
 
   return (
-    <header className="h-12 bg-white border-b border-gray-200 flex items-center px-4 gap-4 shrink-0">
+    <header className="h-14 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 flex items-center px-4 gap-3 shrink-0">
+      {/* 모바일 햄버거 */}
+      <button
+        onClick={onMenuClick}
+        className="lg:hidden p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"
+        aria-label="메뉴 열기"
+      >
+        <Menu size={20} />
+      </button>
+
       {/* 창고 선택 */}
       <div className="flex items-center gap-2">
-        <span className="text-xs text-gray-500">창고:</span>
+        <Warehouse size={14} className="text-gray-400 shrink-0" />
         <select
           value={selectedWarehouse?.id ?? ''}
           onChange={(e) => {
-            const w = warehouses.find((wh) => wh.id === e.target.value)
-            if (w) setWarehouse(w)
+            const wh = warehouses.find((w) => w.id === e.target.value)
+            if (wh) setWarehouse(wh)
           }}
-          className="text-sm border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-brand-500"
+          className="text-sm bg-gray-50 dark:bg-gray-700 dark:text-gray-200 border-0 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-200 text-gray-700 font-medium cursor-pointer"
         >
           <option value="">창고 선택</option>
-          {warehouses.map((w) => (
-            <option key={w.id} value={w.id}>{w.name}</option>
+          {warehouses.map((wh) => (
+            <option key={wh.id} value={wh.id}>{wh.name}</option>
           ))}
         </select>
       </div>
 
       <div className="flex-1" />
 
-      {/* 사용자 정보 */}
-      <div className="flex items-center gap-2 text-sm text-gray-700">
-        <User size={14} className="text-gray-400" />
-        <span>{user?.fullName}</span>
-        <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded text-gray-500">{user?.role}</span>
-      </div>
+      {/* 날짜 */}
+      <span className="hidden md:block text-xs text-gray-400 dark:text-gray-500">{today}</span>
 
+      {/* 테마 토글 */}
       <button
-        onClick={handleLogout}
-        className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
-        title="로그아웃"
+        onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+        className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"
+        aria-label="테마 전환"
       >
-        <LogOut size={15} />
+        {resolvedTheme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
       </button>
+
+      {/* 사용자 */}
+      <div className="flex items-center gap-2">
+        <div className="w-7 h-7 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold text-xs shrink-0">
+          {user?.fullName?.charAt(0) ?? 'U'}
+        </div>
+        <span className="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-300 max-w-[120px] truncate">
+          {user?.fullName}
+        </span>
+      </div>
     </header>
   )
 }

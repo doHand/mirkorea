@@ -1,29 +1,30 @@
--- V2: 초기 데이터 (개발/테스트용)
+-- 로컬 개발용 초기 데이터입니다.
+-- 기존 프로젝트에서 사용하던 샘플 BCrypt 해시를 그대로 사용합니다.
 
--- 기본 관리자 계정 (password: admin1234)
+-- 기본 사용자 계정을 생성합니다.
 INSERT INTO users (id, username, email, password_hash, full_name, role) VALUES
     (gen_random_uuid(), 'admin', 'admin@wmspro.com',
      '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
      '시스템 관리자', 'ADMIN'),
     (gen_random_uuid(), 'manager1', 'manager1@wmspro.com',
      '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
-     '창고 매니저', 'MANAGER'),
+     '창고 관리자', 'MANAGER'),
     (gen_random_uuid(), 'worker1', 'worker1@wmspro.com',
      '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
-     '작업자1', 'WORKER');
+     '현장 작업자', 'WORKER');
 
--- 기본 창고
+-- 기본 창고를 생성합니다.
 INSERT INTO warehouses (id, code, name, address) VALUES
-    ('00000000-0000-0000-0000-000000000001', 'WH-001', '본사 창고', '서울시 강남구');
+    ('00000000-0000-0000-0000-000000000001', 'WH-001', '본사 창고', '서울');
 
--- 구역
+-- 기본 구역을 생성합니다.
 INSERT INTO zones (id, warehouse_id, code, name, type) VALUES
-    ('00000000-0000-0000-0001-000000000001', '00000000-0000-0000-0000-000000000001', 'A', 'A구역 (일반보관)', 'STORAGE'),
-    ('00000000-0000-0000-0001-000000000002', '00000000-0000-0000-0000-000000000001', 'B', 'B구역 (냉장보관)', 'STORAGE'),
+    ('00000000-0000-0000-0001-000000000001', '00000000-0000-0000-0000-000000000001', 'A', 'A구역', 'STORAGE'),
+    ('00000000-0000-0000-0001-000000000002', '00000000-0000-0000-0000-000000000001', 'B', 'B구역', 'STORAGE'),
     ('00000000-0000-0000-0001-000000000003', '00000000-0000-0000-0000-000000000001', 'IN', '입고 스테이징', 'RECEIVING'),
     ('00000000-0000-0000-0001-000000000004', '00000000-0000-0000-0000-000000000001', 'OUT', '출고 스테이징', 'SHIPPING');
 
--- 위치 (A구역 샘플)
+-- 기본 로케이션을 생성합니다.
 INSERT INTO locations (warehouse_id, zone_id, code, aisle, rack, shelf, bin) VALUES
     ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0001-000000000001', 'A-01-01-01', '01', '01', '01', NULL),
     ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0001-000000000001', 'A-01-01-02', '01', '01', '02', NULL),

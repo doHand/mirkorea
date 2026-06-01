@@ -44,7 +44,7 @@ public class AuthService {
                 "username",    user.getUsername(),
                 "fullName",    user.getFullName(),
                 "role",        roleStr,
-                "warehouseId", user.getWarehouseId() != null ? user.getWarehouseId().toString() : null
+                "warehouseId", user.getWarehouseId() != null ? user.getWarehouseId().toString() : ""
             )
         );
     }

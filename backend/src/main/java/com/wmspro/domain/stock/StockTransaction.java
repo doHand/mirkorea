@@ -1,5 +1,7 @@
 package com.wmspro.domain.stock;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.wmspro.domain.product.Product;
 import com.wmspro.domain.user.User;
 import com.wmspro.domain.warehouse.Location;
@@ -89,12 +91,15 @@ public class StockTransaction {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", insertable = false, updatable = false)
+    @JsonIgnoreProperties("barcodes")
     private Product product;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "location_id", insertable = false, updatable = false)
+    @JsonIgnoreProperties({"zone", "warehouse"})
     private Location location;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", insertable = false, updatable = false)
     private User createdByUser;

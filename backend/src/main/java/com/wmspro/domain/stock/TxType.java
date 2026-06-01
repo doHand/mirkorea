@@ -7,7 +7,7 @@ public enum TxType {
     OUTBOUND_CANCEL,  // 출고 취소
     ADJUST_INCREASE,  // 재고 증가 조정
     ADJUST_DECREASE,  // 재고 감소 조정
-    MOVE_OUT,         // 위치이동 출발
-    MOVE_IN,          // 위치이동 도착
+    MOVE_OUT,         // 위치 이동 출발
+    MOVE_IN,          // 위치 이동 도착
     INITIAL           // 초기 재고
 }

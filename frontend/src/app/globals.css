@@ -17,6 +17,18 @@
   --ag-cell-horizontal-border: solid #f1f5f9;
 }
 
+.dark .ag-theme-wms {
+  --ag-background-color: #1f2937;
+  --ag-header-background-color: #111827;
+  --ag-header-foreground-color: #d1d5db;
+  --ag-foreground-color: #e5e7eb;
+  --ag-odd-row-background-color: #1f2937;
+  --ag-row-hover-color: #374151;
+  --ag-selected-row-background-color: #1e3a5f;
+  --ag-border-color: #374151;
+  --ag-cell-horizontal-border: solid #374151;
+}
+
 .ag-theme-wms .ag-header-cell-text {
   font-weight: 600;
 }
@@ -32,5 +44,5 @@
 
 @layer base {
   * { box-sizing: border-box; }
-  body { @apply bg-gray-50 text-gray-900 antialiased; }
+  body { @apply bg-gray-50 text-gray-900 antialiased dark:bg-gray-900 dark:text-gray-100; }
 }

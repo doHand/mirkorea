@@ -14,12 +14,21 @@ export interface PageResponse<T> {
   totalPages: number
 }
 
+export type UserRole = 'ADMIN' | 'MANAGER' | 'WORKER' | 'VIEWER'
+
 export interface User {
   id: string
   username: string
   fullName: string
-  role: 'ADMIN' | 'MANAGER' | 'WORKER' | 'VIEWER'
+  role: UserRole
   warehouseId: string | null
+}
+
+export interface UserDetail extends User {
+  email: string
+  isActive: boolean
+  lastLoginAt: string | null
+  createdAt: string
 }
 
 export interface Warehouse {

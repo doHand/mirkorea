@@ -3,6 +3,9 @@ package com.wmspro.domain.stock;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.lang.NonNull;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
@@ -14,6 +17,11 @@ import java.util.UUID;
 
 public interface StockTransactionRepository
     extends JpaRepository<StockTransaction, UUID>, JpaSpecificationExecutor<StockTransaction> {
+
+    @Override
+    @NonNull
+    @EntityGraph(attributePaths = {"product", "location"})
+    Page<StockTransaction> findAll(@NonNull Specification<StockTransaction> spec, @NonNull Pageable pageable);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT t FROM StockTransaction t WHERE t.id = :id")

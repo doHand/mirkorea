@@ -42,7 +42,7 @@ public class ProductController {
         @Valid @RequestBody ProductCreateRequest req,
         @AuthenticationPrincipal WmsPrincipal principal
     ) {
-        return ApiResponse.ok(productService.create(req, principal.getId()), "상품 등록 완료");
+        return ApiResponse.ok(productService.create(req, principal.getUuid()), "상품 등록 완료");
     }
 
     @PutMapping("/{id}")

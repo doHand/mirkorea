@@ -15,7 +15,7 @@
   <artifactId>wms-pro-backend</artifactId>
   <version>1.0.0</version>
   <packaging>jar</packaging>
-  <name>WMS Pro Backend</name>
+  <name>MK WMS Backend</name>
 
   <properties>
     <java.version>17</java.version>
@@ -56,6 +56,7 @@
     <dependency>
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-database-postgresql</artifactId>
+      <version>${flyway.version}</version>
     </dependency>
 
     <!-- JWT -->

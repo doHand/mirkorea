@@ -25,7 +25,7 @@ public class StockController {
         @Valid @RequestBody InboundRequest req,
         @AuthenticationPrincipal WmsPrincipal principal
     ) {
-        return ApiResponse.ok(stockService.inbound(req, principal.getId()), "입고 처리 완료");
+        return ApiResponse.ok(stockService.inbound(req, principal.getUuid()), "입고 처리 완료");
     }
 
     @PostMapping("/inbound/{txnId}/cancel")
@@ -35,7 +35,7 @@ public class StockController {
         @AuthenticationPrincipal WmsPrincipal principal
     ) {
         return ApiResponse.ok(
-            stockService.cancelInbound(txnId, body.get("reason"), principal.getId()),
+            stockService.cancelInbound(txnId, body.get("reason"), principal.getUuid()),
             "입고 취소 완료"
         );
     }
@@ -46,7 +46,7 @@ public class StockController {
         @Valid @RequestBody OutboundRequest req,
         @AuthenticationPrincipal WmsPrincipal principal
     ) {
-        return ApiResponse.ok(stockService.outbound(req, principal.getId()), "출고 처리 완료");
+        return ApiResponse.ok(stockService.outbound(req, principal.getUuid()), "출고 처리 완료");
     }
 
     @PostMapping("/outbound/{txnId}/cancel")
@@ -56,7 +56,7 @@ public class StockController {
         @AuthenticationPrincipal WmsPrincipal principal
     ) {
         return ApiResponse.ok(
-            stockService.cancelOutbound(txnId, body.get("reason"), principal.getId()),
+            stockService.cancelOutbound(txnId, body.get("reason"), principal.getUuid()),
             "출고 취소 완료"
         );
     }
@@ -67,7 +67,7 @@ public class StockController {
         @Valid @RequestBody AdjustRequest req,
         @AuthenticationPrincipal WmsPrincipal principal
     ) {
-        return ApiResponse.ok(stockService.adjust(req, principal.getId()), "재고 조정 완료");
+        return ApiResponse.ok(stockService.adjust(req, principal.getUuid()), "재고 조정 완료");
     }
 
     @PostMapping("/move")
@@ -76,7 +76,7 @@ public class StockController {
         @Valid @RequestBody MoveRequest req,
         @AuthenticationPrincipal WmsPrincipal principal
     ) {
-        stockService.move(req, principal.getId());
+        stockService.move(req, principal.getUuid());
         return ApiResponse.ok(null, "위치 이동 완료");
     }
 }

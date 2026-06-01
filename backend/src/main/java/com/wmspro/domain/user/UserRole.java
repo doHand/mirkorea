@@ -1,8 +1,8 @@
 package com.wmspro.domain.user;
 
 public enum UserRole {
-    ADMIN,    // 전체 권한
-    MANAGER,  // 관리자 (취소 가능)
-    WORKER,   // 작업자 (입출고 처리)
-    VIEWER    // 조회 전용
+    ADMIN,    // 전체 관리자
+    MANAGER,  // 창고 관리자
+    WORKER,   // 현장 작업자
+    VIEWER    // 조회 전용 사용자
 }

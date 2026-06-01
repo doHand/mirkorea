@@ -2,16 +2,21 @@ import type { Config } from 'tailwindcss'
 
 const config: Config = {
   content: ['./src/**/*.{ts,tsx}'],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
         brand: {
-          50:  '#eff6ff',
-          100: '#dbeafe',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          900: '#1e3a8a',
+          50:  '#fef4f0',
+          100: '#fee5db',
+          200: '#fcc9b5',
+          300: '#f9a285',
+          400: '#f47050',
+          500: '#e84c2b',
+          600: '#d23918',
+          700: '#ad2e13',
+          800: '#8a2511',
+          900: '#6b1c0c',
         },
         success: { 500: '#22c55e', 100: '#dcfce7' },
         warning: { 500: '#f59e0b', 100: '#fef3c7' },
@@ -20,6 +25,15 @@ const config: Config = {
       fontFamily: {
         sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
         mono: ['D2Coding', 'Consolas', 'monospace'],
+      },
+      keyframes: {
+        scanLine: {
+          '0%, 100%': { top: '4px' },
+          '50%':       { top: 'calc(100% - 6px)' },
+        },
+      },
+      animation: {
+        'scan-line': 'scanLine 1.8s ease-in-out infinite',
       },
     },
   },

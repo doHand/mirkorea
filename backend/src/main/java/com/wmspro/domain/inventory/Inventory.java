@@ -1,5 +1,6 @@
 package com.wmspro.domain.inventory;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.wmspro.domain.product.Product;
 import com.wmspro.domain.warehouse.Location;
 import jakarta.persistence.*;
@@ -65,10 +66,12 @@ public class Inventory {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", insertable = false, updatable = false)
+    @JsonIgnoreProperties("barcodes")
     private Product product;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "location_id", insertable = false, updatable = false)
+    @JsonIgnoreProperties({"zone", "warehouse"})
     private Location location;
 
     public int getAvailableQty() {

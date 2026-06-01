@@ -11,6 +11,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.persistence.criteria.Predicate;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ public class StockLogController {
     private final StockTransactionRepository txnRepo;
 
     @GetMapping
+    @Transactional(readOnly = true)
     public ApiResponse<PageResponse<StockTransaction>> findAll(
         @RequestParam(required = false) UUID productId,
         @RequestParam(required = false) UUID locationId,

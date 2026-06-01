@@ -10,7 +10,7 @@ services:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      # Flyway가 마이그레이션을 관리합니다 (Spring Boot 시작 시 자동 실행)
+      # 스키마 관리는 Spring Boot 시작 시 Flyway가 담당합니다.
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-wms_user} -d ${DB_NAME:-wms_pro}"]
       interval: 5s
