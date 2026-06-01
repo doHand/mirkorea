@@ -1,6 +1,6 @@
 package com.wmspro.domain.product;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -49,6 +49,6 @@ public class Barcode {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", insertable = false, updatable = false)
-    @JsonIgnoreProperties("barcodes")
+    @JsonIgnore
     private Product product;
 }

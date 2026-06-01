@@ -10,6 +10,7 @@ public class ProductUpdateRequest {
     public String     name;
     public String     category;
     public String     brand;
+    public String     unit;
     public int        boxQty       = -1;
     public int        safetyStock  = -1;
     public int        reorderPoint = -1;

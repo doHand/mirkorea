@@ -38,6 +38,10 @@ public interface InventoryRepository extends JpaRepository<Inventory, UUID> {
     List<Inventory> findLowStock(@Param("warehouseId") UUID warehouseId);
 
     @Query("SELECT i FROM Inventory i JOIN FETCH i.product p JOIN FETCH i.location l " +
+           "WHERE i.warehouseId = :warehouseId ORDER BY p.code ASC, l.code ASC")
+    List<Inventory> findByWarehouseIdWithProductAndLocation(@Param("warehouseId") UUID warehouseId);
+
+    @Query("SELECT i FROM Inventory i JOIN FETCH i.product p JOIN FETCH i.location l " +
            "WHERE i.productId = :productId AND i.warehouseId = :warehouseId AND i.quantity > 0 ORDER BY i.quantity DESC")
     List<Inventory> findAvailableByProduct(@Param("productId") UUID productId,
                                             @Param("warehouseId") UUID warehouseId);

@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Search, Package } from 'lucide-react'
+import { Plus, Search, Package, Pencil } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { productApi } from '@/api/product.api'
 import { QUERY_KEYS } from '@/constants/query-keys'
@@ -11,13 +11,28 @@ import { cn } from '@/utils/cn'
 import { ExportButton } from '@/components/ExportButton'
 import type { Product, SaleStatus } from '@/types/api.types'
 
+const EMPTY_PRODUCT_FORM = {
+  code: '',
+  name: '',
+  category: '',
+  brand: '',
+  unit: 'EA',
+  boxQty: 1,
+  safetyStock: 0,
+  reorderPoint: 0,
+  costPrice: 0,
+  sellPrice: 0,
+  saleStatus: 'ACTIVE' as SaleStatus,
+}
+
 export default function ProductsPage() {
   const qc = useQueryClient()
   const [search, setSearch]         = useState('')
   const [status, setStatus]         = useState<SaleStatus | ''>('')
   const [page, setPage]             = useState(1)
   const [showModal, setShowModal]   = useState(false)
-  const [form, setForm]             = useState({ code: '', name: '', category: '', boxQty: 1, safetyStock: 0 })
+  const [editing, setEditing]       = useState<Product | null>(null)
+  const [form, setForm]             = useState(EMPTY_PRODUCT_FORM)
 
   const { data, isLoading } = useQuery({
     queryKey: QUERY_KEYS.products({ search, status, page }),
@@ -30,8 +45,27 @@ export default function ProductsPage() {
     onSuccess: () => {
       toast.success('상품이 등록되었습니다')
       qc.invalidateQueries({ queryKey: ['products'] })
-      setShowModal(false)
-      setForm({ code: '', name: '', category: '', boxQty: 1, safetyStock: 0 })
+      closeModal()
+    },
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: () => productApi.update(editing!.id, {
+      name: form.name,
+      category: form.category,
+      brand: form.brand,
+      unit: form.unit,
+      boxQty: form.boxQty,
+      safetyStock: form.safetyStock,
+      reorderPoint: form.reorderPoint,
+      costPrice: form.costPrice,
+      sellPrice: form.sellPrice,
+      saleStatus: form.saleStatus,
+    }),
+    onSuccess: () => {
+      toast.success('상품이 수정되었습니다')
+      qc.invalidateQueries({ queryKey: ['products'] })
+      closeModal()
     },
   })
 
@@ -42,6 +76,36 @@ export default function ProductsPage() {
       qc.invalidateQueries({ queryKey: ['products'] })
     },
   })
+
+  const openCreate = () => {
+    setEditing(null)
+    setForm(EMPTY_PRODUCT_FORM)
+    setShowModal(true)
+  }
+
+  const openEdit = (product: Product) => {
+    setEditing(product)
+    setForm({
+      code: product.code,
+      name: product.name,
+      category: product.category ?? '',
+      brand: product.brand ?? '',
+      unit: product.unit ?? 'EA',
+      boxQty: product.boxQty,
+      safetyStock: product.safetyStock,
+      reorderPoint: product.reorderPoint,
+      costPrice: Number(product.costPrice ?? 0),
+      sellPrice: Number(product.sellPrice ?? 0),
+      saleStatus: product.saleStatus,
+    })
+    setShowModal(true)
+  }
+
+  const closeModal = () => {
+    setShowModal(false)
+    setEditing(null)
+    setForm(EMPTY_PRODUCT_FORM)
+  }
 
   return (
     <div className="space-y-4">
@@ -56,15 +120,18 @@ export default function ProductsPage() {
                 '상품코드':  p.code,
                 '상품명':    p.name,
                 '카테고리':  p.category ?? '',
+                '브랜드':    p.brand ?? '',
                 '박스입수':  p.boxQty,
                 '안전재고':  p.safetyStock,
+                '원가':      p.costPrice ?? 0,
+                '판매가':    p.sellPrice ?? 0,
                 '상태':      SALE_STATUS_LABEL[p.saleStatus],
                 '등록일':    formatDateTime(p.createdAt),
               }))
             }}
           />
           <button
-            onClick={() => setShowModal(true)}
+            onClick={openCreate}
             className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white text-sm rounded-lg hover:bg-brand-700 transition-colors"
           >
             <Plus size={15} /> 상품 등록
@@ -105,13 +172,14 @@ export default function ProductsPage() {
               <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">카테고리</th>
               <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400">박스입수</th>
               <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400">안전재고</th>
+              <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400">판매가</th>
               <th className="text-center px-4 py-3 font-medium text-gray-600 dark:text-gray-400">상태</th>
               <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">등록일</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-            {isLoading && <tr><td colSpan={8} className="text-center py-10 text-gray-400 dark:text-gray-500">로딩 중...</td></tr>}
+            {isLoading && <tr><td colSpan={9} className="text-center py-10 text-gray-400 dark:text-gray-500">로딩 중...</td></tr>}
             {data?.items.map((p: Product) => (
               <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                 <td className="px-4 py-3 font-mono text-xs text-gray-600 dark:text-gray-400">{p.code}</td>
@@ -119,6 +187,7 @@ export default function ProductsPage() {
                 <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{p.category || '-'}</td>
                 <td className="px-4 py-3 text-right tabular-nums text-gray-900 dark:text-gray-100">{formatNumber(p.boxQty)}</td>
                 <td className="px-4 py-3 text-right tabular-nums text-gray-900 dark:text-gray-100">{formatNumber(p.safetyStock)}</td>
+                <td className="px-4 py-3 text-right tabular-nums text-gray-900 dark:text-gray-100">{formatNumber(p.sellPrice)}</td>
                 <td className="px-4 py-3 text-center">
                   <span className={cn(
                     'text-xs px-2 py-0.5 rounded-full',
@@ -131,6 +200,13 @@ export default function ProductsPage() {
                 </td>
                 <td className="px-4 py-3 text-xs text-gray-400 dark:text-gray-500">{formatDateTime(p.createdAt)}</td>
                 <td className="px-4 py-3 text-right">
+                  <button
+                    onClick={() => openEdit(p)}
+                    className="inline-flex items-center justify-center p-1.5 mr-1 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-gray-700"
+                    title="수정"
+                  >
+                    <Pencil size={13} />
+                  </button>
                   <button
                     onClick={() => { if (confirm('삭제하시겠습니까?')) deleteMutation.mutate(p.id) }}
                     className="text-xs text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-400"
@@ -153,18 +229,19 @@ export default function ProductsPage() {
         </div>
       )}
 
-      {/* 상품 등록 모달 */}
+      {/* 상품 등록/수정 모달 */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 dark:bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-md p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-2xl p-6">
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900 dark:text-white">
-              <Package size={18} /> 상품 등록
+              {editing ? <><Pencil size={18} /> 상품 수정</> : <><Package size={18} /> 상품 등록</>}
             </h3>
             <div className="space-y-3">
               {[
                 { label: '상품코드 *', key: 'code',  type: 'text', placeholder: 'PRD-001' },
                 { label: '상품명 *',   key: 'name',  type: 'text', placeholder: '상품명 입력' },
                 { label: '카테고리',   key: 'category', type: 'text', placeholder: '카테고리' },
+                { label: '브랜드',     key: 'brand', type: 'text', placeholder: '브랜드' },
               ].map(({ label, key, type, placeholder }) => (
                 <div key={key}>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
@@ -172,12 +249,19 @@ export default function ProductsPage() {
                     type={type}
                     placeholder={placeholder}
                     value={(form as any)[key]}
+                    disabled={editing !== null && key === 'code'}
                     onChange={(e) => setForm((p) => ({ ...p, [key]: e.target.value }))}
-                    className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
+                    className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 disabled:bg-gray-100 disabled:text-gray-400 dark:disabled:bg-gray-700/60"
                   />
                 </div>
               ))}
               <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">단위</label>
+                  <input value={form.unit}
+                    onChange={(e) => setForm((p) => ({ ...p, unit: e.target.value }))}
+                    className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">박스 입수</label>
                   <input type="number" min={1} value={form.boxQty}
@@ -190,19 +274,49 @@ export default function ProductsPage() {
                     onChange={(e) => setForm((p) => ({ ...p, safetyStock: +e.target.value }))}
                     className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">재주문점</label>
+                  <input type="number" min={0} value={form.reorderPoint}
+                    onChange={(e) => setForm((p) => ({ ...p, reorderPoint: +e.target.value }))}
+                    className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">원가</label>
+                  <input type="number" min={0} value={form.costPrice}
+                    onChange={(e) => setForm((p) => ({ ...p, costPrice: +e.target.value }))}
+                    className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">판매가</label>
+                  <input type="number" min={0} value={form.sellPrice}
+                    onChange={(e) => setForm((p) => ({ ...p, sellPrice: +e.target.value }))}
+                    className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">상태</label>
+                  <select
+                    value={form.saleStatus}
+                    onChange={(e) => setForm((p) => ({ ...p, saleStatus: e.target.value as SaleStatus }))}
+                    className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  >
+                    {Object.entries(SALE_STATUS_LABEL).map(([k, v]) => (
+                      <option key={k} value={k}>{v}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
             <div className="flex gap-3 mt-6">
-              <button onClick={() => setShowModal(false)}
+              <button onClick={closeModal}
                 className="flex-1 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700">
                 취소
               </button>
               <button
-                onClick={() => createMutation.mutate()}
-                disabled={!form.code || !form.name || createMutation.isPending}
+                onClick={() => editing ? updateMutation.mutate() : createMutation.mutate()}
+                disabled={!form.code || !form.name || createMutation.isPending || updateMutation.isPending}
                 className="flex-1 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-50"
               >
-                {createMutation.isPending ? '등록 중...' : '등록'}
+                {(createMutation.isPending || updateMutation.isPending) ? '처리 중...' : (editing ? '수정' : '등록')}
               </button>
             </div>
           </div>

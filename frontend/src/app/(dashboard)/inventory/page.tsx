@@ -15,9 +15,9 @@ export default function InventoryPage() {
   const [search,   setSearch]   = useState('')
   const [belowOnly, setBelowOnly] = useState(false)
 
-  const { data: lowStock = [], isLoading } = useQuery({
-    queryKey: QUERY_KEYS.lowStock(warehouse?.id ?? ''),
-    queryFn:  () => stockApi.getLowStock(warehouse!.id),
+  const { data: inventory = [], isLoading } = useQuery({
+    queryKey: QUERY_KEYS.inventory({ warehouseId: warehouse?.id ?? '' }),
+    queryFn:  () => stockApi.getInventory(warehouse!.id),
     enabled:  !!warehouse?.id,
     refetchInterval: 30_000,
   })
@@ -29,7 +29,7 @@ export default function InventoryPage() {
   })
 
   const filtered = useMemo(() => {
-    let list: Inventory[] = lowStock
+    let list: Inventory[] = inventory
     if (belowOnly) list = list.filter((i) => i.quantity <= (i.product?.safetyStock ?? 0))
     if (search) {
       const s = search.toLowerCase()
@@ -38,7 +38,7 @@ export default function InventoryPage() {
       )
     }
     return list
-  }, [lowStock, belowOnly, search])
+  }, [inventory, belowOnly, search])
 
   if (!warehouse) {
     return <div className="flex items-center justify-center h-64 text-gray-400 dark:text-gray-500">창고를 먼저 선택하세요</div>
@@ -57,6 +57,8 @@ export default function InventoryPage() {
             '상품코드':    inv.product?.code ?? '',
             '상품명':      inv.product?.name ?? '',
             '위치코드':    inv.location?.code ?? '',
+            '원가':        inv.product?.costPrice ?? 0,
+            '판매가':      inv.product?.sellPrice ?? 0,
             '현재고':      inv.quantity,
             '예약수량':    inv.reservedQty,
             '가용수량':    inv.quantity - inv.reservedQty,
@@ -89,6 +91,8 @@ export default function InventoryPage() {
             <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
               <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">상품</th>
               <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">위치</th>
+              <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400">원가</th>
+              <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400">판매가</th>
               <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400">현재고</th>
               <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400">예약</th>
               <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400">가용</th>
@@ -98,10 +102,10 @@ export default function InventoryPage() {
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
             {isLoading && (
-              <tr><td colSpan={7} className="text-center py-10 text-gray-400 dark:text-gray-500">로딩 중...</td></tr>
+              <tr><td colSpan={9} className="text-center py-10 text-gray-400 dark:text-gray-500">로딩 중...</td></tr>
             )}
             {!isLoading && filtered.length === 0 && (
-              <tr><td colSpan={7} className="text-center py-10 text-gray-400 dark:text-gray-500">데이터가 없습니다</td></tr>
+              <tr><td colSpan={9} className="text-center py-10 text-gray-400 dark:text-gray-500">데이터가 없습니다</td></tr>
             )}
             {filtered.map((inv) => {
               const isBelowSafety = inv.quantity <= (inv.product?.safetyStock ?? 0)
@@ -113,6 +117,12 @@ export default function InventoryPage() {
                     <p className="text-xs text-gray-400 dark:text-gray-500">{inv.product?.code}</p>
                   </td>
                   <td className="px-4 py-3 font-mono text-xs text-gray-700 dark:text-gray-300">{inv.location?.code}</td>
+                  <td className="px-4 py-3 text-right tabular-nums text-gray-600 dark:text-gray-400">
+                    {formatNumber(inv.product?.costPrice)}
+                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums text-gray-600 dark:text-gray-400">
+                    {formatNumber(inv.product?.sellPrice)}
+                  </td>
                   <td className="px-4 py-3 text-right font-bold tabular-nums text-gray-900 dark:text-gray-100">
                     {formatNumber(inv.quantity)}
                   </td>

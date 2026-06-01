@@ -1,5 +1,6 @@
 package com.wmspro.domain.warehouse;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -53,9 +54,11 @@ public class Location {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "zone_id", insertable = false, updatable = false)
+    @JsonIgnore
     private Zone zone;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "warehouse_id", insertable = false, updatable = false)
+    @JsonIgnore
     private Warehouse warehouse;
 }

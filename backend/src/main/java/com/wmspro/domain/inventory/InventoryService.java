@@ -28,6 +28,10 @@ public class InventoryService {
         return invRepo.findLowStock(warehouseId);
     }
 
+    public List<Inventory> findAllByWarehouse(UUID warehouseId) {
+        return invRepo.findByWarehouseIdWithProductAndLocation(warehouseId);
+    }
+
     public Map<String, Object> getSummary(UUID warehouseId) {
         long totalSkus = invRepo.countDistinctProducts(warehouseId);
         long totalQty  = invRepo.sumQuantity(warehouseId);

@@ -63,6 +63,7 @@ public class ProductService {
         if (req.name        != null) product.setName(req.name);
         if (req.category    != null) product.setCategory(req.category);
         if (req.brand       != null) product.setBrand(req.brand);
+        if (req.unit        != null) product.setUnit(req.unit);
         if (req.boxQty      > 0)    product.setBoxQty(req.boxQty);
         if (req.safetyStock >= 0)   product.setSafetyStock(req.safetyStock);
         if (req.reorderPoint >= 0)  product.setReorderPoint(req.reorderPoint);

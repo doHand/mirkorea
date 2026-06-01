@@ -15,6 +15,11 @@ public class InventoryController {
 
     private final InventoryService inventoryService;
 
+    @GetMapping
+    public ApiResponse<List<Inventory>> findAll(@RequestParam UUID warehouseId) {
+        return ApiResponse.ok(inventoryService.findAllByWarehouse(warehouseId));
+    }
+
     @GetMapping("/by-product/{productId}")
     public ApiResponse<List<Inventory>> findByProduct(
         @PathVariable UUID productId,

@@ -30,6 +30,9 @@ export const stockApi = {
   }) => post<void>('/stock/move', data),
 
   // 재고 조회
+  getInventory: (warehouseId: string) =>
+    get<Inventory[]>('/inventory', { warehouseId }),
+
   getInventoryByProduct: (productId: string, warehouseId?: string) =>
     get<Inventory[]>('/inventory/by-product/' + productId, { warehouseId }),
 
