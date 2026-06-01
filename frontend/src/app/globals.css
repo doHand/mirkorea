@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* AG Grid 테마 오버라이드 */
+.ag-theme-wms {
+  --ag-font-family: 'Pretendard', sans-serif;
+  --ag-font-size: 13px;
+  --ag-row-height: 36px;
+  --ag-header-height: 38px;
+  --ag-header-background-color: #f8fafc;
+  --ag-header-foreground-color: #374151;
+  --ag-odd-row-background-color: #fff;
+  --ag-row-hover-color: #eff6ff;
+  --ag-selected-row-background-color: #dbeafe;
+  --ag-border-color: #e2e8f0;
+  --ag-cell-horizontal-border: solid #f1f5f9;
+}
+
+.ag-theme-wms .ag-header-cell-text {
+  font-weight: 600;
+}
+
+/* 재고 부족 행 */
+.row-below-safety { background-color: #fff7f7 !important; }
+.row-cancelled     { opacity: 0.5; text-decoration: line-through; }
+
+/* 스캔 모드 풀스크린 */
+.scan-layout {
+  @apply fixed inset-0 bg-gray-900 text-white flex flex-col;
+}
+
+@layer base {
+  * { box-sizing: border-box; }
+  body { @apply bg-gray-50 text-gray-900 antialiased; }
+}

@@ -1,0 +1,29 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: wms_pro_postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-wms_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-wms_pass}
+      POSTGRES_DB: ${DB_NAME:-wms_pro}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Flyway가 마이그레이션을 관리합니다 (Spring Boot 시작 시 자동 실행)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-wms_user} -d ${DB_NAME:-wms_pro}"]
+      interval: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: wms_pro_redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:
