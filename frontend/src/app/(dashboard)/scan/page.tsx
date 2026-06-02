@@ -1,5 +1,5 @@
 'use client'
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useCallback, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { ScanLine, CheckCircle, Trash2, Camera } from 'lucide-react'
@@ -13,7 +13,7 @@ import { SCAN_MODE_LABEL, SCAN_MODES } from '@/constants/stock.constants'
 import { QUERY_KEYS } from '@/constants/query-keys'
 import { formatNumber } from '@/utils/format'
 import { CameraScanner } from '@/components/CameraScanner'
-import type { BarcodeResolveResult } from '@/types/api.types'
+import type { BarcodeResolveResult, Zone } from '@/types/api.types'
 
 export default function ScanPage() {
   const qc          = useQueryClient()
@@ -31,6 +31,17 @@ export default function ScanPage() {
     queryFn:  () => warehouseApi.findLocations(warehouse!.id),
     enabled:  !!warehouse?.id,
   })
+
+  const { data: zones = [] } = useQuery({
+    queryKey: QUERY_KEYS.zones(warehouse?.id ?? ''),
+    queryFn:  () => warehouseApi.findZones(warehouse!.id),
+    enabled:  !!warehouse?.id,
+  })
+
+  // 창고 변경 시 선택 위치 초기화
+  useEffect(() => {
+    setSelectedLocation(null)
+  }, [warehouse?.id, setSelectedLocation])
 
   const submitMutation = useMutation({
     mutationFn: async (items: ScanCartItem[]) => {
@@ -157,14 +168,33 @@ export default function ScanPage() {
               onChange={(e) => {
                 const loc = locations.find((l: any) => l.id === e.target.value)
                 setSelectedLocation(loc ?? null)
+                setTimeout(() => inputRef.current?.focus(), 0)
               }}
               className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             >
               <option value="">위치 선택</option>
-              {locations.map((l: any) => (
-                <option key={l.id} value={l.id}>{l.code}</option>
-              ))}
+              {zones.length > 0
+                ? zones.map((z: Zone) => {
+                    const zoneLocs = locations.filter((l: any) => l.zoneId === z.id)
+                    if (zoneLocs.length === 0) return null
+                    return (
+                      <optgroup key={z.id} label={`[${z.code}] ${z.name}`}>
+                        {zoneLocs.map((l: any) => (
+                          <option key={l.id} value={l.id}>{l.code}</option>
+                        ))}
+                      </optgroup>
+                    )
+                  })
+                : locations.map((l: any) => (
+                    <option key={l.id} value={l.id}>{l.code}</option>
+                  ))
+              }
             </select>
+            {selectedLocation && (
+              <p className="mt-1.5 text-xs text-brand-600 dark:text-brand-400">
+                선택됨: {selectedLocation.code}
+              </p>
+            )}
           </div>
         )}
 

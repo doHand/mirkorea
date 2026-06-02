@@ -1,4 +1,4 @@
-import { get, post, patch } from './client'
+import { get, post, patch, del } from './client'
 import type { Warehouse, Zone, Location } from '@/types/api.types'
 
 export const warehouseApi = {
@@ -24,4 +24,10 @@ export const warehouseApi = {
 
   updateLocation: (locationId: string, data: { isActive?: boolean; capacityUnit?: number }) =>
     patch<Location>(`/warehouses/locations/${locationId}`, data),
+
+  deleteZone: (warehouseId: string, zoneId: string) =>
+    del(`/warehouses/${warehouseId}/zones/${zoneId}`),
+
+  deleteLocation: (locationId: string) =>
+    del(`/warehouses/locations/${locationId}`),
 }

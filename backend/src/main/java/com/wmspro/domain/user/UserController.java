@@ -3,6 +3,7 @@ package com.wmspro.domain.user;
 import com.wmspro.common.ApiResponse;
 import com.wmspro.common.exception.BusinessException;
 import com.wmspro.common.exception.ErrorCode;
+import com.wmspro.common.security.WmsPrincipal;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -10,6 +11,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,18 +23,44 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
 public class UserController {
 
     private final UserRepository  userRepo;
     private final PasswordEncoder passwordEncoder;
 
+    // ── 내 계정 (모든 인증 사용자) ───────────────────────────────────────
+
+    @GetMapping("/me")
+    public ApiResponse<Map<String, Object>> getMe(@AuthenticationPrincipal WmsPrincipal principal) {
+        User user = userRepo.findById(principal.getUuid())
+            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        return ApiResponse.ok(toMap(user));
+    }
+
+    @PatchMapping("/me")
+    public ApiResponse<Map<String, Object>> updateMe(
+        @AuthenticationPrincipal WmsPrincipal principal,
+        @RequestBody UpdateMeRequest req
+    ) {
+        User user = userRepo.findById(principal.getUuid())
+            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        if (req.getFullName() != null && !req.getFullName().isBlank())
+            user.setFullName(req.getFullName());
+        if (req.getPassword() != null && !req.getPassword().isBlank())
+            user.setPasswordHash(passwordEncoder.encode(req.getPassword()));
+        return ApiResponse.ok(toMap(userRepo.save(user)));
+    }
+
+    // ── 관리자 전용 ──────────────────────────────────────────────────────
+
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<List<Map<String, Object>>> findAll() {
         return ApiResponse.ok(userRepo.findAll().stream().map(this::toMap).toList());
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<Map<String, Object>> create(@Valid @RequestBody CreateRequest req) {
         if (userRepo.existsByUsername(req.getUsername()))
             throw new BusinessException(ErrorCode.USER_DUPLICATE);
@@ -52,6 +80,7 @@ public class UserController {
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<Map<String, Object>> update(@PathVariable UUID id,
                                                     @RequestBody UpdateRequest req) {
         User user = userRepo.findById(id)
@@ -70,6 +99,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         if (!userRepo.existsById(id))
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
@@ -89,6 +119,12 @@ public class UserController {
         m.put("lastLoginAt", u.getLastLoginAt() != null ? u.getLastLoginAt().toString() : null);
         m.put("createdAt",   u.getCreatedAt().toString());
         return m;
+    }
+
+    @Getter @Setter
+    public static class UpdateMeRequest {
+        String fullName;
+        String password;
     }
 
     @Getter @Setter

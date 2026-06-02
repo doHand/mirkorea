@@ -3,30 +3,32 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   Package, BarChart3, Warehouse, ScanLine, ClipboardList,
-  LayoutDashboard, LogOut, X, ChevronRight, ShieldCheck,
+  LayoutDashboard, LogOut, X, ShieldCheck, UserCog, Tags, LayoutGrid,
+  Hash, Barcode, FileText, BoxSelect, FlaskConical, Ruler,
 } from 'lucide-react'
 import { cn } from '@/utils/cn'
 import { useAuthStore } from '@/stores/auth.store'
+import { useMenuPermissionStore } from '@/stores/menu-permission.store'
+import type { UserRole } from '@/types/api.types'
 
-const NAV_SECTIONS = [
-  {
-    label: '운영',
-    items: [
-      { href: '/',             label: '대시보드',    icon: LayoutDashboard, adminOnly: false },
-      { href: '/products',     label: '상품 관리',   icon: Package,         adminOnly: false },
-      { href: '/inventory',    label: '재고 조회',   icon: BarChart3,       adminOnly: false },
-      { href: '/scan',         label: '바코드 스캔', icon: ScanLine,        adminOnly: false },
-    ],
-  },
-  {
-    label: '설정',
-    items: [
-      { href: '/warehouse',    label: '창고/위치',   icon: Warehouse,       adminOnly: false },
-      { href: '/transactions', label: '이력 조회',   icon: ClipboardList,   adminOnly: false },
-      { href: '/users',        label: '권한 관리',   icon: ShieldCheck,     adminOnly: true  },
-    ],
-  },
-]
+const ICON_MAP: Record<string, React.ElementType> = {
+  dashboard:          LayoutDashboard,
+  products:           Package,
+  inventory:          BarChart3,
+  scan:               ScanLine,
+  'product-codes':    Hash,
+  barcodes:           Barcode,
+  'product-attrs':    FileText,
+  'box-qty':          BoxSelect,
+  lot:                FlaskConical,
+  units:              Ruler,
+  pricing:            Tags,
+  warehouse:          Warehouse,
+  transactions:       ClipboardList,
+  users:              ShieldCheck,
+  'menu-permissions': LayoutGrid,
+  profile:            UserCog,
+}
 
 interface Props {
   onClose?: () => void
@@ -34,57 +36,58 @@ interface Props {
 
 export function SidebarNav({ onClose }: Props) {
   const pathname = usePathname()
-  const router = useRouter()
+  const router   = useRouter()
   const { user, clearAuth } = useAuthStore()
+  const menus        = useMenuPermissionStore((s) => s.menus)
+  const sectionOrder = useMenuPermissionStore((s) => s.sectionOrder)
 
   const handleLogout = () => {
     clearAuth()
     router.push('/login')
   }
 
+  const role = user?.role as UserRole | undefined
+  const visibleMenus = menus.filter((m) => role && m.roles.includes(role))
+
+  const sections = sectionOrder
+    .map((section) => ({ label: section, items: visibleMenus.filter((m) => m.section === section) }))
+    .filter((s) => s.items.length > 0)
+
   return (
-    <aside className="w-60 bg-white dark:bg-gray-800 border-r border-gray-100 dark:border-gray-700 flex flex-col h-full shadow-sm">
+    <aside className="w-60 bg-slate-950 flex flex-col h-full select-none">
       {/* 로고 */}
-      <div className="px-5 py-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-700">
-        <Link href="/" onClick={onClose} className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-          <div className="w-8 h-8 bg-brand-500 rounded-xl flex items-center justify-center shadow-sm">
-            <Warehouse size={16} className="text-white" />
+      <div className="px-4 h-14 flex items-center justify-between border-b border-slate-800/80 shrink-0">
+        <Link
+          href="/"
+          onClick={onClose}
+          className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
+        >
+          <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25">
+            <Warehouse size={15} className="text-white" />
           </div>
           <div>
-            <h1 className="text-sm font-bold text-gray-900 dark:text-white leading-none">WMS Pro</h1>
-            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">창고 물류 관리</p>
+            <h1 className="text-sm font-bold text-white leading-none tracking-tight">WMS Pro</h1>
+            <p className="text-[10px] text-slate-500 mt-0.5">창고 물류 관리</p>
           </div>
         </Link>
         <button
           onClick={onClose}
-          className="lg:hidden p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 transition-colors"
+          className="lg:hidden p-1 rounded-lg hover:bg-slate-800 text-slate-500 transition-colors"
         >
           <X size={16} />
         </button>
       </div>
 
-      {/* 사용자 정보 */}
-      <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-700">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold text-sm shrink-0">
-            {user?.fullName?.charAt(0) ?? 'U'}
-          </div>
-          <div className="min-w-0">
-            <p className="text-xs font-semibold text-gray-800 dark:text-gray-100 truncate">{user?.fullName}</p>
-            <span className="text-[10px] text-brand-500 font-medium">{user?.role}</span>
-          </div>
-        </div>
-      </div>
-
       {/* 네비게이션 */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
-        {NAV_SECTIONS.map(({ label, items }) => (
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+        {sections.map(({ label, items }) => (
           <div key={label}>
-            <p className="px-2 text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1.5">
+            <p className="px-2 mb-1.5 text-[10px] font-semibold text-slate-600 uppercase tracking-widest">
               {label}
             </p>
             <div className="space-y-0.5">
-              {items.filter(({ adminOnly }) => !adminOnly || user?.role === 'ADMIN').map(({ href, label: itemLabel, icon: Icon }) => {
+              {items.map(({ href, label: itemLabel, menuId }) => {
+                const Icon = ICON_MAP[menuId] ?? LayoutDashboard
                 const active = pathname === href || (href !== '/' && pathname.startsWith(href))
                 return (
                   <Link
@@ -92,15 +95,23 @@ export function SidebarNav({ onClose }: Props) {
                     href={href}
                     onClick={onClose}
                     className={cn(
-                      'flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all',
+                      'group flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150',
                       active
-                        ? 'bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 font-semibold'
-                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
+                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
+                        : 'text-slate-400 hover:bg-slate-800/80 hover:text-slate-100'
                     )}
                   >
-                    <Icon size={16} className={active ? 'text-brand-500 dark:text-brand-400' : 'text-gray-400 dark:text-gray-500'} />
-                    <span className="flex-1">{itemLabel}</span>
-                    {active && <ChevronRight size={12} className="text-brand-300 dark:text-brand-500" />}
+                    <Icon
+                      size={16}
+                      className={cn(
+                        'shrink-0 transition-colors',
+                        active ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'
+                      )}
+                    />
+                    <span className="flex-1 truncate">{itemLabel}</span>
+                    {active && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-white/60 shrink-0" />
+                    )}
                   </Link>
                 )
               })}
@@ -109,13 +120,22 @@ export function SidebarNav({ onClose }: Props) {
         ))}
       </nav>
 
-      {/* 로그아웃 */}
-      <div className="px-3 py-3 border-t border-gray-100 dark:border-gray-700">
+      {/* 사용자 + 로그아웃 */}
+      <div className="px-3 py-3 border-t border-slate-800/80 space-y-1 shrink-0">
+        <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-md">
+            {user?.fullName?.charAt(0)?.toUpperCase() ?? 'U'}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold text-slate-200 truncate leading-tight">{user?.fullName}</p>
+            <span className="text-[10px] text-indigo-400 font-medium">{user?.role}</span>
+          </div>
+        </div>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-gray-500 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-slate-500 hover:bg-slate-800/80 hover:text-rose-400 transition-all duration-150"
         >
-          <LogOut size={16} />
+          <LogOut size={15} className="shrink-0" />
           로그아웃
         </button>
       </div>

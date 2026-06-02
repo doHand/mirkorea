@@ -42,6 +42,8 @@ public class ProductService {
             .category(req.category)
             .brand(req.brand)
             .unit(req.unit != null ? req.unit : "EA")
+            .optionName(req.optionName)
+            .spec(req.spec)
             .boxQty(req.boxQty > 0 ? req.boxQty : 1)
             .weightG(req.weightG)
             .imageUrl(req.imageUrl)
@@ -60,10 +62,18 @@ public class ProductService {
     @Transactional
     public Product update(UUID id, ProductUpdateRequest req) {
         Product product = findById(id);
+        if (req.code        != null) {
+            if (!product.getCode().equals(req.code) && productRepo.existsByCode(req.code)) {
+                throw new BusinessException(ErrorCode.PRODUCT_CODE_DUPLICATE);
+            }
+            product.setCode(req.code);
+        }
         if (req.name        != null) product.setName(req.name);
         if (req.category    != null) product.setCategory(req.category);
         if (req.brand       != null) product.setBrand(req.brand);
         if (req.unit        != null) product.setUnit(req.unit);
+        if (req.optionName  != null) product.setOptionName(req.optionName);
+        if (req.spec        != null) product.setSpec(req.spec);
         if (req.boxQty      > 0)    product.setBoxQty(req.boxQty);
         if (req.safetyStock >= 0)   product.setSafetyStock(req.safetyStock);
         if (req.reorderPoint >= 0)  product.setReorderPoint(req.reorderPoint);
@@ -71,6 +81,7 @@ public class ProductService {
         if (req.sellPrice   != null) product.setSellPrice(req.sellPrice);
         if (req.saleStatus  != null) product.setSaleStatus(req.saleStatus);
         if (req.imageUrl    != null) product.setImageUrl(req.imageUrl);
+        if (req.isLotManaged != null) product.setLotManaged(req.isLotManaged);
         return productRepo.save(product);
     }
 

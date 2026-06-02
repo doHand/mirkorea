@@ -3,12 +3,15 @@ package com.wmspro.domain.product;
 import com.wmspro.common.ApiResponse;
 import com.wmspro.common.PageResponse;
 import com.wmspro.common.security.WmsPrincipal;
+import com.wmspro.domain.inventory.InventoryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -18,7 +21,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ProductController {
 
-    private final ProductService productService;
+    private final ProductService   productService;
+    private final InventoryService inventoryService;
 
     @GetMapping
     public ApiResponse<PageResponse<Product>> findAll(
@@ -84,5 +88,31 @@ public class ProductController {
     @GetMapping("/barcode/{barcodeValue}")
     public ApiResponse<ProductService.BarcodeResolveResult> resolveBarcode(@PathVariable String barcodeValue) {
         return ApiResponse.ok(productService.resolveBarcode(barcodeValue));
+    }
+
+    // 관리자용: 상품별 가격 + 전체 재고 현황
+    @GetMapping("/pricing")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<List<Map<String, Object>>> getPricing() {
+        var stockMap = inventoryService.getTotalStockByProduct();
+        var items = productService.findAll(null, null, null, 1, 9999).getItems().stream()
+            .map(p -> {
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("id",          p.getId());
+                m.put("code",        p.getCode());
+                m.put("name",        p.getName());
+                m.put("category",    p.getCategory());
+                m.put("brand",       p.getBrand());
+                m.put("unit",        p.getUnit());
+                m.put("boxQty",      p.getBoxQty());
+                m.put("costPrice",   p.getCostPrice());
+                m.put("sellPrice",   p.getSellPrice());
+                m.put("safetyStock", p.getSafetyStock());
+                m.put("saleStatus",  p.getSaleStatus());
+                m.put("totalStock",  stockMap.getOrDefault(p.getId(), 0L));
+                return m;
+            })
+            .toList();
+        return ApiResponse.ok(items);
     }
 }

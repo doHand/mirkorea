@@ -9,9 +9,12 @@ interface UseBarcodeScanner {
 export function useBarcodeScanner({ inputRef, onScan, debounceMs = 100 }: UseBarcodeScanner) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // 화면이 클릭되어도 스캔 입력창 포커스 유지
+  // 화면이 클릭되어도 스캔 입력창 포커스 유지 (단, 다른 입력 요소 클릭 시 제외)
   useEffect(() => {
-    const keepFocus = () => {
+    const keepFocus = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      // select, input, textarea 등 다른 입력 요소 클릭 시 focus 빼앗지 않음
+      if (target.closest('select, input, textarea, [contenteditable]')) return
       setTimeout(() => inputRef.current?.focus(), 0)
     }
     document.addEventListener('click', keepFocus)

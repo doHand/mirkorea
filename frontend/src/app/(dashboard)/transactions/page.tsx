@@ -83,7 +83,8 @@ export default function TransactionsPage() {
 
       {/* 테이블 */}
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[700px] text-sm">
           <thead>
             <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
               <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-36">거래번호</th>
@@ -124,6 +125,7 @@ export default function TransactionsPage() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* 페이지네이션 */}

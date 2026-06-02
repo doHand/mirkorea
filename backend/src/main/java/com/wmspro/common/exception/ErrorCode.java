@@ -27,6 +27,7 @@ public enum ErrorCode {
     TRANSACTION_NOT_FOUND(HttpStatus.NOT_FOUND,     "거래 내역을 찾을 수 없습니다"),
     WAREHOUSE_NOT_FOUND(HttpStatus.NOT_FOUND,       "창고를 찾을 수 없습니다"),
     WAREHOUSE_CODE_DUPLICATE(HttpStatus.CONFLICT,   "창고코드가 이미 존재합니다"),
+    ZONE_NOT_FOUND(HttpStatus.NOT_FOUND,            "구역을 찾을 수 없습니다"),
     LOCATION_NOT_FOUND(HttpStatus.NOT_FOUND,        "위치를 찾을 수 없습니다"),
     LOCATION_CODE_DUPLICATE(HttpStatus.CONFLICT,    "위치코드가 이미 존재합니다"),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND,            "사용자를 찾을 수 없습니다"),

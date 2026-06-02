@@ -20,6 +20,8 @@ public class ProductCreateRequest {
     public int        reorderPoint = 0;
     public BigDecimal costPrice;
     public BigDecimal sellPrice;
+    public String     optionName;
+    public String     spec;
     public boolean    isLotManaged    = false;
     public boolean    isExpiryManaged = false;
 }

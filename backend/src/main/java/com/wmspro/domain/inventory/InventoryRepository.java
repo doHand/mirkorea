@@ -51,4 +51,8 @@ public interface InventoryRepository extends JpaRepository<Inventory, UUID> {
 
     @Query("SELECT COALESCE(SUM(i.quantity), 0) FROM Inventory i WHERE i.warehouseId = :wid")
     long sumQuantity(@Param("wid") UUID warehouseId);
+
+    // 상품별 전체 재고 합계 (전 창고)
+    @Query("SELECT i.productId, COALESCE(SUM(i.quantity), 0) FROM Inventory i GROUP BY i.productId")
+    List<Object[]> sumQuantityGroupByProduct();
 }

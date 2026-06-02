@@ -68,6 +68,12 @@ public class Product {
     @Builder.Default
     private SaleStatus saleStatus = SaleStatus.ACTIVE;
 
+    @Column(name = "option_name", length = 200)
+    private String optionName;
+
+    @Column(length = 200)
+    private String spec;
+
     @Column(name = "is_lot_managed", nullable = false)
     @Builder.Default
     private boolean isLotManaged = false;

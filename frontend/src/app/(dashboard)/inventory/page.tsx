@@ -1,19 +1,29 @@
 'use client'
-import { useState, useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { AlertTriangle, Search } from 'lucide-react'
+import { useState, useMemo, useRef } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { AlertTriangle, Search, Pencil, Trash2, X } from 'lucide-react'
 import { useWarehouseStore } from '@/stores/warehouse.store'
 import { stockApi } from '@/api/stock.api'
 import { QUERY_KEYS } from '@/constants/query-keys'
 import { formatNumber } from '@/utils/format'
 import { cn } from '@/utils/cn'
 import { ExportButton } from '@/components/ExportButton'
+import toast from 'react-hot-toast'
 import type { Inventory } from '@/types/api.types'
+
+interface EditModalState {
+  inv: Inventory
+  newQty: string
+  reason: string
+}
 
 export default function InventoryPage() {
   const warehouse  = useWarehouseStore((s) => s.selectedWarehouse)
+  const qc         = useQueryClient()
   const [search,   setSearch]   = useState('')
   const [belowOnly, setBelowOnly] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [editModal, setEditModal] = useState<EditModalState | null>(null)
 
   const { data: inventory = [], isLoading } = useQuery({
     queryKey: QUERY_KEYS.inventory({ warehouseId: warehouse?.id ?? '' }),
@@ -28,6 +38,13 @@ export default function InventoryPage() {
     enabled:  !!warehouse?.id,
   })
 
+  const adjustMutation = useMutation({
+    mutationFn: stockApi.adjust,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['inventory'] })
+    },
+  })
+
   const filtered = useMemo(() => {
     let list: Inventory[] = inventory
     if (belowOnly) list = list.filter((i) => i.quantity <= (i.product?.safetyStock ?? 0))
@@ -40,6 +57,88 @@ export default function InventoryPage() {
     return list
   }, [inventory, belowOnly, search])
 
+  const currentIds = filtered.map((i) => i.id)
+  const allChecked = currentIds.length > 0 && currentIds.every((id) => selectedIds.has(id))
+  const someChecked = currentIds.some((id) => selectedIds.has(id))
+
+  const toggleRow = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const toggleAll = () => {
+    if (allChecked) setSelectedIds(new Set())
+    else setSelectedIds(new Set(currentIds))
+  }
+
+  const openEdit = (inv: Inventory) => {
+    setEditModal({ inv, newQty: String(inv.quantity), reason: '' })
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editModal) return
+    const qty = parseInt(editModal.newQty)
+    if (isNaN(qty) || qty < 0) { toast.error('수량은 0 이상의 숫자를 입력하세요'); return }
+    if (!editModal.reason.trim()) { toast.error('조정 사유를 입력하세요'); return }
+    try {
+      await adjustMutation.mutateAsync({
+        productId:   editModal.inv.productId,
+        locationId:  editModal.inv.locationId,
+        warehouseId: editModal.inv.warehouseId,
+        adjustedQty: qty,
+        reason:      editModal.reason,
+        lotNumber:   editModal.inv.lotNumber,
+      })
+      toast.success('재고가 수정되었습니다')
+      setEditModal(null)
+      setSelectedIds(new Set())
+    } catch {
+      toast.error('재고 수정에 실패했습니다')
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`선택한 ${selectedIds.size}개 재고를 삭제(0으로 조정)하시겠습니까?`)) return
+    const targets = filtered.filter((i) => selectedIds.has(i.id))
+    try {
+      for (const inv of targets) {
+        await adjustMutation.mutateAsync({
+          productId:   inv.productId,
+          locationId:  inv.locationId,
+          warehouseId: inv.warehouseId,
+          adjustedQty: 0,
+          reason:      '재고 삭제',
+          lotNumber:   inv.lotNumber,
+        })
+      }
+      toast.success(`${targets.length}개 재고가 삭제되었습니다`)
+      setSelectedIds(new Set())
+    } catch {
+      toast.error('일부 재고 삭제에 실패했습니다')
+    }
+  }
+
+  const handleSingleDelete = async (inv: Inventory) => {
+    if (!confirm('이 재고를 삭제(0으로 조정)하시겠습니까?')) return
+    try {
+      await adjustMutation.mutateAsync({
+        productId:   inv.productId,
+        locationId:  inv.locationId,
+        warehouseId: inv.warehouseId,
+        adjustedQty: 0,
+        reason:      '재고 삭제',
+        lotNumber:   inv.lotNumber,
+      })
+      toast.success('재고가 삭제되었습니다')
+    } catch {
+      toast.error('재고 삭제에 실패했습니다')
+    }
+  }
+
   if (!warehouse) {
     return <div className="flex items-center justify-center h-64 text-gray-400 dark:text-gray-500">창고를 먼저 선택하세요</div>
   }
@@ -51,20 +150,22 @@ export default function InventoryPage() {
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">재고 현황</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">전체 SKU: {formatNumber(summary?.totalSkus)} / 총 수량: {formatNumber(summary?.totalQty)}</p>
         </div>
-        <ExportButton
-          filename="재고현황"
-          getData={() => filtered.map((inv) => ({
-            '상품코드':    inv.product?.code ?? '',
-            '상품명':      inv.product?.name ?? '',
-            '위치코드':    inv.location?.code ?? '',
-            '원가':        inv.product?.costPrice ?? 0,
-            '판매가':      inv.product?.sellPrice ?? 0,
-            '현재고':      inv.quantity,
-            '예약수량':    inv.reservedQty,
-            '가용수량':    inv.quantity - inv.reservedQty,
-            '안전재고':    inv.product?.safetyStock ?? 0,
-          }))}
-        />
+        <div className="flex items-center gap-2">
+          <ExportButton
+            filename="재고현황"
+            getData={() => filtered.map((inv) => ({
+              '상품코드':    inv.product?.code ?? '',
+              '상품명':      inv.product?.name ?? '',
+              '위치코드':    inv.location?.code ?? '',
+              '원가':        inv.product?.costPrice ?? 0,
+              '판매가':      inv.product?.sellPrice ?? 0,
+              '현재고':      inv.quantity,
+              '예약수량':    inv.reservedQty,
+              '가용수량':    inv.quantity - inv.reservedQty,
+              '안전재고':    inv.product?.safetyStock ?? 0,
+            }))}
+          />
+        </div>
       </div>
 
       {/* 필터 */}
@@ -84,11 +185,46 @@ export default function InventoryPage() {
         </label>
       </div>
 
+      {/* 선택 액션 바 */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 bg-indigo-600 text-white px-4 py-2.5 rounded-xl shadow-lg shadow-indigo-500/20">
+          <span className="text-sm font-semibold flex-1">{selectedIds.size}개 선택됨</span>
+          {selectedIds.size === 1 && (
+            <button
+              onClick={() => { const inv = filtered.find((i) => selectedIds.has(i.id)); if (inv) openEdit(inv) }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors"
+            >
+              <Pencil size={13} />수정
+            </button>
+          )}
+          <button
+            onClick={handleBulkDelete}
+            disabled={adjustMutation.isPending}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/80 hover:bg-red-500 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+          >
+            <Trash2 size={13} />삭제
+          </button>
+          <button onClick={() => setSelectedIds(new Set())} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors" title="선택 해제">
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
       {/* 목록 */}
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[800px] text-sm">
           <thead>
             <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+              <th className="px-4 py-3 w-8">
+                <input
+                  type="checkbox"
+                  checked={allChecked}
+                  ref={(el) => { if (el) el.indeterminate = someChecked && !allChecked }}
+                  onChange={toggleAll}
+                  className="rounded accent-indigo-600 cursor-pointer"
+                />
+              </th>
               <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">상품</th>
               <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">위치</th>
               <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400">원가</th>
@@ -98,20 +234,41 @@ export default function InventoryPage() {
               <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400">가용</th>
               <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400">안전재고</th>
               <th className="text-center px-4 py-3 font-medium text-gray-600 dark:text-gray-400">상태</th>
+              <th className="px-4 py-3 w-16" />
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
             {isLoading && (
-              <tr><td colSpan={9} className="text-center py-10 text-gray-400 dark:text-gray-500">로딩 중...</td></tr>
+              <tr><td colSpan={11} className="text-center py-10 text-gray-400 dark:text-gray-500">로딩 중...</td></tr>
             )}
             {!isLoading && filtered.length === 0 && (
-              <tr><td colSpan={9} className="text-center py-10 text-gray-400 dark:text-gray-500">데이터가 없습니다</td></tr>
+              <tr><td colSpan={11} className="text-center py-10 text-gray-400 dark:text-gray-500">데이터가 없습니다</td></tr>
             )}
             {filtered.map((inv) => {
               const isBelowSafety = inv.quantity <= (inv.product?.safetyStock ?? 0)
               const available     = inv.quantity - inv.reservedQty
+              const isSelected    = selectedIds.has(inv.id)
               return (
-                <tr key={inv.id} className={cn(isBelowSafety ? 'bg-red-50 dark:bg-red-900/10' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50')}>
+                <tr
+                  key={inv.id}
+                  onClick={() => toggleRow(inv.id)}
+                  className={cn(
+                    'group cursor-pointer transition-colors',
+                    isSelected
+                      ? 'bg-indigo-50 dark:bg-indigo-900/20'
+                      : isBelowSafety
+                        ? 'bg-red-50 dark:bg-red-900/10 hover:bg-red-100/60 dark:hover:bg-red-900/20'
+                        : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                  )}
+                >
+                  <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleRow(inv.id)}
+                      className="rounded accent-indigo-600 cursor-pointer"
+                    />
+                  </td>
                   <td className="px-4 py-3">
                     <p className="font-medium text-gray-900 dark:text-gray-100">{inv.product?.name}</p>
                     <p className="text-xs text-gray-400 dark:text-gray-500">{inv.product?.code}</p>
@@ -125,6 +282,11 @@ export default function InventoryPage() {
                   </td>
                   <td className="px-4 py-3 text-right font-bold tabular-nums text-gray-900 dark:text-gray-100">
                     {formatNumber(inv.quantity)}
+                    {inv.lotNumber && (
+                      <span className="ml-2 text-xs font-normal text-indigo-500 dark:text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                        LOT {inv.lotNumber}
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-right text-gray-500 dark:text-gray-400 tabular-nums">
                     {formatNumber(inv.reservedQty)}
@@ -144,12 +306,109 @@ export default function InventoryPage() {
                       <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full">정상</span>
                     )}
                   </td>
+                  <td className="px-4 py-3.5" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => openEdit(inv)}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:text-indigo-400 dark:hover:bg-indigo-900/20 transition-colors"
+                        title="수정"
+                      >
+                        <Pencil size={13} />
+                      </button>
+                      <button
+                        onClick={() => handleSingleDelete(inv)}
+                        disabled={adjustMutation.isPending}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                        title="삭제 (0으로 조정)"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               )
             })}
           </tbody>
         </table>
+        </div>
       </div>
+
+      {/* 수정 모달 */}
+      {editModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">재고 수량 수정</h3>
+              <button onClick={() => setEditModal(null)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 transition-colors">
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* 상품 정보 */}
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
+                <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">{editModal.inv.product?.name}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                  {editModal.inv.product?.code} · {editModal.inv.location?.code}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  현재 재고: <span className="font-bold text-gray-900 dark:text-gray-100">{formatNumber(editModal.inv.quantity)}</span>
+                  {editModal.inv.lotNumber && <span className="ml-2 text-indigo-600 dark:text-indigo-400">LOT: {editModal.inv.lotNumber}</span>}
+                </p>
+              </div>
+
+              {/* 새 수량 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">조정 수량 (목표 재고)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={editModal.newQty}
+                  onChange={(e) => setEditModal((p) => p ? { ...p, newQty: e.target.value } : p)}
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                  placeholder="새 수량 입력"
+                  autoFocus
+                />
+                {editModal.newQty !== '' && parseInt(editModal.newQty) !== editModal.inv.quantity && (
+                  <p className="text-xs mt-1 text-indigo-600 dark:text-indigo-400">
+                    변경: {formatNumber(editModal.inv.quantity)} → {formatNumber(parseInt(editModal.newQty) || 0)}
+                    {' '}({parseInt(editModal.newQty) > editModal.inv.quantity ? '+' : ''}{formatNumber((parseInt(editModal.newQty) || 0) - editModal.inv.quantity)})
+                  </p>
+                )}
+              </div>
+
+              {/* 사유 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">조정 사유 <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  value={editModal.reason}
+                  onChange={(e) => setEditModal((p) => p ? { ...p, reason: e.target.value } : p)}
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                  placeholder="예: 실사 후 재고 조정, 파손 처리 등"
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleSaveEdit() }}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2 mt-6">
+              <button
+                onClick={() => setEditModal(null)}
+                className="flex-1 py-2 border border-gray-200 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                disabled={adjustMutation.isPending}
+                className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium disabled:opacity-50 transition-colors"
+              >
+                {adjustMutation.isPending ? '저장 중...' : '저장'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

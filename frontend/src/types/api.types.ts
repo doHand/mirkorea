@@ -72,6 +72,8 @@ export interface Product {
   category?: string
   brand?: string
   unit: string
+  optionName?: string
+  spec?: string
   boxQty: number
   weightG?: number
   imageUrl?: string
@@ -84,6 +86,16 @@ export interface Product {
   isExpiryManaged: boolean
   createdAt: string
   barcodes?: Barcode[]
+}
+
+export interface ProductUnit {
+  id: string
+  code: string
+  label: string
+  description?: string
+  sortOrder: number
+  isActive: boolean
+  createdAt: string
 }
 
 export interface Barcode {
@@ -146,4 +158,19 @@ export interface BarcodeResolveResult {
   product: Product
   unitType: BarcodeUnitType
   qtyPerScan: number
+}
+
+export interface ProductPricing {
+  id: string
+  code: string
+  name: string
+  category?: string
+  brand?: string
+  unit: string
+  boxQty: number
+  costPrice?: number
+  sellPrice?: number
+  safetyStock: number
+  saleStatus: SaleStatus
+  totalStock: number
 }

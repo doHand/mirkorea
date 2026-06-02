@@ -2,47 +2,70 @@
 @tailwind components;
 @tailwind utilities;
 
-/* AG Grid 테마 오버라이드 */
+/* ───── 스크롤바 ───── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+.dark ::-webkit-scrollbar-thumb { background: #374151; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+
+/* ───── AG Grid 테마 오버라이드 ───── */
 .ag-theme-wms {
   --ag-font-family: 'Pretendard', sans-serif;
   --ag-font-size: 13px;
   --ag-row-height: 36px;
   --ag-header-height: 38px;
-  --ag-header-background-color: #f8fafc;
+  --ag-header-background-color: #f5efe6;
   --ag-header-foreground-color: #374151;
-  --ag-odd-row-background-color: #fff;
-  --ag-row-hover-color: #eff6ff;
-  --ag-selected-row-background-color: #dbeafe;
-  --ag-border-color: #e2e8f0;
-  --ag-cell-horizontal-border: solid #f1f5f9;
+  --ag-odd-row-background-color: #fefdfb;
+  --ag-row-hover-color: #f0ebe3;
+  --ag-selected-row-background-color: #e0e7ff;
+  --ag-border-color: #ede5d8;
+  --ag-cell-horizontal-border: solid #f5efe6;
 }
 
 .dark .ag-theme-wms {
-  --ag-background-color: #1f2937;
-  --ag-header-background-color: #111827;
+  --ag-background-color: #111827;
+  --ag-header-background-color: #0f172a;
   --ag-header-foreground-color: #d1d5db;
   --ag-foreground-color: #e5e7eb;
-  --ag-odd-row-background-color: #1f2937;
-  --ag-row-hover-color: #374151;
+  --ag-odd-row-background-color: #111827;
+  --ag-row-hover-color: #1e1b4b20;
   --ag-selected-row-background-color: #1e3a5f;
-  --ag-border-color: #374151;
-  --ag-cell-horizontal-border: solid #374151;
+  --ag-border-color: #1f2937;
+  --ag-cell-horizontal-border: solid #1f2937;
 }
 
-.ag-theme-wms .ag-header-cell-text {
-  font-weight: 600;
-}
+.ag-theme-wms .ag-header-cell-text { font-weight: 600; }
 
-/* 재고 부족 행 */
+/* ───── 재고 부족 행 ───── */
 .row-below-safety { background-color: #fff7f7 !important; }
 .row-cancelled     { opacity: 0.5; text-decoration: line-through; }
 
-/* 스캔 모드 풀스크린 */
+/* ───── 스캔 모드 풀스크린 ───── */
 .scan-layout {
   @apply fixed inset-0 bg-gray-900 text-white flex flex-col;
 }
 
 @layer base {
   * { box-sizing: border-box; }
-  body { @apply bg-gray-50 text-gray-900 antialiased dark:bg-gray-900 dark:text-gray-100; }
+  html { scroll-behavior: smooth; }
+  body {
+    @apply text-gray-900 antialiased dark:bg-gray-950 dark:text-gray-100;
+    background-color: #faf7f2;
+    font-feature-settings: "kern" 1, "liga" 1;
+  }
+  .dark body {
+    background-color: #030712;
+  }
+  ::selection {
+    @apply bg-indigo-200 dark:bg-indigo-800;
+  }
+}
+
+@layer utilities {
+  .ring-focus {
+    @apply focus:outline-none focus:ring-2 focus:ring-indigo-500/40;
+  }
 }

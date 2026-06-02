@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -42,6 +43,14 @@ public class InventoryService {
             "lowStockCount",  lowStockCount,
             "warehouseId",    warehouseId
         );
+    }
+
+    public Map<UUID, Long> getTotalStockByProduct() {
+        Map<UUID, Long> result = new HashMap<>();
+        for (Object[] row : invRepo.sumQuantityGroupByProduct()) {
+            result.put((UUID) row[0], (Long) row[1]);
+        }
+        return result;
     }
 
     public Inventory findOrThrow(UUID id) {

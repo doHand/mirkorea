@@ -19,6 +19,11 @@ interface UpdateUserData {
 }
 
 export const userApi = {
+  getMe: () => get<UserDetail>('/users/me'),
+
+  updateMe: (data: { fullName?: string; password?: string }) =>
+    patch<UserDetail>('/users/me', data),
+
   findAll: () => get<UserDetail[]>('/users'),
 
   create: (data: CreateUserData) => post<UserDetail>('/users', data),

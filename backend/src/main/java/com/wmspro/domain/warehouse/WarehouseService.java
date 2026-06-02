@@ -75,4 +75,19 @@ public class WarehouseService {
         if (capacityUnit != null) loc.setCapacityUnit(capacityUnit);
         return locationRepo.save(loc);
     }
+
+    @Transactional
+    public void deleteZone(UUID zoneId) {
+        Zone zone = zoneRepo.findById(zoneId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.ZONE_NOT_FOUND));
+        zone.setActive(false);
+        zoneRepo.save(zone);
+    }
+
+    @Transactional
+    public void deleteLocation(UUID locationId) {
+        Location loc = findLocation(locationId);
+        loc.setActive(false);
+        locationRepo.save(loc);
+    }
 }

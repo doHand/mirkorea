@@ -75,4 +75,16 @@ public class WarehouseController {
         Integer capacityUnit = body.containsKey("capacityUnit") ? (Integer) body.get("capacityUnit") : null;
         return ApiResponse.ok(warehouseService.updateLocation(locationId, isActive, capacityUnit));
     }
+
+    @DeleteMapping("/{warehouseId}/zones/{zoneId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteZone(@PathVariable UUID warehouseId, @PathVariable UUID zoneId) {
+        warehouseService.deleteZone(zoneId);
+    }
+
+    @DeleteMapping("/locations/{locationId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteLocation(@PathVariable UUID locationId) {
+        warehouseService.deleteLocation(locationId);
+    }
 }
