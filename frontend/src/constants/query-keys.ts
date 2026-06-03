@@ -15,4 +15,7 @@ export const QUERY_KEYS = {
   transactions: (filters?: object) => ['transactions', filters],
 
   barcode:      (value: string) => ['barcode', value],
+
+  inboundOrders: (filters?: object) => ['inbound', filters],
+  inboundOrder:  (id: string)       => ['inbound', id],
 } as const

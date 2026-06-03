@@ -5,6 +5,7 @@ import com.wmspro.common.exception.ErrorCode;
 import com.wmspro.common.security.JwtTokenProvider;
 import com.wmspro.domain.user.User;
 import com.wmspro.domain.user.UserRepository;
+import com.wmspro.domain.user.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -47,6 +48,31 @@ public class AuthService {
                 "warehouseId", user.getWarehouseId() != null ? user.getWarehouseId().toString() : ""
             )
         );
+    }
+
+    @Transactional
+    public void register(String username, String email, String fullName, String password) {
+        if (userRepo.existsByUsername(username))
+            throw new BusinessException(ErrorCode.USER_DUPLICATE);
+        if (userRepo.existsByEmail(email))
+            throw new BusinessException(ErrorCode.USER_DUPLICATE);
+        userRepo.save(User.builder()
+            .username(username)
+            .email(email)
+            .passwordHash(passwordEncoder.encode(password))
+            .fullName(fullName)
+            .role(UserRole.WORKER)
+            .build());
+    }
+
+    @Transactional
+    public void resetPassword(String username, String email, String newPassword) {
+        User user = userRepo.findByUsernameOrEmail(username)
+            .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
+        if (!user.getEmail().equalsIgnoreCase(email))
+            throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepo.save(user);
     }
 
     public Map<String, Object> refresh(String refreshToken) {

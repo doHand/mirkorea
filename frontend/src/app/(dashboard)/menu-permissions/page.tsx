@@ -120,22 +120,31 @@ function SortableSectionHeader({
 
 /* ─── SortableMenuRow ────────────────────────────────────────────────── */
 function SortableMenuRow({
-  menu, sectionOrder, onToggle, onMove,
+  menu, sectionOrder, onToggle, onMove, onRename,
 }: {
   menu: MenuDef
   sectionOrder: string[]
   onToggle: (menuId: string, role: UserRole, checked: boolean, label: string) => void
   onMove: (menuId: string, toSection: string) => void
+  onRename: (menuId: string, newLabel: string) => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: menu.menuId })
+  const [editing, setEditing] = useState(false)
+  const [editVal, setEditVal] = useState(menu.label)
+
+  const commit = () => {
+    const v = editVal.trim()
+    if (v && v !== menu.label) onRename(menu.menuId, v)
+    setEditing(false)
+  }
 
   return (
     <tr
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        'border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors',
+        'border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors group/row',
         isDragging && 'opacity-40 bg-indigo-50/60 dark:bg-indigo-900/5',
       )}
     >
@@ -148,7 +157,39 @@ function SortableMenuRow({
           <GripVertical size={13} />
         </span>
       </td>
-      <td className="px-4 py-3.5 font-medium text-gray-800 dark:text-gray-200 text-sm">{menu.label}</td>
+      <td className="px-4 py-3.5 text-sm">
+        {editing ? (
+          <div className="flex items-center gap-1.5">
+            <input
+              autoFocus
+              value={editVal}
+              onChange={(e) => setEditVal(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') commit()
+                if (e.key === 'Escape') setEditing(false)
+              }}
+              onBlur={commit}
+              className="font-medium text-gray-800 dark:text-gray-200 bg-transparent border-b border-indigo-400 outline-none w-36"
+            />
+            <button onMouseDown={(e) => { e.preventDefault(); commit() }} className="text-indigo-500 hover:text-indigo-600 p-0.5">
+              <Check size={11} />
+            </button>
+            <button onMouseDown={(e) => { e.preventDefault(); setEditing(false) }} className="text-gray-400 hover:text-gray-600 p-0.5">
+              <X size={11} />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => { setEditVal(menu.label); setEditing(true) }}
+              className="font-medium text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left"
+            >
+              {menu.label}
+            </button>
+            <Pencil size={10} className="text-gray-300 dark:text-gray-700 opacity-0 group-hover/row:opacity-100 transition-opacity" />
+          </div>
+        )}
+      </td>
       {ROLES.map(({ role, checkCls }) => {
         const isAdmin = role === 'ADMIN'
         const checked = menu.roles.includes(role)
@@ -216,7 +257,7 @@ export default function MenuPermissionsPage() {
   const {
     menus, sectionOrder,
     toggleRole, moveMenu, reorderMenusInSection, reorderSections,
-    addSection, renameSection, deleteSection, reset,
+    addSection, renameSection, renameMenu, deleteSection, reset,
   } = useMenuPermissionStore()
 
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
@@ -274,6 +315,11 @@ export default function MenuPermissionsPage() {
     deleteSection(label)
     toast.success(`"${label}" 폴더를 삭제했습니다`)
   }, [menus, deleteSection])
+
+  const handleRenameMenu = useCallback((menuId: string, newLabel: string) => {
+    renameMenu(menuId, newLabel)
+    toast.success(`메뉴 이름이 변경되었습니다`)
+  }, [renameMenu])
 
   const handleReset = useCallback(() => {
     if (!confirm('모든 메뉴 권한과 폴더 구성을 기본값으로 초기화할까요?')) return
@@ -418,6 +464,7 @@ export default function MenuPermissionsPage() {
                         sectionOrder={sectionOrder}
                         onToggle={handleToggle}
                         onMove={handleMove}
+                        onRename={handleRenameMenu}
                       />
                     ))}
                   </>

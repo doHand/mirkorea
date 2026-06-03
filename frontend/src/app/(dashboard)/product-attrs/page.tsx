@@ -1,15 +1,17 @@
 'use client'
 import { useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Package, Search, Plus, Trash2, X } from 'lucide-react'
+import { FileText, Package, Search, Plus, Trash2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { productApi, unitApi } from '@/api/product.api'
 import { SALE_STATUS_LABEL } from '@/constants/stock.constants'
 import { cn } from '@/utils/cn'
+import { formatNumber } from '@/utils/format'
 import type { Product, SaleStatus, ProductUnit } from '@/types/api.types'
 
 /* ─── EditableCell (top-level to prevent remount on parent re-render) ───── */
-type EditField = 'code' | 'name' | 'optionName' | 'spec' | 'unit' | 'boxQty'
+type EditField = 'code' | 'name' | 'optionName' | 'spec' | 'unit' | 'boxQty' | 'sellPrice'
 type EditCell  = { id: string; field: EditField; value: string }
 
 function EditableCell({
@@ -44,7 +46,7 @@ function EditableCell({
     return (
       <input
         autoFocus
-        type={field === 'boxQty' ? 'number' : 'text'}
+        type={field === 'boxQty' || field === 'sellPrice' ? 'number' : 'text'}
         value={editCell.value}
         onChange={(e) => setEditCell({ ...editCell, value: e.target.value })}
         onKeyDown={(e) => {
@@ -90,6 +92,7 @@ const STATUS_CLS: Record<SaleStatus, string> = {
 /* ─── Page ───────────────────────────────────────────────────────────────── */
 export default function ProductMasterPage() {
   const qc = useQueryClient()
+  const router = useRouter()
   const [search, setSearch]           = useState('')
   const [editCell, setEditCell]       = useState<EditCell | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -139,7 +142,7 @@ export default function ProductMasterPage() {
       return
     }
     const patch: Partial<Product> = {
-      [cell.field]: cell.field === 'boxQty' ? Number(trimmed) : trimmed,
+      [cell.field]: cell.field === 'boxQty' || cell.field === 'sellPrice' ? Number(trimmed) : trimmed,
     }
     updateMutation.mutate({ id: cell.id, patch })
     setEditCell(null)
@@ -159,8 +162,23 @@ export default function ProductMasterPage() {
   const allChecked  = products.length > 0 && products.every((p) => selectedIds.has(p.id))
   const someChecked = products.some((p) => selectedIds.has(p.id))
 
-  const toggleRow = (id: string) =>
-    setSelectedIds((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+  const toggleRow = (id: string) => {
+    setSelectedIds((prev) => {
+      const n = new Set(prev)
+      if (n.has(id)) n.delete(id)
+      else n.add(id)
+      return n
+    })
+  }
+
+  const openQuoteScreen = () => {
+    const ids = [...selectedIds]
+    if (ids.length === 0) {
+      toast.error('상품을 먼저 선택해주세요')
+      return
+    }
+    router.push(`/quotes?productIds=${encodeURIComponent(ids.join(','))}`)
+  }
 
   const inputCls = 'w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400'
 
@@ -192,6 +210,14 @@ export default function ProductMasterPage() {
           >
             <Plus size={14} /><span className="hidden sm:inline">상품 추가</span>
           </button>
+          <button
+            onClick={openQuoteScreen}
+            disabled={selectedIds.size === 0}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm border border-emerald-200 text-emerald-700 dark:border-emerald-800 dark:text-emerald-400 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-900/20 disabled:opacity-40 disabled:hover:bg-transparent transition-colors font-medium"
+          >
+            <FileText size={14} />
+            <span className="hidden sm:inline">거래명세서/견적서</span>
+          </button>
         </div>
       </div>
 
@@ -214,24 +240,30 @@ export default function ProductMasterPage() {
 
       {/* Table */}
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[860px] text-sm">
-            <thead>
+        <div className="overflow-auto max-h-[calc(100vh-260px)]">
+          <table className="w-full min-w-[1080px] text-sm border-separate border-spacing-0 [&_td]:border-r [&_td]:border-gray-100 [&_th]:border-r [&_th]:border-gray-200 dark:[&_td]:border-gray-800 dark:[&_th]:border-gray-700">
+            <thead className="sticky top-0 z-10">
               <tr className="bg-gray-50/80 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700">
                 <th className="px-4 py-3.5 w-8">
                   <input
                     type="checkbox"
                     checked={allChecked}
                     ref={(el) => { if (el) el.indeterminate = someChecked && !allChecked }}
-                    onChange={() => { if (allChecked) setSelectedIds(new Set()); else setSelectedIds(new Set(products.map((p) => p.id))) }}
+                    onChange={() => {
+                      if (allChecked) setSelectedIds(new Set())
+                      else setSelectedIds(new Set(products.map((p) => p.id)))
+                    }}
                     className="rounded accent-indigo-600 cursor-pointer"
                   />
                 </th>
+                <th className="text-center px-2 py-3.5 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide w-12">#</th>
                 <th className="text-left px-2 py-3.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide w-36">코드</th>
                 <th className="text-left px-2 py-3.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide min-w-[140px]">상품명</th>
                 <th className="text-left px-2 py-3.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide w-28">옵션명</th>
                 <th className="text-left px-2 py-3.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide w-24">규격</th>
                 <th className="text-left px-2 py-3.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide w-24">단위</th>
+                <th className="text-right px-2 py-3.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide w-24">재고 수량</th>
+                <th className="text-right px-2 py-3.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide w-24">판매가</th>
                 <th className="text-center px-2 py-3.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide w-20">박스입수</th>
                 <th className="text-center px-2 py-3.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide w-16">LOT</th>
                 <th className="text-center px-2 py-3.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide w-20">상태</th>
@@ -240,12 +272,12 @@ export default function ProductMasterPage() {
             </thead>
             <tbody>
               {isLoading && (
-                <tr><td colSpan={10} className="text-center py-10 text-gray-400 text-sm">불러오는 중...</td></tr>
+                <tr><td colSpan={13} className="text-center py-10 text-gray-400 text-sm">불러오는 중...</td></tr>
               )}
               {!isLoading && products.length === 0 && (
-                <tr><td colSpan={10} className="text-center py-10 text-gray-300 text-sm">상품이 없습니다</td></tr>
+                <tr><td colSpan={13} className="text-center py-10 text-gray-300 text-sm">상품이 없습니다</td></tr>
               )}
-              {products.map((p) => (
+              {products.map((p, idx) => (
                 <tr
                   key={p.id}
                   className={cn(
@@ -262,6 +294,9 @@ export default function ProductMasterPage() {
                       onChange={() => toggleRow(p.id)}
                       className="rounded accent-indigo-600 cursor-pointer"
                     />
+                  </td>
+                  <td className="py-2 px-2 text-center text-xs text-gray-400 dark:text-gray-500 bg-gray-50/70 dark:bg-gray-800/40 tabular-nums">
+                    {idx + 1}
                   </td>
                   <td className="py-1.5 pr-1">
                     <EditableCell id={p.id} field="code" value={p.code}
@@ -283,6 +318,13 @@ export default function ProductMasterPage() {
                     <EditableCell id={p.id} field="unit" value={p.unit}
                       editCell={editCell} setEditCell={setEditCell} onSave={saveEdit}
                       unitOptions={unitOptions} />
+                  </td>
+                  <td className="py-2 px-2 text-right tabular-nums font-semibold text-gray-900 dark:text-gray-100">
+                    {formatNumber(p.stockQty ?? 0)}
+                  </td>
+                  <td className="py-1.5 px-2 text-right tabular-nums font-semibold text-gray-900 dark:text-gray-100">
+                    <EditableCell id={p.id} field="sellPrice" value={p.sellPrice ?? 0}
+                      editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} />
                   </td>
                   <td className="py-1.5 pr-1 text-center">
                     <EditableCell id={p.id} field="boxQty" value={p.boxQty}
@@ -393,6 +435,16 @@ export default function ProductMasterPage() {
                     min={1}
                     value={form.boxQty}
                     onChange={(e) => setForm((p) => ({ ...p, boxQty: +e.target.value }))}
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">판매가</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={form.sellPrice}
+                    onChange={(e) => setForm((p) => ({ ...p, sellPrice: +e.target.value }))}
                     className={inputCls}
                   />
                 </div>

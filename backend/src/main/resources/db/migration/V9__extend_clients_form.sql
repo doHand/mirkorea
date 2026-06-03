@@ -1,0 +1,18 @@
+ALTER TABLE clients
+    ADD COLUMN IF NOT EXISTS customer_type      VARCHAR(100),
+    ADD COLUMN IF NOT EXISTS salesperson        VARCHAR(100),
+    ADD COLUMN IF NOT EXISTS mobile             VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS ceo_name           VARCHAR(100),
+    ADD COLUMN IF NOT EXISTS postal_code        VARCHAR(20),
+    ADD COLUMN IF NOT EXISTS address_detail     VARCHAR(500),
+    ADD COLUMN IF NOT EXISTS contact_name       VARCHAR(100),
+    ADD COLUMN IF NOT EXISTS honorific          VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS employee_count     INT,
+    ADD COLUMN IF NOT EXISTS price_policy       VARCHAR(100),
+    ADD COLUMN IF NOT EXISTS tax_type           VARCHAR(100),
+    ADD COLUMN IF NOT EXISTS discount_rate      DECIMAL(5,2),
+    ADD COLUMN IF NOT EXISTS initial_receivable DECIMAL(15,2),
+    ADD COLUMN IF NOT EXISTS unpaid_only        BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS registration_date  DATE,
+    ADD COLUMN IF NOT EXISTS management_no      VARCHAR(100),
+    ADD COLUMN IF NOT EXISTS memo               TEXT;

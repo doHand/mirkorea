@@ -20,7 +20,8 @@ interface EditModalState {
 export default function InventoryPage() {
   const warehouse  = useWarehouseStore((s) => s.selectedWarehouse)
   const qc         = useQueryClient()
-  const [search,   setSearch]   = useState('')
+  const [searchInput, setSearchInput] = useState('')
+  const [search,      setSearch]      = useState('')
   const [belowOnly, setBelowOnly] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [editModal, setEditModal] = useState<EditModalState | null>(null)
@@ -173,12 +174,19 @@ export default function InventoryPage() {
         <div className="relative flex-1">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') setSearch(searchInput) }}
             placeholder="상품명 또는 코드 검색"
             className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
           />
         </div>
+        <button
+          onClick={() => setSearch(searchInput)}
+          className="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium whitespace-nowrap"
+        >
+          검색
+        </button>
         <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
           <input type="checkbox" checked={belowOnly} onChange={(e) => setBelowOnly(e.target.checked)} />
           안전재고 미달만

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/stores/auth.store'
 import { SidebarNav } from '@/layouts/sidebar-nav'
 import { HeaderBar } from '@/layouts/header-bar'
+import { OpenTabsBar } from '@/layouts/open-tabs-bar'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -39,6 +40,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       <div className="flex-1 flex flex-col min-w-0">
         <HeaderBar onMenuClick={() => setSidebarOpen(true)} />
+        <OpenTabsBar />
         <main className="flex-1 overflow-auto p-4 lg:p-6">
           {children}
         </main>

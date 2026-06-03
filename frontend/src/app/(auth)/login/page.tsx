@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '@/stores/auth.store'
 import { authApi } from '@/api/auth.api'
@@ -66,6 +67,15 @@ export default function LoginPage() {
             {loading ? '로그인 중...' : '로그인'}
           </button>
         </form>
+
+        <div className="mt-5 flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
+          <Link href="/register" className="hover:text-brand-600 transition-colors">
+            회원가입
+          </Link>
+          <Link href="/forgot-password" className="hover:text-brand-600 transition-colors">
+            비밀번호 찾기
+          </Link>
+        </div>
       </div>
     </div>
   )

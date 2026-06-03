@@ -8,6 +8,14 @@ interface LoginResponse {
 }
 
 export const authApi = {
+  register: async (data: { username: string; email: string; fullName: string; password: string }): Promise<void> => {
+    await apiClient.post('/auth/register', data)
+  },
+
+  resetPassword: async (data: { username: string; email: string; newPassword: string }): Promise<void> => {
+    await apiClient.post('/auth/reset-password', data)
+  },
+
   login: async (username: string, password: string): Promise<LoginResponse> => {
     const res = await apiClient.post<ApiResponse<LoginResponse>>('/auth/login', { username, password })
     return res.data.data!

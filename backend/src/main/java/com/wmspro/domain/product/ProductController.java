@@ -32,7 +32,10 @@ public class ProductController {
         @RequestParam(defaultValue = "1")  int page,
         @RequestParam(defaultValue = "50") int limit
     ) {
-        return ApiResponse.ok(productService.findAll(search, category, status, page, limit));
+        var result   = productService.findAll(search, category, status, page, limit);
+        var stockMap = inventoryService.getTotalStockByProduct();
+        result.getItems().forEach(p -> p.setStockQty(stockMap.getOrDefault(p.getId(), 0L)));
+        return ApiResponse.ok(result);
     }
 
     @GetMapping("/{id}")
@@ -51,6 +54,11 @@ public class ProductController {
 
     @PutMapping("/{id}")
     public ApiResponse<Product> update(@PathVariable UUID id, @RequestBody ProductUpdateRequest req) {
+        return ApiResponse.ok(productService.update(id, req));
+    }
+
+    @PatchMapping("/{id}")
+    public ApiResponse<Product> patch(@PathVariable UUID id, @RequestBody ProductUpdateRequest req) {
         return ApiResponse.ok(productService.update(id, req));
     }
 
@@ -76,6 +84,18 @@ public class ProductController {
         int unitQty     = (int) body.getOrDefault("unitQty", 1);
         boolean primary = (boolean) body.getOrDefault("isPrimary", false);
         return ApiResponse.ok(productService.addBarcode(id, barcodeValue, type, unitQty, primary));
+    }
+
+    @PutMapping("/{productId}/barcodes/{barcodeId}")
+    public ApiResponse<Barcode> updateBarcode(
+        @PathVariable UUID productId,
+        @PathVariable UUID barcodeId,
+        @RequestBody Map<String, Object> body
+    ) {
+        BarcodeUnitType type = BarcodeUnitType.valueOf((String) body.getOrDefault("type", "UNIT"));
+        int unitQty = body.get("unitQty") instanceof Integer i ? i : 1;
+        boolean isPrimary = body.get("isPrimary") instanceof Boolean b ? b : false;
+        return ApiResponse.ok(productService.updateBarcode(barcodeId, type, unitQty, isPrimary));
     }
 
     @DeleteMapping("/{productId}/barcodes/{barcodeId}")

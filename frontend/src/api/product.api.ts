@@ -33,6 +33,9 @@ export const productApi = {
   addBarcode: (productId: string, data: { barcode: string; type: BarcodeUnitType; unitQty: number; isPrimary: boolean }) =>
     post<Barcode>(`/products/${productId}/barcodes`, data),
 
+  updateBarcode: (productId: string, barcodeId: string, data: { type: BarcodeUnitType; unitQty: number; isPrimary: boolean }) =>
+    put<Barcode>(`/products/${productId}/barcodes/${barcodeId}`, data),
+
   deleteBarcode: (productId: string, barcodeId: string) =>
     del(`/products/${productId}/barcodes/${barcodeId}`),
 

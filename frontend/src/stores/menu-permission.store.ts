@@ -17,19 +17,23 @@ export const DEFAULT_MENUS: MenuDef[] = [
   { menuId: 'dashboard',        href: '/',                 label: '대시보드',       section: '운영', roles: ALL },
   { menuId: 'products',         href: '/products',         label: '상품 관리',      section: '운영', roles: ALL },
   { menuId: 'inventory',        href: '/inventory',        label: '재고 조회',      section: '운영', roles: ALL },
+  { menuId: 'inbound',          href: '/inbound',          label: '입고 관리',      section: '입출고', roles: ['ADMIN', 'MANAGER', 'WORKER'] },
   { menuId: 'scan',             href: '/scan',             label: '바코드 스캔',    section: '운영', roles: ALL },
   { menuId: 'product-attrs',    href: '/product-attrs',    label: '상품 마스터',    section: '상품 마스터 관리', roles: ALL },
   { menuId: 'barcodes',         href: '/barcodes',         label: '바코드 관리',    section: '상품 마스터 관리', roles: ALL },
   { menuId: 'units',            href: '/units',            label: '단위 관리',      section: '상품 마스터 관리', roles: ALL },
+  { menuId: 'clients',          href: '/clients',          label: '거래처 관리',    section: '영업', roles: ['ADMIN', 'MANAGER'] },
+  { menuId: 'quotes',           href: '/quotes',           label: '거래명세서/견적서', section: '영업', roles: ['ADMIN', 'MANAGER'] },
   { menuId: 'pricing',          href: '/pricing',          label: '가격/재고 현황', section: '관리', roles: ADMIN_ONLY },
   { menuId: 'warehouse',        href: '/warehouse',        label: '창고/위치',      section: '관리', roles: ALL },
   { menuId: 'transactions',     href: '/transactions',     label: '이력 조회',      section: '관리', roles: ALL },
   { menuId: 'users',            href: '/users',            label: '사용자 관리',    section: '관리', roles: ADMIN_ONLY },
+  { menuId: 'supplier-settings', href: '/supplier-settings', label: '공급자 정보',   section: '관리', roles: ADMIN_ONLY },
   { menuId: 'menu-permissions', href: '/menu-permissions', label: '메뉴 권한',      section: '관리', roles: ADMIN_ONLY },
   { menuId: 'profile',          href: '/profile',          label: '내 계정',        section: '계정', roles: ALL },
 ]
 
-export const DEFAULT_SECTION_ORDER = ['운영', '상품 마스터 관리', '관리', '계정']
+export const DEFAULT_SECTION_ORDER = ['운영', '입출고', '영업', '상품 마스터 관리', '관리', '계정']
 
 interface MenuPermissionState {
   menus: MenuDef[]
@@ -40,6 +44,7 @@ interface MenuPermissionState {
   reorderSections: (newOrder: string[]) => void
   addSection: (label: string) => void
   renameSection: (oldLabel: string, newLabel: string) => void
+  renameMenu: (menuId: string, newLabel: string) => void
   deleteSection: (label: string) => void
   reset: () => void
 }
@@ -121,6 +126,11 @@ export const useMenuPermissionStore = create<MenuPermissionState>()(
           sectionOrder: s.sectionOrder.map((l) => l === oldLabel ? newLabel : l),
         })),
 
+      renameMenu: (menuId, newLabel) =>
+        set((s) => ({
+          menus: s.menus.map((m) => m.menuId === menuId ? { ...m, label: newLabel } : m),
+        })),
+
       deleteSection: (label) =>
         set((s) => ({
           menus: s.menus.filter((m) => m.section !== label),
@@ -131,7 +141,7 @@ export const useMenuPermissionStore = create<MenuPermissionState>()(
     }),
     {
       name: 'wms-menu-permissions',
-      version: 3,
+      version: 6,
       migrate: (stored: unknown) => {
         const s = stored as Partial<MenuPermissionState>
         // Remove obsolete menus merged into product-attrs

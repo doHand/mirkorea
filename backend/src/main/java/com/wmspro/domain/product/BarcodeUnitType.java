@@ -1,8 +1,7 @@
 package com.wmspro.domain.product;
 
 public enum BarcodeUnitType {
-    UNIT,   // 낱개
-    BOX,    // 박스
-    INNER,  // 내부 포장 단위
-    PALLET  // 팔레트
+    UNIT,  // 일반용 낱개
+    BOX,   // 박스 단위
+    CXD    // CXD 바코드 낱개
 }

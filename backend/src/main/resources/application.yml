@@ -26,6 +26,12 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+
 server:
   port: ${PORT:4000}
 

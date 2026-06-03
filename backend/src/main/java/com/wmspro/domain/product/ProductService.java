@@ -112,6 +112,16 @@ public class ProductService {
     }
 
     @Transactional
+    public Barcode updateBarcode(UUID barcodeId, BarcodeUnitType type, int unitQty, boolean isPrimary) {
+        Barcode barcode = barcodeRepo.findById(barcodeId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.BARCODE_NOT_FOUND));
+        barcode.setType(type);
+        barcode.setUnitQty(unitQty > 0 ? unitQty : 1);
+        barcode.setPrimary(isPrimary);
+        return barcodeRepo.save(barcode);
+    }
+
+    @Transactional
     public void deleteBarcode(UUID barcodeId) {
         barcodeRepo.deleteById(barcodeId);
     }

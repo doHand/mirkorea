@@ -33,6 +33,16 @@ public enum ErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND,            "사용자를 찾을 수 없습니다"),
     USER_DUPLICATE(HttpStatus.CONFLICT,             "이미 존재하는 사용자명입니다"),
 
+    // Client / Quote
+    CLIENT_NOT_FOUND(HttpStatus.NOT_FOUND,           "거래처를 찾을 수 없습니다"),
+    QUOTE_NOT_FOUND(HttpStatus.NOT_FOUND,            "문서를 찾을 수 없습니다"),
+
+    // Inbound
+    INBOUND_ORDER_NOT_FOUND(HttpStatus.NOT_FOUND,   "입고 주문을 찾을 수 없습니다"),
+    INBOUND_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND,    "입고 품목을 찾을 수 없습니다"),
+    INBOUND_INVALID_STATUS(HttpStatus.CONFLICT,     "현재 상태에서 허용되지 않는 작업입니다"),
+    INBOUND_QTY_EXCEEDED(HttpStatus.BAD_REQUEST,    "검수 수량이 수령 수량을 초과합니다"),
+
     // General
     INVALID_REQUEST(HttpStatus.BAD_REQUEST,         "잘못된 요청입니다"),
     SAME_LOCATION(HttpStatus.BAD_REQUEST,           "출발지와 목적지가 동일합니다"),

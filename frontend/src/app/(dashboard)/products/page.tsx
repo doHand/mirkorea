@@ -1,7 +1,8 @@
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Search, Package, Pencil, Trash2, Filter, X } from 'lucide-react'
+import { Plus, Search, Package, Pencil, Trash2, Filter, X, FileText } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { productApi } from '@/api/product.api'
 import { QUERY_KEYS } from '@/constants/query-keys'
@@ -21,7 +22,6 @@ const EMPTY_PRODUCT_FORM = {
   boxQty: 1,
   safetyStock: 0,
   reorderPoint: 0,
-  costPrice: 0,
   sellPrice: 0,
   saleStatus: 'ACTIVE' as SaleStatus,
 }
@@ -34,6 +34,8 @@ const STATUS_STYLE: Record<SaleStatus, string> = {
 
 export default function ProductsPage() {
   const qc = useQueryClient()
+  const router = useRouter()
+  const [searchInput, setSearchInput]  = useState('')
   const [search, setSearch]           = useState('')
   const [status, setStatus]           = useState<SaleStatus | ''>('')
   const [page, setPage]               = useState(1)
@@ -61,7 +63,7 @@ export default function ProductsPage() {
     mutationFn: () => productApi.update(editing!.id, {
       name: form.name, category: form.category, brand: form.brand,
       unit: form.unit, boxQty: form.boxQty, safetyStock: form.safetyStock,
-      reorderPoint: form.reorderPoint, costPrice: form.costPrice,
+      reorderPoint: form.reorderPoint,
       sellPrice: form.sellPrice, saleStatus: form.saleStatus,
     }),
     onSuccess: () => {
@@ -95,7 +97,6 @@ export default function ProductsPage() {
       boxQty:       product.boxQty,
       safetyStock:  product.safetyStock,
       reorderPoint: product.reorderPoint,
-      costPrice:    Number(product.costPrice ?? 0),
       sellPrice:    Number(product.sellPrice ?? 0),
       saleStatus:   product.saleStatus,
     })
@@ -142,6 +143,11 @@ export default function ProductsPage() {
     if (product) openEdit(product)
   }
 
+  const openStatementForProducts = (ids: string[]) => {
+    if (ids.length === 0) return
+    router.push(`/quotes?productIds=${encodeURIComponent(ids.join(','))}`)
+  }
+
   const currentPageIds = data?.items.map((p) => p.id) ?? []
   const allChecked = currentPageIds.length > 0 && currentPageIds.every((id) => selectedIds.has(id))
   const someChecked = currentPageIds.some((id) => selectedIds.has(id))
@@ -168,7 +174,7 @@ export default function ProductsPage() {
               return all.items.map((p: Product) => ({
                 '상품코드': p.code, '상품명': p.name, '카테고리': p.category ?? '',
                 '브랜드': p.brand ?? '', '박스입수': p.boxQty, '안전재고': p.safetyStock,
-                '원가': p.costPrice ?? 0, '판매가': p.sellPrice ?? 0,
+                '판매가': p.sellPrice ?? 0,
                 '상태': SALE_STATUS_LABEL[p.saleStatus], '등록일': formatDateTime(p.createdAt),
               }))
             }}
@@ -176,6 +182,13 @@ export default function ProductsPage() {
           <ImportButton
             onImported={() => qc.invalidateQueries({ queryKey: ['products'] })}
           />
+          <button
+            onClick={() => openStatementForProducts([...selectedIds])}
+            disabled={selectedIds.size === 0}
+            className="flex items-center gap-1.5 px-3.5 py-2 border border-emerald-200 text-emerald-700 dark:border-emerald-800 dark:text-emerald-400 text-sm rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/20 disabled:opacity-40 disabled:hover:bg-transparent transition-colors font-medium"
+          >
+            <FileText size={15} />거래명세서
+          </button>
           <button
             onClick={openCreate}
             className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-sm shadow-indigo-500/20"
@@ -187,14 +200,23 @@ export default function ProductsPage() {
 
       {/* 검색/필터 */}
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-3 flex gap-2.5 shadow-sm">
-        <div className="relative flex-1">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-          <input
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-            placeholder="상품명, 코드 검색"
-            className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 transition-shadow"
-          />
+        <div className="relative flex-1 flex gap-1.5">
+          <div className="relative flex-1">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { setSearch(searchInput); setPage(1) } }}
+              placeholder="상품명, 코드 검색"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 transition-shadow"
+            />
+          </div>
+          <button
+            onClick={() => { setSearch(searchInput); setPage(1) }}
+            className="px-3 py-2 text-sm bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-medium whitespace-nowrap"
+          >
+            검색
+          </button>
         </div>
         <div className="relative flex items-center">
           <Filter size={13} className="absolute left-3 text-gray-400 pointer-events-none" />
@@ -223,6 +245,12 @@ export default function ProductsPage() {
               <Pencil size={13} />수정
             </button>
           )}
+          <button
+            onClick={() => openStatementForProducts([...selectedIds])}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors"
+          >
+            <FileText size={13} />거래명세서
+          </button>
           <button
             onClick={handleBulkDelete}
             disabled={deleteMutation.isPending}
@@ -257,9 +285,9 @@ export default function ProductsPage() {
               </th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">상품코드</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">상품명</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide hidden md:table-cell">카테고리</th>
-              <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide hidden lg:table-cell">박스입수</th>
-              <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide hidden lg:table-cell">안전재고</th>
+              <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide hidden sm:table-cell">단위</th>
+              <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide hidden md:table-cell">재고수량</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide hidden lg:table-cell">카테고리</th>
               <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">판매가</th>
               <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">상태</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide hidden xl:table-cell">등록일</th>
@@ -268,7 +296,7 @@ export default function ProductsPage() {
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
             {isLoading && (
-              <tr><td colSpan={10} className="text-center py-12 text-gray-400 dark:text-gray-500">
+              <tr><td colSpan={12} className="text-center py-12 text-gray-400 dark:text-gray-500">
                 <div className="flex items-center justify-center gap-2">
                   <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
                   로딩 중...
@@ -276,7 +304,7 @@ export default function ProductsPage() {
               </td></tr>
             )}
             {!isLoading && data?.items.length === 0 && (
-              <tr><td colSpan={10} className="text-center py-12 text-gray-400 dark:text-gray-500">
+              <tr><td colSpan={12} className="text-center py-12 text-gray-400 dark:text-gray-500">
                 <Package size={32} className="mx-auto mb-2 opacity-30" />
                 <p className="text-sm">상품이 없습니다</p>
               </td></tr>
@@ -304,9 +332,13 @@ export default function ProductsPage() {
                   </td>
                   <td className="px-4 py-3.5 font-mono text-xs text-gray-500 dark:text-gray-400">{p.code}</td>
                   <td className="px-4 py-3.5 font-semibold text-gray-900 dark:text-gray-100">{p.name}</td>
-                  <td className="px-4 py-3.5 text-gray-500 dark:text-gray-400 hidden md:table-cell">{p.category || '—'}</td>
-                  <td className="px-4 py-3.5 text-right tabular-nums text-gray-700 dark:text-gray-300 hidden lg:table-cell">{formatNumber(p.boxQty)}</td>
-                  <td className="px-4 py-3.5 text-right tabular-nums text-gray-700 dark:text-gray-300 hidden lg:table-cell">{formatNumber(p.safetyStock)}</td>
+                  <td className="px-4 py-3.5 text-center text-gray-600 dark:text-gray-400 hidden sm:table-cell">{p.unit || 'EA'}</td>
+                  <td className="px-4 py-3.5 text-right tabular-nums hidden md:table-cell">
+                    <span className={cn('font-semibold', (p.stockQty ?? 0) === 0 ? 'text-red-500' : 'text-gray-900 dark:text-gray-100')}>
+                      {formatNumber(p.stockQty ?? 0)}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3.5 text-gray-500 dark:text-gray-400 hidden lg:table-cell">{p.category || '—'}</td>
                   <td className="px-4 py-3.5 text-right tabular-nums font-medium text-gray-900 dark:text-gray-100">
                     {p.sellPrice ? `₩${formatNumber(p.sellPrice)}` : '—'}
                   </td>
@@ -320,6 +352,13 @@ export default function ProductsPage() {
                   </td>
                   <td className="px-4 py-3.5" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => openStatementForProducts([p.id])}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/20 transition-colors"
+                        title="거래명세서"
+                      >
+                        <FileText size={13} />
+                      </button>
                       <button
                         onClick={() => openEdit(p)}
                         className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:text-indigo-400 dark:hover:bg-indigo-900/20 transition-colors"
@@ -459,13 +498,7 @@ export default function ProductsPage() {
 
                 <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
                   <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">가격 & 상태</p>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1.5">원가 (₩)</label>
-                      <input type="number" min={0} value={form.costPrice}
-                        onChange={(e) => setForm((p) => ({ ...p, costPrice: +e.target.value }))}
-                        className={inputCls} />
-                    </div>
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1.5">판매가 (₩)</label>
                       <input type="number" min={0} value={form.sellPrice}
@@ -485,12 +518,6 @@ export default function ProductsPage() {
                       </select>
                     </div>
                   </div>
-                  {form.sellPrice > 0 && form.costPrice > 0 && (
-                    <div className="mt-3 p-3 bg-indigo-50 dark:bg-indigo-900/10 rounded-xl text-xs text-indigo-600 dark:text-indigo-400 flex gap-4">
-                      <span>마진율: <strong>{((form.sellPrice - form.costPrice) / form.sellPrice * 100).toFixed(1)}%</strong></span>
-                      <span>마진액: <strong>₩{formatNumber(form.sellPrice - form.costPrice)}</strong></span>
-                    </div>
-                  )}
                 </div>
 
                 <div className="flex gap-3 pt-2">

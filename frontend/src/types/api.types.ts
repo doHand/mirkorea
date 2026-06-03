@@ -63,7 +63,7 @@ export interface Location {
 }
 
 export type SaleStatus = 'ACTIVE' | 'INACTIVE' | 'DISCONTINUED'
-export type BarcodeUnitType = 'UNIT' | 'BOX' | 'INNER' | 'PALLET'
+export type BarcodeUnitType = 'UNIT' | 'BOX' | 'CXD'
 
 export interface Product {
   id: string
@@ -84,6 +84,7 @@ export interface Product {
   saleStatus: SaleStatus
   isLotManaged: boolean
   isExpiryManaged: boolean
+  stockQty?: number
   createdAt: string
   barcodes?: Barcode[]
 }
@@ -158,6 +159,101 @@ export interface BarcodeResolveResult {
   product: Product
   unitType: BarcodeUnitType
   qtyPerScan: number
+}
+
+export type InboundStatus = 'PENDING' | 'RECEIVING' | 'INSPECTING' | 'COMPLETED' | 'CANCELLED'
+
+export interface InboundOrderItem {
+  id: string
+  orderId?: string
+  productId: string
+  expectedQty: number
+  receivedQty: number
+  passedQty: number
+  defectQty: number
+  lotNumber?: string
+  expireDate?: string
+  locationId?: string
+  defectLocationId?: string
+  barcodeScanned?: string
+  note?: string
+  product?: Product
+  location?: Location
+}
+
+export interface InboundOrder {
+  id: string
+  orderNo: string
+  warehouseId: string
+  supplier?: string
+  expectedDate?: string
+  status: InboundStatus
+  memo?: string
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+  items: InboundOrderItem[]
+}
+
+export interface Client {
+  id: string
+  name: string
+  businessNo?: string
+  address?: string
+  industry?: string
+  sector?: string
+  email?: string
+  phone?: string
+  fax?: string
+  customerType?: string
+  salesperson?: string
+  mobile?: string
+  ceoName?: string
+  postalCode?: string
+  addressDetail?: string
+  contactName?: string
+  honorific?: string
+  managerName?: string
+  managerTitle?: string
+  website?: string
+  employeeCount?: number
+  pricePolicy?: string
+  taxType?: string
+  discountRate?: number
+  initialReceivable?: number
+  unpaidOnly?: boolean
+  registrationDate?: string
+  managementNo?: string
+  memo?: string
+  isActive: boolean
+  createdAt: string
+}
+
+export interface QuoteItem {
+  id: string
+  productId?: string
+  productCode?: string
+  productName?: string
+  unit?: string
+  qty: number
+  unitPrice: number
+  amount: number
+  sortOrder: number
+}
+
+export interface Quote {
+  id: string
+  docNo: string
+  docType: 'STATEMENT' | 'QUOTE'
+  clientId?: string
+  clientName?: string
+  docDate: string
+  memo?: string
+  totalAmount: number
+  status: 'DRAFT' | 'CONFIRMED'
+  createdBy: string
+  createdAt: string
+  items: QuoteItem[]
 }
 
 export interface ProductPricing {

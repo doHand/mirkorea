@@ -6,10 +6,12 @@ import com.wmspro.common.exception.ErrorCode;
 import com.wmspro.common.security.WmsPrincipal;
 import com.wmspro.domain.user.UserRepository;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,6 +24,19 @@ public class AuthController {
 
     private final AuthService    authService;
     private final UserRepository userRepo;
+
+    @PostMapping("/register")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponse<Void> register(@Valid @RequestBody RegisterRequest req) {
+        authService.register(req.username, req.email, req.fullName, req.password);
+        return ApiResponse.ok(null, "회원가입이 완료되었습니다");
+    }
+
+    @PostMapping("/reset-password")
+    public ApiResponse<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest req) {
+        authService.resetPassword(req.username, req.email, req.newPassword);
+        return ApiResponse.ok(null, "비밀번호가 재설정되었습니다");
+    }
 
     @PostMapping("/login")
     public ApiResponse<Map<String, Object>> login(@Valid @RequestBody LoginRequest req) {
@@ -50,5 +65,20 @@ public class AuthController {
     static class LoginRequest {
         @NotBlank String username;
         @NotBlank String password;
+    }
+
+    @Getter @Setter
+    static class RegisterRequest {
+        @NotBlank String username;
+        @NotBlank @Email String email;
+        @NotBlank String fullName;
+        @NotBlank String password;
+    }
+
+    @Getter @Setter
+    static class ResetPasswordRequest {
+        @NotBlank String username;
+        @NotBlank @Email String email;
+        @NotBlank String newPassword;
     }
 }

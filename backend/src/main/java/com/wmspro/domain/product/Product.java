@@ -97,4 +97,7 @@ public class Product {
     @Builder.Default
     @JsonIgnore
     private List<Barcode> barcodes = new ArrayList<>();
+
+    @jakarta.persistence.Transient
+    private Long stockQty;
 }
