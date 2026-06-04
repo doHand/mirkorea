@@ -8,6 +8,7 @@ import { useWarehouseStore } from '@/stores/warehouse.store'
 import { QUERY_KEYS } from '@/constants/query-keys'
 import { ExportButton } from '@/components/ExportButton'
 import { cn } from '@/utils/cn'
+import * as ui from '@/styles/ui'
 import type { Zone, Location } from '@/types/api.types'
 
 const ZONE_TYPE_LABEL: Record<string, string> = {
@@ -96,10 +97,8 @@ export default function WarehousePage() {
       {/* Header */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            창고 위치 관리 — {warehouse.name}
-          </h2>
-          <p className="text-xs text-gray-400 mt-0.5">구역 및 위치를 등록하고 관리합니다.</p>
+          <h2 className={ui.h2Cls}>창고 위치 관리 — {warehouse.name}</h2>
+          <p className={ui.subText}>구역 및 위치를 등록하고 관리합니다.</p>
         </div>
         <div className="flex items-center gap-2">
           <ExportButton
@@ -114,16 +113,16 @@ export default function WarehousePage() {
           />
           <button
             onClick={() => setShowZoneModal(true)}
-            className="flex items-center gap-1.5 px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
+            className={ui.btnSecondary}
           >
-            <Plus size={14} /><span className="hidden sm:inline">구역 추가</span>
+            <span className="flex items-center gap-1.5"><Plus size={14} /><span className="hidden sm:inline">구역 추가</span></span>
           </button>
           <button
             onClick={() => {
               setLocForm({ zoneId: selectedZone, code: '', aisle: '', rack: '', shelf: '' })
               setShowLocationModal(true)
             }}
-            className="flex items-center gap-1.5 px-3 py-2 bg-brand-600 text-white text-sm rounded-lg hover:bg-brand-700 transition-colors"
+            className={cn(ui.btnPrimary, 'flex items-center gap-1.5')}
           >
             <Plus size={15} /><span className="hidden sm:inline">위치 추가</span>
           </button>
@@ -132,7 +131,7 @@ export default function WarehousePage() {
 
       <div className="grid grid-cols-3 gap-4">
         {/* 구역 패널 */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+        <div className={cn(ui.cardFlat, 'p-4')}>
           <h3 className="font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2 text-sm">
             <FolderOpen size={14} className="text-gray-400" />구역
           </h3>
@@ -140,10 +139,10 @@ export default function WarehousePage() {
             <button
               onClick={() => setSelectedZone('')}
               className={cn(
-                'w-full text-left px-3 py-2 rounded-lg text-sm transition-colors',
+                'w-full text-left px-3 py-2 rounded-xl text-sm transition-colors',
                 !selectedZone
-                  ? 'bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 font-medium'
-                  : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300',
+                  ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium'
+                  : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300',
               )}
             >
               전체 ({(locations as Location[]).length})
@@ -152,10 +151,10 @@ export default function WarehousePage() {
               <div
                 key={z.id}
                 className={cn(
-                  'flex items-center rounded-lg transition-colors group/zone',
+                  'flex items-center rounded-xl transition-colors group/zone',
                   selectedZone === z.id
-                    ? 'bg-brand-100 dark:bg-brand-900/30'
-                    : 'hover:bg-gray-50 dark:hover:bg-gray-700',
+                    ? 'bg-indigo-100 dark:bg-indigo-900/30'
+                    : 'hover:bg-gray-50 dark:hover:bg-gray-800',
                 )}
               >
                 <button
@@ -163,7 +162,7 @@ export default function WarehousePage() {
                   className={cn(
                     'flex-1 text-left px-3 py-2 text-sm',
                     selectedZone === z.id
-                      ? 'text-brand-700 dark:text-brand-300 font-medium'
+                      ? 'text-indigo-700 dark:text-indigo-300 font-medium'
                       : 'text-gray-700 dark:text-gray-300',
                   )}
                 >
@@ -189,15 +188,15 @@ export default function WarehousePage() {
         </div>
 
         {/* 위치 목록 */}
-        <div className="col-span-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-          <div className="p-4 border-b border-gray-100 dark:border-gray-700">
+        <div className={cn(ui.cardFlat, 'col-span-2')}>
+          <div className="p-4 border-b border-gray-100 dark:border-gray-800">
             <h3 className="font-medium text-gray-900 dark:text-white text-sm">
               위치 목록 ({(locations as Location[]).length})
             </h3>
           </div>
-          <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-[420px] overflow-y-auto">
+          <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-[420px] overflow-y-auto">
             {(locations as Location[]).map((loc) => (
-              <div key={loc.id} className="flex items-center p-3 gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 group/loc">
+              <div key={loc.id} className="flex items-center p-3 gap-3 hover:bg-gray-50/40 dark:hover:bg-gray-800/20 group/loc">
                 <MapPin size={14} className="text-gray-400 dark:text-gray-500 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-mono font-medium text-gray-900 dark:text-gray-100">{loc.code}</p>
@@ -210,7 +209,7 @@ export default function WarehousePage() {
                   'text-xs px-2 py-0.5 rounded-full shrink-0',
                   loc.isActive
                     ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500',
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500',
                 )}>
                   {loc.isActive ? '사용중' : '비활성'}
                 </span>
@@ -232,40 +231,38 @@ export default function WarehousePage() {
 
       {/* 구역 추가 모달 */}
       {showZoneModal && (
-        <div className="fixed inset-0 bg-black/40 dark:bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-sm p-6">
+        <div className={ui.modalOverlay}>
+          <div className={ui.modalBox}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white">구역 추가</h3>
-              <button onClick={() => setShowZoneModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400">
-                <X size={16} />
-              </button>
+              <h3 className="text-base font-bold text-gray-900 dark:text-white">구역 추가</h3>
+              <button onClick={() => setShowZoneModal(false)} className={ui.btnIcon}><X size={16} /></button>
             </div>
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">구역 코드 *</label>
+                <label className={ui.label}>구역 코드 *</label>
                 <input
                   autoFocus
                   value={zoneForm.code}
                   onChange={(e) => setZoneForm((p) => ({ ...p, code: e.target.value }))}
                   placeholder="A, B, COLD 등"
-                  className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400"
+                  className={ui.formInput}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">구역명 *</label>
+                <label className={ui.label}>구역명 *</label>
                 <input
                   value={zoneForm.name}
                   onChange={(e) => setZoneForm((p) => ({ ...p, name: e.target.value }))}
                   placeholder="일반 보관 구역"
-                  className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400"
+                  className={ui.formInput}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">구역 유형</label>
+                <label className={ui.label}>구역 유형</label>
                 <select
                   value={zoneForm.type}
                   onChange={(e) => setZoneForm((p) => ({ ...p, type: e.target.value }))}
-                  className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  className={cn(ui.selectCls, 'w-full')}
                 >
                   {Object.entries(ZONE_TYPE_LABEL).map(([k, v]) => (
                     <option key={k} value={k}>{v}</option>
@@ -274,16 +271,11 @@ export default function WarehousePage() {
               </div>
             </div>
             <div className="flex gap-3 mt-5">
-              <button
-                onClick={() => setShowZoneModal(false)}
-                className="flex-1 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                취소
-              </button>
+              <button onClick={() => setShowZoneModal(false)} className={cn(ui.btnSecondary, 'flex-1')}>취소</button>
               <button
                 onClick={() => createZoneMutation.mutate()}
                 disabled={!zoneForm.code.trim() || !zoneForm.name.trim() || createZoneMutation.isPending}
-                className="flex-1 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-50"
+                className={cn(ui.btnPrimary, 'flex-1 disabled:opacity-50')}
               >
                 {createZoneMutation.isPending ? '등록 중...' : '등록'}
               </button>
@@ -294,21 +286,19 @@ export default function WarehousePage() {
 
       {/* 위치 추가 모달 */}
       {showLocationModal && (
-        <div className="fixed inset-0 bg-black/40 dark:bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-md p-6">
+        <div className={ui.modalOverlay}>
+          <div className={ui.modalBoxMd}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white">위치 추가</h3>
-              <button onClick={() => setShowLocationModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400">
-                <X size={16} />
-              </button>
+              <h3 className="text-base font-bold text-gray-900 dark:text-white">위치 추가</h3>
+              <button onClick={() => setShowLocationModal(false)} className={ui.btnIcon}><X size={16} /></button>
             </div>
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">구역 *</label>
+                <label className={ui.label}>구역 *</label>
                 <select
                   value={locForm.zoneId}
                   onChange={(e) => setLocForm((p) => ({ ...p, zoneId: e.target.value }))}
-                  className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  className={cn(ui.selectCls, 'w-full')}
                 >
                   <option value="">구역 선택</option>
                   {(zones as Zone[]).map((z) => (
@@ -317,12 +307,12 @@ export default function WarehousePage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">위치코드 *</label>
+                <label className={ui.label}>위치코드 *</label>
                 <input
                   value={locForm.code}
                   onChange={(e) => setLocForm((p) => ({ ...p, code: e.target.value }))}
                   placeholder="A-01-01-01"
-                  className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400"
+                  className={cn(ui.formInput, 'font-mono')}
                 />
               </div>
               <div className="grid grid-cols-3 gap-2">
@@ -334,23 +324,18 @@ export default function WarehousePage() {
                     <input
                       value={locForm[key]}
                       onChange={(e) => setLocForm((p) => ({ ...p, [key]: e.target.value }))}
-                      className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-2 py-1.5 text-sm focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      className={ui.formInput}
                     />
                   </div>
                 ))}
               </div>
             </div>
             <div className="flex gap-3 mt-5">
-              <button
-                onClick={() => setShowLocationModal(false)}
-                className="flex-1 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                취소
-              </button>
+              <button onClick={() => setShowLocationModal(false)} className={cn(ui.btnSecondary, 'flex-1')}>취소</button>
               <button
                 onClick={() => createLocationMutation.mutate()}
                 disabled={!(locForm.zoneId || selectedZone) || !locForm.code.trim() || createLocationMutation.isPending}
-                className="flex-1 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-50"
+                className={cn(ui.btnPrimary, 'flex-1 disabled:opacity-50')}
               >
                 {createLocationMutation.isPending ? '등록 중...' : '등록'}
               </button>

@@ -10,6 +10,7 @@ import { useAuthStore } from '@/stores/auth.store'
 import { formatNumber } from '@/utils/format'
 import { cn } from '@/utils/cn'
 import { SALE_STATUS_LABEL } from '@/constants/stock.constants'
+import * as ui from '@/styles/ui'
 import type { ProductPricing } from '@/types/api.types'
 
 export default function PricingPage() {
@@ -57,10 +58,7 @@ export default function PricingPage() {
 
   const openEdit = (p: ProductPricing) => {
     setEditing(p)
-    setForm({
-      costPrice: Number(p.costPrice ?? 0),
-      sellPrice: Number(p.sellPrice ?? 0),
-    })
+    setForm({ costPrice: Number(p.costPrice ?? 0), sellPrice: Number(p.sellPrice ?? 0) })
   }
 
   if (me?.role !== 'ADMIN') {
@@ -76,10 +74,8 @@ export default function PricingPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">가격 재고현황</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            전체 {items.length}개 상품 · 재고 {formatNumber(totalStock)}개
-          </p>
+          <h2 className={ui.h2Cls}>가격 재고현황</h2>
+          <p className={ui.subText}>전체 {items.length}개 상품 · 재고 {formatNumber(totalStock)}개</p>
         </div>
         <ExportButton
           filename="가격_재고현황"
@@ -97,60 +93,56 @@ export default function PricingPage() {
         />
       </div>
 
+      {/* 요약 카드 */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">상품 수</p>
-          <p className="text-lg font-bold text-gray-900 dark:text-white tabular-nums">{formatNumber(filtered.length)}</p>
+        <div className={cn(ui.cardFlat, 'p-4')}>
+          <p className={ui.subText}>상품 수</p>
+          <p className="text-lg font-bold text-gray-900 dark:text-white tabular-nums mt-1">{formatNumber(filtered.length)}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">재고 수량</p>
-          <p className="text-lg font-bold text-indigo-600 dark:text-indigo-400 tabular-nums">{formatNumber(totalStock)}</p>
+        <div className={cn(ui.cardFlat, 'p-4')}>
+          <p className={ui.subText}>재고 수량</p>
+          <p className="text-lg font-bold text-indigo-600 dark:text-indigo-400 tabular-nums mt-1">{formatNumber(totalStock)}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">판매기준 금액</p>
-          <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">{formatNumber(totalSellAmount)}</p>
-        </div>
-      </div>
-
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3">
-        <div className="flex gap-1.5">
-          <div className="relative flex-1">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') setSearch(searchInput) }}
-              placeholder="상품코드, 상품명, 카테고리 검색"
-              className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
-            />
-          </div>
-          <button
-            onClick={() => setSearch(searchInput)}
-            className="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium whitespace-nowrap"
-          >
-            검색
-          </button>
+        <div className={cn(ui.cardFlat, 'p-4')}>
+          <p className={ui.subText}>판매기준 금액</p>
+          <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400 tabular-nums mt-1">{formatNumber(totalSellAmount)}</p>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+      {/* 검색 */}
+      <div className={ui.filterCard}>
+        <div className="relative flex-1">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') setSearch(searchInput) }}
+            placeholder="상품코드, 상품명, 카테고리 검색"
+            className={ui.searchInput}
+          />
+        </div>
+        <button onClick={() => setSearch(searchInput)} className={ui.btnPrimary}>검색</button>
+      </div>
+
+      {/* 테이블 */}
+      <div className={ui.tableWrap}>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px] text-sm">
             <thead>
-              <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">코드</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">상품명</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-24">카테고리</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-20">단위</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-28">재고 수량</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-28">원가</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-28">판매가</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-32">판매기준 금액</th>
-                <th className="text-center px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-24">상태</th>
+              <tr className={ui.thead}>
+                <th className={ui.th}>코드</th>
+                <th className={ui.th}>상품명</th>
+                <th className={cn(ui.th, 'w-24')}>카테고리</th>
+                <th className={cn(ui.th, 'w-20')}>단위</th>
+                <th className={cn(ui.thR, 'w-28')}>재고 수량</th>
+                <th className={cn(ui.thR, 'w-28')}>원가</th>
+                <th className={cn(ui.thR, 'w-28')}>판매가</th>
+                <th className={cn(ui.thR, 'w-32')}>판매기준 금액</th>
+                <th className={cn(ui.thC, 'w-24')}>상태</th>
                 <th className="px-4 py-3 w-16" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+            <tbody className={ui.tbody}>
               {isLoading && (
                 <tr><td colSpan={10} className="text-center py-10 text-gray-400 dark:text-gray-500">로딩 중...</td></tr>
               )}
@@ -161,7 +153,7 @@ export default function PricingPage() {
                 const sellAmount = Number(p.sellPrice ?? 0) * p.totalStock
                 const belowSafety = p.totalStock <= p.safetyStock && p.safetyStock > 0
                 return (
-                  <tr key={p.id} className={cn('hover:bg-gray-50 dark:hover:bg-gray-700/50', belowSafety && 'bg-red-50/50 dark:bg-red-900/5')}>
+                  <tr key={p.id} className={cn(ui.tr, belowSafety && 'bg-red-50/50 dark:bg-red-900/5')}>
                     <td className="px-4 py-3 font-mono text-xs text-gray-600 dark:text-gray-400">{p.code}</td>
                     <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{p.name}</td>
                     <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{p.category || '-'}</td>
@@ -188,11 +180,7 @@ export default function PricingPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => openEdit(p)}
-                        className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
-                        title="가격 수정"
-                      >
+                      <button onClick={() => openEdit(p)} className={ui.btnIcon} title="가격 수정">
                         <Pencil size={13} />
                       </button>
                     </td>
@@ -204,44 +192,40 @@ export default function PricingPage() {
         </div>
       </div>
 
+      {/* 수정 모달 */}
       {editing && (
-        <div className="fixed inset-0 bg-black/40 dark:bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-sm p-6">
-            <h3 className="text-base font-semibold mb-1 text-gray-900 dark:text-white">{editing.name}</h3>
+        <div className={ui.modalOverlay}>
+          <div className={ui.modalBox}>
+            <h3 className="text-base font-bold mb-1 text-gray-900 dark:text-white">{editing.name}</h3>
             <p className="text-xs text-gray-400 dark:text-gray-500 mb-5 font-mono">{editing.code}</p>
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">원가</label>
+                <label className={ui.label}>원가</label>
                 <input
                   type="number"
                   min={0}
                   value={form.costPrice}
                   onChange={(e) => setForm((p) => ({ ...p, costPrice: +e.target.value }))}
-                  className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  className={ui.formInput}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">판매가</label>
+                <label className={ui.label}>판매가</label>
                 <input
                   type="number"
                   min={0}
                   value={form.sellPrice}
                   onChange={(e) => setForm((p) => ({ ...p, sellPrice: +e.target.value }))}
-                  className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  className={ui.formInput}
                 />
               </div>
             </div>
             <div className="flex gap-3 mt-5">
-              <button
-                onClick={() => setEditing(null)}
-                className="flex-1 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                취소
-              </button>
+              <button onClick={() => setEditing(null)} className={cn(ui.btnSecondary, 'flex-1')}>취소</button>
               <button
                 onClick={() => updateMutation.mutate()}
                 disabled={updateMutation.isPending}
-                className="flex-1 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-50"
+                className={cn(ui.btnPrimary, 'flex-1 disabled:opacity-50')}
               >
                 {updateMutation.isPending ? '저장 중...' : '저장'}
               </button>

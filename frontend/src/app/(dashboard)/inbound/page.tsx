@@ -71,7 +71,7 @@ export default function InboundPage() {
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">입고 관리</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">입고 관리</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             입고 예정 등록 · 수령 · 검수 · 자동 재고 증가
           </p>
@@ -104,10 +104,10 @@ export default function InboundPage() {
               key={s}
               onClick={() => setStatusFilter(s as InboundStatus | '')}
               className={cn(
-                'bg-white dark:bg-gray-800 rounded-xl border p-3 text-left transition-all hover:shadow-sm',
+                'bg-white dark:bg-gray-900 rounded-2xl border p-3 text-left transition-all hover:shadow-sm',
                 statusFilter === s
                   ? 'border-indigo-400 ring-1 ring-indigo-400'
-                  : 'border-gray-200 dark:border-gray-700',
+                  : 'border-gray-200 dark:border-gray-800',
               )}
             >
               <p className={cn('text-xl font-bold', color)}>{count}</p>
@@ -118,21 +118,21 @@ export default function InboundPage() {
       </div>
 
       {/* 필터 */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 flex items-center gap-3 flex-wrap">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-3 flex items-center gap-3 flex-wrap shadow-sm">
         <div className="relative flex-1 min-w-48 flex gap-1.5">
           <div className="relative flex-1">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             <input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') setSearch(searchInput) }}
               placeholder="주문번호 또는 공급업체 검색"
-              className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 transition-shadow"
             />
           </div>
           <button
             onClick={() => setSearch(searchInput)}
-            className="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium whitespace-nowrap"
+            className="px-3.5 py-2 text-sm bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-medium whitespace-nowrap"
           >
             검색
           </button>
@@ -140,7 +140,7 @@ export default function InboundPage() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as InboundStatus | '')}
-          className="px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+          className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
         >
           <option value="">전체 상태</option>
           {Object.entries(STATUS_LABEL).map(([k, v]) => (
@@ -150,11 +150,11 @@ export default function InboundPage() {
       </div>
 
       {/* 목록 */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[700px] text-sm">
             <thead>
-              <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+              <tr className="bg-gray-50/80 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700">
                 <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">주문번호</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">공급업체</th>
                 <th className="text-center px-4 py-3 font-medium text-gray-600 dark:text-gray-400">예정일</th>

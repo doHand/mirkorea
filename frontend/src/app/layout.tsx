@@ -3,6 +3,7 @@ import './globals.css'
 import { QueryProvider } from '@/providers/query-provider'
 import { ToastProvider } from '@/providers/toast-provider'
 import { ThemeProvider } from '@/providers/theme-provider'
+import { ResizableTables } from '@/components/ResizableTables'
 
 export const metadata: Metadata = {
   title: 'MK - 창고 관리 시스템',
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <QueryProvider>
             <ToastProvider />
+            <ResizableTables />
             {children}
           </QueryProvider>
         </ThemeProvider>

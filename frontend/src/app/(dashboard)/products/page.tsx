@@ -1,8 +1,7 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Search, Package, Pencil, Trash2, Filter, X, FileText } from 'lucide-react'
+import { Plus, Search, Package, Pencil, Trash2, Filter, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { productApi } from '@/api/product.api'
 import { QUERY_KEYS } from '@/constants/query-keys'
@@ -34,7 +33,6 @@ const STATUS_STYLE: Record<SaleStatus, string> = {
 
 export default function ProductsPage() {
   const qc = useQueryClient()
-  const router = useRouter()
   const [searchInput, setSearchInput]  = useState('')
   const [search, setSearch]           = useState('')
   const [status, setStatus]           = useState<SaleStatus | ''>('')
@@ -143,11 +141,6 @@ export default function ProductsPage() {
     if (product) openEdit(product)
   }
 
-  const openStatementForProducts = (ids: string[]) => {
-    if (ids.length === 0) return
-    router.push(`/quotes?productIds=${encodeURIComponent(ids.join(','))}`)
-  }
-
   const currentPageIds = data?.items.map((p) => p.id) ?? []
   const allChecked = currentPageIds.length > 0 && currentPageIds.every((id) => selectedIds.has(id))
   const someChecked = currentPageIds.some((id) => selectedIds.has(id))
@@ -182,13 +175,6 @@ export default function ProductsPage() {
           <ImportButton
             onImported={() => qc.invalidateQueries({ queryKey: ['products'] })}
           />
-          <button
-            onClick={() => openStatementForProducts([...selectedIds])}
-            disabled={selectedIds.size === 0}
-            className="flex items-center gap-1.5 px-3.5 py-2 border border-emerald-200 text-emerald-700 dark:border-emerald-800 dark:text-emerald-400 text-sm rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/20 disabled:opacity-40 disabled:hover:bg-transparent transition-colors font-medium"
-          >
-            <FileText size={15} />거래명세서
-          </button>
           <button
             onClick={openCreate}
             className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-sm shadow-indigo-500/20"
@@ -245,12 +231,6 @@ export default function ProductsPage() {
               <Pencil size={13} />수정
             </button>
           )}
-          <button
-            onClick={() => openStatementForProducts([...selectedIds])}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors"
-          >
-            <FileText size={13} />거래명세서
-          </button>
           <button
             onClick={handleBulkDelete}
             disabled={deleteMutation.isPending}
@@ -352,13 +332,6 @@ export default function ProductsPage() {
                   </td>
                   <td className="px-4 py-3.5" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => openStatementForProducts([p.id])}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-900/20 transition-colors"
-                        title="거래명세서"
-                      >
-                        <FileText size={13} />
-                      </button>
                       <button
                         onClick={() => openEdit(p)}
                         className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:text-indigo-400 dark:hover:bg-indigo-900/20 transition-colors"

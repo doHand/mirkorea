@@ -6,7 +6,7 @@ import {
   Package, BarChart3, Warehouse, ScanLine, ClipboardList,
   LayoutDashboard, LogOut, X, ShieldCheck, UserCog, Tags, LayoutGrid,
   Hash, Barcode, FileText, BoxSelect, FlaskConical, Ruler, ChevronDown,
-  PackageCheck, Building2, Receipt, FileCog,
+  PackageCheck, Building2, Receipt, FileCog, Users, Shield,
 } from 'lucide-react'
 import { cn } from '@/utils/cn'
 import { useAuthStore } from '@/stores/auth.store'
@@ -34,6 +34,8 @@ const ICON_MAP: Record<string, React.ElementType> = {
   clients:            Building2,
   quotes:             Receipt,
   'supplier-settings': FileCog,
+  'role-management':   Shield,
+  'permissions':       Users,
 }
 
 interface Props {

@@ -69,3 +69,46 @@
     @apply focus:outline-none focus:ring-2 focus:ring-indigo-500/40;
   }
 }
+
+@layer components {
+  .wms-resizable-table {
+    table-layout: auto;
+  }
+
+  .wms-resizable-th {
+    position: relative;
+  }
+
+  .wms-column-resizer {
+    position: absolute;
+    top: 0;
+    right: -3px;
+    z-index: 10;
+    width: 7px;
+    height: 100%;
+    cursor: col-resize;
+    touch-action: none;
+    user-select: none;
+  }
+
+  .wms-column-resizer::after {
+    position: absolute;
+    top: 20%;
+    right: 3px;
+    width: 1px;
+    height: 60%;
+    content: '';
+    background: transparent;
+    transition: background-color 120ms ease;
+  }
+
+  .wms-column-resizer:hover::after,
+  .wms-resizing-active .wms-column-resizer::after {
+    background: #6366f1;
+  }
+
+  .wms-column-resizing {
+    cursor: col-resize;
+    user-select: none;
+  }
+}

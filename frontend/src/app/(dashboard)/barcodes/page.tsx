@@ -91,29 +91,31 @@ export default function BarcodesPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
             <Barcode size={18} className="text-indigo-500" />바코드 관리
           </h2>
           <p className="text-xs text-gray-400 mt-0.5">상품 행을 펼쳐 바코드를 추가·수정·삭제합니다.</p>
         </div>
+      </div>
 
-        {/* 검색 입력 + 버튼 */}
-        <div className="flex items-center gap-1.5">
-          <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+      {/* 검색/필터 */}
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-3 flex gap-2.5 shadow-sm">
+        <div className="relative flex-1 flex gap-1.5">
+          <div className="relative flex-1">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             <input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') commitSearch() }}
-              placeholder="코드 / 상품명"
-              className="pl-8 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 outline-none focus:border-indigo-400 w-48"
+              placeholder="상품코드 / 상품명"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 transition-shadow"
             />
           </div>
           <button
             onClick={commitSearch}
-            className="px-3 py-2 text-sm bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-medium"
+            className="px-3.5 py-2 text-sm bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-medium"
           >
             검색
           </button>

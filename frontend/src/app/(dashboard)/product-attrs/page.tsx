@@ -8,6 +8,8 @@ import { productApi, unitApi } from '@/api/product.api'
 import { SALE_STATUS_LABEL } from '@/constants/stock.constants'
 import { cn } from '@/utils/cn'
 import { formatNumber } from '@/utils/format'
+import { ExportButton } from '@/components/ExportButton'
+import { ImportButton } from '@/components/ImportButton'
 import type { Product, SaleStatus, ProductUnit } from '@/types/api.types'
 
 /* ─── EditableCell (top-level to prevent remount on parent re-render) ───── */
@@ -93,6 +95,7 @@ const STATUS_CLS: Record<SaleStatus, string> = {
 export default function ProductMasterPage() {
   const qc = useQueryClient()
   const router = useRouter()
+  const [searchInput, setSearchInput]  = useState('')
   const [search, setSearch]           = useState('')
   const [editCell, setEditCell]       = useState<EditCell | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -128,6 +131,16 @@ export default function ProductMasterPage() {
       toast.success('저장되었습니다')
     },
     onError: () => toast.error('저장 실패'),
+  })
+
+  const lotMutation = useMutation({
+    mutationFn: ({ id, isLotManaged }: { id: string; isLotManaged: boolean }) =>
+      productApi.update(id, { isLotManaged } as Partial<Product>),
+    onSuccess: (_, { isLotManaged }) => {
+      qc.invalidateQueries({ queryKey: ['products'] })
+      toast.success(`LOT 관리 ${isLotManaged ? '활성화' : '비활성화'}`)
+    },
+    onError: () => toast.error('LOT 변경 실패'),
   })
 
   const deleteMutation = useMutation({
@@ -194,16 +207,28 @@ export default function ProductMasterPage() {
             코드·상품명·옵션·규격·단위·박스입수·LOT을 통합 관리합니다. 셀을 클릭하면 편집됩니다.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="코드 / 상품명"
-              className="pl-8 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 outline-none focus:border-indigo-400 w-48"
-            />
-          </div>
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          <ExportButton
+            filename="상품마스터"
+            getData={async () => {
+              const all = await productApi.findAll({ search: search || undefined, limit: 9999 })
+              return all.items.map((p: Product) => ({
+                '상품코드': p.code,
+                '상품명': p.name,
+                '옵션명': p.optionName ?? '',
+                '규격': p.spec ?? '',
+                '단위': p.unit,
+                '박스입수': p.boxQty,
+                '재고수량': p.stockQty ?? 0,
+                '판매가': p.sellPrice ?? 0,
+                'LOT관리': p.isLotManaged ? 'Y' : 'N',
+                '상태': SALE_STATUS_LABEL[p.saleStatus],
+              }))
+            }}
+          />
+          <ImportButton
+            onImported={() => qc.invalidateQueries({ queryKey: ['products'] })}
+          />
           <button
             onClick={() => { setShowAdd(true); setForm(EMPTY_FORM) }}
             className="flex items-center gap-1.5 px-3 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors shadow-sm shadow-indigo-500/20"
@@ -217,6 +242,28 @@ export default function ProductMasterPage() {
           >
             <FileText size={14} />
             <span className="hidden sm:inline">거래명세서/견적서</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 검색/필터 */}
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-3 flex gap-2.5 shadow-sm">
+        <div className="relative flex-1 flex gap-1.5">
+          <div className="relative flex-1">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') setSearch(searchInput) }}
+              placeholder="상품코드 / 상품명"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 transition-shadow"
+            />
+          </div>
+          <button
+            onClick={() => setSearch(searchInput)}
+            className="px-3.5 py-2 text-sm bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-medium"
+          >
+            검색
           </button>
         </div>
       </div>
@@ -332,9 +379,10 @@ export default function ProductMasterPage() {
                   </td>
                   <td className="py-2 text-center">
                     <button
-                      onClick={() => updateMutation.mutate({ id: p.id, patch: { isLotManaged: !p.isLotManaged } })}
+                      disabled={lotMutation.isPending}
+                      onClick={() => lotMutation.mutate({ id: p.id, isLotManaged: !p.isLotManaged })}
                       className={cn(
-                        'relative rounded-full transition-colors duration-200 focus:outline-none',
+                        'relative rounded-full transition-colors duration-200 focus:outline-none disabled:opacity-60',
                         'w-9 h-[20px]',
                         p.isLotManaged ? 'bg-indigo-600' : 'bg-gray-200 dark:bg-gray-700',
                       )}

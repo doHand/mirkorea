@@ -34,7 +34,7 @@ export default function TransactionsPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">거래 로그</h2>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white">거래 로그</h2>
         <ExportButton
           filename="거래로그"
           getData={async () => {
@@ -62,11 +62,11 @@ export default function TransactionsPage() {
       </div>
 
       {/* 필터 */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 flex flex-wrap gap-3">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-3 flex flex-wrap gap-3 shadow-sm">
         <select
           value={txType}
           onChange={(e) => { setTxType(e.target.value as TxType | ''); setPage(1) }}
-          className="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+          className="text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
         >
           <option value="">전체 유형</option>
           {Object.entries(TX_TYPE_LABEL).map(([k, v]) => (
@@ -74,19 +74,19 @@ export default function TransactionsPage() {
           ))}
         </select>
         <input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1) }}
-          className="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1.5 focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+          className="text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
         <span className="text-gray-400 dark:text-gray-500 self-center">~</span>
         <input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1) }}
-          className="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1.5 focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+          className="text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
         <span className="text-xs text-gray-400 dark:text-gray-500 self-center">총 {formatNumber(data?.total)}건</span>
       </div>
 
       {/* 테이블 */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
         <table className="w-full min-w-[700px] text-sm">
           <thead>
-            <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+            <tr className="bg-gray-50/80 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700">
               <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-36">거래번호</th>
               <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-28">유형</th>
               <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">상품</th>
