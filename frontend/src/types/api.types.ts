@@ -70,12 +70,14 @@ export interface Product {
   code: string
   name: string
   category?: string
-  brand?: string
+  clientId?: string
+  client?: Pick<Client, 'id' | 'name' | 'phone' | 'email'>
+  locationId?: string
+  defaultLocation?: Location
   unit: string
   optionName?: string
   spec?: string
   materialNo?: string
-  location?: string
   boxQty: number
   weightG?: number
   imageUrl?: string
@@ -159,7 +161,7 @@ export interface StockTransaction {
   createdAt: string
   product?: Product
   location?: Location
-  createdByUser?: User
+  createdByUser?: Pick<User, 'id' | 'username' | 'fullName' | 'role'>
 }
 
 export interface BarcodeResolveResult {
@@ -268,7 +270,8 @@ export interface ProductPricing {
   code: string
   name: string
   category?: string
-  brand?: string
+  clientId?: string
+  clientName?: string
   unit: string
   boxQty: number
   costPrice?: number

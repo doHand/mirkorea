@@ -1,60 +1,36 @@
 'use client'
-import { Menu, Sun, Moon, ChevronDown } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { Menu, Sun, Moon } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth.store'
-import { useWarehouseStore } from '@/stores/warehouse.store'
-import { useQuery } from '@tanstack/react-query'
-import { warehouseApi } from '@/api/warehouse.api'
-import { QUERY_KEYS } from '@/constants/query-keys'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { useTheme } from 'next-themes'
 
 interface Props {
   onMenuClick?: () => void
+  children?: ReactNode
 }
 
-export function HeaderBar({ onMenuClick }: Props) {
-  const { user }                        = useAuthStore()
-  const { selectedWarehouse, setWarehouse } = useWarehouseStore()
-  const { resolvedTheme, setTheme }     = useTheme()
-
-  const { data: warehouses = [] } = useQuery({
-    queryKey: QUERY_KEYS.warehouses(),
-    queryFn:  warehouseApi.findAll,
-  })
+export function HeaderBar({ onMenuClick, children }: Props) {
+  const { user }                    = useAuthStore()
+  const { resolvedTheme, setTheme } = useTheme()
 
   const today = format(new Date(), 'M월 d일 EEEE', { locale: ko })
 
   return (
-    <header className="h-14 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-gray-200 dark:border-slate-700 flex items-center px-4 gap-3 shrink-0 sticky top-0 z-30">
+    <header className="h-16 bg-white/70 dark:bg-slate-900/90 backdrop-blur-md border-b border-white/70 dark:border-slate-700/80 flex items-center px-4 lg:px-6 gap-3 shrink-0 sticky top-0 z-30">
       {/* 모바일 햄버거 */}
       <button
         onClick={onMenuClick}
-        className="lg:hidden p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 dark:text-slate-400 transition-colors"
+        className="lg:hidden p-2 rounded-xl bg-white/70 hover:bg-white dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-600 dark:text-slate-200 transition-colors shadow-sm"
         aria-label="메뉴 열기"
       >
         <Menu size={20} />
       </button>
 
-      {/* 창고 선택 */}
-      <div className="relative flex items-center">
-        <select
-          value={selectedWarehouse?.id ?? ''}
-          onChange={(e) => {
-            const wh = warehouses.find((w) => w.id === e.target.value)
-            if (wh) setWarehouse(wh)
-          }}
-          className="appearance-none pl-3 pr-8 py-1.5 text-sm bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-xl text-gray-800 dark:text-slate-100 font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-colors hover:border-indigo-200 dark:hover:border-indigo-500"
-        >
-          <option value="">창고 선택</option>
-          {warehouses.map((wh) => (
-            <option key={wh.id} value={wh.id}>{wh.name}</option>
-          ))}
-        </select>
-        <ChevronDown size={13} className="absolute right-2.5 text-gray-400 pointer-events-none" />
+      <div className="min-w-0 flex-1">
+        {children}
       </div>
-
-      <div className="flex-1" />
 
       {/* 날짜 */}
       <span className="hidden md:block text-xs text-gray-400 dark:text-slate-300 font-medium tabular-nums">
@@ -64,7 +40,7 @@ export function HeaderBar({ onMenuClick }: Props) {
       {/* 다크 모드 토글 */}
       <button
         onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-        className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 dark:text-slate-200 transition-colors"
+        className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/80 hover:bg-white dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-600 dark:text-slate-100 transition-colors shadow-sm"
         aria-label="테마 전환"
       >
         {resolvedTheme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
@@ -72,7 +48,7 @@ export function HeaderBar({ onMenuClick }: Props) {
 
       {/* 사용자 */}
       <div className="flex items-center gap-2 pl-1">
-        <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-sm shadow-indigo-500/20">
+        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-sm shadow-blue-500/25">
           {user?.fullName?.charAt(0)?.toUpperCase() ?? 'U'}
         </div>
         <span className="hidden sm:block text-sm font-medium text-gray-700 dark:text-slate-100 max-w-[120px] truncate">

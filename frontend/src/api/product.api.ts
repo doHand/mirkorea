@@ -17,16 +17,25 @@ export const productApi = {
     get<Product>(`/products/${id}`),
 
   create: (data: {
-    code: string; name: string; category?: string; brand?: string
+    code: string; name: string; category?: string
+    clientId?: string; locationId?: string
     unit?: string; boxQty?: number; safetyStock?: number; reorderPoint?: number
     costPrice?: number; sellPrice?: number
-    spec?: string; materialNo?: string; location?: string
+    spec?: string; materialNo?: string
     priceA?: number; priceB?: number; priceC?: number; retailPrice?: number
     memo?: string; isLotManaged?: boolean; isExpiryManaged?: boolean
   }) => post<Product>('/products', data),
 
-  update: (id: string, data: Partial<Product>) =>
-    put<Product>(`/products/${id}`, data),
+  update: (id: string, data: {
+    code?: string; name?: string; category?: string
+    clientId?: string | null; clearClient?: boolean
+    locationId?: string | null; clearLocation?: boolean
+    unit?: string; boxQty?: number; safetyStock?: number; reorderPoint?: number
+    costPrice?: number; sellPrice?: number
+    spec?: string; materialNo?: string
+    priceA?: number; priceB?: number; priceC?: number; retailPrice?: number
+    memo?: string; saleStatus?: SaleStatus; isLotManaged?: boolean
+  }) => put<Product>(`/products/${id}`, data),
 
   delete: (id: string) => del(`/products/${id}`),
 

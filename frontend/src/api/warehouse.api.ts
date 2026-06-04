@@ -15,6 +15,9 @@ export const warehouseApi = {
   createZone: (warehouseId: string, data: { code: string; name: string; type?: string }) =>
     post<Zone>(`/warehouses/${warehouseId}/zones`, data),
 
+  findAllLocations: () =>
+    get<Location[]>('/warehouses/locations'),
+
   findLocations: (warehouseId: string, zoneId?: string) =>
     get<Location[]>(`/warehouses/${warehouseId}/locations`, { zoneId }),
 

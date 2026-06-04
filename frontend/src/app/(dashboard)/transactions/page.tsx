@@ -34,9 +34,9 @@ export default function TransactionsPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white">거래 로그</h2>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white">재고 변경 이력</h2>
         <ExportButton
-          filename="거래로그"
+          filename="재고 변경 이력"
           getData={async () => {
             const all = await stockApi.getTransactions({
               warehouseId: warehouse?.id,
@@ -55,6 +55,7 @@ export default function TransactionsPage() {
               '이전재고': t.qtyBefore,
               '이후재고': t.qtyAfter,
               '취소여부': t.isCancelled ? 'Y' : 'N',
+              '작업자':   t.createdByUser?.fullName ?? t.createdByUser?.username ?? '',
               '일시':     formatDateTime(t.createdAt),
             }))
           }}
@@ -94,12 +95,13 @@ export default function TransactionsPage() {
               <th className="text-center px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-20">변동</th>
               <th className="text-center px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-20">이전</th>
               <th className="text-center px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-20">이후</th>
+              <th className="text-center px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-28">작업자</th>
               <th className="text-center px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-36">일시</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
             {isLoading && (
-              <tr><td colSpan={8} className="text-center py-10 text-gray-400 dark:text-gray-500">로딩 중...</td></tr>
+              <tr><td colSpan={9} className="text-center py-10 text-gray-400 dark:text-gray-500">로딩 중...</td></tr>
             )}
             {data?.items.map((txn) => (
               <tr key={txn.id} className={cn('hover:bg-gray-50 dark:hover:bg-gray-700/50', txn.isCancelled && 'opacity-50 line-through')}>
@@ -120,6 +122,9 @@ export default function TransactionsPage() {
                 </td>
                 <td className="px-4 py-3 text-right tabular-nums text-gray-500 dark:text-gray-400">{formatNumber(txn.qtyBefore)}</td>
                 <td className="px-4 py-3 text-right tabular-nums font-medium text-gray-900 dark:text-gray-100">{formatNumber(txn.qtyAfter)}</td>
+                <td className="px-4 py-3 text-center text-sm text-gray-700 dark:text-gray-300">
+                  {txn.createdByUser?.fullName ?? txn.createdByUser?.username ?? '—'}
+                </td>
                 <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">{formatDateTime(txn.createdAt)}</td>
               </tr>
             ))}

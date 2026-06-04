@@ -5,13 +5,15 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Getter @Setter
 public class ProductCreateRequest {
     @NotBlank public String     code;
     @NotBlank public String     name;
     public String     category;
-    public String     brand;
+    public UUID       clientId;
+    public UUID       locationId;
     public String     unit;
     public int        boxQty      = 1;
     public Integer    weightG;
@@ -23,7 +25,6 @@ public class ProductCreateRequest {
     public String     optionName;
     public String     spec;
     public String     materialNo;
-    public String     location;
     public BigDecimal priceA;
     public BigDecimal priceB;
     public BigDecimal priceC;

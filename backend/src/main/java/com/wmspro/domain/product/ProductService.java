@@ -40,12 +40,12 @@ public class ProductService {
             .code(req.code)
             .name(req.name)
             .category(req.category)
-            .brand(req.brand)
+            .clientId(req.clientId)
+            .locationId(req.locationId)
             .unit(req.unit != null ? req.unit : "EA")
             .optionName(req.optionName)
             .spec(req.spec)
             .materialNo(req.materialNo)
-            .location(req.location)
             .boxQty(req.boxQty > 0 ? req.boxQty : 1)
             .weightG(req.weightG)
             .imageUrl(req.imageUrl)
@@ -69,7 +69,7 @@ public class ProductService {
     @Transactional
     public Product update(UUID id, ProductUpdateRequest req) {
         Product product = findById(id);
-        if (req.code        != null) {
+        if (req.code != null) {
             if (!product.getCode().equals(req.code) && productRepo.existsByCode(req.code)) {
                 throw new BusinessException(ErrorCode.PRODUCT_CODE_DUPLICATE);
             }
@@ -77,12 +77,14 @@ public class ProductService {
         }
         if (req.name        != null) product.setName(req.name);
         if (req.category    != null) product.setCategory(req.category);
-        if (req.brand       != null) product.setBrand(req.brand);
+        if (req.clearClient)          product.setClientId(null);
+        else if (req.clientId != null) product.setClientId(req.clientId);
+        if (req.clearLocation)           product.setLocationId(null);
+        else if (req.locationId != null) product.setLocationId(req.locationId);
         if (req.unit        != null) product.setUnit(req.unit);
         if (req.optionName  != null) product.setOptionName(req.optionName);
         if (req.spec        != null) product.setSpec(req.spec);
         if (req.materialNo  != null) product.setMaterialNo(req.materialNo);
-        if (req.location    != null) product.setLocation(req.location);
         if (req.boxQty      > 0)    product.setBoxQty(req.boxQty);
         if (req.safetyStock >= 0)   product.setSafetyStock(req.safetyStock);
         if (req.reorderPoint >= 0)  product.setReorderPoint(req.reorderPoint);
@@ -112,7 +114,7 @@ public class ProductService {
 
     @Transactional
     public Barcode addBarcode(UUID productId, String barcodeValue, BarcodeUnitType type, int unitQty, boolean isPrimary) {
-        findById(productId);  // 존재 확인
+        findById(productId);
         if (barcodeRepo.existsByBarcode(barcodeValue)) {
             throw new BusinessException(ErrorCode.BARCODE_DUPLICATE);
         }
@@ -140,13 +142,11 @@ public class ProductService {
         barcodeRepo.deleteById(barcodeId);
     }
 
-    // 바코드 스캔 → 상품 조회 (스캔 API에서 사용)
     public BarcodeResolveResult resolveBarcode(String barcodeValue) {
         Barcode barcode = barcodeRepo.findActiveByBarcode(barcodeValue)
             .orElseThrow(() -> new BusinessException(ErrorCode.BARCODE_NOT_FOUND));
 
         Product product = barcode.getProduct();
-        // 박스 바코드면 낱개로 환산
         int qtyPerScan = barcode.getType() == BarcodeUnitType.BOX
             ? product.getBoxQty() * barcode.getUnitQty()
             : barcode.getUnitQty();

@@ -2,9 +2,11 @@
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient, useQueries } from '@tanstack/react-query'
-import { FileText, Package, Search, Plus, Trash2, X } from 'lucide-react'
+import { Building2, FileText, MapPin, Package, Search, Plus, Trash2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { productApi, unitApi } from '@/api/product.api'
+import { clientApi } from '@/api/client.api'
+import { warehouseApi } from '@/api/warehouse.api'
 import { stockApi } from '@/api/stock.api'
 import { useWarehouseStore } from '@/stores/warehouse.store'
 import { SALE_STATUS_LABEL } from '@/constants/stock.constants'
@@ -12,7 +14,7 @@ import { cn } from '@/utils/cn'
 import { formatNumber } from '@/utils/format'
 import { ExportButton } from '@/components/ExportButton'
 import { ImportButton } from '@/components/ImportButton'
-import type { Barcode, BarcodeUnitType, Inventory, Product, SaleStatus, ProductUnit } from '@/types/api.types'
+import type { Barcode, BarcodeUnitType, Client, Inventory, Location, Product, SaleStatus, ProductUnit } from '@/types/api.types'
 
 /* ─── EditableCell (top-level to prevent remount on parent re-render) ───── */
 type EditField = 'code' | 'name' | 'optionName' | 'spec' | 'unit' | 'boxQty' | 'costPrice' | 'sellPrice'
@@ -92,10 +94,16 @@ function EditableCell({
 
 /* ─── Constants ──────────────────────────────────────────────────────────── */
 const EMPTY_FORM = {
-  code: '', name: '', category: '', brand: '',
+  code: '', name: '', category: '',
+  clientId: '', locationId: '',
   unit: 'EA', boxQty: 1, safetyStock: 0, reorderPoint: 0,
-  costPrice: 0, sellPrice: 0, saleStatus: 'ACTIVE' as SaleStatus,
+  costPrice: 0, sellPrice: 0, retailPrice: 0,
+  priceA: 0, priceB: 0, priceC: 0,
+  spec: '', materialNo: '', memo: '',
+  saleStatus: 'ACTIVE' as SaleStatus,
 }
+
+type ClientOption = Pick<Client, 'id' | 'name' | 'phone' | 'email'>
 
 const STATUS_CLS: Record<SaleStatus, string> = {
   ACTIVE:       'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
@@ -116,10 +124,7 @@ const BARCODE_TYPE_CLS: Record<BarcodeUnitType, string> = {
 }
 
 const toNumber = (value?: number) => Number(value ?? 0)
-const getBoxStockQty = (product: Product) => {
-  const boxQty = product.boxQty > 0 ? product.boxQty : 1
-  return Math.floor(toNumber(product.stockQty) / boxQty)
-}
+const getBoxStockQty = (product: Product) => toNumber(product.stockQty)
 const getBoxCostPrice = (product: Product) => toNumber(product.costPrice) * (product.boxQty > 0 ? product.boxQty : 1)
 const getBoxSellPrice = (product: Product) => toNumber(product.sellPrice) * (product.boxQty > 0 ? product.boxQty : 1)
 const getTotalAmount = (product: Product) => getBoxCostPrice(product) * getBoxStockQty(product)
@@ -154,6 +159,12 @@ export default function ProductMasterPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [showAdd, setShowAdd]         = useState(false)
   const [form, setForm]               = useState(EMPTY_FORM)
+  const [showClientPicker, setShowClientPicker] = useState(false)
+  const [clientPickerSearch, setClientPickerSearch] = useState('')
+  const [selectedClient, setSelectedClient] = useState<ClientOption | null>(null)
+  const [showLocationPicker, setShowLocationPicker] = useState(false)
+  const [locationPickerSearch, setLocationPickerSearch] = useState('')
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null)
 
   const { data, isLoading } = useQuery({
     queryKey: ['products', search],
@@ -165,11 +176,49 @@ export default function ProductMasterPage() {
     queryFn:  () => unitApi.findAll(),
   })
 
+  const { data: clients = [] } = useQuery<Client[]>({
+    queryKey: ['clients-all'],
+    queryFn:  () => clientApi.findAllActive(),
+    enabled:  showAdd,
+    placeholderData: [],
+  })
+
+  const { data: allLocations = [] } = useQuery<Location[]>({
+    queryKey: ['locations-for-product-master-form', warehouse?.id],
+    queryFn:  () => warehouseApi.findLocations(warehouse!.id),
+    enabled:  showAdd && !!warehouse?.id,
+    placeholderData: [],
+  })
+
   const { data: inventory = [] } = useQuery({
     queryKey: ['inventory', 'product-master', warehouse?.id ?? ''],
     queryFn:  () => stockApi.getInventory(warehouse!.id),
     enabled:  !!warehouse?.id,
   })
+
+  const filteredClients = clients.filter((c) => {
+    const q = clientPickerSearch.trim().toLowerCase()
+    if (!q) return true
+    return [c.name, c.businessNo, c.phone, c.contactName, c.managerName]
+      .filter(Boolean)
+      .some((v) => String(v).toLowerCase().includes(q))
+  }).slice(0, 50)
+
+  const filteredLocations = allLocations.filter((l) => {
+    const q = locationPickerSearch.trim().toLowerCase()
+    if (!q) return true
+    return [l.code, l.aisle, l.rack, l.shelf, l.bin]
+      .filter(Boolean)
+      .some((v) => String(v).toLowerCase().includes(q))
+  }).slice(0, 80)
+
+  const selectedClientLabel = selectedClient?.name
+    ?? clients.find((c) => c.id === form.clientId)?.name
+    ?? ''
+
+  const selectedLocationLabel = selectedLocation?.code
+    ?? allLocations.find((l) => l.id === form.locationId)?.code
+    ?? ''
 
   const createMutation = useMutation({
     mutationFn: () => productApi.create(form),
@@ -177,6 +226,8 @@ export default function ProductMasterPage() {
       qc.invalidateQueries({ queryKey: ['products'] })
       setShowAdd(false)
       setForm(EMPTY_FORM)
+      setSelectedClient(null)
+      setSelectedLocation(null)
       toast.success('상품이 등록되었습니다')
     },
     onError: () => toast.error('등록 실패 (코드 중복 또는 오류)'),
@@ -315,7 +366,12 @@ export default function ProductMasterPage() {
             onImported={() => qc.invalidateQueries({ queryKey: ['products'] })}
           />
           <button
-            onClick={() => { setShowAdd(true); setForm(EMPTY_FORM) }}
+            onClick={() => {
+              setShowAdd(true)
+              setForm(EMPTY_FORM)
+              setSelectedClient(null)
+              setSelectedLocation(null)
+            }}
             className="flex items-center gap-1.5 px-3 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors shadow-sm shadow-indigo-500/20"
           >
             <Plus size={14} /><span className="hidden sm:inline">상품 추가</span>
@@ -516,99 +572,194 @@ export default function ProductMasterPage() {
       {/* Add modal */}
       {showAdd && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-lg border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92vh] overflow-y-auto border border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 dark:border-gray-700">
               <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
                 <Package size={16} className="text-emerald-600 dark:text-emerald-400" />
               </div>
-              <h3 className="font-semibold text-gray-900 dark:text-white flex-1">새 상품 등록</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white flex-1">상품 등록</h3>
               <button
-                onClick={() => setShowAdd(false)}
+                onClick={() => {
+                  setShowAdd(false)
+                  setSelectedClient(null)
+                  setSelectedLocation(null)
+                }}
                 className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400"
               >
                 <X size={16} />
               </button>
             </div>
-            <div className="p-6 space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">상품코드 *</label>
-                  <input
-                    autoFocus
-                    placeholder="PRD-001"
-                    value={form.code}
-                    onChange={(e) => setForm((p) => ({ ...p, code: e.target.value }))}
-                    className={inputCls}
-                  />
+            <div className="p-6 space-y-5">
+              <section>
+                <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">기본 정보</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">상품코드 *</label>
+                    <input autoFocus placeholder="PRD-001" value={form.code}
+                      onChange={(e) => setForm((p) => ({ ...p, code: e.target.value }))}
+                      className={inputCls} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">상품명 *</label>
+                    <input placeholder="상품명" value={form.name}
+                      onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+                      className={inputCls} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">규격</label>
+                    <input placeholder="규격" value={form.spec}
+                      onChange={(e) => setForm((p) => ({ ...p, spec: e.target.value }))}
+                      className={inputCls} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">자재번호</label>
+                    <input placeholder="자재번호" value={form.materialNo}
+                      onChange={(e) => setForm((p) => ({ ...p, materialNo: e.target.value }))}
+                      className={inputCls} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">카테고리</label>
+                    <input placeholder="카테고리" value={form.category}
+                      onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
+                      className={inputCls} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">거래처</label>
+                    <button
+                      type="button"
+                      onClick={() => { setClientPickerSearch(''); setShowClientPicker(true) }}
+                      className={cn(inputCls, 'w-full flex items-center justify-between gap-2 text-left cursor-pointer', form.clientId ? '' : 'text-gray-400 dark:text-gray-500')}
+                    >
+                      <span className="truncate">{form.clientId ? (selectedClientLabel || '거래처 선택...') : '거래처 선택...'}</span>
+                      <Search size={13} className="shrink-0 text-gray-400" />
+                    </button>
+                    {form.clientId && (
+                      <button
+                        type="button"
+                        onClick={() => { setSelectedClient(null); setForm((p) => ({ ...p, clientId: '' })) }}
+                        className="mt-1 flex items-center gap-1 text-xs text-gray-400 hover:text-rose-500 transition-colors"
+                      >
+                        <X size={11} /> 선택 해제
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">상품명 *</label>
-                  <input
-                    placeholder="상품명"
-                    value={form.name}
-                    onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-                    className={inputCls}
-                  />
+              </section>
+
+              <section className="border-t border-gray-100 dark:border-gray-700 pt-4">
+                <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">수량 / 위치</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">단위</label>
+                    <select value={form.unit} onChange={(e) => setForm((p) => ({ ...p, unit: e.target.value }))} className={inputCls}>
+                      {unitOptions.length > 0
+                        ? unitOptions.map((u) => <option key={u.id} value={u.code}>{u.code}{u.label ? ` (${u.label})` : ''}</option>)
+                        : ['EA', 'BOX', 'PALLET'].map((u) => <option key={u} value={u}>{u}</option>)
+                      }
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">박스당 낱개 수량</label>
+                    <input type="number" min={1} value={form.boxQty}
+                      onChange={(e) => setForm((p) => ({ ...p, boxQty: +e.target.value }))}
+                      className={inputCls} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">안전재고</label>
+                    <input type="number" min={0} value={form.safetyStock}
+                      onChange={(e) => setForm((p) => ({ ...p, safetyStock: +e.target.value }))}
+                      className={inputCls} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">재주문점</label>
+                    <input type="number" min={0} value={form.reorderPoint}
+                      onChange={(e) => setForm((p) => ({ ...p, reorderPoint: +e.target.value }))}
+                      className={inputCls} />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">보관위치</label>
+                    <button
+                      type="button"
+                      onClick={() => { setLocationPickerSearch(''); setShowLocationPicker(true) }}
+                      className={cn(inputCls, 'w-full flex items-center justify-between gap-2 text-left cursor-pointer', form.locationId ? '' : 'text-gray-400 dark:text-gray-500')}
+                    >
+                      <span className="truncate">{form.locationId ? (selectedLocationLabel || '위치 선택...') : '위치 선택...'}</span>
+                      <MapPin size={13} className="shrink-0 text-gray-400" />
+                    </button>
+                    {form.locationId && (
+                      <button
+                        type="button"
+                        onClick={() => { setSelectedLocation(null); setForm((p) => ({ ...p, locationId: '' })) }}
+                        className="mt-1 flex items-center gap-1 text-xs text-gray-400 hover:text-rose-500 transition-colors"
+                      >
+                        <X size={11} /> 선택 해제
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">카테고리</label>
-                  <input
-                    placeholder="카테고리"
-                    value={form.category}
-                    onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
-                    className={inputCls}
-                  />
+              </section>
+
+              <section className="border-t border-gray-100 dark:border-gray-700 pt-4">
+                <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">가격 정보</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">원가</label>
+                    <input type="number" min={0} value={form.costPrice}
+                      onChange={(e) => setForm((p) => ({ ...p, costPrice: +e.target.value }))}
+                      className={inputCls} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">판매가</label>
+                    <input type="number" min={0} value={form.sellPrice}
+                      onChange={(e) => setForm((p) => ({ ...p, sellPrice: +e.target.value }))}
+                      className={inputCls} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">소매단가</label>
+                    <input type="number" min={0} value={form.retailPrice}
+                      onChange={(e) => setForm((p) => ({ ...p, retailPrice: +e.target.value }))}
+                      className={inputCls} />
+                  </div>
+                  {(['priceA', 'priceB', 'priceC'] as const).map((key) => (
+                    <div key={key}>
+                      <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">
+                        {key === 'priceA' ? 'A 단가' : key === 'priceB' ? 'B 단가' : 'C 단가'}
+                      </label>
+                      <input type="number" min={0} value={form[key]}
+                        onChange={(e) => setForm((p) => ({ ...p, [key]: +e.target.value }))}
+                        className={inputCls} />
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">단위</label>
-                  <select
-                    value={form.unit}
-                    onChange={(e) => setForm((p) => ({ ...p, unit: e.target.value }))}
-                    className={inputCls}
-                  >
-                    {unitOptions.length > 0
-                      ? unitOptions.map((u) => <option key={u.id} value={u.code}>{u.code} — {u.label}</option>)
-                      : ['EA', 'BOX', 'PALLET'].map((u) => <option key={u} value={u}>{u}</option>)
-                    }
-                  </select>
+              </section>
+
+              <section className="border-t border-gray-100 dark:border-gray-700 pt-4">
+                <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">상태 & 메모</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">판매 상태</label>
+                    <select value={form.saleStatus} onChange={(e) => setForm((p) => ({ ...p, saleStatus: e.target.value as SaleStatus }))} className={inputCls}>
+                      {Object.entries(SALE_STATUS_LABEL).map(([k, v]) => (
+                        <option key={k} value={k}>{v}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">메모</label>
+                    <textarea rows={3} placeholder="메모 입력..." value={form.memo}
+                      onChange={(e) => setForm((p) => ({ ...p, memo: e.target.value }))}
+                      className={cn(inputCls, 'resize-none')} />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">박스 입수</label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={form.boxQty}
-                    onChange={(e) => setForm((p) => ({ ...p, boxQty: +e.target.value }))}
-                    className={inputCls}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">판매가</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={form.sellPrice}
-                    onChange={(e) => setForm((p) => ({ ...p, sellPrice: +e.target.value }))}
-                    className={inputCls}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">판매 상태</label>
-                  <select
-                    value={form.saleStatus}
-                    onChange={(e) => setForm((p) => ({ ...p, saleStatus: e.target.value as SaleStatus }))}
-                    className={inputCls}
-                  >
-                    {Object.entries(SALE_STATUS_LABEL).map(([k, v]) => (
-                      <option key={k} value={k}>{v}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+              </section>
             </div>
             <div className="flex gap-3 px-6 pb-6">
               <button
-                onClick={() => setShowAdd(false)}
+                onClick={() => {
+                  setShowAdd(false)
+                  setSelectedClient(null)
+                  setSelectedLocation(null)
+                }}
                 className="flex-1 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
               >
                 취소
@@ -620,6 +771,116 @@ export default function ProductMasterPage() {
               >
                 {createMutation.isPending ? '등록 중...' : '등록'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showClientPicker && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/45 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
+            <div className="flex items-center gap-3 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300">
+                <Building2 size={16} />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white">거래처 선택</h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{filteredClients.length}개 표시</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowClientPicker(false)}
+                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="p-4">
+              <div className="relative mb-3">
+                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  autoFocus
+                  value={clientPickerSearch}
+                  onChange={(e) => setClientPickerSearch(e.target.value)}
+                  placeholder="거래처명, 담당자, 전화번호 검색"
+                  className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-800 outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:focus:ring-indigo-900/40"
+                />
+              </div>
+              <div className="max-h-72 overflow-y-auto space-y-1">
+                {filteredClients.length === 0 ? (
+                  <div className="py-8 text-center text-sm text-gray-400">검색 결과가 없습니다.</div>
+                ) : filteredClients.map((client) => (
+                  <button
+                    key={client.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedClient(client)
+                      setForm((p) => ({ ...p, clientId: client.id }))
+                      setShowClientPicker(false)
+                    }}
+                    className="w-full rounded-xl px-3 py-2.5 text-left hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                  >
+                    <div className="text-sm font-semibold text-gray-900 dark:text-white">{client.name}</div>
+                    <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{client.phone || client.email || '-'}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showLocationPicker && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/45 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
+            <div className="flex items-center gap-3 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300">
+                <MapPin size={16} />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white">보관위치 선택</h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{filteredLocations.length}개 표시</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowLocationPicker(false)}
+                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="p-4">
+              <div className="relative mb-3">
+                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  autoFocus
+                  value={locationPickerSearch}
+                  onChange={(e) => setLocationPickerSearch(e.target.value)}
+                  placeholder="위치코드, Aisle, Rack, Shelf 검색"
+                  className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-800 outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:focus:ring-indigo-900/40"
+                />
+              </div>
+              <div className="max-h-72 overflow-y-auto space-y-1">
+                {filteredLocations.length === 0 ? (
+                  <div className="py-8 text-center text-sm text-gray-400">등록된 위치가 없습니다.</div>
+                ) : filteredLocations.map((location) => (
+                  <button
+                    key={location.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedLocation(location)
+                      setForm((p) => ({ ...p, locationId: location.id }))
+                      setShowLocationPicker(false)
+                    }}
+                    className="w-full rounded-xl px-3 py-2.5 text-left hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                  >
+                    <div className="text-sm font-semibold text-gray-900 dark:text-white">{location.code}</div>
+                    <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                      {[location.aisle, location.rack, location.shelf, location.bin].filter(Boolean).join(' / ') || '-'}
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>

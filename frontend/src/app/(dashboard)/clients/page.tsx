@@ -1,12 +1,23 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Building2, Mail, Pencil, Phone, Plus, Search, Trash2, X } from 'lucide-react'
+import { Building2, Mail, MapPin, Pencil, Phone, Plus, Search, Trash2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { clientApi } from '@/api/client.api'
 import { formatDateTime, formatNumber } from '@/utils/format'
+import { cn } from '@/utils/cn'
 import type { Client } from '@/types/api.types'
+
+declare global {
+  interface Window {
+    daum?: {
+      Postcode: new (opts: {
+        oncomplete: (data: { zonecode: string; roadAddress: string; jibunAddress: string }) => void
+      }) => { open: () => void }
+    }
+  }
+}
 
 const today = () => new Date().toISOString().slice(0, 10)
 
@@ -41,37 +52,6 @@ const EMPTY_FORM = {
   memo: '',
 }
 
-const TEMP_CLIENT_DATA: FormState = {
-  name: '테스트 거래처',
-  customerType: '매출처',
-  salesperson: '홍길동',
-  businessNo: '123-45-67890',
-  ceoName: '김대표',
-  industry: '도소매',
-  sector: '전자부품',
-  phone: '02-1234-5678',
-  mobile: '010-9876-5432',
-  fax: '02-8765-4321',
-  postalCode: '04524',
-  address: '서울특별시 중구 세종대로 110',
-  addressDetail: '10층',
-  contactName: '박담당자',
-  honorific: '귀하',
-  email: 'test-client@example.com',
-  website: 'https://example.com',
-  employeeCount: 25,
-  pricePolicy: '도매단가',
-  taxType: '부가세별도',
-  discountRate: 10,
-  initialReceivable: 500000,
-  unpaidOnly: true,
-  registrationDate: today(),
-  managementNo: 'MGR-2026-001',
-  managerName: '박담당자',
-  managerTitle: '영업팀장',
-  memo: '임시 테스트용 거래처입니다.',
-}
-
 type FormState = typeof EMPTY_FORM
 
 function toNumber(value: unknown) {
@@ -79,20 +59,16 @@ function toNumber(value: unknown) {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
-function Field({
-  label,
-  children,
-  className = '',
-}: {
-  label: string
-  children: React.ReactNode
-  className?: string
-}) {
+const inputCls =
+  'w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-shadow'
+const labelCls = 'block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1'
+
+function Field({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
-    <label className={`grid grid-cols-[92px_1fr] items-center gap-2 text-[12px] text-gray-700 ${className}`}>
-      <span className="text-right font-medium">{label}</span>
+    <div className={className}>
+      <label className={labelCls}>{label}</label>
       {children}
-    </label>
+    </div>
   )
 }
 
@@ -104,6 +80,16 @@ export default function ClientsPage() {
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Client | null>(null)
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
+  const postcodeScriptLoaded = useRef(false)
+
+  useEffect(() => {
+    if (postcodeScriptLoaded.current) return
+    const script = document.createElement('script')
+    script.src = 'https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js'
+    script.async = true
+    script.onload = () => { postcodeScriptLoaded.current = true }
+    document.head.appendChild(script)
+  }, [])
 
   const { data, isLoading } = useQuery({
     queryKey: ['clients', { search, page }],
@@ -145,10 +131,7 @@ export default function ClientsPage() {
     },
   })
 
-  const commitSearch = () => {
-    setSearch(searchInput)
-    setPage(1)
-  }
+  const commitSearch = () => { setSearch(searchInput); setPage(1) }
 
   const openCreate = () => {
     setEditing(null)
@@ -191,10 +174,6 @@ export default function ClientsPage() {
     setShowModal(true)
   }
 
-  const fillTemporaryData = () => {
-    setForm(TEMP_CLIENT_DATA)
-  }
-
   const closeModal = () => {
     setShowModal(false)
     setEditing(null)
@@ -206,11 +185,25 @@ export default function ClientsPage() {
     deleteMutation.mutate(client.id)
   }
 
-  const setValue = <K extends keyof FormState>(key: K, value: FormState[K]) =>
+  const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }))
 
-  const inputCls = 'h-7 w-full border border-gray-400 bg-white px-2 text-[12px] text-gray-900 outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-500'
-  const selectCls = `${inputCls} pr-6`
+  const openAddressSearch = () => {
+    if (!window.daum?.Postcode) {
+      toast.error('주소검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.')
+      return
+    }
+    new window.daum.Postcode({
+      oncomplete: (data) => {
+        setForm((prev) => ({
+          ...prev,
+          postalCode: data.zonecode,
+          address: data.roadAddress || data.jibunAddress,
+          addressDetail: '',
+        }))
+      },
+    }).open()
+  }
 
   return (
     <div className="space-y-4">
@@ -221,26 +214,24 @@ export default function ClientsPage() {
         </div>
         <button
           onClick={openCreate}
-          className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white shadow-sm shadow-indigo-500/20 transition-colors hover:bg-indigo-700"
+          className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white shadow-sm shadow-indigo-500/20 transition-colors hover:bg-indigo-700"
         >
           <Plus size={15} />거래처 등록
         </button>
       </div>
 
       <div className="flex gap-2 rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <div className="relative flex flex-1 gap-1.5">
-          <div className="relative flex-1">
-            <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
-              onKeyDown={(event) => event.key === 'Enter' && commitSearch()}
-              placeholder="거래처명, 사업자번호, 담당자, 연락처 검색"
-              className="w-full rounded-xl border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
-            />
-          </div>
-          <button onClick={commitSearch} className="rounded-xl bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700">검색</button>
+        <div className="relative flex-1">
+          <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && commitSearch()}
+            placeholder="거래처명, 사업자번호, 담당자, 연락처 검색"
+            className="w-full rounded-xl border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+          />
         </div>
+        <button onClick={commitSearch} className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700">검색</button>
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
@@ -248,12 +239,12 @@ export default function ClientsPage() {
           <table className="w-full min-w-[780px] text-sm">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50/80 dark:border-gray-700 dark:bg-gray-800/60">
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500">상호명/고객</th>
-                <th className="hidden px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 md:table-cell">사업자번호</th>
-                <th className="hidden px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 lg:table-cell">대표자</th>
-                <th className="hidden px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 lg:table-cell">업태/종목</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500">연락처</th>
-                <th className="hidden px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 xl:table-cell">등록일</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">상호명</th>
+                <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 md:table-cell">사업자번호</th>
+                <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 lg:table-cell">대표자</th>
+                <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 lg:table-cell">업태/종목</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">연락처</th>
+                <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 xl:table-cell">등록일</th>
                 <th className="w-20 px-4 py-3" />
               </tr>
             </thead>
@@ -271,7 +262,10 @@ export default function ClientsPage() {
                 <tr key={client.id} className="group transition-colors hover:bg-gray-50/60 dark:hover:bg-gray-800/40">
                   <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
                     {client.name}
-                    {client.address && <p className="max-w-[240px] truncate text-xs text-gray-400">{client.address}</p>}
+                    {client.customerType && (
+                      <span className="ml-2 rounded-full bg-indigo-50 px-2 py-0.5 text-xs text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400">{client.customerType}</span>
+                    )}
+                    {client.address && <p className="mt-0.5 max-w-[240px] truncate text-xs text-gray-400">{client.address}</p>}
                   </td>
                   <td className="hidden px-4 py-3 text-gray-600 dark:text-gray-400 md:table-cell">{client.businessNo || '-'}</td>
                   <td className="hidden px-4 py-3 text-gray-600 dark:text-gray-400 lg:table-cell">{client.ceoName || '-'}</td>
@@ -303,13 +297,16 @@ export default function ClientsPage() {
 
         {data && data.totalPages > 1 && (
           <div className="flex items-center justify-center gap-1 border-t border-gray-100 px-4 py-3 dark:border-gray-800">
-            {Array.from({ length: data.totalPages }, (_, index) => index + 1).map((n) => (
+            {Array.from({ length: data.totalPages }, (_, i) => i + 1).map((n) => (
               <button
                 key={n}
                 onClick={() => setPage(n)}
-                className={`h-8 w-8 rounded-lg text-sm transition-colors ${n === page ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'}`}
+                className={cn(
+                  'h-8 w-8 rounded-lg text-sm transition-colors',
+                  n === page ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800',
+                )}
               >
-                {formatNumber(n)}
+                {n}
               </button>
             ))}
           </div>
@@ -317,183 +314,253 @@ export default function ClientsPage() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/45 p-4 pt-10">
-          <div className="w-full max-w-[780px] border border-gray-500 bg-[#f0f0ec] shadow-2xl">
-            <div className="flex h-10 items-center justify-between bg-[#7a7a78] px-3 text-white">
-              <div className="flex items-center gap-2 text-sm font-semibold">
-                <Building2 size={18} />
-                고객/거래처 등록 및 수정
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-2xl bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-700">
+            {/* 헤더 */}
+            <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-900 z-10">
+              <div className={cn(
+                'w-9 h-9 rounded-xl flex items-center justify-center shrink-0',
+                editing ? 'bg-indigo-100 dark:bg-indigo-900/30' : 'bg-emerald-100 dark:bg-emerald-900/30',
+              )}>
+                <Building2 size={16} className={editing ? 'text-indigo-600 dark:text-indigo-400' : 'text-emerald-600 dark:text-emerald-400'} />
               </div>
-              <button onClick={closeModal} className="flex h-7 items-center gap-1 border border-gray-500 bg-[#ececec] px-3 text-xs font-semibold text-gray-900 hover:bg-white">
-                <X size={14} />닫기(F12)
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900 dark:text-white">
+                  {editing ? `${editing.name} 수정` : '거래처 등록'}
+                </h3>
+                <p className="text-xs text-gray-400 mt-0.5">{editing ? '거래처 정보를 수정합니다' : '새 거래처를 등록합니다'}</p>
+              </div>
+              <button onClick={closeModal} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-200 transition-colors">
+                <X size={16} />
               </button>
             </div>
 
             <form
-              onSubmit={(event) => {
-                event.preventDefault()
+              onSubmit={(e) => {
+                e.preventDefault()
                 editing ? updateMutation.mutate() : createMutation.mutate()
               }}
-              className="px-7 py-5"
+              className="p-6 space-y-6"
             >
-              <div className="space-y-2">
-                <div className="grid grid-cols-2 gap-x-8 gap-y-1">
-                  <Field label="고객/거래처">
-                    <input autoFocus required value={form.name} onChange={(event) => setValue('name', event.target.value)} className={`${inputCls} bg-blue-100`} />
+              {/* ── 기본 정보 ── */}
+              <section>
+                <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">기본 정보</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="거래처명 *" className="col-span-2 sm:col-span-1">
+                    <input
+                      autoFocus
+                      required
+                      value={form.name}
+                      onChange={(e) => set('name', e.target.value)}
+                      className={cn(inputCls, 'bg-indigo-50/50 dark:bg-indigo-900/10 border-indigo-200 dark:border-indigo-800 font-medium')}
+                      placeholder="거래처명을 입력하세요"
+                    />
                   </Field>
                   <Field label="고객분류">
-                    <select value={form.customerType} onChange={(event) => setValue('customerType', event.target.value)} className={selectCls}>
+                    <select value={form.customerType} onChange={(e) => set('customerType', e.target.value)} className={inputCls}>
                       <option value="">선택</option>
-                      <option value="매출처">매출처</option>
-                      <option value="매입처">매입처</option>
-                      <option value="매출/매입처">매출/매입처</option>
+                      <option>매출처</option>
+                      <option>매입처</option>
+                      <option>매출/매입처</option>
                     </select>
                   </Field>
                   <Field label="대표전화">
-                    <input value={form.phone} onChange={(event) => setValue('phone', event.target.value)} className={inputCls} />
+                    <input value={form.phone} onChange={(e) => set('phone', e.target.value)} className={inputCls} placeholder="02-0000-0000" />
                   </Field>
                   <Field label="영업사원">
-                    <input value={form.salesperson} onChange={(event) => setValue('salesperson', event.target.value)} className={inputCls} />
+                    <input value={form.salesperson} onChange={(e) => set('salesperson', e.target.value)} className={inputCls} />
                   </Field>
                   <Field label="휴대폰">
-                    <input value={form.mobile} onChange={(event) => setValue('mobile', event.target.value)} className={inputCls} />
+                    <input value={form.mobile} onChange={(e) => set('mobile', e.target.value)} className={inputCls} placeholder="010-0000-0000" />
                   </Field>
                   <Field label="팩스번호">
-                    <input value={form.fax} onChange={(event) => setValue('fax', event.target.value)} className={inputCls} />
+                    <input value={form.fax} onChange={(e) => set('fax', e.target.value)} className={inputCls} placeholder="02-0000-0000" />
+                  </Field>
+                  <Field label="참고사항" className="col-span-2">
+                    <input value={form.managerTitle} onChange={(e) => set('managerTitle', e.target.value)} className={inputCls} />
                   </Field>
                 </div>
+              </section>
 
-                <Field label="참고사항" className="grid-cols-[92px_1fr]">
-                  <input value={form.managerTitle} onChange={(event) => setValue('managerTitle', event.target.value)} className={inputCls} />
-                </Field>
-
-                <div className="my-2 border-t border-gray-400" />
-
-                <div className="grid grid-cols-2 gap-x-8 gap-y-1">
-                  <Field label="사업자No">
-                    <input value={form.businessNo} onChange={(event) => setValue('businessNo', event.target.value)} className={inputCls} />
+              {/* ── 사업자 정보 ── */}
+              <section className="border-t border-gray-100 dark:border-gray-700 pt-5">
+                <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">사업자 정보</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="사업자번호">
+                    <input value={form.businessNo} onChange={(e) => set('businessNo', e.target.value)} className={inputCls} placeholder="000-00-00000" />
                   </Field>
-                  <div className="grid grid-cols-[92px_1fr_48px_1fr] items-center gap-2 text-[12px] text-gray-700">
-                    <span className="text-right font-medium">대표자명</span>
-                    <input value={form.ceoName} onChange={(event) => setValue('ceoName', event.target.value)} className={inputCls} />
-                    <span className="text-right font-medium">종사업</span>
-                    <input value={form.managementNo} onChange={(event) => setValue('managementNo', event.target.value)} className={inputCls} />
+                  <Field label="종사업장번호">
+                    <input value={form.managementNo} onChange={(e) => set('managementNo', e.target.value)} className={inputCls} />
+                  </Field>
+                  <Field label="대표자명">
+                    <input value={form.ceoName} onChange={(e) => set('ceoName', e.target.value)} className={inputCls} />
+                  </Field>
+                  <div className="grid grid-cols-2 gap-3 col-span-1">
+                    <Field label="업태">
+                      <input value={form.industry} onChange={(e) => set('industry', e.target.value)} className={inputCls} />
+                    </Field>
+                    <Field label="종목">
+                      <input value={form.sector} onChange={(e) => set('sector', e.target.value)} className={inputCls} />
+                    </Field>
                   </div>
-                  <Field label="업태">
-                    <input value={form.industry} onChange={(event) => setValue('industry', event.target.value)} className={inputCls} />
+                </div>
+              </section>
+
+              {/* ── 주소 정보 ── */}
+              <section className="border-t border-gray-100 dark:border-gray-700 pt-5">
+                <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">주소 정보</p>
+                <div className="space-y-3">
+                  <div>
+                    <label className={labelCls}>우편번호</label>
+                    <div className="flex gap-2">
+                      <input
+                        value={form.postalCode}
+                        onChange={(e) => set('postalCode', e.target.value)}
+                        className={cn(inputCls, 'w-32')}
+                        placeholder="00000"
+                        readOnly
+                      />
+                      <button
+                        type="button"
+                        onClick={openAddressSearch}
+                        className="flex items-center gap-1.5 px-4 rounded-xl border border-indigo-300 bg-indigo-50 text-indigo-600 text-sm font-medium hover:bg-indigo-100 dark:bg-indigo-900/30 dark:border-indigo-700 dark:text-indigo-400 dark:hover:bg-indigo-900/50 transition-colors"
+                      >
+                        <MapPin size={14} />
+                        주소 검색
+                      </button>
+                    </div>
+                  </div>
+                  <Field label="업체주소">
+                    <input
+                      value={form.address}
+                      onChange={(e) => set('address', e.target.value)}
+                      className={inputCls}
+                      placeholder="주소 검색 버튼을 이용하거나 직접 입력"
+                    />
                   </Field>
-                  <Field label="종목">
-                    <input value={form.sector} onChange={(event) => setValue('sector', event.target.value)} className={inputCls} />
+                  <Field label="상세주소">
+                    <input
+                      value={form.addressDetail}
+                      onChange={(e) => set('addressDetail', e.target.value)}
+                      className={inputCls}
+                      placeholder="동, 호수 등 상세주소"
+                    />
                   </Field>
                 </div>
+              </section>
 
-                <div className="grid grid-cols-[92px_130px_1fr] items-center gap-2 text-[12px] text-gray-700">
-                  <span className="text-right font-medium">주소검색</span>
-                  <input value={form.postalCode} onChange={(event) => setValue('postalCode', event.target.value)} className={inputCls} />
-                  <span className="text-gray-700">(도로명+건물번호나, 읍/동/면을 입력요망.)</span>
-                </div>
-                <Field label="업체주소">
-                  <input value={form.address} onChange={(event) => setValue('address', event.target.value)} className={inputCls} />
-                </Field>
-                <Field label="상세주소">
-                  <input value={form.addressDetail} onChange={(event) => setValue('addressDetail', event.target.value)} className={inputCls} />
-                </Field>
-
-                <div className="my-2 border-t border-gray-400" />
-
-                <div className="grid grid-cols-2 gap-x-8 gap-y-1">
-                  <Field label="받는이">
-                    <input value={form.contactName} onChange={(event) => { setValue('contactName', event.target.value); setValue('managerName', event.target.value) }} className={inputCls} />
+              {/* ── 담당자 정보 ── */}
+              <section className="border-t border-gray-100 dark:border-gray-700 pt-5">
+                <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">담당자 정보</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="받는이(담당자)">
+                    <input
+                      value={form.contactName}
+                      onChange={(e) => { set('contactName', e.target.value); set('managerName', e.target.value) }}
+                      className={inputCls}
+                    />
                   </Field>
                   <Field label="존칭어">
-                    <select value={form.honorific} onChange={(event) => setValue('honorific', event.target.value)} className={selectCls}>
-                      <option value="귀하">귀하</option>
-                      <option value="님">님</option>
-                      <option value="담당자님">담당자님</option>
+                    <select value={form.honorific} onChange={(e) => set('honorific', e.target.value)} className={inputCls}>
+                      <option>귀하</option>
+                      <option>님</option>
+                      <option>담당자님</option>
                     </select>
                   </Field>
+                  <Field label="이메일">
+                    <input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} className={inputCls} placeholder="example@email.com" />
+                  </Field>
+                  <Field label="홈페이지">
+                    <input value={form.website} onChange={(e) => set('website', e.target.value)} className={inputCls} placeholder="https://" />
+                  </Field>
                 </div>
-                <Field label="E-MAIL">
-                  <input type="email" value={form.email} onChange={(event) => setValue('email', event.target.value)} className={inputCls} />
-                </Field>
-                <Field label="홈페이지">
-                  <input value={form.website} onChange={(event) => setValue('website', event.target.value)} className={inputCls} />
-                </Field>
+              </section>
 
-                <div className="my-2 border-t border-gray-400" />
-
-                <div className="grid grid-cols-2 gap-x-8 gap-y-1">
-                  <Field label="업체직원">
-                    <input type="number" min={0} value={form.employeeCount} onChange={(event) => setValue('employeeCount', toNumber(event.target.value))} className={inputCls} />
+              {/* ── 거래 정보 ── */}
+              <section className="border-t border-gray-100 dark:border-gray-700 pt-5">
+                <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">거래 정보</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="가격등급">
+                    <select value={form.pricePolicy} onChange={(e) => set('pricePolicy', e.target.value)} className={inputCls}>
+                      <option>매출단가적용</option>
+                      <option>도매단가</option>
+                      <option>소매단가</option>
+                    </select>
                   </Field>
                   <Field label="세액기준">
-                    <select value={form.taxType} onChange={(event) => setValue('taxType', event.target.value)} className={selectCls}>
-                      <option value="부가세없음">부가세없음</option>
-                      <option value="부가세별도">부가세별도</option>
-                      <option value="부가세포함">부가세포함</option>
+                    <select value={form.taxType} onChange={(e) => set('taxType', e.target.value)} className={inputCls}>
+                      <option>부가세없음</option>
+                      <option>부가세별도</option>
+                      <option>부가세포함</option>
                     </select>
                   </Field>
-                  <Field label="가격등급">
-                    <select value={form.pricePolicy} onChange={(event) => setValue('pricePolicy', event.target.value)} className={selectCls}>
-                      <option value="매출단가적용">매출단가적용</option>
-                      <option value="도매단가">도매단가</option>
-                      <option value="소매단가">소매단가</option>
-                    </select>
+                  <Field label="할인율 (%)">
+                    <input type="number" min={0} max={100} value={form.discountRate} onChange={(e) => set('discountRate', toNumber(e.target.value))} className={inputCls} />
                   </Field>
-                  <Field label="할인적용">
-                    <div className="flex items-center gap-1">
-                      <input type="number" min={0} value={form.discountRate} onChange={(event) => setValue('discountRate', toNumber(event.target.value))} className={`${inputCls} text-right`} />
-                      <span>%</span>
-                    </div>
+                  <Field label="업체 직원수">
+                    <input type="number" min={0} value={form.employeeCount} onChange={(e) => set('employeeCount', toNumber(e.target.value))} className={inputCls} />
                   </Field>
-                  <Field label="초기미수">
-                    <input type="number" value={form.initialReceivable} onChange={(event) => setValue('initialReceivable', toNumber(event.target.value))} className={`${inputCls} text-right`} />
+                  <Field label="초기 미수금">
+                    <input type="number" value={form.initialReceivable} onChange={(e) => set('initialReceivable', toNumber(e.target.value))} className={inputCls} />
                   </Field>
-                  <label className="flex h-7 items-center gap-2 text-[12px] text-gray-700">
-                    <input type="checkbox" checked={form.unpaidOnly} onChange={(event) => setValue('unpaidOnly', event.target.checked)} />
-                    거래명세 미수금인쇄
-                  </label>
+                  <div className="flex items-end pb-0.5">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={form.unpaidOnly}
+                        onChange={(e) => set('unpaidOnly', e.target.checked)}
+                        className="w-4 h-4 rounded accent-indigo-600"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">거래명세 미수금 인쇄</span>
+                    </label>
+                  </div>
                 </div>
+              </section>
 
-                <div className="my-2 border-t border-gray-400" />
-
-                <div className="grid grid-cols-2 gap-x-8 gap-y-1">
+              {/* ── 관리 정보 ── */}
+              <section className="border-t border-gray-100 dark:border-gray-700 pt-5">
+                <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">관리 정보</p>
+                <div className="grid grid-cols-2 gap-3">
                   <Field label="등록일자">
-                    <input type="date" value={form.registrationDate} onChange={(event) => setValue('registrationDate', event.target.value)} className={inputCls} />
+                    <input type="date" value={form.registrationDate} onChange={(e) => set('registrationDate', e.target.value)} className={inputCls} />
                   </Field>
                   <Field label="관리번호">
-                    <input value={form.managementNo} onChange={(event) => setValue('managementNo', event.target.value)} className={`${inputCls} text-right`} />
+                    <input value={form.managementNo} onChange={(e) => set('managementNo', e.target.value)} className={inputCls} />
                   </Field>
                 </div>
+              </section>
 
-                <Field label="메모사항" className="items-start">
-                  <textarea value={form.memo} onChange={(event) => setValue('memo', event.target.value)} rows={5} className="w-full resize-none border border-gray-400 bg-white px-2 py-1 text-[12px] text-gray-900 outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-500" />
-                </Field>
-              </div>
+              {/* ── 메모 ── */}
+              <section className="border-t border-gray-100 dark:border-gray-700 pt-5">
+                <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">메모</p>
+                <textarea
+                  value={form.memo}
+                  onChange={(e) => set('memo', e.target.value)}
+                  rows={3}
+                  className={cn(inputCls, 'resize-none')}
+                  placeholder="메모를 입력하세요..."
+                />
+              </section>
 
-              <div className="mt-3 flex flex-col gap-2 border-t border-gray-400 pt-2 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-[12px] text-gray-500">고객/거래처명이 없을시 자동저장이 안됩니다.</p>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={fillTemporaryData}
-                    className="border border-gray-500 bg-white px-4 py-2 text-[12px] font-semibold hover:bg-gray-50"
-                  >
-                    임시 데이터 채우기
-                  </button>
-                  <button type="button" className="border border-gray-500 bg-[#ececec] px-4 py-2 text-[12px] font-semibold hover:bg-white">
-                    연속입력(F6)
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={createMutation.isPending || updateMutation.isPending}
-                    className="border border-gray-500 bg-[#ececec] px-5 py-2 text-[12px] font-semibold hover:bg-white disabled:opacity-50"
-                  >
-                    저장후 전표작성
-                  </button>
-                </div>
+              {/* 버튼 */}
+              <div className="flex justify-end gap-2 border-t border-gray-100 dark:border-gray-700 pt-4">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  disabled={createMutation.isPending || updateMutation.isPending}
+                  className="px-6 py-2.5 rounded-xl bg-indigo-600 text-sm font-semibold text-white shadow-sm shadow-indigo-500/20 hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                >
+                  {createMutation.isPending || updateMutation.isPending
+                    ? '저장 중...'
+                    : editing ? '수정 완료' : '거래처 등록'}
+                </button>
               </div>
-              <p className="mt-2 text-center text-[13px] font-bold text-red-600">한글자료 입력시, 꼭 엔터를 치시기바랍니다.</p>
             </form>
           </div>
         </div>

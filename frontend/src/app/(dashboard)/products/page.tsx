@@ -1,9 +1,11 @@
 'use client'
 import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Search, Package, Pencil, Trash2, Filter, X, FileText } from 'lucide-react'
+import { Plus, Search, Package, Pencil, Trash2, Filter, X, FileText, Building2, QrCode, Star, MapPin } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { productApi, unitApi } from '@/api/product.api'
+import { clientApi } from '@/api/client.api'
+import { warehouseApi } from '@/api/warehouse.api'
 import { QUERY_KEYS } from '@/constants/query-keys'
 import { SALE_STATUS_LABEL } from '@/constants/stock.constants'
 import { formatNumber, formatDateTime } from '@/utils/format'
@@ -14,18 +16,19 @@ import { ImportButton } from '@/components/ImportButton'
 import { useAuthStore } from '@/stores/auth.store'
 import { useMenuPermissionStore } from '@/stores/menu-permission.store'
 import { useSupplierInfoStore } from '@/stores/supplier-info.store'
+import { useWarehouseStore } from '@/stores/warehouse.store'
 import { printQuoteDocument } from '@/utils/printDocument'
-import type { Product, SaleStatus, Barcode, ProductUnit } from '@/types/api.types'
+import type { Product, SaleStatus, Barcode, ProductUnit, Client, Location, BarcodeUnitType } from '@/types/api.types'
 
 const EMPTY_PRODUCT_FORM = {
   code: '',
   name: '',
   category: '',
-  brand: '',
+  clientId:   '',
+  locationId: '',
   unit: 'EA',
   spec: '',
   materialNo: '',
-  location: '',
   boxQty: 1,
   safetyStock: 0,
   reorderPoint: 0,
@@ -39,6 +42,10 @@ const EMPTY_PRODUCT_FORM = {
   saleStatus: 'ACTIVE' as SaleStatus,
 }
 
+const PAGE_SIZE = 10
+
+type ClientOption = Pick<Client, 'id' | 'name' | 'phone' | 'email'>
+
 const STATUS_STYLE: Record<SaleStatus, string> = {
   ACTIVE:       'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:ring-emerald-800',
   INACTIVE:     'bg-amber-50 text-amber-700 ring-1 ring-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:ring-amber-800',
@@ -46,8 +53,12 @@ const STATUS_STYLE: Record<SaleStatus, string> = {
 }
 
 const getBoxStockQty = (product: Product) => {
+  return product.stockQty ?? 0
+}
+
+const getEachStockQty = (product: Product) => {
   const qtyPerBox = product.boxQty > 0 ? product.boxQty : 1
-  return Math.floor((product.stockQty ?? 0) / qtyPerBox)
+  return qtyPerBox * getBoxStockQty(product)
 }
 
 const getPrimaryBarcode = (barcodes?: Barcode[]) => {
@@ -66,6 +77,7 @@ const TD_CTR  = cn(TD_BASE, 'text-center text-gray-700 dark:text-gray-300')
 export default function ProductsPage() {
   const qc = useQueryClient()
   const me = useAuthStore((s) => s.user)
+  const warehouse = useWarehouseStore((s) => s.selectedWarehouse)
     const router = useRouter()
   const menus = useMenuPermissionStore((s) => s.menus)
   const supplierInfo = useSupplierInfoStore((s) => s.info)
@@ -77,10 +89,21 @@ export default function ProductsPage() {
   const [editing, setEditing]         = useState<Product | null>(null)
   const [form, setForm]               = useState(EMPTY_PRODUCT_FORM)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [showClientPicker, setShowClientPicker] = useState(false)
+  const [clientPickerSearch, setClientPickerSearch] = useState('')
+  const [selectedClient, setSelectedClient] = useState<ClientOption | null>(null)
+  const [showLocationPicker, setShowLocationPicker] = useState(false)
+  const [locationPickerSearch, setLocationPickerSearch] = useState('')
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null)
+  const [newBcVal, setNewBcVal]       = useState('')
+  const [newBcType, setNewBcType]     = useState<BarcodeUnitType>('UNIT')
+  const [newBcQty, setNewBcQty]       = useState(1)
+  const [newBcPrimary, setNewBcPrimary] = useState(false)
+  const [showAddBc, setShowAddBc]     = useState(false)
 
   const { data, isLoading } = useQuery({
-    queryKey: QUERY_KEYS.products({ search, status, page }),
-    queryFn:  () => productApi.findAll({ search: search || undefined, status: status as SaleStatus || undefined, page }),
+    queryKey: QUERY_KEYS.products({ search, status, page, limit: PAGE_SIZE }),
+    queryFn:  () => productApi.findAll({ search: search || undefined, status: status as SaleStatus || undefined, page, limit: PAGE_SIZE }),
     placeholderData: (prev) => prev,
   })
 
@@ -89,13 +112,90 @@ export default function ProductsPage() {
     queryFn:  () => unitApi.findAll(),
     placeholderData: [],
   })
+
+  const { data: barcodes = [], refetch: refetchBarcodes } = useQuery<Barcode[]>({
+    queryKey: ['product-barcodes', editing?.id],
+    queryFn:  () => productApi.findBarcodes(editing!.id),
+    enabled:  !!editing?.id,
+    placeholderData: [],
+  })
+
+  const addBarcodeMutation = useMutation({
+    mutationFn: () => productApi.addBarcode(editing!.id, { barcode: newBcVal.trim(), type: newBcType, unitQty: newBcQty, isPrimary: newBcPrimary }),
+    onSuccess: () => {
+      refetchBarcodes()
+      setNewBcVal(''); setNewBcType('UNIT'); setNewBcQty(1); setNewBcPrimary(false); setShowAddBc(false)
+      toast.success('바코드가 등록되었습니다')
+    },
+    onError: () => toast.error('바코드 추가 실패 (중복 또는 오류)'),
+  })
+
+  const delBarcodeMutation = useMutation({
+    mutationFn: (barcodeId: string) => productApi.deleteBarcode(editing!.id, barcodeId),
+    onSuccess: () => { refetchBarcodes(); toast.success('바코드가 삭제되었습니다') },
+  })
+
+  const { data: clients = [] } = useQuery<Client[]>({
+    queryKey: ['clients-all'],
+    queryFn:  () => clientApi.findAllActive(),
+    enabled:  showModal,
+    placeholderData: [],
+  })
+
+  const { data: allLocations = [] } = useQuery<Location[]>({
+    queryKey: ['locations-for-product-form', warehouse?.id],
+    queryFn:  () => warehouseApi.findLocations(warehouse!.id),
+    enabled:  showModal && !!warehouse?.id,
+    placeholderData: [],
+  })
+
+  const filteredClients = useMemo(() => {
+    const q = clientPickerSearch.trim().toLowerCase()
+    if (!q) return clients.slice(0, 50)
+    return clients.filter((c) =>
+      [c.name, c.businessNo, c.phone, c.contactName, c.managerName]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(q))
+    )
+  }, [clients, clientPickerSearch])
+
+  const filteredLocations = useMemo(() => {
+    const q = locationPickerSearch.trim().toLowerCase()
+    if (!q) return allLocations.slice(0, 80)
+    return allLocations.filter((l) =>
+      [l.code, l.aisle, l.rack, l.shelf, l.bin, l.zone?.name, l.zone?.code]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(q))
+    )
+  }, [allLocations, locationPickerSearch])
+
+  const selectedClientLabel = selectedClient?.name
+    ?? clients.find((c) => c.id === form.clientId)?.name
+    ?? (editing?.clientId === form.clientId ? editing?.client?.name : undefined)
+    ?? ''
+
+  const selectedLocationLabel = selectedLocation?.code
+    ?? allLocations.find((l) => l.id === form.locationId)?.code
+    ?? (editing?.locationId === form.locationId || editing?.defaultLocation?.id === form.locationId ? editing?.defaultLocation?.code : undefined)
+    ?? ''
+
   const canAccessQuotes = Boolean(me?.role && menus.find((m) => m.menuId === 'quotes')?.roles.includes(me.role))
+
+  const invalidateAll = () => {
+    qc.invalidateQueries({ queryKey: ['products'] })
+    qc.invalidateQueries({ queryKey: ['product'] })
+    qc.invalidateQueries({ queryKey: ['product-barcodes'] })
+    qc.invalidateQueries({ queryKey: ['inventory'] })
+    qc.invalidateQueries({ queryKey: QUERY_KEYS.products({ search, status, page, limit: PAGE_SIZE }) })
+  }
 
   const createMutation = useMutation({
     mutationFn: () => productApi.create({
-      code: form.code, name: form.name, category: form.category || undefined, brand: form.brand || undefined,
+      code: form.code, name: form.name, category: form.category || undefined,
+      clientId:   form.clientId   || undefined,
+      locationId: form.locationId || undefined,
       unit: form.unit, boxQty: form.boxQty, safetyStock: form.safetyStock, reorderPoint: form.reorderPoint,
-      spec: form.spec || undefined, materialNo: form.materialNo || undefined, location: form.location || undefined,
+      spec: form.spec || undefined, materialNo: form.materialNo || undefined,
       costPrice: form.costPrice || undefined, sellPrice: form.sellPrice || undefined,
       priceA: form.priceA || undefined, priceB: form.priceB || undefined,
       priceC: form.priceC || undefined, retailPrice: form.retailPrice || undefined,
@@ -103,26 +203,32 @@ export default function ProductsPage() {
     }),
     onSuccess: () => {
       toast.success('상품이 등록되었습니다')
-      qc.invalidateQueries({ queryKey: ['products'] })
+      invalidateAll()
       closeModal()
     },
+    onError: () => toast.error('상품 등록에 실패했습니다'),
   })
 
   const updateMutation = useMutation({
     mutationFn: () => productApi.update(editing!.id, {
-      name: form.name, category: form.category, brand: form.brand,
+      name: form.name, category: form.category,
+      clientId:     form.clientId   || undefined,
+      clearClient:  !form.clientId,
+      locationId:   form.locationId || undefined,
+      clearLocation: !form.locationId,
       unit: form.unit, boxQty: form.boxQty, safetyStock: form.safetyStock,
       reorderPoint: form.reorderPoint, spec: form.spec, materialNo: form.materialNo,
-      location: form.location, costPrice: form.costPrice || undefined, sellPrice: form.sellPrice || undefined,
+      costPrice: form.costPrice || undefined, sellPrice: form.sellPrice || undefined,
       priceA: form.priceA || undefined, priceB: form.priceB || undefined,
       priceC: form.priceC || undefined, retailPrice: form.retailPrice || undefined,
       memo: form.memo, saleStatus: form.saleStatus,
     }),
     onSuccess: () => {
       toast.success('상품이 수정되었습니다')
-      qc.invalidateQueries({ queryKey: ['products'] })
+      invalidateAll()
       closeModal()
     },
+    onError: () => toast.error('상품 수정에 실패했습니다'),
   })
 
   const deleteMutation = useMutation({
@@ -135,6 +241,8 @@ export default function ProductsPage() {
   const openCreate = () => {
     setEditing(null)
     setForm(EMPTY_PRODUCT_FORM)
+    setSelectedClient(null)
+    setSelectedLocation(null)
     setShowModal(true)
   }
 
@@ -144,11 +252,11 @@ export default function ProductsPage() {
       code:         product.code,
       name:         product.name,
       category:     product.category ?? '',
-      brand:        product.brand ?? '',
+      clientId:     product.clientId ?? product.client?.id ?? '',
+      locationId:   product.locationId ?? product.defaultLocation?.id ?? '',
       unit:         product.unit ?? 'EA',
       spec:         product.spec ?? '',
       materialNo:   product.materialNo ?? '',
-      location:     product.location ?? '',
       boxQty:       product.boxQty,
       safetyStock:  product.safetyStock,
       reorderPoint: product.reorderPoint,
@@ -161,6 +269,8 @@ export default function ProductsPage() {
       memo:         product.memo ?? '',
       saleStatus:   product.saleStatus,
     })
+    setSelectedClient(product.client ?? null)
+    setSelectedLocation(product.defaultLocation ?? null)
     setShowModal(true)
   }
 
@@ -168,6 +278,10 @@ export default function ProductsPage() {
     setShowModal(false)
     setEditing(null)
     setForm(EMPTY_PRODUCT_FORM)
+    setSelectedClient(null)
+    setSelectedLocation(null)
+    setShowAddBc(false)
+    setNewBcVal(''); setNewBcType('UNIT'); setNewBcQty(1); setNewBcPrimary(false)
   }
 
   const toggleRow = (id: string) => {
@@ -275,18 +389,18 @@ export default function ProductsPage() {
               return all.items.map((p: Product) => ({
                 '상품코드': p.code,
                 '상품명': p.name,
-                '위치': p.location ?? '-',
+                '위치': p.defaultLocation?.code ?? '-',
                 '기준단위': p.unit || 'EA',
                 '1BOX(입수량)': p.boxQty,
                 '재고수량(박스)': getBoxStockQty(p),
-                '재고수량(낱개)': p.stockQty ?? 0,
+                '재고수량(낱개)': getEachStockQty(p),
                 '카테고리': p.category ?? '',
-                '거래처명': p.brand ?? '',
+                '거래처명': p.client?.name ?? '',
                 '판매가': p.sellPrice ?? 0,
                 '바코드': getPrimaryBarcode(p.barcodes),
-                '현재고': p.stockQty ?? 0,
+                '현재고': getEachStockQty(p),
                 '예약': 0,
-                '가용': p.stockQty ?? 0,
+                '가용': getEachStockQty(p),
                 '안전재고': p.safetyStock,
                 '상태': SALE_STATUS_LABEL[p.saleStatus],
                 '등록일': formatDateTime(p.createdAt),
@@ -431,7 +545,9 @@ export default function ProductsPage() {
               )}
               {data?.items.map((p: Product) => {
                 const isSelected = selectedIds.has(p.id)
-                const isBelowSafety = (p.stockQty ?? 0) < p.safetyStock
+                const boxStockQty = getBoxStockQty(p)
+                const eachStockQty = getEachStockQty(p)
+                const isBelowSafety = boxStockQty < p.safetyStock
                 const rowBase = isSelected
                   ? 'bg-indigo-50/60 dark:bg-indigo-900/10'
                   : isBelowSafety
@@ -462,29 +578,29 @@ export default function ProductsPage() {
                     {/* 상품명 */}
                     <td className={cn(TD_TEXT, 'font-semibold text-gray-900 dark:text-gray-100')}>{p.name}</td>
                     {/* 위치 */}
-                    <td className={TD_TEXT}>{p.location || '—'}</td>
+                    <td className={TD_TEXT}>{p.defaultLocation?.code || '—'}</td>
                     {/* 기준단위 */}
                     <td className={TD_CTR}>{p.unit || 'EA'}</td>
                     {/* 1BOX */}
                     <td className={TD_NUM}>{formatNumber(p.boxQty)}</td>
                     {/* 재고수량(박스) */}
-                    <td className={TD_NUM}>{formatNumber(getBoxStockQty(p))}</td>
+                    <td className={TD_NUM}>{formatNumber(boxStockQty)}</td>
                     {/* 재고수량(낱개) */}
-                    <td className={TD_NUM}>{formatNumber(p.stockQty ?? 0)}</td>
+                    <td className={TD_NUM}>{formatNumber(eachStockQty)}</td>
                     {/* 카테고리 */}
                     <td className={TD_TEXT}>{p.category || '—'}</td>
                     {/* 거래처명 - 배경 강조 */}
-                    <td className={cn(TD_TEXT, clientBg)}>{p.brand || '—'}</td>
+                    <td className={cn(TD_TEXT, clientBg)}>{p.client?.name || '—'}</td>
                     {/* 판매가 */}
                     <td className={TD_NUM}>{p.sellPrice ? `₩${formatNumber(p.sellPrice)}` : '—'}</td>
                     {/* 바코드 */}
                     <td className={TD_TEXT}>{getPrimaryBarcode(p.barcodes)}</td>
                     {/* 현재고 */}
-                    <td className={TD_NUM}>{formatNumber(p.stockQty ?? 0)}</td>
+                    <td className={TD_NUM}>{formatNumber(eachStockQty)}</td>
                     {/* 예약 */}
                     <td className={cn(TD_NUM, 'text-gray-500 dark:text-gray-400')}>0</td>
                     {/* 가용 */}
-                    <td className={TD_NUM}>{formatNumber(p.stockQty ?? 0)}</td>
+                    <td className={TD_NUM}>{formatNumber(eachStockQty)}</td>
                     {/* 안전재고 */}
                     <td className={cn(TD_NUM, isBelowSafety ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-400 dark:text-gray-500')}>
                       {formatNumber(p.safetyStock)}
@@ -526,7 +642,7 @@ export default function ProductsPage() {
 
       {/* 페이지네이션 */}
       {data && data.totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex flex-wrap items-center justify-center gap-2">
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
@@ -536,6 +652,9 @@ export default function ProductsPage() {
           </button>
           <span className="text-sm text-gray-500 dark:text-gray-400 tabular-nums">
             {formatNumber(page)} / {formatNumber(data.totalPages)}
+          </span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">
+            10개씩 보기
           </span>
           <button
             onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
@@ -615,10 +734,33 @@ export default function ProductsPage() {
                       className={inputCls} />
                   </div>
                   <div>
-                    <label className={labelCls}>거래처명(브랜드)</label>
-                    <input type="text" placeholder="거래처명 또는 브랜드" value={form.brand}
-                      onChange={(e) => setForm((p) => ({ ...p, brand: e.target.value }))}
-                      className={inputCls} />
+                    <label className={labelCls}>거래처</label>
+                    <button
+                      type="button"
+                      onClick={() => { setClientPickerSearch(''); setShowClientPicker(true) }}
+                      className={cn(
+                        inputCls,
+                        'w-full flex items-center justify-between gap-2 text-left cursor-pointer',
+                        form.clientId ? '' : 'text-gray-400 dark:text-gray-500',
+                      )}
+                    >
+                      <span className="truncate">
+                        {form.clientId ? (selectedClientLabel || '거래처 선택...') : '거래처 선택...'}
+                      </span>
+                      <Search size={13} className="shrink-0 text-gray-400" />
+                    </button>
+                    {form.clientId && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedClient(null)
+                          setForm((p) => ({ ...p, clientId: '' }))
+                        }}
+                        className="mt-1 flex items-center gap-1 text-xs text-gray-400 hover:text-rose-500 transition-colors"
+                      >
+                        <X size={11} /> 선택 해제
+                      </button>
+                    )}
                   </div>
                 </div>
               </section>
@@ -664,9 +806,32 @@ export default function ProductsPage() {
                   </div>
                   <div className="col-span-2">
                     <label className={labelCls}>보관위치</label>
-                    <input type="text" placeholder="예: A-1-2" value={form.location}
-                      onChange={(e) => setForm((p) => ({ ...p, location: e.target.value }))}
-                      className={inputCls} />
+                    <button
+                      type="button"
+                      onClick={() => { setLocationPickerSearch(''); setShowLocationPicker(true) }}
+                      className={cn(
+                        inputCls,
+                        'w-full flex items-center justify-between gap-2 text-left cursor-pointer',
+                        form.locationId ? '' : 'text-gray-400 dark:text-gray-500',
+                      )}
+                    >
+                      <span className="truncate">
+                        {form.locationId ? (selectedLocationLabel || '위치 선택...') : '위치 선택...'}
+                      </span>
+                      <MapPin size={13} className="shrink-0 text-gray-400" />
+                    </button>
+                    {form.locationId && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedLocation(null)
+                          setForm((p) => ({ ...p, locationId: '' }))
+                        }}
+                        className="mt-1 flex items-center gap-1 text-xs text-gray-400 hover:text-rose-500 transition-colors"
+                      >
+                        <X size={11} /> 선택 해제
+                      </button>
+                    )}
                   </div>
                 </div>
               </section>
@@ -743,6 +908,113 @@ export default function ProductsPage() {
                 </div>
               </section>
 
+              {/* ── 바코드 관리 ── */}
+              <section className="border-t border-gray-100 dark:border-gray-700 pt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide flex items-center gap-1.5">
+                    <QrCode size={13} /> 바코드
+                  </p>
+                  {editing && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAddBc((v) => !v)}
+                      className="flex items-center gap-1 text-xs text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+                    >
+                      <Plus size={12} /> 바코드 추가
+                    </button>
+                  )}
+                </div>
+
+                {!editing && (
+                  <p className="text-xs text-gray-400 dark:text-gray-500 py-2">상품 저장 후 바코드를 등록할 수 있습니다.</p>
+                )}
+
+                {editing && (
+                  <>
+                    {barcodes.length === 0 && !showAddBc && (
+                      <p className="text-xs text-gray-400 dark:text-gray-500 py-2">등록된 바코드가 없습니다. 위 버튼으로 추가하세요.</p>
+                    )}
+
+                    {barcodes.length > 0 && (
+                      <div className="space-y-1.5 mb-3">
+                        {barcodes.map((bc) => (
+                          <div key={bc.id} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-800 group">
+                            <span className="font-mono text-sm text-gray-800 dark:text-gray-200 flex-1 truncate">{bc.barcode}</span>
+                            <span className={cn(
+                              'text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0',
+                              bc.type === 'BOX'
+                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
+                                : bc.type === 'CXD'
+                                  ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/20 dark:text-violet-400'
+                                  : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400',
+                            )}>
+                              {bc.type === 'BOX' ? '박스' : bc.type === 'CXD' ? 'CXD' : '낱개'}
+                            </span>
+                            <span className="text-xs text-gray-400 tabular-nums shrink-0">×{bc.unitQty}</span>
+                            {bc.isPrimary && <Star size={11} className="text-amber-400 fill-amber-400 shrink-0" />}
+                            <button
+                              type="button"
+                              onClick={() => { if (confirm('이 바코드를 삭제할까요?')) delBarcodeMutation.mutate(bc.id) }}
+                              className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-rose-500 dark:text-gray-600 dark:hover:text-rose-400 transition-all shrink-0"
+                            >
+                              <X size={13} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {showAddBc && (
+                      <div className="flex flex-wrap items-center gap-2 p-3 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/40 dark:bg-indigo-900/10">
+                        <input
+                          autoFocus
+                          type="text"
+                          placeholder="바코드 값"
+                          value={newBcVal}
+                          onChange={(e) => setNewBcVal(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter' && newBcVal.trim()) addBarcodeMutation.mutate() }}
+                          className="font-mono text-sm px-2.5 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-400/40 flex-1 min-w-32"
+                        />
+                        <select
+                          value={newBcType}
+                          onChange={(e) => setNewBcType(e.target.value as BarcodeUnitType)}
+                          className="text-xs px-2.5 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none"
+                        >
+                          <option value="UNIT">낱개</option>
+                          <option value="BOX">박스</option>
+                          <option value="CXD">CXD</option>
+                        </select>
+                        <input
+                          type="number" min={1}
+                          value={newBcQty}
+                          onChange={(e) => setNewBcQty(Number(e.target.value))}
+                          className="w-14 text-xs px-2 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-right tabular-nums focus:outline-none"
+                        />
+                        <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer select-none">
+                          <input type="checkbox" checked={newBcPrimary} onChange={(e) => setNewBcPrimary(e.target.checked)} className="rounded accent-indigo-600" />
+                          기본
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => addBarcodeMutation.mutate()}
+                          disabled={!newBcVal.trim() || addBarcodeMutation.isPending}
+                          className="px-3 py-1.5 text-xs font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-40 transition-colors"
+                        >
+                          저장
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowAddBc(false)}
+                          className="px-2.5 py-1.5 text-xs text-gray-500 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          취소
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </section>
+
               <div className="flex gap-3 pt-2">
                 <button onClick={closeModal}
                   className="flex-1 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
@@ -756,6 +1028,162 @@ export default function ProductsPage() {
                   {(createMutation.isPending || updateMutation.isPending) ? '처리 중...' : (editing ? '수정 완료' : '등록')}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 거래처 검색 팝업 */}
+      {showClientPicker && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-700 flex flex-col max-h-[80vh]">
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 dark:border-gray-700 shrink-0">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-indigo-100 dark:bg-indigo-900/30 shrink-0">
+                <Building2 size={16} className="text-indigo-600 dark:text-indigo-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900 dark:text-white text-sm">거래처 검색</h3>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">선택하면 거래처명이 자동 입력됩니다</p>
+              </div>
+              <button
+                onClick={() => setShowClientPicker(false)}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-200 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 shrink-0">
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <input
+                  autoFocus
+                  type="text"
+                  placeholder="거래처명 검색..."
+                  value={clientPickerSearch}
+                  onChange={(e) => setClientPickerSearch(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400"
+                />
+              </div>
+            </div>
+
+            <div className="overflow-y-auto flex-1">
+              {filteredClients.length === 0 ? (
+                <div className="py-12 text-center text-gray-400 text-sm">
+                  <Building2 size={28} className="mx-auto mb-2 opacity-30" />
+                  {clientPickerSearch ? '검색 결과 없음' : '등록된 거래처가 없습니다'}
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {filteredClients.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedClient(c)
+                        setForm((p) => ({ ...p, clientId: c.id }))
+                        setShowClientPicker(false)
+                      }}
+                      className="w-full px-5 py-3 text-left hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+                    >
+                      <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{c.name}</p>
+                      {(c.phone || c.businessNo) && (
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                          {[c.businessNo, c.phone].filter(Boolean).join(' · ')}
+                        </p>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-700 shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowClientPicker(false)}
+                className="w-full py-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 보관위치 검색 팝업 */}
+      {showLocationPicker && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-700 flex flex-col max-h-[80vh]">
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 dark:border-gray-700 shrink-0">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-emerald-100 dark:bg-emerald-900/30 shrink-0">
+                <MapPin size={16} className="text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900 dark:text-white text-sm">보관위치 선택</h3>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">창고에 등록된 위치 중에서 선택하세요</p>
+              </div>
+              <button
+                onClick={() => setShowLocationPicker(false)}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-200 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 shrink-0">
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <input
+                  autoFocus
+                  type="text"
+                  placeholder="위치 코드 검색 (예: A-01)"
+                  value={locationPickerSearch}
+                  onChange={(e) => setLocationPickerSearch(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400"
+                />
+              </div>
+            </div>
+
+            <div className="overflow-y-auto flex-1">
+              {filteredLocations.length === 0 ? (
+                <div className="py-12 text-center text-gray-400 text-sm">
+                  <MapPin size={28} className="mx-auto mb-2 opacity-30" />
+                  {locationPickerSearch ? '검색 결과 없음' : '등록된 위치가 없습니다'}
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {filteredLocations.map((loc) => (
+                    <button
+                      key={loc.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedLocation(loc)
+                        setForm((p) => ({ ...p, locationId: loc.id }))
+                        setShowLocationPicker(false)
+                      }}
+                      className="w-full px-5 py-3 text-left hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
+                    >
+                      <p className="text-sm font-mono font-medium text-gray-800 dark:text-gray-100">{loc.code}</p>
+                      {(loc.aisle || loc.rack) && (
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                          {[loc.aisle && `통로 ${loc.aisle}`, loc.rack && `랙 ${loc.rack}`, loc.shelf && `선반 ${loc.shelf}`].filter(Boolean).join(' · ')}
+                        </p>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-700 shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowLocationPicker(false)}
+                className="w-full py-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
+              >
+                취소
+              </button>
             </div>
           </div>
         </div>

@@ -1,6 +1,5 @@
 package com.wmspro.domain.stock;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.wmspro.domain.product.Product;
 import com.wmspro.domain.user.User;
@@ -99,7 +98,7 @@ public class StockTransaction {
     @JsonIgnoreProperties({"zone", "warehouse"})
     private Location location;
 
-    @JsonIgnore
+    @JsonIgnoreProperties({"passwordHash", "email", "isActive", "lastLoginAt", "createdAt", "updatedAt", "warehouseId"})
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", insertable = false, updatable = false)
     private User createdByUser;

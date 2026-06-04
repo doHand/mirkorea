@@ -143,6 +143,10 @@ export default function BarcodesPage() {
 
               {isOpen && (
                 <div className="bg-gray-50/40 dark:bg-gray-800/10 border-t border-gray-100 dark:border-gray-800 px-12 py-3 space-y-1.5">
+                  <div className="flex items-center gap-1.5 pb-1 text-xs text-gray-400">
+                    <span>현재 재고</span>
+                    <span className="font-semibold text-gray-600 dark:text-gray-300 tabular-nums">{formatNumber(p.stockQty ?? 0)}개</span>
+                  </div>
                   {barcodes.map((bc) => {
                     const ef = editForms[bc.id]
                     return (
@@ -154,7 +158,6 @@ export default function BarcodesPage() {
                             <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full', UNIT_CLS[bc.type])}>
                               {UNIT_LABEL[bc.type]}
                             </span>
-                            <span className="text-right tabular-nums text-xs text-gray-400 w-14">×{formatNumber(bc.unitQty)}</span>
                             {bc.isPrimary && <Star size={12} className="text-amber-400 fill-amber-400 shrink-0" />}
                             {/* 수정 버튼 */}
                             <button

@@ -50,7 +50,15 @@ export default function InboundPage() {
     enabled:  !!warehouse?.id,
   })
 
-  const orders = page?.items ?? []
+  // 요약 카드 전용: 필터 없이 전체 조회 (상태별 카운트 정확히 유지)
+  const { data: allPage } = useQuery({
+    queryKey: QUERY_KEYS.inboundOrders({ warehouseId: warehouse?.id }),
+    queryFn:  () => inboundApi.findAll({ warehouseId: warehouse!.id, limit: 9999 }),
+    enabled:  !!warehouse?.id,
+  })
+
+  const orders    = page?.items ?? []
+  const allOrders = allPage?.items ?? []
   const filtered = useMemo(() => {
     if (!search) return orders
     const s = search.toLowerCase()
@@ -90,8 +98,8 @@ export default function InboundPage() {
       <div className="grid grid-cols-5 gap-3">
         {(['', ...Object.keys(STATUS_LABEL)] as (InboundStatus | '')[]).map((s) => {
           const count = s === ''
-            ? orders.length
-            : orders.filter((o) => o.status === s).length
+            ? allOrders.length
+            : allOrders.filter((o) => o.status === s).length
           const label = s === '' ? '전체' : STATUS_LABEL[s as InboundStatus]
           const color = s === '' ? 'text-gray-700 dark:text-gray-200' : {
             PENDING:    'text-blue-600 dark:text-blue-400',

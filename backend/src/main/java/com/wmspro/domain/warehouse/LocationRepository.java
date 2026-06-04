@@ -6,6 +6,7 @@ import java.util.UUID;
 
 public interface LocationRepository extends JpaRepository<Location, UUID> {
     boolean existsByCode(String code);
+    List<Location> findByIsActiveTrueOrderByCode();
     List<Location> findByWarehouseIdAndIsActiveTrueOrderByCode(UUID warehouseId);
     List<Location> findByZoneIdAndIsActiveTrueOrderByCode(UUID zoneId);
 }

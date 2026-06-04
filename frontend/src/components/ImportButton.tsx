@@ -1,6 +1,6 @@
 'use client'
 import { useRef, useState } from 'react'
-import { Upload, X, AlertCircle, Loader2, FileSpreadsheet, Download } from 'lucide-react'
+import { Download, X, AlertCircle, Loader2, FileSpreadsheet } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { cn } from '@/utils/cn'
 import { formatNumber } from '@/utils/format'
@@ -150,7 +150,7 @@ export function ImportButton({ onImported }: Props) {
         onClick={() => fileRef.current?.click()}
         className="flex items-center gap-1.5 px-3 py-2 bg-violet-600 text-white text-sm rounded-lg hover:bg-violet-700 transition-colors font-medium"
       >
-        <Upload size={14} />
+        <Download size={14} />
         가져오기
       </button>
 

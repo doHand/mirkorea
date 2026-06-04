@@ -21,6 +21,11 @@ public class WarehouseController {
         return ApiResponse.ok(warehouseService.findAll());
     }
 
+    @GetMapping("/locations")
+    public ApiResponse<List<Location>> findAllLocations() {
+        return ApiResponse.ok(warehouseService.findAllLocations());
+    }
+
     @GetMapping("/{id}")
     public ApiResponse<Warehouse> findById(@PathVariable UUID id) {
         return ApiResponse.ok(warehouseService.findById(id));

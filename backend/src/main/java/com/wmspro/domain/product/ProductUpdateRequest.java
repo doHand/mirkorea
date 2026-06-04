@@ -4,18 +4,21 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Getter @Setter
 public class ProductUpdateRequest {
     public String     code;
     public String     name;
     public String     category;
-    public String     brand;
+    public UUID       clientId;
+    public boolean    clearClient   = false;   // true 이면 clientId를 null로 설정
+    public UUID       locationId;
+    public boolean    clearLocation = false;   // true 이면 locationId를 null로 설정
     public String     unit;
     public String     optionName;
     public String     spec;
     public String     materialNo;
-    public String     location;
     public int        boxQty        = -1;
     public int        safetyStock   = -1;
     public int        reorderPoint  = -1;

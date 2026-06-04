@@ -122,7 +122,8 @@ public class ProductController {
                 m.put("code",        p.getCode());
                 m.put("name",        p.getName());
                 m.put("category",    p.getCategory());
-                m.put("brand",       p.getBrand());
+                m.put("clientId",   p.getClientId());
+                m.put("clientName", p.getClient() != null ? p.getClient().getName() : null);
                 m.put("unit",        p.getUnit());
                 m.put("boxQty",      p.getBoxQty());
                 m.put("costPrice",   p.getCostPrice());

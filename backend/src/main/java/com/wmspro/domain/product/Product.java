@@ -1,6 +1,9 @@
 package com.wmspro.domain.product;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.wmspro.domain.client.Client;
+import com.wmspro.domain.warehouse.Location;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -32,8 +35,17 @@ public class Product {
     @Column(length = 100)
     private String category;
 
-    @Column(length = 100)
-    private String brand;
+    @Column(name = "client_id")
+    private UUID clientId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "client_id", insertable = false, updatable = false)
+    @JsonIgnoreProperties({"businessNo","address","industry","sector","fax","customerType","salesperson",
+        "mobile","ceoName","postalCode","addressDetail","contactName","honorific","managerName",
+        "managerTitle","website","employeeCount","pricePolicy","taxType","discountRate",
+        "initialReceivable","unpaidOnly","registrationDate","managementNo","memo","isActive",
+        "createdAt","updatedAt"})
+    private Client client;
 
     @Column(nullable = false, length = 20)
     @Builder.Default
@@ -77,8 +89,12 @@ public class Product {
     @Column(name = "material_no", length = 50)
     private String materialNo;
 
-    @Column(name = "location", length = 200)
-    private String location;
+    @Column(name = "location_id")
+    private UUID locationId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "location_id", insertable = false, updatable = false)
+    private Location defaultLocation;
 
     @Column(name = "price_a", precision = 15, scale = 2)
     private BigDecimal priceA;
@@ -116,7 +132,6 @@ public class Product {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
-    @JsonIgnore
     private List<Barcode> barcodes = new ArrayList<>();
 
     @jakarta.persistence.Transient

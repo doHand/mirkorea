@@ -161,7 +161,7 @@ export default function QuotesPage() {
     const prefillProducts = async () => {
       const ids = productIdsParam.split(',').filter(Boolean)
       const selectedProducts = await Promise.all(ids.map((id) => productApi.findById(id)))
-      const docType = docTypeParam === 'QUOTE' ? 'QUOTE' : 'STATEMENT'
+      const docType: Quote['docType'] = docTypeParam === 'QUOTE' ? 'QUOTE' : 'STATEMENT'
       const items = selectedProducts.map((product, index) => ({
         id: String(index),
         productId: product.id,

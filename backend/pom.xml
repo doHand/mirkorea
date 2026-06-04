@@ -59,6 +59,12 @@
       <version>${flyway.version}</version>
     </dependency>
 
+    <!-- Jackson Hibernate6 module: open-in-view=false 환경에서 Lazy 프록시 직렬화 -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-hibernate6</artifactId>
+    </dependency>
+
     <!-- JWT -->
     <dependency>
       <groupId>io.jsonwebtoken</groupId>

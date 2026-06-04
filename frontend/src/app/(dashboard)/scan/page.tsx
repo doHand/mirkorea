@@ -4,12 +4,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import {
   ScanLine, CheckCircle, Trash2, Camera,
-  Barcode, Search, ChevronDown, ChevronRight, Plus, Star, Pencil, Check, X,
+  Barcode, Search, ChevronDown, ChevronRight, Plus, Minus, Star, Pencil, Check, X,
+  AlertTriangle, Clock,
 } from 'lucide-react'
 import { useScanStore, ScanCartItem } from '@/stores/scan.store'
 import { useWarehouseStore } from '@/stores/warehouse.store'
 import { productApi } from '@/api/product.api'
 import { stockApi } from '@/api/stock.api'
+import type { StockTransaction } from '@/types/api.types'
 import { warehouseApi } from '@/api/warehouse.api'
 import { useBarcodeScanner } from '@/hooks/use-barcode-scanner'
 import { SCAN_MODE_LABEL, SCAN_MODES } from '@/constants/stock.constants'
@@ -44,6 +46,8 @@ export default function ScanPage() {
 
   const [processing, setProcessing] = useState(false)
   const [cameraOpen, setCameraOpen] = useState(false)
+  const [instantMode, setInstantMode] = useState(false)
+  const [notFoundBarcode, setNotFoundBarcode] = useState<string | null>(null)
 
   // ── Barcode management state ──
   const [bcSearchInput, setBcSearchInput] = useState('')
@@ -81,6 +85,17 @@ export default function ScanPage() {
     enabled: bcProducts.length > 0,
   })
 
+  // ── 스캔 이력 ──
+  const today = new Date().toISOString().slice(0, 10)
+  const { data: historyPage, refetch: refetchHistory } = useQuery({
+    queryKey: ['scan-history', warehouse?.id, today],
+    queryFn: () => stockApi.getTransactions({ warehouseId: warehouse!.id, from: today, limit: 50 }),
+    enabled: !!warehouse?.id,
+  })
+  const historyItems: StockTransaction[] = (historyPage?.items ?? []).filter(
+    (t) => t.txType === 'INBOUND' || t.txType === 'OUTBOUND',
+  )
+
   // ── Scan mutations ──
   const submitMutation = useMutation({
     mutationFn: async (items: ScanCartItem[]) => {
@@ -92,7 +107,12 @@ export default function ScanPage() {
         }
       }
     },
-    onSuccess: () => { toast.success(`${mode === 'INBOUND' ? '입고' : '출고'} 처리 완료`); clearCart(); qc.invalidateQueries({ queryKey: ['inventory'] }) },
+    onSuccess: () => {
+      toast.success(`${mode === 'INBOUND' ? '입고' : '출고'} 처리 완료`)
+      clearCart()
+      qc.invalidateQueries({ queryKey: ['inventory'] })
+      refetchHistory()
+    },
   })
 
   // ── Barcode mutations ──
@@ -123,29 +143,42 @@ export default function ScanPage() {
   const handleScan = useCallback(async (barcode: string) => {
     if (processing || !warehouse) return
     setProcessing(true)
+    setNotFoundBarcode(null)
     try {
       const result: BarcodeResolveResult = await productApi.resolveBarcode(barcode)
       setLastResult(result)
-      if (mode === 'INBOUND' && selectedLocation) {
-        addToCart({ productId: result.product.id, productCode: result.product.code, productName: result.product.name, locationId: selectedLocation.id, locationCode: selectedLocation.code, quantity: result.qtyPerScan, barcodeUsed: barcode, unitType: result.unitType, qtyPerScan: result.qtyPerScan })
-        toast.success(`${result.product.name} — ${formatNumber(result.qtyPerScan)}개 추가`)
+
+      if (mode === 'INBOUND') {
+        if (!selectedLocation) { toast.error('입고 위치를 먼저 선택하세요'); return }
+        if (instantMode) {
+          await stockApi.inbound({ productId: result.product.id, locationId: selectedLocation.id, warehouseId: warehouse.id, quantity: result.qtyPerScan, barcodeUsed: barcode })
+          qc.invalidateQueries({ queryKey: ['inventory'] })
+          refetchHistory()
+          toast.success(`✓ ${result.product.name} +${formatNumber(result.qtyPerScan)}개 입고 완료`)
+        } else {
+          addToCart({ productId: result.product.id, productCode: result.product.code, productName: result.product.name, locationId: selectedLocation.id, locationCode: selectedLocation.code, quantity: result.qtyPerScan, barcodeUsed: barcode, unitType: result.unitType, qtyPerScan: result.qtyPerScan })
+          toast.success(`${result.product.name} — ${formatNumber(result.qtyPerScan)}개 추가`)
+        }
       } else if (mode === 'OUTBOUND') {
         const invList = await stockApi.getInventoryByProduct(result.product.id, warehouse.id)
         const firstInv = invList.find((i: any) => i.quantity >= result.qtyPerScan)
-        if (!firstInv) { toast.error('출고 가능 재고 없음') }
-        else {
+        if (!firstInv) { toast.error('출고 가능 재고 없음'); return }
+        if (instantMode) {
+          await stockApi.outbound({ productId: result.product.id, locationId: firstInv.locationId, warehouseId: warehouse.id, quantity: result.qtyPerScan, barcodeUsed: barcode })
+          qc.invalidateQueries({ queryKey: ['inventory'] })
+          refetchHistory()
+          toast.success(`✓ ${result.product.name} -${formatNumber(result.qtyPerScan)}개 출고 완료`)
+        } else {
           addToCart({ productId: result.product.id, productCode: result.product.code, productName: result.product.name, locationId: firstInv.locationId, locationCode: firstInv.location?.code ?? '', quantity: result.qtyPerScan, barcodeUsed: barcode, unitType: result.unitType, qtyPerScan: result.qtyPerScan })
           toast.success(`${result.product.name} — ${formatNumber(result.qtyPerScan)}개 출고 예약`)
         }
-      } else if (mode === 'INBOUND' && !selectedLocation) {
-        toast.error('입고 위치를 먼저 선택하세요')
       }
     } catch (err: any) {
       const code = err.response?.data?.code
-      if (code === 'BARCODE_NOT_FOUND') toast.error('등록되지 않은 바코드입니다')
+      if (code === 'BARCODE_NOT_FOUND') setNotFoundBarcode(barcode)
       else toast.error('스캔 처리 중 오류가 발생했습니다')
     } finally { setProcessing(false) }
-  }, [processing, warehouse, mode, selectedLocation, setLastResult, addToCart])
+  }, [processing, warehouse, mode, selectedLocation, instantMode, setLastResult, addToCart, qc, refetchHistory])
 
   const { handleKeyDown } = useBarcodeScanner({ inputRef, onScan: handleScan })
 
@@ -174,16 +207,47 @@ export default function ScanPage() {
           {/* ── Left: Scan panel ── */}
           <div className="space-y-3">
             {/* 모드 선택 */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">스캔 모드</p>
-              <div className="flex gap-2">
-                {SCAN_MODES.filter((m) => m === 'INBOUND' || m === 'OUTBOUND').map((m) => (
-                  <button key={m} onClick={() => setMode(m)}
-                    className={cn('flex-1 py-2 rounded-lg text-sm font-medium transition-colors',
-                      mode === m ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600')}>
-                    {SCAN_MODE_LABEL[m]}
-                  </button>
-                ))}
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-3">
+              <div>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">스캔 모드</p>
+                <div className="flex gap-2">
+                  {SCAN_MODES.filter((m) => m === 'INBOUND' || m === 'OUTBOUND').map((m) => (
+                    <button key={m} onClick={() => setMode(m)}
+                      className={cn('flex-1 py-2 rounded-lg text-sm font-medium transition-colors',
+                        mode === m ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600')}>
+                      {SCAN_MODE_LABEL[m]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 즉시 처리 토글 */}
+              <div className={cn(
+                'flex items-center justify-between rounded-lg px-3 py-2.5 border transition-colors',
+                instantMode
+                  ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-700'
+                  : 'bg-gray-50 dark:bg-gray-700/40 border-gray-200 dark:border-gray-700',
+              )}>
+                <div>
+                  <p className={cn('text-sm font-medium', instantMode ? 'text-emerald-700 dark:text-emerald-400' : 'text-gray-600 dark:text-gray-300')}>
+                    즉시 처리 모드
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                    {instantMode ? '스캔 즉시 재고 자동 반영' : '카트에 쌓고 일괄 처리'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setInstantMode((v) => !v)}
+                  className={cn(
+                    'relative w-11 h-6 rounded-full transition-colors shrink-0',
+                    instantMode ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600',
+                  )}
+                >
+                  <span className={cn(
+                    'absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform',
+                    instantMode ? 'translate-x-5' : 'translate-x-0',
+                  )} />
+                </button>
               </div>
             </div>
 
@@ -225,7 +289,25 @@ export default function ScanPage() {
               <input ref={inputRef} type="text" onKeyDown={handleKeyDown}
                 className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
                 placeholder="바코드를 스캔하거나 직접 입력 후 Enter" autoFocus />
-              {lastResult && (
+              {notFoundBarcode && (
+                <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle size={16} className="text-red-500 shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-red-700 dark:text-red-400">미등록 바코드</p>
+                      <p className="font-mono text-sm text-red-600 dark:text-red-500 mt-0.5 break-all">{notFoundBarcode}</p>
+                      <p className="text-xs text-red-500 dark:text-red-400 mt-1.5 leading-relaxed">
+                        이 바코드는 아직 등록되어 있지 않습니다.<br />
+                        오른쪽 <strong>바코드 관리</strong>에서 상품을 선택한 후 등록해주세요.
+                      </p>
+                    </div>
+                    <button onClick={() => setNotFoundBarcode(null)} className="text-red-300 hover:text-red-500 shrink-0">
+                      <X size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
+              {!notFoundBarcode && lastResult && (
                 <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg flex items-center gap-2">
                   <CheckCircle size={16} className="text-green-600 dark:text-green-400 shrink-0" />
                   <div className="min-w-0">
@@ -236,8 +318,8 @@ export default function ScanPage() {
               )}
             </div>
 
-            {/* 처리 대기 목록 */}
-            {cart.length > 0 && (
+            {/* 처리 대기 목록 (즉시 처리 모드 off 일 때만) */}
+            {!instantMode && cart.length > 0 && (
               <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
                 <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                   <span className="font-medium text-gray-900 dark:text-gray-100">처리 대기 ({formatNumber(cart.length)})</span>
@@ -263,6 +345,45 @@ export default function ScanPage() {
                 </div>
               </div>
             )}
+
+            {/* ── 스캔 이력 ── */}
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700">
+              <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Clock size={14} className="text-indigo-500" />
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">오늘 스캔 이력</span>
+                </div>
+                <span className="text-xs text-gray-400">{historyItems.length}건</span>
+              </div>
+              {historyItems.length === 0 ? (
+                <p className="py-6 text-center text-xs text-gray-400">오늘 처리된 스캔 이력이 없습니다</p>
+              ) : (
+                <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-60 overflow-y-auto">
+                  {historyItems.map((tx) => (
+                    <div key={tx.id} className="flex items-center gap-3 px-4 py-2.5">
+                      {tx.txType === 'INBOUND'
+                        ? <Plus size={14} className="text-blue-500 shrink-0" />
+                        : <Minus size={14} className="text-amber-500 shrink-0" />
+                      }
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">
+                          {tx.product?.name ?? tx.productId}
+                        </p>
+                        {tx.barcodeScanned && (
+                          <p className="text-[10px] font-mono text-gray-400 truncate">{tx.barcodeScanned}</p>
+                        )}
+                      </div>
+                      <span className="text-xs tabular-nums shrink-0 text-gray-500 dark:text-gray-400">
+                        재고 {formatNumber(tx.qtyAfter)}
+                      </span>
+                      <span className="text-[10px] text-gray-400 shrink-0 w-10 text-right">
+                        {tx.createdAt.slice(11, 16)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* ── Right: Barcode management ── */}
@@ -300,6 +421,10 @@ export default function ScanPage() {
                       </button>
                       {isOpen && (
                         <div className="bg-gray-50/40 dark:bg-gray-800/10 border-t border-gray-100 dark:border-gray-800 px-3 sm:px-8 py-2 space-y-1.5">
+                          <div className="flex items-center gap-1.5 pb-1 text-xs text-gray-400">
+                            <span>현재 재고</span>
+                            <span className="font-semibold text-gray-600 dark:text-gray-300 tabular-nums">{formatNumber(p.stockQty ?? 0)}개</span>
+                          </div>
                           {barcodes.map((bc: any) => {
                             const ef = editForms[bc.id]
                             return (
@@ -308,7 +433,6 @@ export default function ScanPage() {
                                   <div className="flex flex-wrap items-center gap-2 py-1.5 group/bc">
                                     <span className="font-mono text-left sm:text-center text-sm text-gray-800 dark:text-gray-200 flex-[1_1_160px] min-w-0 break-all">{bc.barcode}</span>
                                     <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0', UNIT_CLS[bc.type as BarcodeUnitType])}>{UNIT_LABEL[bc.type as BarcodeUnitType]}</span>
-                                    <span className="text-right tabular-nums text-xs text-gray-400 w-10">×{formatNumber(bc.unitQty)}</span>
                                     {bc.isPrimary && <Star size={11} className="text-amber-400 fill-amber-400 shrink-0" />}
                                     <button onClick={() => setEditForms((prev) => ({ ...prev, [bc.id]: defaultEditForm(bc.type, bc.unitQty, bc.isPrimary) }))} className="text-gray-400 hover:text-indigo-500 sm:opacity-0 sm:group-hover/bc:opacity-100 transition-all p-1"><Pencil size={12} /></button>
                                     <button onClick={() => { if (confirm('바코드를 삭제할까요?')) deleteMutation.mutate({ productId: p.id, barcodeId: bc.id }) }} className="text-gray-400 hover:text-rose-500 sm:opacity-0 sm:group-hover/bc:opacity-100 transition-all p-1"><Trash2 size={12} /></button>

@@ -45,6 +45,10 @@ public class WarehouseService {
             .warehouseId(warehouseId).code(code).name(name).type(type).build());
     }
 
+    public List<Location> findAllLocations() {
+        return locationRepo.findByIsActiveTrueOrderByCode();
+    }
+
     public List<Location> findLocations(UUID warehouseId, UUID zoneId) {
         if (zoneId != null) {
             return locationRepo.findByZoneIdAndIsActiveTrueOrderByCode(zoneId);

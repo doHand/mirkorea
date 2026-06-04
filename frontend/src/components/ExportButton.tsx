@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { Download } from 'lucide-react'
+import { Upload } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 interface Props {
@@ -39,7 +39,7 @@ export function ExportButton({ filename, getData, label = '엑셀' }: Props) {
       disabled={loading}
       className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 text-white text-sm rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors"
     >
-      <Download size={14} />
+      <Upload size={14} />
       {loading ? '준비 중...' : label}
     </button>
   )
