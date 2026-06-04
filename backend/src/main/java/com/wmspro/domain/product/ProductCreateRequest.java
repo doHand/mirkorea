@@ -22,6 +22,13 @@ public class ProductCreateRequest {
     public BigDecimal sellPrice;
     public String     optionName;
     public String     spec;
+    public String     materialNo;
+    public String     location;
+    public BigDecimal priceA;
+    public BigDecimal priceB;
+    public BigDecimal priceC;
+    public BigDecimal retailPrice;
+    public String     memo;
     public boolean    isLotManaged    = false;
     public boolean    isExpiryManaged = false;
 }

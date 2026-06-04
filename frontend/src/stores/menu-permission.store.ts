@@ -16,7 +16,6 @@ const ADMIN_ONLY: UserRole[] = ['ADMIN']
 export const DEFAULT_MENUS: MenuDef[] = [
   { menuId: 'dashboard',        href: '/',                 label: '대시보드',          section: '운영', roles: ALL },
   { menuId: 'products',         href: '/products',         label: '상품 관리',         section: '운영', roles: ALL },
-  { menuId: 'inventory',        href: '/inventory',        label: '재고/가격 현황',    section: '운영', roles: ALL },
   { menuId: 'inbound',          href: '/inbound',          label: '입고 관리',         section: '입출고', roles: ['ADMIN', 'MANAGER', 'WORKER'] },
   { menuId: 'scan',             href: '/scan',             label: '스캔/바코드 관리',  section: '운영', roles: ALL },
   { menuId: 'product-attrs',    href: '/product-attrs',    label: '상품 마스터',       section: '상품 마스터 관리', roles: ALL },
@@ -140,12 +139,12 @@ export const useMenuPermissionStore = create<MenuPermissionState>()(
     }),
     {
       name: 'wms-menu-permissions',
-      version: 8,
+      version: 9,
       migrate: (stored: unknown) => {
         const s = stored as Partial<MenuPermissionState>
         // Remove obsolete menus: product-codes/box-qty/lot merged into product-attrs,
         // pricing merged into inventory, barcodes merged into scan, role-management merged into users
-        const obsolete = new Set(['product-codes', 'box-qty', 'lot', 'pricing', 'barcodes', 'role-management'])
+        const obsolete = new Set(['product-codes', 'box-qty', 'lot', 'pricing', 'barcodes', 'role-management', 'inventory'])
         let menus = (s.menus ?? []).filter((m) => !obsolete.has(m.menuId))
         // Rename product-attrs label to "상품 마스터"
         menus = menus.map((m) =>

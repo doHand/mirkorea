@@ -128,14 +128,14 @@ export default function ScanPage() {
       setLastResult(result)
       if (mode === 'INBOUND' && selectedLocation) {
         addToCart({ productId: result.product.id, productCode: result.product.code, productName: result.product.name, locationId: selectedLocation.id, locationCode: selectedLocation.code, quantity: result.qtyPerScan, barcodeUsed: barcode, unitType: result.unitType, qtyPerScan: result.qtyPerScan })
-        toast.success(`${result.product.name} — ${result.qtyPerScan}개 추가`)
+        toast.success(`${result.product.name} — ${formatNumber(result.qtyPerScan)}개 추가`)
       } else if (mode === 'OUTBOUND') {
         const invList = await stockApi.getInventoryByProduct(result.product.id, warehouse.id)
         const firstInv = invList.find((i: any) => i.quantity >= result.qtyPerScan)
         if (!firstInv) { toast.error('출고 가능 재고 없음') }
         else {
           addToCart({ productId: result.product.id, productCode: result.product.code, productName: result.product.name, locationId: firstInv.locationId, locationCode: firstInv.location?.code ?? '', quantity: result.qtyPerScan, barcodeUsed: barcode, unitType: result.unitType, qtyPerScan: result.qtyPerScan })
-          toast.success(`${result.product.name} — ${result.qtyPerScan}개 출고 예약`)
+          toast.success(`${result.product.name} — ${formatNumber(result.qtyPerScan)}개 출고 예약`)
         }
       } else if (mode === 'INBOUND' && !selectedLocation) {
         toast.error('입고 위치를 먼저 선택하세요')
@@ -170,7 +170,7 @@ export default function ScanPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400">스캔으로 입출고를 처리하고 바코드를 관리합니다</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 items-start">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
           {/* ── Left: Scan panel ── */}
           <div className="space-y-3">
             {/* 모드 선택 */}
@@ -213,7 +213,7 @@ export default function ScanPage() {
 
             {/* 바코드 입력 */}
             <div className="bg-white dark:bg-gray-800 rounded-xl border-2 border-indigo-500 p-4">
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex flex-wrap items-center gap-3 mb-3">
                 <ScanLine size={20} className="text-indigo-600" />
                 <span className="font-medium text-gray-900 dark:text-gray-100">바코드 스캔</span>
                 {processing && <span className="text-xs text-gray-400 animate-pulse">처리 중...</span>}
@@ -228,9 +228,9 @@ export default function ScanPage() {
               {lastResult && (
                 <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg flex items-center gap-2">
                   <CheckCircle size={16} className="text-green-600 dark:text-green-400 shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium text-green-800 dark:text-green-300">{lastResult.product.name}</p>
-                    <p className="text-xs text-green-600 dark:text-green-500">{lastResult.unitType === 'BOX' ? '박스' : '낱개'} — {lastResult.qtyPerScan}개/스캔</p>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-green-800 dark:text-green-300 truncate">{lastResult.product.name}</p>
+                    <p className="text-xs text-green-600 dark:text-green-500">{lastResult.unitType === 'BOX' ? '박스' : '낱개'} — {formatNumber(lastResult.qtyPerScan)}개/스캔</p>
                   </div>
                 </div>
               )}
@@ -240,7 +240,7 @@ export default function ScanPage() {
             {cart.length > 0 && (
               <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
                 <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
-                  <span className="font-medium text-gray-900 dark:text-gray-100">처리 대기 ({cart.length})</span>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">처리 대기 ({formatNumber(cart.length)})</span>
                   <button onClick={clearCart} className="text-xs text-gray-400 hover:text-red-500 transition-colors">전체 삭제</button>
                 </div>
                 <div className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -258,7 +258,7 @@ export default function ScanPage() {
                 <div className="p-4">
                   <button onClick={() => submitMutation.mutate(cart)} disabled={submitMutation.isPending}
                     className="w-full py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors">
-                    {submitMutation.isPending ? '처리 중...' : `${SCAN_MODE_LABEL[mode as 'INBOUND' | 'OUTBOUND']} 완료 (${cart.length}건)`}
+                    {submitMutation.isPending ? '처리 중...' : `${SCAN_MODE_LABEL[mode as 'INBOUND' | 'OUTBOUND']} 완료 (${formatNumber(cart.length)}건)`}
                   </button>
                 </div>
               </div>
@@ -267,20 +267,20 @@ export default function ScanPage() {
 
           {/* ── Right: Barcode management ── */}
           <div className="space-y-3">
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-3 flex gap-2.5 shadow-sm">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-3 flex flex-col sm:flex-row gap-2.5 shadow-sm">
               <div className="relative flex-1">
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                 <input value={bcSearchInput} onChange={(e) => setBcSearchInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') setBcSearch(bcSearchInput) }}
                   placeholder="상품코드 / 상품명"
                   className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 transition-shadow" />
               </div>
-              <button onClick={() => setBcSearch(bcSearchInput)} className="px-3.5 py-2 text-sm bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-medium">검색</button>
+              <button onClick={() => setBcSearch(bcSearchInput)} className="px-3.5 py-2 text-sm bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-medium sm:w-auto">검색</button>
             </div>
 
             <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
               <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
                 <Barcode size={14} className="text-indigo-500" />
-                <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">바코드 관리 — 상품 행을 펼쳐 바코드를 관리합니다</span>
+                <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 leading-relaxed">바코드 관리 — 상품 행을 펼쳐 바코드를 관리합니다</span>
               </div>
               <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-[520px] overflow-y-auto">
                 {bcLoading && <p className="text-center py-8 text-gray-400 text-sm">불러오는 중...</p>}
@@ -292,35 +292,35 @@ export default function ScanPage() {
                   return (
                     <div key={p.id}>
                       <button onClick={() => toggleBc(p.id)}
-                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 text-left transition-colors">
+                        className="w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 text-left transition-colors">
                         {isOpen ? <ChevronDown size={13} className="text-indigo-500 shrink-0" /> : <ChevronRight size={13} className="text-gray-400 shrink-0" />}
-                        <span className="font-mono text-xs text-indigo-600 dark:text-indigo-400 w-24 shrink-0">{p.code}</span>
+                        <span className="font-mono text-xs text-indigo-600 dark:text-indigo-400 w-20 sm:w-24 shrink-0 truncate">{p.code}</span>
                         <span className="text-sm font-medium text-gray-800 dark:text-gray-200 flex-1 truncate">{p.name}</span>
-                        <span className="text-xs text-gray-400">{barcodes.length}개</span>
+                        <span className="text-right tabular-nums text-xs text-gray-400 shrink-0">{formatNumber(barcodes.length)}개</span>
                       </button>
                       {isOpen && (
-                        <div className="bg-gray-50/40 dark:bg-gray-800/10 border-t border-gray-100 dark:border-gray-800 px-8 py-2 space-y-1.5">
+                        <div className="bg-gray-50/40 dark:bg-gray-800/10 border-t border-gray-100 dark:border-gray-800 px-3 sm:px-8 py-2 space-y-1.5">
                           {barcodes.map((bc: any) => {
                             const ef = editForms[bc.id]
                             return (
                               <div key={bc.id}>
                                 {!ef && (
-                                  <div className="flex items-center gap-2 py-1.5 group/bc">
-                                    <span className="font-mono text-sm text-gray-800 dark:text-gray-200 flex-1">{bc.barcode}</span>
-                                    <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full', UNIT_CLS[bc.type as BarcodeUnitType])}>{UNIT_LABEL[bc.type as BarcodeUnitType]}</span>
-                                    <span className="text-xs text-gray-400 w-10">×{bc.unitQty}</span>
+                                  <div className="flex flex-wrap items-center gap-2 py-1.5 group/bc">
+                                    <span className="font-mono text-left sm:text-center text-sm text-gray-800 dark:text-gray-200 flex-[1_1_160px] min-w-0 break-all">{bc.barcode}</span>
+                                    <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0', UNIT_CLS[bc.type as BarcodeUnitType])}>{UNIT_LABEL[bc.type as BarcodeUnitType]}</span>
+                                    <span className="text-right tabular-nums text-xs text-gray-400 w-10">×{formatNumber(bc.unitQty)}</span>
                                     {bc.isPrimary && <Star size={11} className="text-amber-400 fill-amber-400 shrink-0" />}
-                                    <button onClick={() => setEditForms((prev) => ({ ...prev, [bc.id]: defaultEditForm(bc.type, bc.unitQty, bc.isPrimary) }))} className="text-gray-300 hover:text-indigo-500 opacity-0 group-hover/bc:opacity-100 transition-all p-0.5"><Pencil size={12} /></button>
-                                    <button onClick={() => { if (confirm('바코드를 삭제할까요?')) deleteMutation.mutate({ productId: p.id, barcodeId: bc.id }) }} className="text-gray-300 hover:text-rose-500 opacity-0 group-hover/bc:opacity-100 transition-all p-0.5"><Trash2 size={12} /></button>
+                                    <button onClick={() => setEditForms((prev) => ({ ...prev, [bc.id]: defaultEditForm(bc.type, bc.unitQty, bc.isPrimary) }))} className="text-gray-400 hover:text-indigo-500 sm:opacity-0 sm:group-hover/bc:opacity-100 transition-all p-1"><Pencil size={12} /></button>
+                                    <button onClick={() => { if (confirm('바코드를 삭제할까요?')) deleteMutation.mutate({ productId: p.id, barcodeId: bc.id }) }} className="text-gray-400 hover:text-rose-500 sm:opacity-0 sm:group-hover/bc:opacity-100 transition-all p-1"><Trash2 size={12} /></button>
                                   </div>
                                 )}
                                 {ef && (
                                   <div className="flex items-center gap-2 py-1.5 flex-wrap bg-indigo-50/50 dark:bg-indigo-900/10 rounded-lg px-2">
-                                    <span className="font-mono text-sm text-gray-500 dark:text-gray-400 flex-1">{bc.barcode}</span>
-                                    <select value={ef.type} onChange={(e) => patchEditForm(bc.id, { type: e.target.value as BarcodeUnitType })} className="px-2 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 outline-none">
+                                    <span className="font-mono text-left sm:text-center text-sm text-gray-500 dark:text-gray-400 flex-[1_1_160px] min-w-0 break-all">{bc.barcode}</span>
+                                    <select value={ef.type} onChange={(e) => patchEditForm(bc.id, { type: e.target.value as BarcodeUnitType })} className="px-2 py-1 text-center text-xs border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 outline-none min-w-24">
                                       {UNIT_TYPES.map((t) => <option key={t} value={t}>{UNIT_LABEL[t]}</option>)}
                                     </select>
-                                    <input type="number" min={1} value={ef.unitQty} onChange={(e) => patchEditForm(bc.id, { unitQty: Number(e.target.value) })} onKeyDown={(e) => { if (e.key === 'Enter') editMutation.mutate({ productId: p.id, barcodeId: bc.id, form: ef }) }} className="px-2 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 outline-none w-14 text-right" />
+                                    <input type="number" min={1} value={ef.unitQty} onChange={(e) => patchEditForm(bc.id, { unitQty: Number(e.target.value) })} onKeyDown={(e) => { if (e.key === 'Enter') editMutation.mutate({ productId: p.id, barcodeId: bc.id, form: ef }) }} className="px-2 py-1 text-xs border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 outline-none w-14 text-right tabular-nums" />
                                     <label className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer"><input type="checkbox" checked={ef.isPrimary} onChange={(e) => patchEditForm(bc.id, { isPrimary: e.target.checked })} className="rounded" />기본</label>
                                     <button onClick={() => editMutation.mutate({ productId: p.id, barcodeId: bc.id, form: ef })} disabled={editMutation.isPending} className="p-1 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40"><Check size={12} /></button>
                                     <button onClick={() => setEditForms((prev) => { const n = { ...prev }; delete n[bc.id]; return n })} className="p-1 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-500 hover:text-gray-700"><X size={12} /></button>
@@ -331,11 +331,11 @@ export default function ScanPage() {
                           })}
                           {addForm ? (
                             <div className="flex items-center gap-2 pt-1.5 flex-wrap">
-                              <input placeholder="바코드 값" value={addForm.barcode} onChange={(e) => patchAddForm(p.id, { barcode: e.target.value })} onKeyDown={(e) => { if (e.key === 'Enter' && addForm.barcode.trim()) addMutation.mutate({ productId: p.id, form: addForm }) }} className="px-2 py-1.5 text-xs border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 outline-none focus:border-indigo-400 font-mono w-40" autoFocus />
-                              <select value={addForm.type} onChange={(e) => patchAddForm(p.id, { type: e.target.value as BarcodeUnitType })} className="px-2 py-1.5 text-xs border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 outline-none">
+                              <input placeholder="바코드 값" value={addForm.barcode} onChange={(e) => patchAddForm(p.id, { barcode: e.target.value })} onKeyDown={(e) => { if (e.key === 'Enter' && addForm.barcode.trim()) addMutation.mutate({ productId: p.id, form: addForm }) }} className="px-2 py-1.5 text-left sm:text-center text-xs border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 outline-none focus:border-indigo-400 font-mono w-full sm:w-40" autoFocus />
+                              <select value={addForm.type} onChange={(e) => patchAddForm(p.id, { type: e.target.value as BarcodeUnitType })} className="px-2 py-1.5 text-center text-xs border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 outline-none min-w-24 flex-1 sm:flex-none">
                                 {UNIT_TYPES.map((t) => <option key={t} value={t}>{UNIT_LABEL[t]}</option>)}
                               </select>
-                              <input type="number" min={1} value={addForm.unitQty} onChange={(e) => patchAddForm(p.id, { unitQty: Number(e.target.value) })} className="px-2 py-1.5 text-xs border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 outline-none w-14 text-right" />
+                              <input type="number" min={1} value={addForm.unitQty} onChange={(e) => patchAddForm(p.id, { unitQty: Number(e.target.value) })} className="px-2 py-1.5 text-xs border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 outline-none w-14 text-right tabular-nums" />
                               <label className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer"><input type="checkbox" checked={addForm.isPrimary} onChange={(e) => patchAddForm(p.id, { isPrimary: e.target.checked })} className="rounded" />기본</label>
                               <button onClick={() => addMutation.mutate({ productId: p.id, form: addForm })} disabled={!addForm.barcode.trim() || addMutation.isPending} className="px-2.5 py-1.5 text-xs font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-40 transition-colors">저장</button>
                               <button onClick={() => setAddForms((prev) => { const n = { ...prev }; delete n[p.id]; return n })} className="px-2.5 py-1.5 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg transition-colors">취소</button>

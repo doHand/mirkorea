@@ -5,7 +5,7 @@ import { KeyRound, Search, Shield } from 'lucide-react'
 import { userApi } from '@/api/user.api'
 import { warehouseApi } from '@/api/warehouse.api'
 import { useAuthStore } from '@/stores/auth.store'
-import { formatDateTime } from '@/utils/format'
+import { formatDateTime, formatNumber } from '@/utils/format'
 import { cn } from '@/utils/cn'
 import type { UserRole } from '@/types/api.types'
 
@@ -59,7 +59,7 @@ export default function PermissionsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">권한 관리</h2>
-          <p className="text-xs text-gray-400 mt-0.5">사용자별 역할 및 접근 권한을 확인합니다 · 전체 {users.length}명</p>
+          <p className="text-xs text-gray-400 mt-0.5">사용자별 역할 및 접근 권한을 확인합니다 · 전체 {formatNumber(users.length)}명</p>
         </div>
       </div>
 
@@ -70,7 +70,7 @@ export default function PermissionsPage() {
             key={role}
             className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-3 shadow-sm"
           >
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{count}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white tabular-nums">{formatNumber(count)}</p>
             <div className="flex items-center gap-1.5 mt-1">
               <span className={cn('text-xs font-medium px-1.5 py-0.5 rounded-full', ROLE_META[role].cls)}>
                 {ROLE_META[role].label}
@@ -99,12 +99,12 @@ export default function PermissionsPage() {
           <table className="w-full min-w-[640px] text-sm">
             <thead>
               <tr className="bg-gray-50/80 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">사용자</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">이메일</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">사용자</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">이메일</th>
                 <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide w-28">역할</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide w-32">담당 창고</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide w-32">담당 창고</th>
                 <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide w-20">상태</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide w-36">마지막 로그인</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide w-36">마지막 로그인</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">

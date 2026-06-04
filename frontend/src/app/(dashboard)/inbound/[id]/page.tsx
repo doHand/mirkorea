@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -12,6 +12,7 @@ import type { ReceiveItemRequest, InspectItemRequest } from '@/api/inbound.api'
 import { warehouseApi } from '@/api/warehouse.api'
 import { QUERY_KEYS } from '@/constants/query-keys'
 import { cn } from '@/utils/cn'
+import { formatNumber } from '@/utils/format'
 import type { InboundStatus, InboundOrder } from '@/types/api.types'
 
 // ── 상수 ──────────────────────────────────────────────────────────
@@ -176,7 +177,7 @@ function OrderHeader({
             </div>
             <div>
               <span className="text-gray-400 text-xs">품목수</span>
-              <p className="font-medium text-gray-800 dark:text-gray-200">{order.items.length}종</p>
+              <p className="font-medium tabular-nums text-gray-800 dark:text-gray-200">{formatNumber(order.items.length)}종</p>
             </div>
           </div>
           {order.memo && (
@@ -323,7 +324,7 @@ function ReceivePanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
       <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
         <Truck size={16} className="text-amber-500" />
         <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">수령 처리</h3>
-        <span className="ml-auto text-xs text-gray-400">{order.items.length}개 품목</span>
+        <span className="ml-auto text-xs tabular-nums text-gray-400">{formatNumber(order.items.length)}개 품목</span>
       </div>
 
       <div className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -332,11 +333,11 @@ function ReceivePanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
             <div className="flex items-center justify-between mb-3">
               <div>
                 <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{item.product?.name}</p>
-                <p className="text-xs text-gray-400">{item.product?.code} · 예정 {item.expectedQty}{item.product?.unit}</p>
+                <p className="text-xs text-gray-400">{item.product?.code} · 예정 {formatNumber(item.expectedQty)}{item.product?.unit}</p>
               </div>
               <div className="text-right">
                 <p className="text-xs text-gray-400">현재 수령</p>
-                <p className="text-sm font-bold text-amber-600 dark:text-amber-400">{item.receivedQty}{item.product?.unit}</p>
+                <p className="text-sm font-bold tabular-nums text-amber-600 dark:text-amber-400">{formatNumber(item.receivedQty)}{item.product?.unit}</p>
               </div>
             </div>
             <div className="flex items-end gap-3 flex-wrap">
@@ -346,7 +347,7 @@ function ReceivePanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
                   type="number" min={0}
                   value={state[item.id]?.qty ?? ''}
                   onChange={(e) => setState((p) => ({ ...p, [item.id]: { ...p[item.id], qty: e.target.value } }))}
-                  className="w-28 px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-center font-semibold"
+                  className="w-28 px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-right tabular-nums font-semibold"
                 />
               </div>
               <div className="flex-1 min-w-48">
@@ -434,7 +435,7 @@ function InspectPanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
       const passed = parseInt(state[i.id]?.passed ?? '0') || 0
       const defect = parseInt(state[i.id]?.defect ?? '0') || 0
       if (passed + defect > i.receivedQty) {
-        toast.error(`${i.product?.name}: 검수 수량(${passed + defect})이 수령 수량(${i.receivedQty})을 초과합니다`)
+        toast.error(`${i.product?.name}: 검수 수량(${formatNumber(passed + defect)})이 수령 수량(${formatNumber(i.receivedQty)})을 초과합니다`)
         return
       }
     }
@@ -459,7 +460,7 @@ function InspectPanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
       <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
         <ClipboardCheck size={16} className="text-purple-500" />
         <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">검수 처리</h3>
-        <span className="ml-auto text-xs text-gray-400">{order.items.length}개 품목</span>
+        <span className="ml-auto text-xs tabular-nums text-gray-400">{formatNumber(order.items.length)}개 품목</span>
       </div>
 
       <div className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -473,7 +474,7 @@ function InspectPanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{item.product?.name}</p>
-                  <p className="text-xs text-gray-400">{item.product?.code} · 수령 {item.receivedQty}{item.product?.unit}</p>
+                  <p className="text-xs text-gray-400">{item.product?.code} · 수령 {formatNumber(item.receivedQty)}{item.product?.unit}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   {over && (
@@ -482,7 +483,7 @@ function InspectPanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
                     </span>
                   )}
                   <span className="text-xs text-gray-400">
-                    합격+불량: <span className={cn('font-bold', over ? 'text-red-500' : 'text-gray-700 dark:text-gray-300')}>{passed + defect}</span>/{item.receivedQty}
+                    합격+불량: <span className={cn('font-bold tabular-nums', over ? 'text-red-500' : 'text-gray-700 dark:text-gray-300')}>{formatNumber(passed + defect)}</span>/{formatNumber(item.receivedQty)}
                   </span>
                 </div>
               </div>
@@ -494,7 +495,7 @@ function InspectPanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
                     value={s?.passed ?? ''}
                     onChange={(e) => setState((p) => ({ ...p, [item.id]: { ...p[item.id], passed: e.target.value } }))}
                     className={cn(
-                      'w-28 px-3 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-center font-semibold',
+                      'w-28 px-3 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-right tabular-nums font-semibold',
                       over ? 'border-red-400' : 'border-gray-200 dark:border-gray-600'
                     )}
                   />
@@ -506,7 +507,7 @@ function InspectPanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
                     value={s?.defect ?? ''}
                     onChange={(e) => setState((p) => ({ ...p, [item.id]: { ...p[item.id], defect: e.target.value } }))}
                     className={cn(
-                      'w-28 px-3 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-red-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-center font-semibold',
+                      'w-28 px-3 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-red-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-right tabular-nums font-semibold',
                       over ? 'border-red-400' : 'border-gray-200 dark:border-gray-600'
                     )}
                   />
@@ -581,7 +582,7 @@ function CompletedPanel({ order }: { order: InboundOrder }) {
           { label: '불량 수량', value: totalDefect,   color: 'text-red-600 dark:text-red-400' },
         ].map(({ label, value, color }) => (
           <div key={label} className="bg-white dark:bg-gray-800 rounded-xl p-3 text-center">
-            <p className={cn('text-2xl font-bold', color)}>{value}</p>
+            <p className={cn('text-2xl font-bold tabular-nums', color)}>{formatNumber(value)}</p>
             <p className="text-xs text-gray-400 mt-0.5">{label}</p>
           </div>
         ))}
@@ -611,13 +612,13 @@ function ItemsTable({ order }: { order: InboundOrder }) {
         <table className="w-full min-w-[640px] text-sm">
           <thead>
             <tr className="bg-gray-50 dark:bg-gray-700/50 text-xs">
-              <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">상품</th>
+              <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-gray-400">상품</th>
               <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-gray-400">예정</th>
               <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-gray-400">수령</th>
               <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-gray-400">합격</th>
               <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-gray-400">불량</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">입고 위치</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">LOT / 유통기한</th>
+              <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-gray-400">입고 위치</th>
+              <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-gray-400">LOT / 유통기한</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -627,17 +628,17 @@ function ItemsTable({ order }: { order: InboundOrder }) {
                   <p className="font-medium text-gray-800 dark:text-gray-200">{item.product?.name}</p>
                   <p className="text-xs text-gray-400">{item.product?.code}</p>
                 </td>
-                <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-400">
-                  {item.expectedQty}
+                <td className="px-4 py-3 text-right tabular-nums text-gray-600 dark:text-gray-400">
+                  {formatNumber(item.expectedQty)}
                 </td>
-                <td className="px-4 py-3 text-center font-medium text-amber-600 dark:text-amber-400">
-                  {item.receivedQty}
+                <td className="px-4 py-3 text-right tabular-nums font-medium text-amber-600 dark:text-amber-400">
+                  {formatNumber(item.receivedQty)}
                 </td>
-                <td className="px-4 py-3 text-center font-medium text-emerald-600 dark:text-emerald-400">
-                  {item.passedQty > 0 ? item.passedQty : <span className="text-gray-300 dark:text-gray-600">-</span>}
+                <td className="px-4 py-3 text-right tabular-nums font-medium text-emerald-600 dark:text-emerald-400">
+                  {item.passedQty > 0 ? formatNumber(item.passedQty) : <span className="text-gray-300 dark:text-gray-600">-</span>}
                 </td>
-                <td className="px-4 py-3 text-center font-medium text-red-500">
-                  {item.defectQty > 0 ? item.defectQty : <span className="text-gray-300 dark:text-gray-600">-</span>}
+                <td className="px-4 py-3 text-right tabular-nums font-medium text-red-500">
+                  {item.defectQty > 0 ? formatNumber(item.defectQty) : <span className="text-gray-300 dark:text-gray-600">-</span>}
                 </td>
                 <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
                   {item.location?.code ?? <span className="text-gray-300 dark:text-gray-600">-</span>}

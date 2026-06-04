@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { BoxSelect, Search, Pencil, Check, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { productApi, unitApi } from '@/api/product.api'
+import { formatNumber } from '@/utils/format'
 import type { Product, ProductUnit } from '@/types/api.types'
 
 type EditCell = { id: string; field: 'unit' | 'boxQty'; value: string }
@@ -63,9 +64,9 @@ export default function BoxQtyPage() {
         <table className="w-full min-w-[480px] text-sm">
           <thead>
             <tr className="bg-gray-50/80 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700">
-              <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide w-32">코드</th>
-              <th className="text-left px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">상품명</th>
-              <th className="text-left px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide w-32">단위</th>
+              <th className="text-center px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide w-32">코드</th>
+              <th className="text-center px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">상품명</th>
+              <th className="text-center px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide w-32">단위</th>
               <th className="text-center px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide w-28">박스 입수</th>
             </tr>
           </thead>
@@ -79,9 +80,9 @@ export default function BoxQtyPage() {
                 <td className="px-4 py-3 text-gray-800 dark:text-gray-200 font-medium">{p.name}</td>
 
                 {/* 단위 */}
-                <td className="px-3 py-2">
+                <td className="px-3 py-2 text-center">
                   {editCell?.id === p.id && editCell.field === 'unit' ? (
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center justify-center gap-1.5">
                       <select autoFocus value={editCell.value}
                         onChange={(e) => setEditCell({ ...editCell, value: e.target.value })}
                         onBlur={() => saveEdit(editCell)}
@@ -95,7 +96,7 @@ export default function BoxQtyPage() {
                     </div>
                   ) : (
                     <button onClick={() => startEdit(p.id, 'unit', p.unit)}
-                      className="flex items-center gap-1.5 group/u px-2 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors">
+                      className="mx-auto flex items-center justify-center gap-1.5 group/u px-2 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors">
                       <span className="text-sm font-mono font-medium text-gray-800 dark:text-gray-200">{p.unit}</span>
                       <Pencil size={10} className="text-gray-300 opacity-0 group-hover/u:opacity-100 transition-opacity" />
                     </button>
@@ -103,20 +104,20 @@ export default function BoxQtyPage() {
                 </td>
 
                 {/* 박스 입수 */}
-                <td className="px-3 py-2 text-center">
+                <td className="px-3 py-2 text-right">
                   {editCell?.id === p.id && editCell.field === 'boxQty' ? (
-                    <div className="flex items-center justify-center gap-1">
+                    <div className="flex items-center justify-end gap-1">
                       <input autoFocus type="number" min={1} value={editCell.value}
                         onChange={(e) => setEditCell({ ...editCell, value: e.target.value })}
                         onKeyDown={(e) => { if (e.key === 'Enter') saveEdit(editCell); if (e.key === 'Escape') setEditCell(null) }}
                         onBlur={() => saveEdit(editCell)}
-                        className="w-16 px-2 py-1 text-sm border border-indigo-400 rounded-lg bg-white dark:bg-gray-800 text-center outline-none" />
+                        className="w-16 px-2 py-1 text-sm border border-indigo-400 rounded-lg bg-white dark:bg-gray-800 text-right tabular-nums outline-none" />
                       <button onMouseDown={(e) => { e.preventDefault(); saveEdit(editCell) }} className="text-indigo-500 p-0.5"><Check size={13} /></button>
                     </div>
                   ) : (
                     <button onClick={() => startEdit(p.id, 'boxQty', String(p.boxQty))}
-                      className="flex items-center justify-center gap-1.5 mx-auto group/b px-3 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors">
-                      <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{p.boxQty}</span>
+                      className="ml-auto flex items-center justify-end gap-1.5 group/b px-3 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors">
+                      <span className="text-sm font-semibold tabular-nums text-gray-800 dark:text-gray-200">{formatNumber(p.boxQty)}</span>
                       <Pencil size={10} className="text-gray-300 opacity-0 group-hover/b:opacity-100 transition-opacity" />
                     </button>
                   )}

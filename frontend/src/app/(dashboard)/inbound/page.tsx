@@ -12,6 +12,7 @@ import type { CreateInboundOrderRequest } from '@/api/inbound.api'
 import { productApi } from '@/api/product.api'
 import { QUERY_KEYS } from '@/constants/query-keys'
 import { cn } from '@/utils/cn'
+import { formatNumber } from '@/utils/format'
 import type { InboundStatus, Product } from '@/types/api.types'
 
 const STATUS_LABEL: Record<InboundStatus, string> = {
@@ -110,7 +111,7 @@ export default function InboundPage() {
                   : 'border-gray-200 dark:border-gray-800',
               )}
             >
-              <p className={cn('text-xl font-bold', color)}>{count}</p>
+              <p className={cn('text-xl font-bold tabular-nums', color)}>{formatNumber(count)}</p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{label}</p>
             </button>
           )
@@ -155,8 +156,8 @@ export default function InboundPage() {
           <table className="w-full min-w-[700px] text-sm">
             <thead>
               <tr className="bg-gray-50/80 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">주문번호</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">공급업체</th>
+                <th className="text-center px-4 py-3 font-medium text-gray-600 dark:text-gray-400">주문번호</th>
+                <th className="text-center px-4 py-3 font-medium text-gray-600 dark:text-gray-400">공급업체</th>
                 <th className="text-center px-4 py-3 font-medium text-gray-600 dark:text-gray-400">예정일</th>
                 <th className="text-center px-4 py-3 font-medium text-gray-600 dark:text-gray-400">품목수</th>
                 <th className="text-center px-4 py-3 font-medium text-gray-600 dark:text-gray-400">상태</th>
@@ -186,8 +187,8 @@ export default function InboundPage() {
                   <td className="px-4 py-3 text-center text-gray-500 dark:text-gray-400">
                     {fmtDate(order.expectedDate)}
                   </td>
-                  <td className="px-4 py-3 text-center text-gray-700 dark:text-gray-300">
-                    {order.items?.length ?? 0}종
+                  <td className="px-4 py-3 text-right tabular-nums text-gray-700 dark:text-gray-300">
+                    {formatNumber(order.items?.length ?? 0)}종
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span className={cn('inline-block px-2 py-0.5 rounded-full text-xs font-medium', STATUS_COLOR[order.status])}>
@@ -334,7 +335,7 @@ function CreateModal({
 
           {items.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs font-medium text-gray-600 dark:text-gray-400">품목 ({items.length}개)</p>
+              <p className="text-xs font-medium text-gray-600 dark:text-gray-400">품목 ({formatNumber(items.length)}개)</p>
               {items.map((item, idx) => (
                 <div key={item.productId} className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
                   <div className="flex-1 min-w-0">
@@ -344,10 +345,10 @@ function CreateModal({
                   <input
                     type="number" min={1} value={item.expectedQty}
                     onChange={(e) => setItems((prev) => prev.map((i, j) => j === idx ? { ...i, expectedQty: parseInt(e.target.value) || 1 } : i))}
-                    className="w-20 px-2 py-1 text-sm text-center border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    className="w-20 px-2 py-1 text-sm text-right tabular-nums border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     placeholder="수량"
                   />
-                  <span className="text-xs text-gray-400">{item.product?.unit}</span>
+                  <span className="w-10 text-center text-xs text-gray-400">{item.product?.unit}</span>
                   <button onClick={() => removeItem(item.productId)} className="p-1 text-gray-400 hover:text-red-500 transition-colors">
                     <X size={14} />
                   </button>

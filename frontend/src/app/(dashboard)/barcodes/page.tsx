@@ -5,6 +5,7 @@ import { Barcode, Search, ChevronDown, ChevronRight, Plus, Trash2, Star, Pencil,
 import toast from 'react-hot-toast'
 import { productApi } from '@/api/product.api'
 import { cn } from '@/utils/cn'
+import { formatNumber } from '@/utils/format'
 import type { Product, BarcodeUnitType } from '@/types/api.types'
 
 const UNIT_TYPES: BarcodeUnitType[] = ['UNIT', 'BOX', 'CXD']
@@ -137,7 +138,7 @@ export default function BarcodesPage() {
                 {isOpen ? <ChevronDown size={14} className="text-indigo-500 shrink-0" /> : <ChevronRight size={14} className="text-gray-400 shrink-0" />}
                 <span className="font-mono text-xs text-indigo-600 dark:text-indigo-400 w-28 shrink-0">{p.code}</span>
                 <span className="text-sm font-medium text-gray-800 dark:text-gray-200 flex-1">{p.name}</span>
-                <span className="text-xs text-gray-400">{barcodes.length}개</span>
+                <span className="text-right tabular-nums text-xs text-gray-400">{formatNumber(barcodes.length)}개</span>
               </button>
 
               {isOpen && (
@@ -149,11 +150,11 @@ export default function BarcodesPage() {
                         {/* 일반 표시 행 */}
                         {!ef && (
                           <div className="flex items-center gap-3 py-1.5 group/bc">
-                            <span className="font-mono text-sm text-gray-800 dark:text-gray-200 flex-1">{bc.barcode}</span>
+                            <span className="font-mono text-center text-sm text-gray-800 dark:text-gray-200 flex-1">{bc.barcode}</span>
                             <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full', UNIT_CLS[bc.type])}>
                               {UNIT_LABEL[bc.type]}
                             </span>
-                            <span className="text-xs text-gray-400 w-14">×{bc.unitQty}</span>
+                            <span className="text-right tabular-nums text-xs text-gray-400 w-14">×{formatNumber(bc.unitQty)}</span>
                             {bc.isPrimary && <Star size={12} className="text-amber-400 fill-amber-400 shrink-0" />}
                             {/* 수정 버튼 */}
                             <button
@@ -180,11 +181,11 @@ export default function BarcodesPage() {
                         {/* 인라인 수정 폼 */}
                         {ef && (
                           <div className="flex items-center gap-2 py-1.5 flex-wrap bg-indigo-50/50 dark:bg-indigo-900/10 rounded-lg px-2">
-                            <span className="font-mono text-sm text-gray-500 dark:text-gray-400 flex-1">{bc.barcode}</span>
+                            <span className="font-mono text-center text-sm text-gray-500 dark:text-gray-400 flex-1">{bc.barcode}</span>
                             <select
                               value={ef.type}
                               onChange={(e) => patchEditForm(bc.id, { type: e.target.value as BarcodeUnitType })}
-                              className="px-2 py-1 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 outline-none"
+                              className="px-2 py-1 text-center text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 outline-none"
                             >
                               {UNIT_TYPES.map((t) => <option key={t} value={t}>{UNIT_LABEL[t]}</option>)}
                             </select>
@@ -234,13 +235,13 @@ export default function BarcodesPage() {
                         value={addForm.barcode}
                         onChange={(e) => patchAddForm(p.id, { barcode: e.target.value })}
                         onKeyDown={(e) => { if (e.key === 'Enter' && addForm.barcode.trim()) addMutation.mutate({ productId: p.id, form: addForm }) }}
-                        className="px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 outline-none focus:border-indigo-400 font-mono w-48"
+                        className="px-2 py-1.5 text-center text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 outline-none focus:border-indigo-400 font-mono w-48"
                         autoFocus
                       />
                       <select
                         value={addForm.type}
                         onChange={(e) => patchAddForm(p.id, { type: e.target.value as BarcodeUnitType })}
-                        className="px-2 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 outline-none"
+                        className="px-2 py-1.5 text-center text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 outline-none"
                       >
                         {UNIT_TYPES.map((t) => <option key={t} value={t}>{UNIT_LABEL[t]}</option>)}
                       </select>

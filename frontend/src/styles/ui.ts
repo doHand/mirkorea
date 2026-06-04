@@ -13,9 +13,9 @@ export const filterCard = 'bg-white dark:bg-gray-900 rounded-2xl border border-g
 
 // ── Table internals ─────────────────────────────────────────────────────────
 export const thead = 'bg-gray-50/80 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700'
-export const th    = 'text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide'
+export const th    = 'text-center px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide'
 export const thC   = 'text-center px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide'
-export const thR   = 'text-right px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide'
+export const thR   = 'text-center px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide'
 export const tbody = 'divide-y divide-gray-100 dark:divide-gray-800'
 export const tr    = 'hover:bg-gray-50/30 dark:hover:bg-gray-800/10 transition-colors'
 export const td    = 'px-4 py-3 text-sm text-gray-600 dark:text-gray-400'

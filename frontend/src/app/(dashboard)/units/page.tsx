@@ -5,6 +5,7 @@ import { Ruler, Plus, Pencil, Trash2, Check, X, GripVertical } from 'lucide-reac
 import toast from 'react-hot-toast'
 import { unitApi } from '@/api/product.api'
 import { cn } from '@/utils/cn'
+import { formatNumber } from '@/utils/format'
 import type { ProductUnit } from '@/types/api.types'
 
 type FormState = { code: string; label: string; description: string; sortOrder: number }
@@ -76,9 +77,9 @@ export default function UnitsPage() {
           <thead>
             <tr className="bg-gray-50/80 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700">
               <th className="w-8" />
-              <th className="text-left px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide w-24">코드</th>
-              <th className="text-left px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide w-32">레이블</th>
-              <th className="text-left px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">설명</th>
+              <th className="text-center px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide w-24">코드</th>
+              <th className="text-center px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide w-32">레이블</th>
+              <th className="text-center px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">설명</th>
               <th className="text-center px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide w-20">순서</th>
               <th className="w-20" />
             </tr>
@@ -125,7 +126,7 @@ export default function UnitsPage() {
                     </td>
                     <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{u.label}</td>
                     <td className="px-4 py-3 text-gray-400 dark:text-gray-500">{u.description ?? '—'}</td>
-                    <td className="px-4 py-3 text-center text-gray-500">{u.sortOrder}</td>
+                    <td className="px-4 py-3 text-right tabular-nums text-gray-500">{formatNumber(u.sortOrder)}</td>
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-1 justify-end opacity-0 group-hover/row:opacity-100 transition-opacity">
                         <button onClick={() => startEdit(u)} className="text-gray-400 hover:text-indigo-500 p-1 transition-colors"><Pencil size={13} /></button>

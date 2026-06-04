@@ -5,6 +5,7 @@ import { FlaskConical, Search } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { productApi } from '@/api/product.api'
 import { cn } from '@/utils/cn'
+import { formatNumber } from '@/utils/format'
 import type { Product } from '@/types/api.types'
 
 export default function LotPage() {
@@ -39,7 +40,7 @@ export default function LotPage() {
           <p className="text-xs text-gray-400 mt-0.5">LOT 추적이 필요한 상품을 활성화합니다. (유통기간 관리 없음)</p>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-gray-400 hidden sm:block">LOT 활성: <strong className="text-indigo-600">{lotCount}</strong>개</span>
+          <span className="text-xs text-gray-400 hidden sm:block">LOT 활성: <strong className="text-indigo-600 tabular-nums">{formatNumber(lotCount)}</strong>개</span>
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="코드 / 상품명"
@@ -53,9 +54,9 @@ export default function LotPage() {
         <table className="w-full min-w-[480px] text-sm">
           <thead>
             <tr className="bg-gray-50/80 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700">
-              <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide w-32">코드</th>
-              <th className="text-left px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">상품명</th>
-              <th className="text-left px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide w-28">카테고리</th>
+              <th className="text-center px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide w-32">코드</th>
+              <th className="text-center px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">상품명</th>
+              <th className="text-center px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide w-28">카테고리</th>
               <th className="text-center px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide w-28">LOT 관리</th>
             </tr>
           </thead>

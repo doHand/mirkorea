@@ -26,7 +26,7 @@ export function HeaderBar({ onMenuClick }: Props) {
   const today = format(new Date(), 'M월 d일 EEEE', { locale: ko })
 
   return (
-    <header className="h-14 bg-[#fefdfb]/95 dark:bg-gray-950/90 backdrop-blur-md border-b border-[#ede5d8] dark:border-slate-800 flex items-center px-4 gap-3 shrink-0 sticky top-0 z-30">
+    <header className="h-14 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-gray-200 dark:border-slate-700 flex items-center px-4 gap-3 shrink-0 sticky top-0 z-30">
       {/* 모바일 햄버거 */}
       <button
         onClick={onMenuClick}
@@ -44,7 +44,7 @@ export function HeaderBar({ onMenuClick }: Props) {
             const wh = warehouses.find((w) => w.id === e.target.value)
             if (wh) setWarehouse(wh)
           }}
-          className="appearance-none pl-3 pr-8 py-1.5 text-sm bg-[#f5efe6] dark:bg-slate-800 border border-[#ede5d8] dark:border-slate-700 rounded-xl text-gray-800 dark:text-gray-200 font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-colors hover:border-[#c9b99e] dark:hover:border-slate-600"
+          className="appearance-none pl-3 pr-8 py-1.5 text-sm bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-xl text-gray-800 dark:text-slate-100 font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-colors hover:border-indigo-200 dark:hover:border-indigo-500"
         >
           <option value="">창고 선택</option>
           {warehouses.map((wh) => (
@@ -57,14 +57,14 @@ export function HeaderBar({ onMenuClick }: Props) {
       <div className="flex-1" />
 
       {/* 날짜 */}
-      <span className="hidden md:block text-xs text-gray-400 dark:text-slate-500 font-medium tabular-nums">
+      <span className="hidden md:block text-xs text-gray-400 dark:text-slate-300 font-medium tabular-nums">
         {today}
       </span>
 
       {/* 다크 모드 토글 */}
       <button
         onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-        className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 dark:text-slate-400 transition-colors"
+        className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 dark:text-slate-200 transition-colors"
         aria-label="테마 전환"
       >
         {resolvedTheme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
@@ -72,10 +72,10 @@ export function HeaderBar({ onMenuClick }: Props) {
 
       {/* 사용자 */}
       <div className="flex items-center gap-2 pl-1">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-md shadow-indigo-500/20">
+        <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-sm shadow-indigo-500/20">
           {user?.fullName?.charAt(0)?.toUpperCase() ?? 'U'}
         </div>
-        <span className="hidden sm:block text-sm font-medium text-gray-700 dark:text-slate-300 max-w-[120px] truncate">
+        <span className="hidden sm:block text-sm font-medium text-gray-700 dark:text-slate-100 max-w-[120px] truncate">
           {user?.fullName}
         </span>
       </div>

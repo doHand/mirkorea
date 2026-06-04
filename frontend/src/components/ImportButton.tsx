@@ -3,6 +3,7 @@ import { useRef, useState } from 'react'
 import { Upload, X, AlertCircle, Loader2, FileSpreadsheet, Download } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { cn } from '@/utils/cn'
+import { formatNumber } from '@/utils/format'
 import type { SaleStatus } from '@/types/api.types'
 
 interface ImportRow {
@@ -166,9 +167,9 @@ export function ImportButton({ onImported }: Props) {
                 <div>
                   <h3 className="font-semibold text-gray-900 dark:text-white">엑셀 가져오기</h3>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    {preview.length}행 파싱 ·{' '}
-                    <span className="text-emerald-600 dark:text-emerald-400">정상 {validCount}건</span>
-                    {errorCount > 0 && <span className="text-red-500"> · 오류 {errorCount}건</span>}
+                    {formatNumber(preview.length)}행 파싱 ·{' '}
+                    <span className="text-emerald-600 dark:text-emerald-400">정상 {formatNumber(validCount)}건</span>
+                    {errorCount > 0 && <span className="text-red-500"> · 오류 {formatNumber(errorCount)}건</span>}
                   </p>
                 </div>
               </div>
@@ -215,7 +216,7 @@ export function ImportButton({ onImported }: Props) {
                           : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
                       )}
                     >
-                      <td className="px-4 py-2 text-gray-400 tabular-nums">{i + 1}</td>
+                      <td className="px-4 py-2 text-right text-gray-400 tabular-nums">{formatNumber(i + 1)}</td>
                       <td className="px-4 py-2 font-mono text-gray-700 dark:text-gray-300">
                         {row.code || <span className="text-red-500 font-sans">없음</span>}
                       </td>
@@ -224,10 +225,10 @@ export function ImportButton({ onImported }: Props) {
                       </td>
                       <td className="px-4 py-2 text-gray-500 dark:text-gray-400">{row.category || '—'}</td>
                       <td className="px-4 py-2 text-right tabular-nums text-gray-700 dark:text-gray-300">
-                        {row.costPrice != null ? `₩${row.costPrice.toLocaleString()}` : '—'}
+                        {row.costPrice != null ? `₩${formatNumber(row.costPrice)}` : '-'}
                       </td>
                       <td className="px-4 py-2 text-right tabular-nums text-gray-700 dark:text-gray-300">
-                        {row.sellPrice != null ? `₩${row.sellPrice.toLocaleString()}` : '—'}
+                        {row.sellPrice != null ? `₩${formatNumber(row.sellPrice)}` : '-'}
                       </td>
                       <td className="px-4 py-2 text-center">
                         {row._error ? (
@@ -274,7 +275,7 @@ export function ImportButton({ onImported }: Props) {
               >
                 {importing
                   ? <><Loader2 size={14} className="animate-spin" />가져오는 중...</>
-                  : `${validCount}개 등록`
+                  : `${formatNumber(validCount)}개 등록`
                 }
               </button>
             </div>

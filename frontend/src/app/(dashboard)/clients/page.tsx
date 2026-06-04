@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Building2, Mail, Pencil, Phone, Plus, Search, Trash2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { clientApi } from '@/api/client.api'
-import { formatDateTime } from '@/utils/format'
+import { formatDateTime, formatNumber } from '@/utils/format'
 import type { Client } from '@/types/api.types'
 
 const today = () => new Date().toISOString().slice(0, 10)
@@ -39,6 +39,37 @@ const EMPTY_FORM = {
   managerName: '',
   managerTitle: '',
   memo: '',
+}
+
+const TEMP_CLIENT_DATA: FormState = {
+  name: '테스트 거래처',
+  customerType: '매출처',
+  salesperson: '홍길동',
+  businessNo: '123-45-67890',
+  ceoName: '김대표',
+  industry: '도소매',
+  sector: '전자부품',
+  phone: '02-1234-5678',
+  mobile: '010-9876-5432',
+  fax: '02-8765-4321',
+  postalCode: '04524',
+  address: '서울특별시 중구 세종대로 110',
+  addressDetail: '10층',
+  contactName: '박담당자',
+  honorific: '귀하',
+  email: 'test-client@example.com',
+  website: 'https://example.com',
+  employeeCount: 25,
+  pricePolicy: '도매단가',
+  taxType: '부가세별도',
+  discountRate: 10,
+  initialReceivable: 500000,
+  unpaidOnly: true,
+  registrationDate: today(),
+  managementNo: 'MGR-2026-001',
+  managerName: '박담당자',
+  managerTitle: '영업팀장',
+  memo: '임시 테스트용 거래처입니다.',
 }
 
 type FormState = typeof EMPTY_FORM
@@ -160,6 +191,10 @@ export default function ClientsPage() {
     setShowModal(true)
   }
 
+  const fillTemporaryData = () => {
+    setForm(TEMP_CLIENT_DATA)
+  }
+
   const closeModal = () => {
     setShowModal(false)
     setEditing(null)
@@ -182,7 +217,7 @@ export default function ClientsPage() {
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold tracking-tight text-gray-900 dark:text-white">거래처 관리</h2>
-          {data && <p className="mt-0.5 text-xs text-gray-400">전체 {data.total}건</p>}
+          {data && <p className="mt-0.5 text-xs text-gray-400">전체 {formatNumber(data.total)}건</p>}
         </div>
         <button
           onClick={openCreate}
@@ -213,12 +248,12 @@ export default function ClientsPage() {
           <table className="w-full min-w-[780px] text-sm">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50/80 dark:border-gray-700 dark:bg-gray-800/60">
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">상호명/고객</th>
-                <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 md:table-cell">사업자번호</th>
-                <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 lg:table-cell">대표자</th>
-                <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 lg:table-cell">업태/종목</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">연락처</th>
-                <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 xl:table-cell">등록일</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500">상호명/고객</th>
+                <th className="hidden px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 md:table-cell">사업자번호</th>
+                <th className="hidden px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 lg:table-cell">대표자</th>
+                <th className="hidden px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 lg:table-cell">업태/종목</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500">연락처</th>
+                <th className="hidden px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500 xl:table-cell">등록일</th>
                 <th className="w-20 px-4 py-3" />
               </tr>
             </thead>
@@ -274,7 +309,7 @@ export default function ClientsPage() {
                 onClick={() => setPage(n)}
                 className={`h-8 w-8 rounded-lg text-sm transition-colors ${n === page ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'}`}
               >
-                {n}
+                {formatNumber(n)}
               </button>
             ))}
           </div>
@@ -436,9 +471,16 @@ export default function ClientsPage() {
                 </Field>
               </div>
 
-              <div className="mt-3 flex items-center justify-between border-t border-gray-400 pt-2">
+              <div className="mt-3 flex flex-col gap-2 border-t border-gray-400 pt-2 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-[12px] text-gray-500">고객/거래처명이 없을시 자동저장이 안됩니다.</p>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={fillTemporaryData}
+                    className="border border-gray-500 bg-white px-4 py-2 text-[12px] font-semibold hover:bg-gray-50"
+                  >
+                    임시 데이터 채우기
+                  </button>
                   <button type="button" className="border border-gray-500 bg-[#ececec] px-4 py-2 text-[12px] font-semibold hover:bg-white">
                     연속입력(F6)
                   </button>

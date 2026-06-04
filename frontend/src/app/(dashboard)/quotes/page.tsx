@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
@@ -8,10 +8,13 @@ import toast from 'react-hot-toast'
 import { clientApi } from '@/api/client.api'
 import { productApi } from '@/api/product.api'
 import { quoteApi } from '@/api/quote.api'
-import { DEFAULT_SUPPLIER_INFO, useSupplierInfoStore } from '@/stores/supplier-info.store'
+import { useSupplierInfoStore } from '@/stores/supplier-info.store'
 import { formatNumber } from '@/utils/format'
+import {
+  QUOTE_PRINT_TITLES, type QuotePrintTitle,
+  printQuoteDocument,
+} from '@/utils/printDocument'
 import type { Client, Product, Quote } from '@/types/api.types'
-import type { SupplierInfo } from '@/stores/supplier-info.store'
 
 const DOC_TYPE_LABEL: Record<string, string> = {
   STATEMENT: '거래명세서',
@@ -60,212 +63,6 @@ const EMPTY_FORM: FormState = {
   printTitle: '견적서',
 }
 
-function escapeHtml(value?: string | number | null) {
-  return String(value ?? '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;')
-}
-
-function money(value?: number | string | null) {
-  return Number(value ?? 0).toLocaleString('ko-KR')
-}
-
-function formatKoreanDate(s: string) {
-  const p = (s || '').split('-')
-  if (p.length !== 3) return s
-  return `${p[0]} 년 ${p[1]} 월 ${p[2]} 일`
-}
-
-function toKoreanMoney(n: number): string {
-  if (n === 0) return '영'
-  const d = ['', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구']
-  const g = (x: number): string => {
-    if (!x) return ''
-    let r = ''
-    const c = Math.floor(x / 1000); if (c) r += d[c] + '천'
-    const b = Math.floor((x % 1000) / 100); if (b) r += d[b] + '백'
-    const t = Math.floor((x % 100) / 10); if (t) r += d[t] + '십'
-    const i = x % 10; if (i) r += d[i]
-    return r
-  }
-  let r = ''; let v = Math.round(n)
-  const jo = Math.floor(v / 1e12); if (jo) { r += g(jo) + '조'; v %= 1e12 }
-  const eo = Math.floor(v / 1e8);  if (eo) { r += g(eo) + '억'; v %= 1e8 }
-  const ma = Math.floor(v / 1e4);  if (ma) { r += g(ma) + '만'; v %= 1e4 }
-  if (v) r += g(v)
-  return r
-}
-
-const QUOTE_PRINT_TITLES = ['견적서', '발주서', '청구서', '납품서', '지시서', '의뢰서'] as const
-type QuotePrintTitle = typeof QUOTE_PRINT_TITLES[number]
-
-function formatPrintTitle(label: string) {
-  return label.split('').join('   ')
-}
-
-function printQuoteDocument(doc: Quote, targetWindow?: Window | null, client?: Client | null, supplier: SupplierInfo = DEFAULT_SUPPLIER_INFO, printTitle?: string) {
-  const isStatement = doc.docType === 'STATEMENT'
-  const title = isStatement ? '거 래 명 세 서' : formatPrintTitle(printTitle || '견적서')
-  const total = Number(doc.totalAmount ?? 0)
-  const vat = 0
-  const supplyTotal = total - vat
-  const lineCount = isStatement ? 29 : 19
-  const receiver = {
-    name: doc.clientName || client?.name || '',
-    businessNo: client?.businessNo || '',
-    phone: client?.phone || '',
-    ceo: client?.ceoName || client?.managerName || '',
-    address: [client?.address, client?.addressDetail].filter(Boolean).join(' ') || '',
-  }
-
-  const rows = Array.from({ length: lineCount }, (_, idx) => {
-    const item = doc.items?.[idx]
-    if (!item) {
-      const isFirstBlank = idx === (doc.items?.length ?? 0)
-      return `<tr>
-        <td></td>
-        <td class="left" style="${isFirstBlank ? 'color:#bbb;font-size:9px;text-align:center' : ''}">${isFirstBlank ? '*** 이하여백 ***' : ''}</td>
-        <td></td><td></td><td></td><td></td>
-      </tr>`
-    }
-    const nameCell = escapeHtml(item.productName) + (item.productCode ? '&nbsp;&nbsp;' + escapeHtml(item.productCode) : '')
-    return `<tr>
-      <td>${idx + 1}</td>
-      <td class="left">${nameCell}</td>
-      <td>${escapeHtml(item.unit || 'Ea')}</td>
-      <td class="right">${money(item.qty)}</td>
-      <td class="right">${money(item.unitPrice)}</td>
-      <td class="right">${money(item.amount)}</td>
-    </tr>`
-  }).join('')
-
-  const statementHeader = `
-    <div class="doc-top"><div>작성일자&nbsp;&nbsp;${escapeHtml(doc.docDate)}</div><div>Page: 1/1</div></div>
-    <div class="party-grid">
-      <div class="party-label">공<br/>급<br/>자</div>
-      <table class="party-table"><tbody>
-        <tr><th>사업번호</th><td colspan="3"><b>${escapeHtml(supplier.businessNo)}</b></td></tr>
-        <tr><th>상&nbsp;&nbsp;&nbsp;&nbsp;호</th><td colspan="3">${escapeHtml(supplier.name)}</td></tr>
-        <tr><th>전화번호</th><td>${escapeHtml(supplier.phone)}</td><th>대표자</th><td>${escapeHtml(supplier.ceo)}</td></tr>
-        <tr><th>주&nbsp;&nbsp;&nbsp;&nbsp;소</th><td colspan="3">${escapeHtml(supplier.address)}</td></tr>
-      </tbody></table>
-      <div class="stamp">印</div>
-      <div class="party-label">공<br/>급<br/>받<br/>는<br/>자</div>
-      <table class="party-table"><tbody>
-        <tr><th>사업번호</th><td colspan="3"><b>${escapeHtml(receiver.businessNo)}</b></td></tr>
-        <tr><th>상&nbsp;&nbsp;&nbsp;&nbsp;호</th><td colspan="3">${escapeHtml(receiver.name)}</td></tr>
-        <tr><th>전화번호</th><td>${escapeHtml(receiver.phone)}</td><th>대표자</th><td>${escapeHtml(receiver.ceo)}</td></tr>
-        <tr><th>주&nbsp;&nbsp;&nbsp;&nbsp;소</th><td colspan="3">${escapeHtml(receiver.address)}</td></tr>
-      </tbody></table>
-    </div>`
-
-  const quoteHeader = `
-    <div class="quote-fax">FAX : ${escapeHtml(supplier.fax)}</div>
-    <div class="quote-header-grid">
-      <div class="quote-to">
-        <div>서기 : ${formatKoreanDate(doc.docDate)}</div>
-        <div class="client-line"><b>(${escapeHtml(receiver.name || doc.clientName || '')})</b>&nbsp;&nbsp;귀하</div>
-        <div>대표전화 : ${escapeHtml(receiver.phone)}</div>
-        <div class="quote-msg">아래와 같이 견적 합니다.</div>
-      </div>
-      <div class="quote-party">
-        <div class="party-label">공<br/>급<br/>자</div>
-        <table class="party-table"><tbody>
-          <tr><th>사업번호</th><td colspan="3"><b>${escapeHtml(supplier.businessNo)}</b></td></tr>
-          <tr><th>상&nbsp;&nbsp;&nbsp;&nbsp;호</th><td colspan="3">${escapeHtml(supplier.name)}</td></tr>
-          <tr><th>전화번호</th><td>${escapeHtml(supplier.phone)}</td><th>대표자</th><td>${escapeHtml(supplier.ceo)}</td></tr>
-          <tr><th>주&nbsp;&nbsp;&nbsp;&nbsp;소</th><td colspan="3">${escapeHtml(supplier.address)}</td></tr>
-        </tbody></table>
-        <div class="stamp">印</div>
-      </div>
-    </div>
-    <div class="quote-total-line"><span class="tl-label">합계금액 : ${toKoreanMoney(total)} 원정</span><span class="tl-num">( ${money(total)} )</span><span class="tl-vat">부가세별도</span></div>`
-
-  const html = `<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="utf-8">
-  <title>${title.replaceAll(' ', '')} - ${escapeHtml(doc.docNo)}</title>
-  <style>
-    @page { size: A4; margin: 12mm 10mm; }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #fff; color: #000; font-family: 'Malgun Gothic', '맑은 고딕', Arial, sans-serif; font-size: 11px; }
-    .sheet { width: 190mm; min-height: 270mm; margin: 0 auto; position: relative; padding: 10mm 2mm 6mm; }
-    .statement { color: #0018aa; --line: #0018aa; padding: 8mm 0 4mm; }
-    .quote { color: #000; --line: #000; border: 1px solid var(--line); padding: 8mm 0 5mm; position: relative; }
-    .title { position: relative; display: table; text-align: center; font-size: 22px; letter-spacing: 10px; font-weight: 700; margin: 0 auto 8mm; padding-bottom: 2.2mm; }
-    .title::after { content: ""; position: absolute; left: 0; right: 10px; bottom: 0; height: 1.4mm; border-top: 1px solid currentColor; border-bottom: 1px solid currentColor; }
-    .quote .title { letter-spacing: 14px; margin-bottom: 10mm; }
-    .statement .title { font-size: 19px; letter-spacing: 8px; margin-bottom: 7mm; }
-    .doc-top { display: flex; justify-content: space-between; margin-bottom: 2mm; }
-    .statement .doc-top { margin-bottom: 0; padding: 0 1mm; font-size: 10px; }
-    .quote-fax { position: absolute; right: 2mm; top: 3mm; font-size: 10px; }
-    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-    th, td { border: 1px solid var(--line); height: 6.2mm; padding: 1mm 1.5mm; font-size: 10px; text-align: center; vertical-align: middle; }
-    .left { text-align: left; } .right { text-align: right; }
-    .party-grid { position: relative; display: grid; grid-template-columns: 8mm 87mm 8mm 87mm; align-items: stretch; margin-bottom: -1px; }
-    .party-label { border: 1px solid var(--line); border-right: 0; display: flex; align-items: center; justify-content: center; text-align: center; font-weight: 700; line-height: 1.25; background: #eef8ff; }
-    .party-table th { width: 18mm; background: #f8fbff; font-weight: 700; }
-    .party-table td { text-align: left; }
-    .statement .party-table th, .statement .party-table td { height: 5.4mm; padding: 0.4mm 1mm; font-size: 9px; }
-    .statement .party-label { font-size: 10px; background: #eef8ff; }
-    .stamp { position: absolute; color: #e5002b; border: 2px solid #e5002b; width: 16mm; height: 16mm; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; transform: rotate(-12deg); z-index: 1; background: transparent; }
-    .party-grid .stamp { left: calc(50% - 9mm); top: 8mm; }
-    .quote-header-grid { display: grid; grid-template-columns: 1fr 92mm; gap: 3mm; margin-bottom: 0; align-items: start; }
-    .quote-to { line-height: 2.4; padding-right: 2mm; }
-    .quote-to .client-line { display: block; border-bottom: 1px solid #000; text-align: center; font-size: 13px; margin: 2mm 0; padding-bottom: 1mm; }
-    .quote-msg { margin-top: 3mm; }
-    .quote-party { position: relative; display: grid; grid-template-columns: 8mm 1fr; }
-    .quote-party .stamp { left: auto; right: 3mm; top: 3mm; }
-    .quote-total-line { display: flex; align-items: center; height: 9mm; border: 1px solid var(--line); margin-top: -1px; font-size: 13px; font-weight: 700; padding: 0 3mm; gap: 6mm; }
-    .tl-label { flex: 1; }
-    .tl-num { text-align: center; min-width: 28mm; }
-    .tl-vat { text-align: right; }
-    .items { margin-top: 0; }
-    .items th { background: ${isStatement ? '#eef8ff' : '#e8f4f8'}; font-weight: 700; height: 6mm; }
-    .items td { height: ${isStatement ? '5.95mm' : '7.1mm'}; }
-    .statement .items th, .statement .items td { padding: 0.35mm 1mm; font-size: 9px; }
-    .summary { width: 58mm; margin-left: auto; } .summary th { background: #eef8ff; font-weight: 700; } .summary td { text-align: right; }
-    .bottom-row { display: grid; grid-template-columns: 1fr 58mm; }
-    .memo-space { border-left: 1px solid var(--line); border-bottom: 1px solid var(--line); min-height: 21mm; }
-    .footer-page { position: absolute; bottom: 5mm; right: 4mm; font-size: 10px; }
-    .statement-footer { margin-top: -1px; }
-    .statement-footer th, .statement-footer td { height: 6.2mm; padding: 0.6mm 1mm; font-size: 9px; }
-    .statement-footer .label { background: #eef8ff; font-weight: 700; text-align: center; }
-    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .sheet { margin: 0 auto; } }
-  </style>
-</head>
-<body>
-  <div class="sheet ${isStatement ? 'statement' : 'quote'}">
-    <h1 class="title">${title}</h1>
-    ${isStatement ? statementHeader : quoteHeader}
-    <table class="items"><colgroup><col style="width:8mm"><col style="width:82mm"><col style="width:13mm"><col style="width:18mm"><col style="width:27mm"><col style="width:34mm"></colgroup><thead><tr><th>${isStatement ? '순번' : 'No'}</th><th>품명 / 규격</th><th>단위</th><th>수량</th><th>단가</th><th>금액</th></tr></thead><tbody>${rows}</tbody></table>
-    ${isStatement ? `<table class="statement-footer"><colgroup><col style="width:15mm"><col style="width:31mm"><col style="width:16mm"><col style="width:33mm"><col style="width:16mm"><col style="width:29mm"><col style="width:15mm"><col style="width:35mm"></colgroup><tbody><tr><th class="label">전표메모</th><td></td><th class="label">공급가</th><td class="right">${money(supplyTotal)}</td><th class="label">부가세</th><td class="right">${money(vat)}</td><th class="label">합계</th><td class="right">${money(total)}</td></tr><tr><th class="label">전미수</th><td></td><th class="label">입금액</th><td></td><th class="label">미수잔액</th><td class="right">${money(total)}</td><th class="label">인수자</th><td class="right">(인)</td></tr></tbody></table>` : `<div class="bottom-row"><div class="memo-space"></div><table class="summary"><tbody><tr><th>공급가</th><td>${money(supplyTotal)}</td></tr><tr><th>부가세</th><td>${money(vat)}</td></tr><tr><th>합계금액</th><td>${money(total)}</td></tr></tbody></table></div><div class="footer-page">Page: 1 / 1</div>`}
-  </div>
-  <script>window.onload = function() { window.print(); }<\/script>
-</body>
-</html>`
-
-  if (targetWindow) {
-    targetWindow.document.write(html)
-    targetWindow.document.close()
-    return
-  }
-
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const win = window.open(url, '_blank', 'width=820,height=1060')
-  if (!win) {
-    URL.revokeObjectURL(url)
-    toast.error('팝업 차단을 해제해주세요')
-    return
-  }
-  setTimeout(() => URL.revokeObjectURL(url), 60_000)
-}
-
 export default function QuotesPage() {
   const qc = useQueryClient()
   const searchParams = useSearchParams()
@@ -280,6 +77,8 @@ export default function QuotesPage() {
   const [prefillKey, setPrefillKey] = useState('')
   const [listPrint, setListPrint] = useState<{ quote: Quote; title: string } | null>(null)
   const productIdsParam = searchParams.get('productIds') ?? ''
+  const docTypeParam = (searchParams.get('docType') ?? '').toUpperCase()
+  const autoPrintParam = ['1', 'true'].includes((searchParams.get('print') ?? '').toLowerCase())
 
   const { data, isLoading } = useQuery({
     queryKey: ['quotes', { search, docTypeFilter, page }],
@@ -362,25 +161,48 @@ export default function QuotesPage() {
     const prefillProducts = async () => {
       const ids = productIdsParam.split(',').filter(Boolean)
       const selectedProducts = await Promise.all(ids.map((id) => productApi.findById(id)))
+      const docType = docTypeParam === 'QUOTE' ? 'QUOTE' : 'STATEMENT'
+      const items = selectedProducts.map((product, index) => ({
+        id: String(index),
+        productId: product.id,
+        productCode: product.code,
+        productName: product.name,
+        unit: product.unit ?? '',
+        qty: 1,
+        unitPrice: Number(product.sellPrice ?? 0),
+        amount: Number(product.sellPrice ?? 0),
+        sortOrder: index,
+      }))
       setEditing(null)
       setForm({
         ...EMPTY_FORM,
+        docType,
         docDate: today(),
-        items: selectedProducts.map((product) => ({
-          productId: product.id,
-          productCode: product.code,
-          productName: product.name,
-          unit: product.unit ?? '',
-          qty: 1,
-          unitPrice: Number(product.sellPrice ?? 0),
-          amount: Number(product.sellPrice ?? 0),
-        })),
+        items,
       })
       setShowModal(true)
       setPrefillKey(productIdsParam)
+
+      if (autoPrintParam) {
+        const draftQuote = {
+          id: '',
+          docNo: '',
+          docType,
+          clientId: undefined,
+          clientName: '',
+          docDate: today(),
+          memo: '',
+          totalAmount: items.reduce((sum, item) => sum + item.amount, 0),
+          status: 'DRAFT' as const,
+          createdBy: '',
+          createdAt: today(),
+          items,
+        }
+        printQuoteDocument(draftQuote, null, null, supplierInfo, docType === 'QUOTE' ? '견적서' : undefined)
+      }
     }
     prefillProducts().catch(() => toast.error('상품 정보를 불러오지 못했습니다'))
-  }, [prefillKey, productIdsParam])
+  }, [prefillKey, productIdsParam, docTypeParam, autoPrintParam, supplierInfo])
 
   const updateItem = (idx: number, patch: Partial<ItemRow>) => {
     setForm((prev) => {
@@ -430,7 +252,7 @@ export default function QuotesPage() {
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">거래명세서 / 견적서</h2>
-          {data && <p className="text-xs text-gray-400 mt-0.5">전체 {data.total}건</p>}
+          {data && <p className="text-xs text-gray-400 mt-0.5">전체 {formatNumber(data.total)}건</p>}
         </div>
         <button onClick={openCreate} className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-sm shadow-indigo-500/20">
           <Plus size={15} />문서 작성
@@ -457,11 +279,11 @@ export default function QuotesPage() {
           <table className="w-full min-w-[720px] text-sm">
             <thead>
               <tr className="bg-gray-50/80 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">문서번호</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">종류</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">거래처</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">날짜</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">합계금액</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">거래처</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">문서번호</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">종류</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">날짜</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">합계금액</th>
                 <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">상태</th>
                 <th className="px-4 py-3 w-28" />
               </tr>
@@ -471,9 +293,9 @@ export default function QuotesPage() {
               {!isLoading && data?.items.length === 0 && <tr><td colSpan={7} className="text-center py-10 text-gray-400">문서가 없습니다</td></tr>}
               {data?.items.map((quote) => (
                 <tr key={quote.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/40">
+                  <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{quote.clientName ?? '-'}</td>
                   <td className="px-4 py-3 font-mono text-xs text-gray-500">{quote.docNo}</td>
                   <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${quote.docType === 'STATEMENT' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400' : 'bg-violet-50 text-violet-700 dark:bg-violet-900/20 dark:text-violet-400'}`}>{DOC_TYPE_LABEL[quote.docType]}</span></td>
-                  <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{quote.clientName ?? '-'}</td>
                   <td className="px-4 py-3 text-gray-500">{quote.docDate}</td>
                   <td className="px-4 py-3 text-right font-semibold tabular-nums">￦{formatNumber(quote.totalAmount)}</td>
                   <td className="px-4 py-3 text-center"><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLE[quote.status]}`}>{STATUS_LABEL[quote.status]}</span></td>
@@ -498,7 +320,7 @@ export default function QuotesPage() {
       {data && data.totalPages > 1 && (
         <div className="flex justify-center items-center gap-2">
           <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="p-2 rounded-lg border border-gray-200 disabled:opacity-40"><ChevronLeft size={16} /></button>
-          <span className="text-sm text-gray-500">{page} / {data.totalPages}</span>
+          <span className="text-sm text-gray-500">{formatNumber(page)} / {formatNumber(data.totalPages)}</span>
           <button onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))} disabled={page === data.totalPages} className="p-2 rounded-lg border border-gray-200 disabled:opacity-40"><ChevronRight size={16} /></button>
         </div>
       )}
@@ -604,7 +426,7 @@ export default function QuotesPage() {
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[640px] text-sm">
-                    <thead><tr className="bg-gray-50 dark:bg-gray-800/50 text-xs text-gray-500"><th className="text-left px-3 py-2">상품</th><th className="px-2 py-2 w-20">단위</th><th className="px-2 py-2 w-20">수량</th><th className="px-2 py-2 w-28">단가</th><th className="px-2 py-2 w-28">금액</th><th className="w-10" /></tr></thead>
+                    <thead><tr className="bg-gray-50 dark:bg-gray-800/50 text-xs text-gray-500"><th className="text-center px-3 py-2">상품</th><th className="text-center px-2 py-2 w-20">단위</th><th className="text-center px-2 py-2 w-20">수량</th><th className="text-center px-2 py-2 w-28">단가</th><th className="text-center px-2 py-2 w-28">금액</th><th className="w-10" /></tr></thead>
                     <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                       {form.items.map((item, idx) => <QuoteItemRow key={idx} item={item} products={products?.items ?? []} tdInput={tdInput} onSelectProduct={(product) => selectProduct(idx, product)} onChange={(patch) => updateItem(idx, patch)} onRemove={() => removeItem(idx)} canRemove={form.items.length > 1} />)}
                     </tbody>
@@ -658,7 +480,7 @@ function QuoteItemRow({ item, products, tdInput, onChange, onSelectProduct, onRe
           </div>
         )}
       </td>
-      <td className="px-2 py-2"><input value={item.unit} onChange={(e) => onChange({ unit: e.target.value })} className={tdInput} /></td>
+      <td className="px-2 py-2"><input value={item.unit} onChange={(e) => onChange({ unit: e.target.value })} className={`${tdInput} text-center`} /></td>
       <td className="px-2 py-2"><input type="number" min={0} value={item.qty} onChange={(e) => onChange({ qty: Number(e.target.value) || 0 })} className={`${tdInput} text-right`} /></td>
       <td className="px-2 py-2"><input type="number" min={0} value={item.unitPrice} onChange={(e) => onChange({ unitPrice: Number(e.target.value) || 0 })} className={`${tdInput} text-right`} /></td>
       <td className="px-2 py-2 text-right tabular-nums font-medium">￦{formatNumber(item.amount)}</td>

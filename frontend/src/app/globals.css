@@ -53,7 +53,7 @@
   html { scroll-behavior: smooth; }
   body {
     @apply text-gray-900 antialiased dark:bg-gray-950 dark:text-gray-100;
-    background-color: #faf7f2;
+    background-color: #f3f4f6;
     font-feature-settings: "kern" 1, "liga" 1;
   }
   .dark body {

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo, useCallback } from 'react'
+import { Fragment, useState, useMemo, useCallback } from 'react'
 import {
   DndContext, DragOverlay, PointerSensor, KeyboardSensor, TouchSensor,
   useSensor, useSensors, closestCenter,
@@ -18,6 +18,7 @@ import toast from 'react-hot-toast'
 import { useAuthStore } from '@/stores/auth.store'
 import { useMenuPermissionStore } from '@/stores/menu-permission.store'
 import { cn } from '@/utils/cn'
+import { formatNumber } from '@/utils/format'
 import type { UserRole } from '@/types/api.types'
 import type { MenuDef } from '@/stores/menu-permission.store'
 
@@ -103,7 +104,7 @@ function SortableSectionHeader({
                 {label}
               </button>
               <Pencil size={9} className="text-gray-300 dark:text-gray-700 opacity-0 group-hover/sec:opacity-100 transition-opacity" />
-              <span className="text-[10px] text-gray-300 dark:text-gray-700">({itemCount})</span>
+              <span className="text-[10px] tabular-nums text-gray-300 dark:text-gray-700">({formatNumber(itemCount)})</span>
               <button
                 onClick={() => onDelete(label)}
                 className="ml-auto text-gray-300 dark:text-gray-700 hover:text-rose-500 dark:hover:text-rose-400 transition-colors opacity-0 group-hover/sec:opacity-100 p-0.5 rounded"
@@ -148,7 +149,7 @@ function SortableMenuRow({
         isDragging && 'opacity-40 bg-indigo-50/60 dark:bg-indigo-900/5',
       )}
     >
-      <td className="pl-2 pr-0 py-3 w-8">
+      <td className="pl-2 pr-0 py-3 w-8 border-r border-gray-100 dark:border-gray-800">
         <span
           {...attributes}
           {...listeners}
@@ -157,7 +158,7 @@ function SortableMenuRow({
           <GripVertical size={13} />
         </span>
       </td>
-      <td className="px-4 py-3.5 text-sm">
+      <td className="px-4 py-3.5 text-sm border-r border-gray-100 dark:border-gray-800">
         {editing ? (
           <div className="flex items-center gap-1.5">
             <input
@@ -194,7 +195,7 @@ function SortableMenuRow({
         const isAdmin = role === 'ADMIN'
         const checked = menu.roles.includes(role)
         return (
-          <td key={role} className="px-4 py-3.5 text-center">
+          <td key={role} className="px-4 py-3.5 text-center border-r border-gray-100 dark:border-gray-800">
             <button
               disabled={isAdmin}
               onClick={() => onToggle(menu.menuId, role, checked, menu.label)}
@@ -215,7 +216,7 @@ function SortableMenuRow({
           </td>
         )
       })}
-      <td className="pr-4 py-3.5 text-right">
+      <td className="pr-4 py-3.5 text-right border-l border-gray-100 dark:border-gray-800">
         <select
           value={menu.section}
           onChange={(e) => onMove(menu.menuId, e.target.value)}
@@ -292,7 +293,7 @@ export default function MenuPermissionsPage() {
   }, [menus, moveMenu])
 
   const handleAddSection = useCallback(() => {
-    const label = `새 폴더 ${sectionOrder.length + 1}`
+    const label = `새 폴더 ${formatNumber(sectionOrder.length + 1)}`
     addSection(label)
     toast.success(`"${label}" 폴더를 추가했습니다`)
   }, [sectionOrder, addSection])
@@ -309,7 +310,7 @@ export default function MenuPermissionsPage() {
   const handleDeleteSection = useCallback((label: string) => {
     const count = menus.filter((m) => m.section === label).length
     const msg = count > 0
-      ? `"${label}" 폴더에 메뉴가 ${count}개 있습니다. 폴더와 메뉴를 모두 삭제할까요?`
+      ? `"${label}" 폴더에 메뉴가 ${formatNumber(count)}개 있습니다. 폴더와 메뉴를 모두 삭제할까요?`
       : `"${label}" 폴더를 삭제할까요?`
     if (!confirm(msg)) return
     deleteSection(label)
@@ -433,24 +434,23 @@ export default function MenuPermissionsPage() {
           onDragEnd={handleDragEnd}
         >
           <SortableContext items={flatIds} strategy={verticalListSortingStrategy}>
-            <table className="w-full text-sm">
+            <table className="w-full text-sm border-collapse">
               <thead>
                 <tr className="bg-gray-50/80 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700">
-                  <th className="w-8" />
-                  <th className="text-left px-4 py-3.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">메뉴</th>
+                  <th className="w-8 border-r border-gray-200 dark:border-gray-700" />
+                  <th className="text-center px-4 py-3.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide border-r border-gray-200 dark:border-gray-700">메뉴</th>
                   {ROLES.map(({ role, label, headerCls }) => (
-                    <th key={role} className="text-center px-4 py-3.5 w-24">
+                    <th key={role} className="text-center px-4 py-3.5 w-24 border-r border-gray-200 dark:border-gray-700">
                       <span className={cn('text-xs font-semibold uppercase tracking-wide', headerCls)}>{label}</span>
                     </th>
                   ))}
-                  <th className="text-right pr-4 py-3.5 w-28 text-xs font-semibold text-gray-400 dark:text-gray-600">폴더</th>
+                  <th className="text-center pr-4 py-3.5 w-28 text-xs font-semibold text-gray-400 dark:text-gray-600">폴더</th>
                 </tr>
               </thead>
               <tbody>
                 {sections.map(({ label, items }) => (
-                  <>
+                  <Fragment key={label}>
                     <SortableSectionHeader
-                      key={`section-${label}`}
                       label={label}
                       itemCount={items.length}
                       sectionOrder={sectionOrder}
@@ -467,7 +467,7 @@ export default function MenuPermissionsPage() {
                         onRename={handleRenameMenu}
                       />
                     ))}
-                  </>
+                  </Fragment>
                 ))}
                 {sections.every((s) => s.items.length === 0) && (
                   <tr>

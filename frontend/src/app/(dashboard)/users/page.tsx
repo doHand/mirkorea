@@ -7,7 +7,7 @@ import { userApi } from '@/api/user.api'
 import { warehouseApi } from '@/api/warehouse.api'
 import { useAuthStore } from '@/stores/auth.store'
 import { useRoleStore, COLOR_OPTIONS } from '@/stores/role.store'
-import { formatDateTime } from '@/utils/format'
+import { formatDateTime, formatNumber } from '@/utils/format'
 import { cn } from '@/utils/cn'
 import { ExportButton } from '@/components/ExportButton'
 import { useMenuLabel } from '@/hooks/use-menu-label'
@@ -126,7 +126,7 @@ export default function UsersPage() {
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">{pageTitle}</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">사용자 {users.length}명 · 역할 {roles.length}개</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">사용자 {formatNumber(users.length)}명 · 역할 {formatNumber(roles.length)}개</p>
         </div>
         <div className="flex items-center gap-2">
           <ExportButton
@@ -158,7 +158,7 @@ export default function UsersPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-gray-50/80 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700">
-                    <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">사용자</th>
+                    <th className="text-center px-4 py-3 font-medium text-gray-600 dark:text-gray-400">사용자</th>
                     <th className="text-center px-3 py-3 font-medium text-gray-600 dark:text-gray-400 w-24">역할</th>
                     <th className="text-center px-3 py-3 font-medium text-gray-600 dark:text-gray-400 w-16">상태</th>
                     <th className="px-3 py-3 w-16" />
@@ -232,7 +232,7 @@ export default function UsersPage() {
           {rightTab === 'roles' && (
             <div className="p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">역할 목록 ({roles.length})</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">역할 목록 ({formatNumber(roles.length)})</p>
                 <button onClick={openAddRole} className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700 font-medium px-2 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors">
                   <Plus size={12} />추가
                 </button>

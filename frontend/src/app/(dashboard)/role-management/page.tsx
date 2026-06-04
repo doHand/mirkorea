@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth.store'
 import { useRoleStore, COLOR_OPTIONS } from '@/stores/role.store'
 import type { RoleDef } from '@/stores/role.store'
 import { cn } from '@/utils/cn'
+import { formatNumber } from '@/utils/format'
 import * as ui from '@/styles/ui'
 
 type FormState = { name: string; description: string; colorIdx: number }
@@ -62,7 +63,7 @@ export default function RoleManagementPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className={ui.h2Cls}>역할 관리</h2>
-          <p className={ui.subText}>시스템 역할을 추가·수정·삭제합니다 · 전체 {roles.length}개</p>
+          <p className={ui.subText}>시스템 역할을 추가·수정·삭제합니다 · 전체 {formatNumber(roles.length)}개</p>
         </div>
         <button onClick={openAdd} className={cn(ui.btnPrimary, 'flex items-center gap-1.5')}>
           <Plus size={14} />역할 추가

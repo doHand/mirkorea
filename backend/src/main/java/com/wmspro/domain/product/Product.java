@@ -74,6 +74,27 @@ public class Product {
     @Column(length = 200)
     private String spec;
 
+    @Column(name = "material_no", length = 50)
+    private String materialNo;
+
+    @Column(name = "location", length = 200)
+    private String location;
+
+    @Column(name = "price_a", precision = 15, scale = 2)
+    private BigDecimal priceA;
+
+    @Column(name = "price_b", precision = 15, scale = 2)
+    private BigDecimal priceB;
+
+    @Column(name = "price_c", precision = 15, scale = 2)
+    private BigDecimal priceC;
+
+    @Column(name = "retail_price", precision = 15, scale = 2)
+    private BigDecimal retailPrice;
+
+    @Column(name = "memo", length = 500)
+    private String memo;
+
     @Column(name = "is_lot_managed", nullable = false)
     @Builder.Default
     private boolean isLotManaged = false;

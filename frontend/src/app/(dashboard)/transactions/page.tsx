@@ -87,14 +87,14 @@ export default function TransactionsPage() {
         <table className="w-full min-w-[700px] text-sm">
           <thead>
             <tr className="bg-gray-50/80 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700">
-              <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-36">거래번호</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-28">유형</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">상품</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-28">위치</th>
-              <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-20">변동</th>
-              <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-20">이전</th>
-              <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-20">이후</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-36">일시</th>
+              <th className="text-center px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-36">거래번호</th>
+              <th className="text-center px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-28">유형</th>
+              <th className="text-center px-4 py-3 font-medium text-gray-600 dark:text-gray-400">상품</th>
+              <th className="text-center px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-28">위치</th>
+              <th className="text-center px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-20">변동</th>
+              <th className="text-center px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-20">이전</th>
+              <th className="text-center px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-20">이후</th>
+              <th className="text-center px-4 py-3 font-medium text-gray-600 dark:text-gray-400 w-36">일시</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -133,7 +133,7 @@ export default function TransactionsPage() {
         <div className="flex items-center justify-center gap-2">
           <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
             className="px-3 py-1 text-sm border border-gray-200 dark:border-gray-600 rounded disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">이전</button>
-          <span className="text-sm text-gray-600 dark:text-gray-400">{page} / {data.totalPages}</span>
+          <span className="text-sm text-gray-600 dark:text-gray-400">{formatNumber(page)} / {formatNumber(data.totalPages)}</span>
           <button onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))} disabled={page === data.totalPages}
             className="px-3 py-1 text-sm border border-gray-200 dark:border-gray-600 rounded disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">다음</button>
         </div>

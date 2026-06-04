@@ -8,6 +8,7 @@ import { useWarehouseStore } from '@/stores/warehouse.store'
 import { QUERY_KEYS } from '@/constants/query-keys'
 import { ExportButton } from '@/components/ExportButton'
 import { cn } from '@/utils/cn'
+import { formatNumber } from '@/utils/format'
 import * as ui from '@/styles/ui'
 import type { Zone, Location } from '@/types/api.types'
 
@@ -145,7 +146,7 @@ export default function WarehousePage() {
                   : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300',
               )}
             >
-              전체 ({(locations as Location[]).length})
+              전체 ({formatNumber((locations as Location[]).length)})
             </button>
             {(zones as Zone[]).map((z) => (
               <div
@@ -191,7 +192,7 @@ export default function WarehousePage() {
         <div className={cn(ui.cardFlat, 'col-span-2')}>
           <div className="p-4 border-b border-gray-100 dark:border-gray-800">
             <h3 className="font-medium text-gray-900 dark:text-white text-sm">
-              위치 목록 ({(locations as Location[]).length})
+              위치 목록 ({formatNumber((locations as Location[]).length)})
             </h3>
           </div>
           <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-[420px] overflow-y-auto">

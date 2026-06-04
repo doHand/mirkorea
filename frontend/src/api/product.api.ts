@@ -19,7 +19,10 @@ export const productApi = {
   create: (data: {
     code: string; name: string; category?: string; brand?: string
     unit?: string; boxQty?: number; safetyStock?: number; reorderPoint?: number
-    costPrice?: number; sellPrice?: number; isLotManaged?: boolean; isExpiryManaged?: boolean
+    costPrice?: number; sellPrice?: number
+    spec?: string; materialNo?: string; location?: string
+    priceA?: number; priceB?: number; priceC?: number; retailPrice?: number
+    memo?: string; isLotManaged?: boolean; isExpiryManaged?: boolean
   }) => post<Product>('/products', data),
 
   update: (id: string, data: Partial<Product>) =>

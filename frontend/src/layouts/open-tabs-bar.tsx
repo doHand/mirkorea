@@ -40,7 +40,7 @@ export function OpenTabsBar() {
   if (tabs.length === 0) return null
 
   return (
-    <div className="h-10 bg-[#fefdfb]/95 dark:bg-gray-950/90 border-b border-[#ede5d8] dark:border-slate-800 shrink-0">
+    <div className="h-10 bg-white/95 dark:bg-slate-900/95 border-b border-gray-200 dark:border-slate-700 shrink-0">
       <div className="h-full flex items-end gap-1 overflow-x-auto px-3 pt-1">
         {tabs.map((tab) => {
           const active = pathname === tab.href || (tab.href !== '/' && pathname.startsWith(tab.href))
@@ -51,7 +51,7 @@ export function OpenTabsBar() {
                 'group h-8 min-w-0 max-w-44 flex items-center rounded-t-xl border text-sm transition-colors',
                 active
                   ? 'bg-indigo-600 dark:bg-indigo-500 border-indigo-600 dark:border-indigo-400 border-b-indigo-600 dark:border-b-indigo-500 text-white shadow-sm shadow-indigo-500/30'
-                  : 'bg-[#f5efe6] dark:bg-slate-900 border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-800 dark:hover:text-slate-100 hover:bg-white dark:hover:bg-slate-800',
+                  : 'bg-gray-100 dark:bg-slate-800 border-transparent text-gray-500 dark:text-slate-200 hover:text-gray-800 dark:hover:text-white hover:bg-white dark:hover:bg-slate-700',
               )}
             >
               <Link href={tab.href} className="min-w-0 flex-1 px-3 py-1.5 truncate">

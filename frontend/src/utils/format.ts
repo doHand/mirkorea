@@ -1,6 +1,8 @@
-export function formatNumber(n: number | undefined | null) {
+export function formatNumber(n: number | string | undefined | null) {
   if (n == null) return '-'
-  return n.toLocaleString('ko-KR')
+  const value = typeof n === 'string' ? Number(n) : n
+  if (!Number.isFinite(value)) return '-'
+  return value.toLocaleString('ko-KR')
 }
 
 export function formatDate(iso: string | undefined | null) {

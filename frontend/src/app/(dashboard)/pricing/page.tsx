@@ -75,7 +75,7 @@ export default function PricingPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className={ui.h2Cls}>가격 재고현황</h2>
-          <p className={ui.subText}>전체 {items.length}개 상품 · 재고 {formatNumber(totalStock)}개</p>
+          <p className={ui.subText}>전체 {formatNumber(items.length)}개 상품 · 재고 {formatNumber(totalStock)}개</p>
         </div>
         <ExportButton
           filename="가격_재고현황"
@@ -133,7 +133,7 @@ export default function PricingPage() {
                 <th className={ui.th}>코드</th>
                 <th className={ui.th}>상품명</th>
                 <th className={cn(ui.th, 'w-24')}>카테고리</th>
-                <th className={cn(ui.th, 'w-20')}>단위</th>
+                <th className={cn(ui.thC, 'w-20')}>단위</th>
                 <th className={cn(ui.thR, 'w-28')}>재고 수량</th>
                 <th className={cn(ui.thR, 'w-28')}>원가</th>
                 <th className={cn(ui.thR, 'w-28')}>판매가</th>
@@ -157,7 +157,7 @@ export default function PricingPage() {
                     <td className="px-4 py-3 font-mono text-xs text-gray-600 dark:text-gray-400">{p.code}</td>
                     <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{p.name}</td>
                     <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{p.category || '-'}</td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{p.unit}</td>
+                    <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-400">{p.unit}</td>
                     <td className={cn('px-4 py-3 text-right tabular-nums font-bold', belowSafety ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-gray-100')}>
                       {formatNumber(p.totalStock)}
                     </td>

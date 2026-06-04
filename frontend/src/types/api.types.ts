@@ -74,6 +74,8 @@ export interface Product {
   unit: string
   optionName?: string
   spec?: string
+  materialNo?: string
+  location?: string
   boxQty: number
   weightG?: number
   imageUrl?: string
@@ -81,6 +83,11 @@ export interface Product {
   reorderPoint: number
   costPrice?: number
   sellPrice?: number
+  priceA?: number
+  priceB?: number
+  priceC?: number
+  retailPrice?: number
+  memo?: string
   saleStatus: SaleStatus
   isLotManaged: boolean
   isExpiryManaged: boolean
