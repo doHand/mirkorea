@@ -911,20 +911,20 @@ export default function ProductsPage() {
                 <SortHeader label="거래처명" sortKey="client" sort={sort} onSort={toggleSort} />
                 <SortHeader label="상품코드" sortKey="code" sort={sort} onSort={toggleSort} />
                 <SortHeader label="자재번호" sortKey="materialNo" sort={sort} onSort={toggleSort} />
+                <SortHeader label="바코드" sortKey="barcode" sort={sort} onSort={toggleSort} />
                 <SortHeader label="상품명" sortKey="name" sort={sort} onSort={toggleSort} />
-                <SortHeader label="위치" sortKey="location" sort={sort} onSort={toggleSort} />
                 <SortHeader label="기준단위" sortKey="unit" sort={sort} onSort={toggleSort} align="center" />
                 <SortHeader label="1BOX(입수량)" sortKey="boxQty" sort={sort} onSort={toggleSort} align="right" />
                 <SortHeader label="재고수량(박스)" sortKey="boxStock" sort={sort} onSort={toggleSort} align="right" />
                 <SortHeader label="재고수량(낱개)" sortKey="eachStock" sort={sort} onSort={toggleSort} align="right" />
                 <SortHeader label="카테고리" sortKey="category" sort={sort} onSort={toggleSort} />
-                <SortHeader label="매입가" sortKey="costPrice" sort={sort} onSort={toggleSort} align="right" />
+                <SortHeader label="위치" sortKey="location" sort={sort} onSort={toggleSort} />
+                {/* <SortHeader label="매입가" sortKey="costPrice" sort={sort} onSort={toggleSort} align="right" /> */}
                 <SortHeader label="판매가" sortKey="sellPrice" sort={sort} onSort={toggleSort} align="right" />
-                <SortHeader label="소매가" sortKey="retailPrice" sort={sort} onSort={toggleSort} align="right" />
-                <SortHeader label="A단가" sortKey="priceA" sort={sort} onSort={toggleSort} align="right" />
-                <SortHeader label="B단가" sortKey="priceB" sort={sort} onSort={toggleSort} align="right" />
-                <SortHeader label="C단가" sortKey="priceC" sort={sort} onSort={toggleSort} align="right" />
-                <SortHeader label="바코드" sortKey="barcode" sort={sort} onSort={toggleSort} />
+                <SortHeader label="해피미르단가" sortKey="priceB" sort={sort} onSort={toggleSort} align="right" />
+                <SortHeader label="네이버단가" sortKey="retailPrice" sort={sort} onSort={toggleSort} align="right" />
+                <SortHeader label="SSG단가" sortKey="priceA" sort={sort} onSort={toggleSort} align="right" />
+                {/* <SortHeader label="C단가" sortKey="priceC" sort={sort} onSort={toggleSort} align="right" /> */}
                 <SortHeader label="메모" sortKey="memo" sort={sort} onSort={toggleSort} />
                 <SortHeader label="현재고" sortKey="currentStock" sort={sort} onSort={toggleSort} align="right" />
                 <SortHeader label="예약" sortKey="reserved" sort={sort} onSort={toggleSort} align="right" />
@@ -991,27 +991,22 @@ export default function ProductsPage() {
                     <td className={cn(TD_TEXT, 'font-mono text-xs text-gray-500 dark:text-gray-400')}>
                       <EditableCell id={p.id} field="materialNo" value={p.materialNo ?? ''} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} />
                     </td>
+                     {/* 바코드 */}
+                    <td className={TD_TEXT} onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        onClick={() => setBarcodeModal(p)}
+                        className="block h-7 w-full text-left truncate rounded-lg px-2 leading-7 hover:bg-amber-50 dark:hover:bg-amber-900/10 text-[#D2691E] dark:text-amber-400 transition-colors"
+                        title={getPrimaryBarcode(p.barcodes)}
+                      >
+                        {getPrimaryBarcode(p.barcodes)}
+                      </button>
+                    </td>
                     {/* 상품명 */}
                     <td className={cn(TD_TEXT, 'font-semibold text-gray-900 dark:text-gray-100')}>
                       <EditableCell id={p.id} field="name" value={p.name} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} />
                     </td>
-                    {/* 위치 */}
-                    <td className={TD_TEXT}>
-                      <div className="flex items-center gap-1">
-                        <span className="block min-w-0 flex-1 truncate" title={p.defaultLocation?.code ?? ''}>{p.defaultLocation?.code || '—'}</span>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            openGridLocationPicker(p)
-                          }}
-                          className="shrink-0 rounded-md p-1 text-gray-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-300"
-                          title="위치 수정"
-                        >
-                          <Search size={12} />
-                        </button>
-                      </div>
-                    </td>
+        
                     {/* 기준단위 */}
                     <td className={TD_CTR}>
                       <EditableCell id={p.id} field="unit" value={p.unit || 'EA'} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} unitOptions={units} align="center" />
@@ -1030,33 +1025,40 @@ export default function ProductsPage() {
                     <td className={TD_TEXT}>
                       <EditableCell id={p.id} field="category" value={p.category ?? ''} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} />
                     </td>
-                    {/* 매입가 */}
-                    <td className={TD_NUM}>
-                      <EditableCell id={p.id} field="costPrice" value={p.costPrice ?? 0} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} align="right" />
+                                {/* 위치 */}
+                    <td className={TD_TEXT}>
+                      <div className="flex items-center gap-1">
+                        <span className="block min-w-0 flex-1 truncate" title={p.defaultLocation?.code ?? ''}>{p.defaultLocation?.code || '—'}</span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openGridLocationPicker(p)
+                          }}
+                          className="shrink-0 rounded-md p-1 text-gray-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-300"
+                          title="위치 수정"
+                        >
+                          <Search size={12} />
+                        </button>
+                      </div>
                     </td>
+                    {/* 매입가 */}
+                    {/* <td className={TD_NUM}>
+                      <EditableCell id={p.id} field="costPrice" value={p.costPrice ?? 0} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} align="right" />
+                    </td> */}
                     {/* 판매가 */}
                     <td className={TD_NUM}>
                       <EditableCell id={p.id} field="sellPrice" value={p.sellPrice ?? 0} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} align="right" />
                     </td>
                     {/* 소매가 */}
-                    <td className={TD_NUM}>
+                    {/* <td className={TD_NUM}>
                       <EditableCell id={p.id} field="retailPrice" value={p.retailPrice ?? 0} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} align="right" />
-                    </td>
+                    </td> */}
                     {/* A/B/C 단가 */}
                     <td className={TD_NUM}><EditableCell id={p.id} field="priceA" value={p.priceA ?? 0} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} align="right" /></td>
                     <td className={TD_NUM}><EditableCell id={p.id} field="priceB" value={p.priceB ?? 0} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} align="right" /></td>
                     <td className={TD_NUM}><EditableCell id={p.id} field="priceC" value={p.priceC ?? 0} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} align="right" /></td>
-                    {/* 바코드 */}
-                    <td className={TD_TEXT} onClick={(e) => e.stopPropagation()}>
-                      <button
-                        type="button"
-                        onClick={() => setBarcodeModal(p)}
-                        className="block h-7 w-full text-left truncate rounded-lg px-2 leading-7 hover:bg-amber-50 dark:hover:bg-amber-900/10 text-[#D2691E] dark:text-amber-400 transition-colors"
-                        title={getPrimaryBarcode(p.barcodes)}
-                      >
-                        {getPrimaryBarcode(p.barcodes)}
-                      </button>
-                    </td>
+             
                     {/* 메모 */}
                     <td className={cn(TD_TEXT, 'max-w-48')} title={p.memo || ''}>
                       <EditableCell id={p.id} field="memo" value={p.memo ?? ''} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} />
@@ -1459,19 +1461,19 @@ export default function ProductsPage() {
                       className={inputCls} />
                   </div>
                   <div>
-                    <label className={labelCls}>A 단가 (₩)</label>
+                    <label className={labelCls}>해피미르 단가 (₩)</label>
                     <input type="number" min={0} value={form.priceA}
                       onChange={(e) => setForm((p) => ({ ...p, priceA: +e.target.value }))}
                       className={inputCls} />
                   </div>
                   <div>
-                    <label className={labelCls}>B 단가 (₩)</label>
+                    <label className={labelCls}>네이버 단가 (₩)</label>
                     <input type="number" min={0} value={form.priceB}
                       onChange={(e) => setForm((p) => ({ ...p, priceB: +e.target.value }))}
                       className={inputCls} />
                   </div>
                   <div>
-                    <label className={labelCls}>C 단가 (₩)</label>
+                    <label className={labelCls}>SSG 단가 (₩)</label>
                     <input type="number" min={0} value={form.priceC}
                       onChange={(e) => setForm((p) => ({ ...p, priceC: +e.target.value }))}
                       className={inputCls} />

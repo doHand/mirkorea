@@ -628,9 +628,9 @@ export default function ProductMasterPage() {
                   '원가': p.costPrice ?? 0,
                   '판매가': p.sellPrice ?? 0,
                   '소매단가': p.retailPrice ?? 0,
-                  'A 단가': p.priceA ?? 0,
-                  'B 단가': p.priceB ?? 0,
-                  'C 단가': p.priceC ?? 0,
+                  '해피미르 단가': p.priceA ?? 0,
+                  '네이버 단가': p.priceB ?? 0,
+                  'SSG 단가': p.priceC ?? 0,
                   '단위': p.unit,
                   '박스당 낱개 갯수': p.boxQty,
                   '박스 재고수량': getBoxStockQty({ ...p, stockQty: inventorySummary.get(p.id)?.stockQty ?? p.stockQty ?? 0 }),
@@ -764,9 +764,9 @@ export default function ProductMasterPage() {
                 <SortHeader label="원가" sortKey="costPrice" sort={sort} onSort={toggleSort} className="w-24 text-amber-700 dark:text-amber-300 bg-amber-50/80 dark:bg-amber-950/30" />
                 <SortHeader label="판매가" sortKey="sellPrice" sort={sort} onSort={toggleSort} className="w-24" />
                 <SortHeader label="소매단가" sortKey="retailPrice" sort={sort} onSort={toggleSort} className="w-24" />
-                <SortHeader label="A 단가" sortKey="priceA" sort={sort} onSort={toggleSort} className="w-24" />
-                <SortHeader label="B 단가" sortKey="priceB" sort={sort} onSort={toggleSort} className="w-24" />
-                <SortHeader label="C 단가" sortKey="priceC" sort={sort} onSort={toggleSort} className="w-24" />
+                <SortHeader label="해피미르 단가" sortKey="priceA" sort={sort} onSort={toggleSort} className="w-24" />
+                <SortHeader label="네이버 단가" sortKey="priceB" sort={sort} onSort={toggleSort} className="w-24" />
+                <SortHeader label="SSG 단가" sortKey="priceC" sort={sort} onSort={toggleSort} className="w-24" />
                 <SortHeader label="단위" sortKey="unit" sort={sort} onSort={toggleSort} className="w-20" />
                 <SortHeader label="박스당 낱개 갯수" sortKey="boxQty" sort={sort} onSort={toggleSort} className="w-28 text-sky-700 dark:text-sky-300 bg-sky-50/80 dark:bg-sky-950/30" />
                 <SortHeader label="박스 재고수량" sortKey="boxStock" sort={sort} onSort={toggleSort} className="w-28" />
@@ -1186,7 +1186,7 @@ export default function ProductMasterPage() {
                   {(['priceA', 'priceB', 'priceC'] as const).map((key) => (
                     <div key={key}>
                       <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">
-                        {key === 'priceA' ? 'A 단가' : key === 'priceB' ? 'B 단가' : 'C 단가'}
+                        {key === 'priceA' ? '해피미르 단가' : key === 'priceB' ? '네이버 단가' : 'SSG 단가'}
                       </label>
                       <input type="number" min={0} value={form[key]}
                         onChange={(e) => setForm((p) => ({ ...p, [key]: +e.target.value }))}
