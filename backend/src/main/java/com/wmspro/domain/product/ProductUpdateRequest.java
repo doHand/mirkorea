@@ -32,4 +32,5 @@ public class ProductUpdateRequest {
     public SaleStatus saleStatus;
     public String     imageUrl;
     public Boolean    isLotManaged;
+    public Boolean    isExpiryManaged;
 }

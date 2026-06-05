@@ -184,10 +184,12 @@ public class StockService {
         int toAfter    = toBefore + req.quantity;
 
         fromInv.setQuantity(fromAfter);
+        fromInv.setLastSyncedAt(Instant.now());
         invRepo.save(fromInv);
 
         if (toInv != null) {
             toInv.setQuantity(toAfter);
+            toInv.setLastSyncedAt(Instant.now());
             invRepo.save(toInv);
         } else {
             invRepo.save(Inventory.builder()
@@ -196,6 +198,7 @@ public class StockService {
                 .warehouseId(req.warehouseId)
                 .quantity(req.quantity)
                 .lotNumber(req.lotNumber)
+                .lastSyncedAt(Instant.now())
                 .build());
         }
 
@@ -291,6 +294,7 @@ public class StockService {
         if (invOpt.isPresent()) {
             Inventory inv = invOpt.get();
             inv.setQuantity(afterQty);
+            inv.setLastSyncedAt(Instant.now());
             invRepo.save(inv);
         } else {
             invRepo.save(Inventory.builder()
@@ -299,6 +303,7 @@ public class StockService {
                 .warehouseId(original.getWarehouseId())
                 .quantity(cancelQty)
                 .lotNumber(original.getLotNumber())
+                .lastSyncedAt(Instant.now())
                 .build());
         }
 

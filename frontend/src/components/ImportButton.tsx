@@ -148,7 +148,7 @@ export function ImportButton({ onImported }: Props) {
 
       <button
         onClick={() => fileRef.current?.click()}
-        className="flex items-center gap-1.5 px-3 py-2 bg-violet-600 text-white text-sm rounded-lg hover:bg-violet-700 transition-colors font-medium"
+        className="flex items-center gap-1.5 px-3 py-2 bg-accent-500 text-white text-sm rounded-md hover:bg-accent-600 transition-colors font-medium"
       >
         <Download size={14} />
         가져오기
@@ -161,8 +161,8 @@ export function ImportButton({ onImported }: Props) {
             {/* 헤더 */}
             <div className="flex items-start justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-violet-100 dark:bg-violet-900/30 rounded-xl flex items-center justify-center shrink-0">
-                  <FileSpreadsheet size={18} className="text-violet-600 dark:text-violet-400" />
+                <div className="w-10 h-10 bg-accent-100 dark:bg-accent-900/30 rounded-md flex items-center justify-center shrink-0">
+                  <FileSpreadsheet size={18} className="text-accent-600 dark:text-accent-400" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 dark:text-white">엑셀 가져오기</h3>
@@ -253,7 +253,7 @@ export function ImportButton({ onImported }: Props) {
                 </div>
                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
                   <div
-                    className="bg-violet-600 h-1.5 rounded-full transition-all duration-300"
+                    className="bg-accent-500 h-1.5 rounded-full transition-all duration-300"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
@@ -271,7 +271,7 @@ export function ImportButton({ onImported }: Props) {
               <button
                 onClick={handleImport}
                 disabled={importing || validCount === 0}
-                className="flex-1 py-2.5 bg-violet-600 text-white rounded-xl text-sm font-semibold hover:bg-violet-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                className="flex-1 py-2.5 bg-accent-500 text-white rounded-md text-sm font-semibold hover:bg-accent-600 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
               >
                 {importing
                   ? <><Loader2 size={14} className="animate-spin" />가져오는 중...</>

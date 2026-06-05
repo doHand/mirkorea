@@ -114,7 +114,7 @@ public class UserController {
         m.put("email",       u.getEmail());
         m.put("fullName",    u.getFullName());
         m.put("role",        u.getRole().name());
-        m.put("warehouseId", u.getWarehouseId() != null ? u.getWarehouseId().toString() : "");
+        m.put("warehouseId", u.getWarehouseId() != null ? u.getWarehouseId().toString() : null);
         m.put("isActive",    u.isActive());
         m.put("lastLoginAt", u.getLastLoginAt() != null ? u.getLastLoginAt().toString() : null);
         m.put("createdAt",   u.getCreatedAt().toString());

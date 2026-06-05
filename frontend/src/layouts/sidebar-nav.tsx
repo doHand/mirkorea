@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { useRouter } from 'next/router'
 import { useState } from 'react'
 import {
   Package, BarChart3, Warehouse, ScanLine, ClipboardList,
@@ -12,39 +12,6 @@ import { cn } from '@/utils/cn'
 import { useAuthStore } from '@/stores/auth.store'
 import { useMenuPermissionStore } from '@/stores/menu-permission.store'
 import type { UserRole } from '@/types/api.types'
-
-const SECTION_STYLES = [
-  {
-    bar: 'bg-blue-400',
-    text: 'text-blue-100',
-    bg: 'bg-white/[0.04]',
-    border: 'border-white/10',
-  },
-  {
-    bar: 'bg-emerald-400',
-    text: 'text-emerald-100',
-    bg: 'bg-white/[0.04]',
-    border: 'border-white/10',
-  },
-  {
-    bar: 'bg-amber-300',
-    text: 'text-amber-100',
-    bg: 'bg-white/[0.04]',
-    border: 'border-white/10',
-  },
-  {
-    bar: 'bg-cyan-300',
-    text: 'text-cyan-100',
-    bg: 'bg-white/[0.04]',
-    border: 'border-white/10',
-  },
-  {
-    bar: 'bg-rose-300',
-    text: 'text-rose-100',
-    bg: 'bg-white/[0.04]',
-    border: 'border-white/10',
-  },
-]
 
 const ICON_MAP: Record<string, React.ElementType> = {
   dashboard:          LayoutDashboard,
@@ -76,8 +43,8 @@ interface Props {
 }
 
 export function SidebarNav({ onClose }: Props) {
-  const pathname = usePathname()
   const router   = useRouter()
+  const pathname = router.pathname
   const { user, clearAuth } = useAuthStore()
   const menus        = useMenuPermissionStore((s) => s.menus)
   const sectionOrder = useMenuPermissionStore((s) => s.sectionOrder)
@@ -99,61 +66,64 @@ export function SidebarNav({ onClose }: Props) {
     setCollapsed((prev) => ({ ...prev, [label]: !prev[label] }))
 
   return (
-    <aside className="w-64 bg-[#1d2a3d] text-slate-200 flex flex-col h-full select-none shadow-2xl shadow-slate-950/25 lg:rounded-[20px] lg:overflow-hidden">
-      {/* 로고 */}
-      <div className="px-4 h-16 flex items-center justify-between border-b border-white/10 shrink-0 bg-[#1d2a3d]">
+    <aside className="w-[248px] bg-[#2D4033] text-[#F9F7F2] flex flex-col h-full select-none shadow-xl shadow-black/15">
+
+      {/* 로고 영역 */}
+      <div className="px-4 h-[68px] flex items-center justify-between shrink-0 border-b border-[#E5D3B3]/20">
         <Link
           href="/"
           onClick={onClose}
-          className="flex items-center gap-3 hover:opacity-85 transition-opacity"
+          className="flex items-center gap-3 hover:opacity-90 transition-opacity"
         >
-          <div className="w-9 h-9 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25">
-            <Warehouse size={17} className="text-white" />
+          <div className="w-9 h-9 bg-[#F9F7F2] border border-[#E5D3B3]/70 rounded-md flex items-center justify-center shrink-0">
+            <Warehouse size={18} className="text-[#2D4033]" />
           </div>
           <div>
-            <h1 className="text-sm font-bold text-white leading-none">WMS Pro</h1>
-            <p className="text-[11px] text-slate-400 mt-1">창고 물류 관리</p>
+            <h1 className="text-[14px] font-bold text-white leading-none">MK WMS</h1>
+            <p className="text-[10px] text-slate-500 mt-0.5 tracking-wide">창고 물류 관리 시스템</p>
           </div>
         </Link>
         <button
           onClick={onClose}
-          className="lg:hidden p-1.5 rounded-lg hover:bg-white/10 text-slate-300 transition-colors"
+          className="lg:hidden p-1.5 rounded-lg hover:bg-white/10 text-slate-400 transition-colors"
         >
-          <X size={16} />
+          <X size={15} />
         </button>
       </div>
 
       {/* 네비게이션 */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-2.5 bg-[#1d2a3d]">
+      <nav className="flex-1 overflow-y-auto py-3 space-y-0.5">
         {sections.map(({ label, items }, sectionIndex) => {
           const isOpen = !collapsed[label]
-          const style = SECTION_STYLES[sectionIndex % SECTION_STYLES.length]
           return (
-            <div key={label} className={cn('rounded-2xl border p-1.5 transition-colors', style.bg, style.border)}>
+            <div key={label} className={cn(sectionIndex > 0 ? 'mt-1' : '')}>
+              {/* 섹션 헤더 */}
               <button
                 onClick={() => toggle(label)}
-                className="w-full flex items-center justify-between px-2.5 py-2 rounded-xl hover:bg-white/[0.08] transition-colors group"
+                className="w-full flex items-center gap-2 px-4 py-1.5 hover:bg-black/10 transition-colors group"
               >
-                <span className="flex items-center gap-2 min-w-0">
-                  <span className={cn('w-1.5 h-5 rounded-full shrink-0', style.bar)} />
-                  <span className={cn('text-xs font-bold truncate', style.text)}>
-                    {label}
-                  </span>
-                  <span className="px-1.5 py-0.5 rounded-md bg-white/10 text-[10px] tabular-nums text-slate-200 border border-white/10">
-                    {items.length}
-                  </span>
+                <span className="text-[10px] font-bold tracking-[0.08em] text-[#E5D3B3]/55 group-hover:text-[#E5D3B3]/85 transition-colors flex-1 text-left truncate">
+                  {label}
                 </span>
-                <ChevronDown size={13} className={cn('text-slate-400 transition-transform duration-200 shrink-0', isOpen ? 'rotate-0' : '-rotate-90')} />
+                <ChevronDown
+                  size={11}
+                  className={cn(
+                    'text-[#E5D3B3]/40 group-hover:text-[#E5D3B3]/75 transition-transform duration-200 shrink-0',
+                    isOpen ? 'rotate-0' : '-rotate-90',
+                  )}
+                />
               </button>
+
+              {/* 섹션 아이템 */}
               <div
                 className={cn(
                   'overflow-hidden transition-all duration-200',
-                  isOpen ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
+                  isOpen ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0',
                 )}
               >
-                <div className="space-y-1 pt-1">
+                <div className="px-2 pb-1 space-y-0.5">
                   {items.map(({ href, label: itemLabel, menuId }) => {
-                    const Icon = ICON_MAP[menuId] ?? LayoutDashboard
+                    const Icon   = ICON_MAP[menuId] ?? LayoutDashboard
                     const active = pathname === href || (href !== '/' && pathname.startsWith(href))
                     return (
                       <Link
@@ -161,49 +131,56 @@ export function SidebarNav({ onClose }: Props) {
                         href={href}
                         onClick={onClose}
                         className={cn(
-                          'group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 border',
+                          'group relative flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-all duration-150',
                           active
-                            ? 'bg-gradient-to-r from-blue-500 to-indigo-500 border-blue-400/60 text-white shadow-lg shadow-blue-950/30'
-                            : 'border-transparent text-slate-300 hover:bg-white/10 hover:text-white hover:border-white/10'
+                            ? 'bg-[#F9F7F2] text-[#2D4033] font-semibold shadow-sm'
+                            : 'text-[#F9F7F2]/65 font-medium hover:bg-black/10 hover:text-white',
                         )}
                       >
+                        {active && (
+                          <span className="absolute left-0 inset-y-[6px] w-[3px] bg-[#D2691E] rounded-r-full" />
+                        )}
                         <Icon
-                          size={16}
+                          size={15}
                           className={cn(
                             'shrink-0 transition-colors',
-                            active ? 'text-white' : 'text-slate-500 group-hover:text-white'
+                            active
+                              ? 'text-[#D2691E]'
+                              : 'text-[#E5D3B3]/45 group-hover:text-[#E5D3B3]',
                           )}
                         />
                         <span className="flex-1 truncate">{itemLabel}</span>
-                        {active && (
-                          <span className="w-1.5 h-6 rounded-full bg-white/80 shrink-0" />
-                        )}
                       </Link>
                     )
                   })}
                 </div>
               </div>
+
+              {/* 섹션 구분선 (마지막 제외) */}
+              {sectionIndex < sections.length - 1 && (
+                <div className="mx-4 mt-1 border-b border-[#E5D3B3]/10" />
+              )}
             </div>
           )
         })}
       </nav>
 
       {/* 사용자 + 로그아웃 */}
-      <div className="px-3 py-3 border-t border-white/10 space-y-1 shrink-0 bg-[#1d2a3d]">
-        <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl bg-white/[0.06] border border-white/10">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-sm">
+      <div className="px-3 py-3 border-t border-[#E5D3B3]/20 space-y-1 shrink-0">
+        <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-md bg-black/10 border border-[#E5D3B3]/10">
+          <div className="w-7 h-7 rounded-md bg-[#D2691E] flex items-center justify-center text-white font-bold text-xs shrink-0">
             {user?.fullName?.charAt(0)?.toUpperCase() ?? 'U'}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold text-white truncate leading-tight">{user?.fullName}</p>
-            <span className="text-[10px] text-blue-200 font-medium">{user?.role}</span>
+            <p className="text-[12px] font-semibold text-white truncate leading-tight">{user?.fullName}</p>
+            <span className="text-[10px] text-[#E5D3B3]/60 font-medium">{user?.role}</span>
           </div>
         </div>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-slate-400 hover:bg-rose-500/10 hover:text-rose-200 transition-all duration-150"
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] text-[#E5D3B3]/55 hover:bg-black/10 hover:text-white transition-all duration-150"
         >
-          <LogOut size={15} className="shrink-0" />
+          <LogOut size={14} className="shrink-0" />
           로그아웃
         </button>
       </div>

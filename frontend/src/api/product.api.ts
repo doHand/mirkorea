@@ -34,7 +34,7 @@ export const productApi = {
     costPrice?: number; sellPrice?: number
     spec?: string; materialNo?: string
     priceA?: number; priceB?: number; priceC?: number; retailPrice?: number
-    memo?: string; saleStatus?: SaleStatus; isLotManaged?: boolean
+    memo?: string; saleStatus?: SaleStatus; isLotManaged?: boolean; isExpiryManaged?: boolean
   }) => put<Product>(`/products/${id}`, data),
 
   delete: (id: string) => del(`/products/${id}`),
@@ -45,7 +45,7 @@ export const productApi = {
   addBarcode: (productId: string, data: { barcode: string; type: BarcodeUnitType; unitQty: number; isPrimary: boolean }) =>
     post<Barcode>(`/products/${productId}/barcodes`, data),
 
-  updateBarcode: (productId: string, barcodeId: string, data: { type: BarcodeUnitType; unitQty: number; isPrimary: boolean }) =>
+  updateBarcode: (productId: string, barcodeId: string, data: { barcode?: string; type: BarcodeUnitType; unitQty: number; isPrimary: boolean }) =>
     put<Barcode>(`/products/${productId}/barcodes/${barcodeId}`, data),
 
   deleteBarcode: (productId: string, barcodeId: string) =>

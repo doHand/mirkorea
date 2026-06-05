@@ -48,7 +48,8 @@ public class InventoryService {
     public Map<UUID, Long> getTotalStockByProduct() {
         Map<UUID, Long> result = new HashMap<>();
         for (Object[] row : invRepo.sumQuantityGroupByProduct()) {
-            result.put((UUID) row[0], (Long) row[1]);
+            Number n = (Number) row[1];
+            result.put((UUID) row[0], n != null ? n.longValue() : 0L);
         }
         return result;
     }

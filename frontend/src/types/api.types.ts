@@ -63,7 +63,7 @@ export interface Location {
 }
 
 export type SaleStatus = 'ACTIVE' | 'INACTIVE' | 'DISCONTINUED'
-export type BarcodeUnitType = 'UNIT' | 'BOX' | 'CXD'
+export type BarcodeUnitType = 'UNIT' | 'CXD' | 'CXD_BOX'
 
 export interface Product {
   id: string
@@ -202,6 +202,36 @@ export interface InboundOrder {
   createdAt: string
   updatedAt: string
   items: InboundOrderItem[]
+}
+
+export type PurchaseOrderStatus = 'DRAFT' | 'ORDERED' | 'CONVERTED' | 'CANCELLED'
+
+export interface PurchaseOrderItem {
+  id: string
+  productId: string
+  quantity: number
+  boxCount: number
+  capSize?: string
+  unitPrice: number
+  sortOrder: number
+  product?: Product
+}
+
+export interface PurchaseOrder {
+  id: string
+  orderNo: string
+  warehouseId: string
+  supplier?: string
+  orderDate: string
+  expectedDate?: string
+  manager?: string
+  phone?: string
+  fax?: string
+  status: PurchaseOrderStatus
+  memo?: string
+  inboundOrderId?: string
+  createdAt: string
+  items: PurchaseOrderItem[]
 }
 
 export interface Client {

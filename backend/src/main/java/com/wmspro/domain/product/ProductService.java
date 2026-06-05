@@ -23,6 +23,11 @@ public class ProductService {
     public PageResponse<Product> findAll(String search, String category, SaleStatus status, int page, int limit) {
         var pageable = PageRequest.of(page - 1, limit, Sort.by("createdAt").descending());
         var result   = productRepo.search(search, category, status, pageable);
+        result.getContent().forEach(p -> {
+            if (p.getClient() != null) p.getClient().getName();
+            if (p.getDefaultLocation() != null) p.getDefaultLocation().getCode();
+            p.getBarcodes().size();
+        });
         return new PageResponse<>(result, limit);
     }
 
@@ -97,7 +102,8 @@ public class ProductService {
         if (req.memo         != null) product.setMemo(req.memo);
         if (req.saleStatus   != null) product.setSaleStatus(req.saleStatus);
         if (req.imageUrl    != null) product.setImageUrl(req.imageUrl);
-        if (req.isLotManaged != null) product.setLotManaged(req.isLotManaged);
+        if (req.isLotManaged    != null) product.setLotManaged(req.isLotManaged);
+        if (req.isExpiryManaged != null) product.setExpiryManaged(req.isExpiryManaged);
         return productRepo.save(product);
     }
 
@@ -114,7 +120,7 @@ public class ProductService {
 
     @Transactional
     public Barcode addBarcode(UUID productId, String barcodeValue, BarcodeUnitType type, int unitQty, boolean isPrimary) {
-        findById(productId);
+        Product product = findById(productId);
         if (barcodeRepo.existsByBarcode(barcodeValue)) {
             throw new BusinessException(ErrorCode.BARCODE_DUPLICATE);
         }
@@ -122,17 +128,24 @@ public class ProductService {
             .productId(productId)
             .barcode(barcodeValue)
             .type(type)
-            .unitQty(unitQty > 0 ? unitQty : 1)
+            .unitQty(normalizeBarcodeQty(type, unitQty))
             .isPrimary(isPrimary)
             .build());
     }
 
     @Transactional
-    public Barcode updateBarcode(UUID barcodeId, BarcodeUnitType type, int unitQty, boolean isPrimary) {
+    public Barcode updateBarcode(UUID barcodeId, String barcodeValue, BarcodeUnitType type, int unitQty, boolean isPrimary) {
         Barcode barcode = barcodeRepo.findById(barcodeId)
             .orElseThrow(() -> new BusinessException(ErrorCode.BARCODE_NOT_FOUND));
+        Product product = findById(barcode.getProductId());
+        if (barcodeValue != null && !barcodeValue.isBlank() && !barcodeValue.equals(barcode.getBarcode())) {
+            if (barcodeRepo.existsByBarcode(barcodeValue)) {
+                throw new BusinessException(ErrorCode.BARCODE_DUPLICATE);
+            }
+            barcode.setBarcode(barcodeValue.trim());
+        }
         barcode.setType(type);
-        barcode.setUnitQty(unitQty > 0 ? unitQty : 1);
+        barcode.setUnitQty(normalizeBarcodeQty(type, unitQty));
         barcode.setPrimary(isPrimary);
         return barcodeRepo.save(barcode);
     }
@@ -147,12 +160,18 @@ public class ProductService {
             .orElseThrow(() -> new BusinessException(ErrorCode.BARCODE_NOT_FOUND));
 
         Product product = barcode.getProduct();
-        int qtyPerScan = barcode.getType() == BarcodeUnitType.BOX
-            ? product.getBoxQty() * barcode.getUnitQty()
-            : barcode.getUnitQty();
+        int qtyPerScan = isSingleUnitBarcode(barcode.getType()) ? 1 : Math.max(1, barcode.getUnitQty());
 
         return new BarcodeResolveResult(product, barcode.getType(), qtyPerScan);
     }
 
     public record BarcodeResolveResult(Product product, BarcodeUnitType unitType, int qtyPerScan) {}
+
+    private int normalizeBarcodeQty(BarcodeUnitType type, int unitQty) {
+        return isSingleUnitBarcode(type) ? 1 : Math.max(1, unitQty);
+    }
+
+    private boolean isSingleUnitBarcode(BarcodeUnitType type) {
+        return type == BarcodeUnitType.UNIT || type == BarcodeUnitType.BOX;
+    }
 }

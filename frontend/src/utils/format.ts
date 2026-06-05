@@ -5,6 +5,13 @@ export function formatNumber(n: number | string | undefined | null) {
   return value.toLocaleString('ko-KR')
 }
 
+export function formatDecimal(n: number | string | undefined | null, maximumFractionDigits = 2) {
+  if (n == null) return '-'
+  const value = typeof n === 'string' ? Number(n) : n
+  if (!Number.isFinite(value)) return '-'
+  return value.toLocaleString('ko-KR', { maximumFractionDigits })
+}
+
 export function formatDate(iso: string | undefined | null) {
   if (!iso) return '-'
   return new Date(iso).toLocaleDateString('ko-KR', {

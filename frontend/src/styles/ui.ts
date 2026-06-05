@@ -2,14 +2,14 @@
 // Usage: import { card, tableWrap, btnPrimary } from '@/styles/ui'
 
 // ── Container / Card ────────────────────────────────────────────────────────
-export const card     = 'bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm'
-export const cardFlat = 'bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800'
+export const card     = 'bg-white dark:bg-gray-900 rounded-md border border-warm-300/70 dark:border-gray-800'
+export const cardFlat = 'bg-white dark:bg-gray-900 rounded-md border border-warm-300/70 dark:border-gray-800'
 
 /** Card with overflow-hidden for tables */
-export const tableWrap = 'bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm'
+export const tableWrap = 'bg-white dark:bg-gray-900 rounded-md border border-warm-300/70 dark:border-gray-800 overflow-hidden'
 
 /** Horizontal filter bar card */
-export const filterCard = 'bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-3 flex gap-2.5 shadow-sm'
+export const filterCard = 'bg-white dark:bg-gray-900 rounded-md border border-warm-300/70 dark:border-gray-800 p-3 flex gap-2.5'
 
 // ── Table internals ─────────────────────────────────────────────────────────
 export const thead = 'bg-gray-50/80 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700'
@@ -29,7 +29,7 @@ export const label   = 'block text-sm font-medium text-gray-700 dark:text-gray-3
 /** Search input (has left icon → pl-9) */
 export const searchInput = [
   'w-full pl-9 pr-3 py-2 text-sm',
-  'border border-gray-200 dark:border-gray-700 rounded-xl',
+  'border border-warm-300/70 dark:border-gray-700 rounded-md',
   'focus:outline-none focus:ring-2 focus:ring-indigo-500/40',
   'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100',
   'placeholder-gray-400 transition-shadow',
@@ -38,7 +38,7 @@ export const searchInput = [
 /** Generic form input (modal / inline edit) */
 export const formInput = [
   'w-full px-3 py-2 text-sm',
-  'border border-gray-200 dark:border-gray-700 rounded-xl',
+  'border border-warm-300/70 dark:border-gray-700 rounded-md',
   'focus:outline-none focus:ring-2 focus:ring-indigo-500/40',
   'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100',
   'placeholder-gray-400',
@@ -47,15 +47,15 @@ export const formInput = [
 /** Select element */
 export const selectCls = [
   'px-3 py-2 text-sm',
-  'border border-gray-200 dark:border-gray-700 rounded-xl',
+  'border border-warm-300/70 dark:border-gray-700 rounded-md',
   'focus:outline-none focus:ring-2 focus:ring-indigo-500/40',
   'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100',
 ].join(' ')
 
 // ── Buttons ──────────────────────────────────────────────────────────────────
-export const btnPrimary   = 'px-3.5 py-2 text-sm bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-medium'
-export const btnSecondary = 'px-3.5 py-2 text-sm border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors'
-export const btnDanger    = 'px-3.5 py-2 text-sm bg-rose-600 text-white rounded-xl hover:bg-rose-700 transition-colors font-medium'
+export const btnPrimary   = 'px-3.5 py-2 text-sm bg-brand-600 text-white rounded-md hover:bg-brand-700 transition-colors font-medium'
+export const btnSecondary = 'px-3.5 py-2 text-sm border border-warm-300/70 dark:border-gray-700 text-gray-600 dark:text-gray-400 rounded-md hover:bg-warm-50 dark:hover:bg-gray-800 transition-colors'
+export const btnDanger    = 'px-3.5 py-2 text-sm bg-rose-600 text-white rounded-md hover:bg-rose-700 transition-colors font-medium'
 export const btnIcon      = 'p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
 
 // ── Modal ────────────────────────────────────────────────────────────────────

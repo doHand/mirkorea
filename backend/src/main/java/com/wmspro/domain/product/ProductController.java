@@ -92,10 +92,11 @@ public class ProductController {
         @PathVariable UUID barcodeId,
         @RequestBody Map<String, Object> body
     ) {
+        String barcodeValue = body.get("barcode") instanceof String s ? s : null;
         BarcodeUnitType type = BarcodeUnitType.valueOf((String) body.getOrDefault("type", "UNIT"));
         int unitQty = body.get("unitQty") instanceof Integer i ? i : 1;
         boolean isPrimary = body.get("isPrimary") instanceof Boolean b ? b : false;
-        return ApiResponse.ok(productService.updateBarcode(barcodeId, type, unitQty, isPrimary));
+        return ApiResponse.ok(productService.updateBarcode(barcodeId, barcodeValue, type, unitQty, isPrimary));
     }
 
     @DeleteMapping("/{productId}/barcodes/{barcodeId}")

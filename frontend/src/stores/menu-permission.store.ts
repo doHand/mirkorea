@@ -17,7 +17,8 @@ export const DEFAULT_MENUS: MenuDef[] = [
   { menuId: 'dashboard',        href: '/',                 label: '대시보드',          section: '운영', roles: ALL },
   { menuId: 'products',         href: '/products',         label: '상품 관리',         section: '운영', roles: ALL },
   { menuId: 'inbound',          href: '/inbound',          label: '입고 관리',         section: '입출고', roles: ['ADMIN', 'MANAGER', 'WORKER'] },
-  { menuId: 'scan',             href: '/scan',             label: '스캔/바코드 관리',  section: '운영', roles: ALL },
+  { menuId: 'scan',             href: '/scan',             label: '스캔',              section: '운영', roles: ALL },
+  { menuId: 'barcodes',         href: '/barcodes',         label: '바코드 관리',       section: '운영', roles: ALL },
   { menuId: 'product-attrs',    href: '/product-attrs',    label: '상품 마스터',       section: '상품 마스터 관리', roles: ALL },
   { menuId: 'units',            href: '/units',            label: '단위 관리',         section: '상품 마스터 관리', roles: ALL },
   { menuId: 'clients',          href: '/clients',          label: '거래처 관리',       section: '영업', roles: ['ADMIN', 'MANAGER'] },
@@ -139,12 +140,13 @@ export const useMenuPermissionStore = create<MenuPermissionState>()(
     }),
     {
       name: 'wms-menu-permissions',
-      version: 9,
+      version: 12,
       migrate: (stored: unknown) => {
         const s = stored as Partial<MenuPermissionState>
         // Remove obsolete menus: product-codes/box-qty/lot merged into product-attrs,
-        // pricing merged into inventory, barcodes merged into scan, role-management merged into users
-        const obsolete = new Set(['product-codes', 'box-qty', 'lot', 'pricing', 'barcodes', 'role-management', 'inventory'])
+        // pricing merged into inventory, role-management merged into users
+        // Note: barcodes is now a standalone page — removed from obsolete list
+        const obsolete = new Set(['product-codes', 'box-qty', 'lot', 'pricing', 'role-management', 'inventory', 'purchase-orders'])
         let menus = (s.menus ?? []).filter((m) => !obsolete.has(m.menuId))
         // Rename product-attrs label to "상품 마스터"
         menus = menus.map((m) =>
@@ -153,7 +155,7 @@ export const useMenuPermissionStore = create<MenuPermissionState>()(
         // Update labels for merged pages
         menus = menus.map((m) => {
           if (m.menuId === 'inventory' && m.label === '재고 조회') return { ...m, label: '재고/가격 현황' }
-          if (m.menuId === 'scan' && m.label === '바코드 스캔') return { ...m, label: '스캔/바코드 관리' }
+          if (m.menuId === 'scan' && m.label === '바코드 스캔') return { ...m, label: '스캔 조회/입출고' }
           if (m.menuId === 'users' && m.label === '사용자 관리') return { ...m, label: '사용자 & 역할 관리' }
           return m
         })
