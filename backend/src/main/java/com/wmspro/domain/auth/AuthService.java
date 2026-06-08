@@ -52,13 +52,14 @@ public class AuthService {
 
     @Transactional
     public void register(String username, String email, String fullName, String password) {
+        String normalizedEmail = email.trim().toLowerCase();
         if (userRepo.existsByUsername(username))
             throw new BusinessException(ErrorCode.USER_DUPLICATE);
-        if (userRepo.existsByEmail(email))
+        if (userRepo.existsByEmailIgnoreCase(normalizedEmail))
             throw new BusinessException(ErrorCode.USER_DUPLICATE);
         userRepo.save(User.builder()
             .username(username)
-            .email(email)
+            .email(normalizedEmail)
             .passwordHash(passwordEncoder.encode(password))
             .fullName(fullName)
             .role(UserRole.WORKER)

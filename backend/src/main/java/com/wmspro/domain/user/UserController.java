@@ -19,6 +19,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -40,12 +41,22 @@ public class UserController {
     @PatchMapping("/me")
     public ApiResponse<Map<String, Object>> updateMe(
         @AuthenticationPrincipal WmsPrincipal principal,
-        @RequestBody UpdateMeRequest req
+        @Valid @RequestBody UpdateMeRequest req
     ) {
         User user = userRepo.findById(principal.getUuid())
             .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         if (req.getFullName() != null && !req.getFullName().isBlank())
             user.setFullName(req.getFullName());
+        if (req.getEmail() != null && !req.getEmail().isBlank()) {
+            String normalizedEmail = req.getEmail().trim().toLowerCase();
+            if (!normalizedEmail.equalsIgnoreCase(user.getEmail())) {
+                if (userRepo.existsByEmailIgnoreCase(normalizedEmail))
+                    throw new BusinessException(ErrorCode.USER_DUPLICATE);
+                user.setEmail(normalizedEmail);
+            }
+        }
+        if (req.getPhone() != null)
+            user.setPhone(req.getPhone().isBlank() ? null : req.getPhone());
         if (req.getPassword() != null && !req.getPassword().isBlank())
             user.setPasswordHash(passwordEncoder.encode(req.getPassword()));
         return ApiResponse.ok(toMap(userRepo.save(user)));
@@ -64,14 +75,17 @@ public class UserController {
     public ApiResponse<Map<String, Object>> create(@Valid @RequestBody CreateRequest req) {
         if (userRepo.existsByUsername(req.getUsername()))
             throw new BusinessException(ErrorCode.USER_DUPLICATE);
-        if (userRepo.existsByEmail(req.getEmail()))
+        String normalizedEmail = req.getEmail().trim().toLowerCase();
+        if (userRepo.existsByEmailIgnoreCase(normalizedEmail))
             throw new BusinessException(ErrorCode.USER_DUPLICATE);
 
         User saved = userRepo.save(User.builder()
             .username(req.getUsername())
-            .email(req.getEmail())
+            .email(normalizedEmail)
             .passwordHash(passwordEncoder.encode(req.getPassword()))
             .fullName(req.getFullName())
+            .phone(req.getPhone())
+            .hireDate(parseDate(req.getHireDate()))
             .role(UserRole.valueOf(req.getRole()))
             .warehouseId(req.getWarehouseId() != null && !req.getWarehouseId().isBlank()
                 ? UUID.fromString(req.getWarehouseId()) : null)
@@ -82,11 +96,21 @@ public class UserController {
     @PatchMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<Map<String, Object>> update(@PathVariable UUID id,
-                                                    @RequestBody UpdateRequest req) {
+                                                    @Valid @RequestBody UpdateRequest req) {
         User user = userRepo.findById(id)
             .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         if (req.getFullName()    != null) user.setFullName(req.getFullName());
+        if (req.getEmail() != null && !req.getEmail().isBlank()) {
+            String normalizedEmail = req.getEmail().trim().toLowerCase();
+            if (!normalizedEmail.equalsIgnoreCase(user.getEmail())) {
+                if (userRepo.existsByEmailIgnoreCase(normalizedEmail))
+                    throw new BusinessException(ErrorCode.USER_DUPLICATE);
+                user.setEmail(normalizedEmail);
+            }
+        }
+        if (req.getPhone()       != null) user.setPhone(req.getPhone().isBlank() ? null : req.getPhone());
+        if (req.getHireDate()    != null) user.setHireDate(parseDate(req.getHireDate()));
         if (req.getRole()        != null) user.setRole(UserRole.valueOf(req.getRole()));
         if (req.getIsActive()    != null) user.setActive(req.getIsActive());
         if (req.getWarehouseId() != null)
@@ -113,6 +137,8 @@ public class UserController {
         m.put("username",    u.getUsername());
         m.put("email",       u.getEmail());
         m.put("fullName",    u.getFullName());
+        m.put("phone",       u.getPhone());
+        m.put("hireDate",    u.getHireDate() != null ? u.getHireDate().toString() : null);
         m.put("role",        u.getRole().name());
         m.put("warehouseId", u.getWarehouseId() != null ? u.getWarehouseId().toString() : null);
         m.put("isActive",    u.isActive());
@@ -124,6 +150,8 @@ public class UserController {
     @Getter @Setter
     public static class UpdateMeRequest {
         String fullName;
+        @Email String email;
+        String phone;
         String password;
     }
 
@@ -133,6 +161,8 @@ public class UserController {
         @NotBlank @Email String email;
         @NotBlank String password;
         @NotBlank String fullName;
+        String phone;
+        String hireDate;
         @NotBlank String role;
         String warehouseId;
     }
@@ -140,9 +170,16 @@ public class UserController {
     @Getter @Setter
     public static class UpdateRequest {
         String fullName;
+        @Email String email;
+        String phone;
+        String hireDate;
         String role;
         Boolean isActive;
         String warehouseId;
         String password;
+    }
+
+    private LocalDate parseDate(String value) {
+        return value == null || value.isBlank() ? null : LocalDate.parse(value);
     }
 }

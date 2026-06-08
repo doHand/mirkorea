@@ -153,7 +153,7 @@ export function ProductBarcodeModal({ product, onClose }: { product: Product; on
                   <span className="rounded-full bg-[#E5D3B3]/60 px-2 py-0.5 text-[10px] font-semibold text-[#2D4033]">{TYPE_LABEL[barcode.type]}</span>
                   {(barcode.type === 'CXD' || barcode.type === 'CXD_BOX') && (
                     <span className="whitespace-nowrap rounded-full bg-[#2D4033]/8 px-2 py-0.5 text-[10px] font-semibold text-[#2D4033] dark:text-emerald-300">
-                      {barcode.type === 'CXD' ? '낱개 구성' : 'INBOX 포함'} {formatNumber(barcode.unitQty)}개
+                      {barcode.type === 'CXD' ? '낱개 구성' : 'INBOX 구성'} {formatNumber(barcode.unitQty)}개
                     </span>
                   )}
                 </div>

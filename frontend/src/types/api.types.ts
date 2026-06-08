@@ -26,6 +26,8 @@ export interface User {
 
 export interface UserDetail extends User {
   email: string
+  phone: string | null
+  hireDate: string | null
   isActive: boolean
   lastLoginAt: string | null
   createdAt: string

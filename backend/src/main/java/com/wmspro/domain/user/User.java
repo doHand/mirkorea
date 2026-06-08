@@ -6,6 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
@@ -30,6 +31,12 @@ public class User {
 
     @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
+
+    @Column(length = 20)
+    private String phone;
+
+    @Column(name = "hire_date")
+    private LocalDate hireDate;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

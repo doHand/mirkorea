@@ -1,11 +1,11 @@
 ﻿'use client'
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { User, KeyRound, Save, ShieldCheck } from 'lucide-react'
+import { User, KeyRound, Save, ShieldCheck, Mail, Phone } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { userApi } from '@/api/user.api'
 import { useAuthStore } from '@/stores/auth.store'
-import { formatDateTime } from '@/utils/format'
+import { formatDate, formatDateTime, formatPhoneInput } from '@/utils/format'
 import { cn } from '@/utils/cn'
 import type { UserRole } from '@/types/api.types'
 
@@ -21,6 +21,8 @@ export default function ProfilePage() {
   const { user: authUser, setUser } = useAuthStore()
 
   const [fullName, setFullName] = useState('')
+  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [confirm,  setConfirm]  = useState('')
 
@@ -30,12 +32,18 @@ export default function ProfilePage() {
   })
 
   useEffect(() => {
-    if (me) setFullName(me.fullName)
+    if (me) {
+      setFullName(me.fullName)
+      setEmail(me.email)
+      setPhone(me.phone ?? '')
+    }
   }, [me])
 
   const updateMutation = useMutation({
     mutationFn: () => userApi.updateMe({
       fullName: fullName !== me?.fullName ? fullName : undefined,
+      email: email !== me?.email ? email : undefined,
+      phone: phone !== (me?.phone ?? '') ? phone : undefined,
       password: password || undefined,
     }),
     onSuccess: (updated) => {
@@ -50,6 +58,7 @@ export default function ProfilePage() {
 
   const handleSave = () => {
     if (!fullName.trim()) { toast.error('이름을 입력하세요'); return }
+    if (!email.trim()) { toast.error('이메일을 입력하세요'); return }
     if (password && password !== confirm) { toast.error('비밀번호가 일치하지 않습니다'); return }
     if (password && password.length < 6) { toast.error('비밀번호는 6자 이상이어야 합니다'); return }
     updateMutation.mutate()
@@ -87,8 +96,8 @@ export default function ProfilePage() {
             <span className="font-mono text-gray-900 dark:text-gray-100">{me?.username}</span>
           </div>
           <div className="flex flex-col gap-1 sm:flex-row sm:justify-between">
-            <span className="text-gray-500 dark:text-gray-400">이메일</span>
-            <span className="break-all text-gray-900 dark:text-gray-100">{me?.email}</span>
+            <span className="text-gray-500 dark:text-gray-400">입사일</span>
+            <span className="text-gray-900 dark:text-gray-100">{me?.hireDate ? formatDate(me.hireDate) : '-'}</span>
           </div>
           <div className="flex flex-col gap-1 sm:flex-row sm:justify-between">
             <span className="text-gray-500 dark:text-gray-400">마지막 로그인</span>
@@ -108,6 +117,31 @@ export default function ProfilePage() {
             <input
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
+              className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              <Mail size={13} className="inline mr-1" />
+              이메일
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              <Phone size={13} className="inline mr-1" />
+              연락처
+            </label>
+            <input
+              value={phone}
+              onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
+              inputMode="numeric"
+              placeholder="010-0000-0000"
               className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             />
           </div>

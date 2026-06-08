@@ -476,9 +476,20 @@ export default function DashboardPage() {
                   <p className="text-xs font-semibold text-white/85">{label}</p>
                   <p className="mt-1 text-2xl font-bold tabular-nums text-white">{formatNumber(value)}</p>
                 </div>
-                <div className="w-10 h-10 rounded-2xl border border-white/25 bg-white/18 flex items-center justify-center shrink-0 backdrop-blur">
-                  <Icon size={18} className={tone} />
-                </div>
+                {label === '안전재고 미달' ? (
+                  <Link
+                    href="/products?safety=1"
+                    className="pointer-events-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/25 bg-white/18 backdrop-blur transition-colors hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-white/70"
+                    title="안전재고 미달 상품만 보기"
+                    aria-label="안전재고 미달 상품만 보기"
+                  >
+                    <Icon size={18} className={tone} />
+                  </Link>
+                ) : (
+                  <div className="w-10 h-10 rounded-2xl border border-white/25 bg-white/18 flex items-center justify-center shrink-0 backdrop-blur">
+                    <Icon size={18} className={tone} />
+                  </div>
+                )}
               </div>
               <div className="relative mt-3 flex items-center justify-between border-t border-white/20 pt-2">
                 <p className="text-xs text-white/75">{sub}</p>

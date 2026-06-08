@@ -4,6 +4,7 @@ import { Building2, RotateCcw, Save } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { DEFAULT_SUPPLIER_INFO, useSupplierInfoStore } from '@/stores/supplier-info.store'
 import type { SupplierInfo } from '@/stores/supplier-info.store'
+import { formatBusinessNoInput, formatPhoneInput } from '@/utils/format'
 
 const FIELDS: Array<{ key: keyof SupplierInfo; label: string; placeholder: string }> = [
   { key: 'name', label: '상호', placeholder: '미르코리아' },
@@ -55,8 +56,15 @@ export default function SupplierSettingsPage() {
               <span className="mb-1.5 block text-xs font-semibold text-gray-600 dark:text-gray-400">{field.label}</span>
               <input
                 value={info[field.key]}
-                onChange={(event) => update({ [field.key]: event.target.value })}
+                onChange={(event) => update({
+                  [field.key]: field.key === 'phone' || field.key === 'fax'
+                    ? formatPhoneInput(event.target.value)
+                    : field.key === 'businessNo'
+                      ? formatBusinessNoInput(event.target.value)
+                      : event.target.value,
+                })}
                 placeholder={field.placeholder}
+                inputMode={field.key === 'phone' || field.key === 'fax' || field.key === 'businessNo' ? 'numeric' : undefined}
                 className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
               />
             </label>

@@ -29,7 +29,7 @@ public class InventoryController {
     }
 
     @GetMapping("/low-stock")
-    public ApiResponse<List<Inventory>> getLowStock(@RequestParam UUID warehouseId) {
+    public ApiResponse<List<Map<String, Object>>> getLowStock(@RequestParam UUID warehouseId) {
         return ApiResponse.ok(inventoryService.findLowStock(warehouseId));
     }
 

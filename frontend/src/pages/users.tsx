@@ -7,7 +7,7 @@ import { userApi } from '@/api/user.api'
 import { warehouseApi } from '@/api/warehouse.api'
 import { useAuthStore } from '@/stores/auth.store'
 import { useRoleStore, COLOR_OPTIONS } from '@/stores/role.store'
-import { formatDateTime, formatNumber } from '@/utils/format'
+import { formatDate, formatDateTime, formatNumber, formatPhoneInput } from '@/utils/format'
 import { cn } from '@/utils/cn'
 import { ExportButton } from '@/components/ExportButton'
 import { useMenuLabel } from '@/hooks/use-menu-label'
@@ -21,7 +21,7 @@ const ROLE_META: Record<UserRole, { label: string; cls: string }> = {
   VIEWER:  { label: '조회 전용',   cls: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400' },
 }
 
-const EMPTY_FORM = { username: '', email: '', password: '', fullName: '', role: 'WORKER', warehouseId: '' }
+const EMPTY_FORM = { username: '', email: '', phone: '', hireDate: '', password: '', fullName: '', role: 'WORKER', warehouseId: '' }
 type RoleFormState = { name: string; description: string; colorIdx: number }
 const emptyRoleForm = (): RoleFormState => ({ name: '', description: '', colorIdx: 0 })
 
@@ -61,12 +61,12 @@ export default function UsersPage() {
     onError: (err: any) => toast.error(err.response?.data?.code === 'USER_DUPLICATE' ? '이미 존재하는 사용자명/이메일입니다' : '등록 실패'),
   })
   const updateMutation = useMutation({
-    mutationFn: () => userApi.update(editing!.id, { fullName: form.fullName, role: form.role, warehouseId: form.warehouseId, isActive: form.isActive, password: form.password || undefined }),
+    mutationFn: () => userApi.update(editing!.id, { fullName: form.fullName, email: form.email, phone: form.phone, hireDate: form.hireDate, role: form.role, warehouseId: form.warehouseId, isActive: form.isActive, password: form.password || undefined }),
     onSuccess: () => {
       toast.success('수정되었습니다')
       qc.invalidateQueries({ queryKey: ['users'] })
       closeModal()
-      if (selectedUser?.id === editing?.id) setSelectedUser((prev) => prev ? { ...prev, fullName: form.fullName, role: form.role as UserRole } : null)
+      if (selectedUser?.id === editing?.id) setSelectedUser((prev) => prev ? { ...prev, fullName: form.fullName, email: form.email, phone: form.phone || null, hireDate: form.hireDate || null, role: form.role as UserRole } : null)
     },
   })
   const deleteMutation = useMutation({
@@ -79,7 +79,7 @@ export default function UsersPage() {
   })
 
   const openCreate = () => { setEditing(null); setForm(EMPTY_FORM); setShowModal(true) }
-  const openEdit = (u: UserDetail) => { setEditing(u); setForm({ username: u.username, email: u.email, password: '', fullName: u.fullName, role: u.role, warehouseId: u.warehouseId ?? '', isActive: u.isActive }); setShowModal(true) }
+  const openEdit = (u: UserDetail) => { setEditing(u); setForm({ username: u.username, email: u.email, phone: u.phone ?? '', hireDate: u.hireDate ?? '', password: '', fullName: u.fullName, role: u.role, warehouseId: u.warehouseId ?? '', isActive: u.isActive }); setShowModal(true) }
   const closeModal = () => { setShowModal(false); setEditing(null) }
 
   const selectUser = (u: UserDetail) => { setSelectedUser(u); setRightTab('detail') }
@@ -280,6 +280,8 @@ export default function UsersPage() {
                 <div className="space-y-2 text-sm">
                   {[
                     { label: '이메일', value: selectedUser.email },
+                    { label: '연락처', value: selectedUser.phone ?? '-' },
+                    { label: '입사일', value: selectedUser.hireDate ? formatDate(selectedUser.hireDate) : '-' },
                     { label: '역할', value: <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium', ROLE_META[selectedUser.role].cls)}>{ROLE_META[selectedUser.role].label}</span> },
                     { label: '담당 창고', value: (warehouses as any[]).find((w) => w.id === selectedUser.warehouseId)?.name ?? '미지정' },
                     { label: '계정 상태', value: <span className={cn('text-xs px-2 py-0.5 rounded-full', selectedUser.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500')}>{selectedUser.isActive ? '활성' : '비활성'}</span> },
@@ -330,17 +332,29 @@ export default function UsersPage() {
                     <input value={form.username} onChange={(e) => setForm((p) => ({ ...p, username: e.target.value }))} placeholder="사용할 아이디"
                       className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500" />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">이메일 *</label>
-                    <input type="email" value={form.email} onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))} placeholder="email@example.com"
-                      className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500" />
-                  </div>
                 </>
               )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">이름 *</label>
                 <input value={form.fullName} onChange={(e) => setForm((p) => ({ ...p, fullName: e.target.value }))} placeholder="실명"
                   className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">이메일 *</label>
+                <input type="email" value={form.email} onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))} placeholder="email@example.com"
+                  className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500" />
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">연락처</label>
+                  <input value={form.phone} onChange={(e) => setForm((p) => ({ ...p, phone: formatPhoneInput(e.target.value) }))} inputMode="numeric" placeholder="010-0000-0000"
+                    className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">입사일</label>
+                  <input type="date" value={form.hireDate} onChange={(e) => setForm((p) => ({ ...p, hireDate: e.target.value }))}
+                    className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1"><KeyRound size={13} />{editing ? '새 비밀번호 (변경 시에만 입력)' : '비밀번호 *'}</label>

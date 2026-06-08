@@ -1,5 +1,5 @@
 ﻿'use client'
-import { useState, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useColumnResize } from '@/hooks/useColumnResize'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, Plus, Search, Package, Pencil, Trash2, X, FileText, Building2, QrCode, Star, MapPin } from 'lucide-react'
@@ -389,6 +389,11 @@ export default function ProductsPage() {
   const [showLocationPicker, setShowLocationPicker] = useState(false)
   const [locationPickerSearch, setLocationPickerSearch] = useState('')
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null)
+
+  useEffect(() => {
+    if (!router.isReady) return
+    setShowSafetyOnly(router.query.safety === '1')
+  }, [router.isReady, router.query.safety])
   const [locationTargetProduct, setLocationTargetProduct] = useState<Product | null>(null)
   const [newBcVal, setNewBcVal]       = useState('')
   const [newBcType, setNewBcType]     = useState<BarcodeUnitType>('UNIT')
@@ -427,9 +432,11 @@ export default function ProductsPage() {
 
   const { widths: cw, startResize, stickyLeftOf, totalWidth, resetWidths } = useColumnResize('products', PRODUCT_COLS)
 
+  const productLimit = showSafetyOnly ? 1000 : PAGE_SIZE
+  const productPage = showSafetyOnly ? 1 : page
   const { data, isLoading } = useQuery({
-    queryKey: QUERY_KEYS.products({ search, page, limit: PAGE_SIZE }),
-    queryFn:  () => productApi.findAll({ search: search || undefined, page, limit: PAGE_SIZE }),
+    queryKey: QUERY_KEYS.products({ search, page: productPage, limit: productLimit }),
+    queryFn:  () => productApi.findAll({ search: search || undefined, page: productPage, limit: productLimit }),
     placeholderData: (prev) => prev,
   })
 
@@ -539,7 +546,7 @@ export default function ProductsPage() {
     qc.invalidateQueries({ queryKey: ['product'] })
     qc.invalidateQueries({ queryKey: ['product-barcodes'] })
     qc.invalidateQueries({ queryKey: ['inventory'] })
-    qc.invalidateQueries({ queryKey: QUERY_KEYS.products({ search, page, limit: PAGE_SIZE }) })
+    qc.invalidateQueries({ queryKey: ['products'] })
   }
 
   const createMutation = useMutation({

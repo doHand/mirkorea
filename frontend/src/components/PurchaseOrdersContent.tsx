@@ -12,6 +12,7 @@ import { QUERY_KEYS } from '@/constants/query-keys'
 import { useWarehouseStore } from '@/stores/warehouse.store'
 import type { Product, PurchaseOrder, PurchaseOrderStatus } from '@/types/api.types'
 import { printPurchaseOrder } from '@/utils/printPurchaseOrder'
+import { formatPhoneInput } from '@/utils/format'
 
 const STATUS: Record<PurchaseOrderStatus, string> = {
   DRAFT: '작성 중', ORDERED: '발주 완료', CONVERTED: '입고예정 등록', CANCELLED: '취소',
@@ -179,8 +180,8 @@ function OrderModal({ warehouseId, order, onClose, onSaved }: { warehouseId: str
         <Field label="발주일"><input type="date" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} /></Field>
         <Field label="담당자"><input value={manager} onChange={(e) => setManager(e.target.value)} placeholder="담당자명" /></Field>
         <Field label="입고일"><input type="date" value={expectedDate} onChange={(e) => setExpectedDate(e.target.value)} /></Field>
-        <Field label="전화번호"><input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="전화번호" /></Field>
-        <Field label="팩스"><input value={fax} onChange={(e) => setFax(e.target.value)} placeholder="팩스번호" /></Field>
+        <Field label="전화번호"><input value={phone} onChange={(e) => setPhone(formatPhoneInput(e.target.value))} inputMode="numeric" placeholder="전화번호" /></Field>
+        <Field label="팩스"><input value={fax} onChange={(e) => setFax(formatPhoneInput(e.target.value))} inputMode="numeric" placeholder="팩스번호" /></Field>
       </div>
       <div className="flex items-center justify-between border border-[#d8ddd8] bg-[#f7f8f5] px-4 py-3">
         <div><p className="text-sm font-semibold text-gray-800">발주 제품</p><p className="text-xs text-gray-500">상품 마스터에 등록된 제품을 불러옵니다</p></div>

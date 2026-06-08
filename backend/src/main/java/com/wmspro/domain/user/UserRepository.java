@@ -16,6 +16,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     boolean existsByUsername(String username);
     boolean existsByEmail(String email);
+    boolean existsByEmailIgnoreCase(String email);
 
     @Modifying
     @Query("UPDATE User u SET u.lastLoginAt = :at WHERE u.id = :id")

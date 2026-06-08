@@ -6,12 +6,17 @@ interface CreateUserData {
   email: string
   password: string
   fullName: string
+  phone?: string
+  hireDate?: string
   role: string
   warehouseId?: string
 }
 
 interface UpdateUserData {
   fullName?: string
+  email?: string
+  phone?: string
+  hireDate?: string
   role?: string
   isActive?: boolean
   warehouseId?: string
@@ -21,7 +26,7 @@ interface UpdateUserData {
 export const userApi = {
   getMe: () => get<UserDetail>('/users/me'),
 
-  updateMe: (data: { fullName?: string; password?: string }) =>
+  updateMe: (data: { fullName?: string; email?: string; phone?: string; password?: string }) =>
     patch<UserDetail>('/users/me', data),
 
   findAll: () => get<UserDetail[]>('/users'),

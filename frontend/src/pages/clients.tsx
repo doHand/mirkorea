@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Building2, Mail, MapPin, Pencil, Phone, Plus, Search, Trash2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { clientApi } from '@/api/client.api'
-import { formatDateTime, formatNumber } from '@/utils/format'
+import { formatBusinessNoInput, formatDateTime, formatNumber, formatPhoneInput } from '@/utils/format'
 import { cn } from '@/utils/cn'
 import type { Client } from '@/types/api.types'
 
@@ -367,16 +367,16 @@ export default function ClientsPage() {
                     </select>
                   </Field>
                   <Field label="대표전화">
-                    <input value={form.phone} onChange={(e) => set('phone', e.target.value)} className={inputCls} placeholder="02-0000-0000" />
+                    <input value={form.phone} onChange={(e) => set('phone', formatPhoneInput(e.target.value))} className={inputCls} placeholder="02-0000-0000" inputMode="numeric" />
                   </Field>
                   <Field label="영업사원">
                     <input value={form.salesperson} onChange={(e) => set('salesperson', e.target.value)} className={inputCls} />
                   </Field>
                   <Field label="휴대폰">
-                    <input value={form.mobile} onChange={(e) => set('mobile', e.target.value)} className={inputCls} placeholder="010-0000-0000" />
+                    <input value={form.mobile} onChange={(e) => set('mobile', formatPhoneInput(e.target.value))} className={inputCls} placeholder="010-0000-0000" inputMode="numeric" />
                   </Field>
                   <Field label="팩스번호">
-                    <input value={form.fax} onChange={(e) => set('fax', e.target.value)} className={inputCls} placeholder="02-0000-0000" />
+                    <input value={form.fax} onChange={(e) => set('fax', formatPhoneInput(e.target.value))} className={inputCls} placeholder="02-0000-0000" inputMode="numeric" />
                   </Field>
                   <Field label="참고사항" className="col-span-2">
                     <input value={form.managerTitle} onChange={(e) => set('managerTitle', e.target.value)} className={inputCls} />
@@ -389,7 +389,7 @@ export default function ClientsPage() {
                 <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">사업자 정보</p>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <Field label="사업자번호">
-                    <input value={form.businessNo} onChange={(e) => set('businessNo', e.target.value)} className={inputCls} placeholder="000-00-00000" />
+                    <input value={form.businessNo} onChange={(e) => set('businessNo', formatBusinessNoInput(e.target.value))} className={inputCls} placeholder="000-00-00000" inputMode="numeric" />
                   </Field>
                   <Field label="종사업장번호">
                     <input value={form.managementNo} onChange={(e) => set('managementNo', e.target.value)} className={inputCls} />
