@@ -124,14 +124,12 @@ const STATUS_CLS: Record<SaleStatus, string> = {
 
 const BARCODE_TYPE_LABEL: Record<BarcodeUnitType, string> = {
   UNIT: '낱개',
-  BOX:  '박스',
   CXD:  'CXD 낱개',
   CXD_BOX: 'CXD BOX',
 }
 
 const BARCODE_TYPE_CLS: Record<BarcodeUnitType, string> = {
   UNIT: 'bg-sky-50 text-sky-700 border-sky-100 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-900/60',
-  BOX:  'bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/60',
   CXD:  'bg-violet-50 text-violet-700 border-violet-100 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-900/60',
   CXD_BOX: 'bg-orange-50 text-orange-700 border-orange-100 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-900/60',
 }

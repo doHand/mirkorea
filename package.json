@@ -1,4 +1,10 @@
 {
+  "name": "wms-pro",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix frontend install && npm --prefix frontend run build",
+    "start": "npm --prefix frontend run start"
+  },
   "devDependencies": {
     "playwright": "^1.60.0"
   }
