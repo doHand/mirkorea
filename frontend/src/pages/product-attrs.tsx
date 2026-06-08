@@ -361,11 +361,11 @@ export default function ProductMasterPage() {
   const MASTER_COLS = useMemo(() => ({
     chk:              { width: 40,  minWidth: 40,  sticky: true },
     seq:              { width: 48,  minWidth: 40,  sticky: true },
-    client:           { width: 144, minWidth: 60,  sticky: true },
-    code:             { width: 144, minWidth: 60,  sticky: true },
-    materialNo:       { width: 144, minWidth: 60,  sticky: true },
-    barcode:          { width: 144, minWidth: 60,  sticky: true },
-    name:             { width: 192, minWidth: 80,  sticky: true },
+    client:           { width: 144, minWidth: 40,  sticky: true },
+    code:             { width: 144, minWidth: 40,  sticky: true },
+    materialNo:       { width: 144, minWidth: 40,  sticky: true },
+    barcode:          { width: 144, minWidth: 40,  sticky: true },
+    name:             { width: 192, minWidth: 48,  sticky: true },
     category:         { width: 110, minWidth: 60,  sticky: false },
     optionName:       { width: 110, minWidth: 60,  sticky: false },
     spec:             { width: 110, minWidth: 60,  sticky: false },
@@ -408,7 +408,7 @@ export default function ProductMasterPage() {
     placeholderData: [],
   })
 
-  const { data: allLocations = [] } = useQuery<Location[]>({
+  const { data: allLocations = [], isLoading: locationsLoading } = useQuery<Location[]>({
     queryKey: ['locations-for-product-master-form', warehouse?.id],
     queryFn:  () => warehouseApi.findLocations(warehouse!.id),
     enabled:  !!warehouse?.id,
@@ -815,7 +815,15 @@ export default function ProductMasterPage() {
       {/* Table */}
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
         <div className="overflow-auto max-h-[calc(100vh-260px)]">
-          <table className="mobile-unpin-grid wms-resizable-table w-full text-sm border-separate border-spacing-0 [&_td]:border-r [&_td]:border-gray-100 [&_th]:border-r [&_th]:border-gray-200 dark:[&_td]:border-gray-800 dark:[&_th]:border-gray-700" style={{ width: totalWidth }}>
+          <table
+            className="mobile-unpin-grid wms-resizable-table text-sm border-separate border-spacing-0 [&_td]:border-r [&_td]:border-gray-100 [&_th]:border-r [&_th]:border-gray-200 dark:[&_td]:border-gray-800 dark:[&_th]:border-gray-700"
+            style={{ width: totalWidth, minWidth: totalWidth, maxWidth: totalWidth }}
+          >
+            <colgroup>
+              {Object.keys(MASTER_COLS).map((key) => (
+                <col key={key} style={{ width: cw[key] }} />
+              ))}
+            </colgroup>
             <thead className="sticky top-0 z-40">
               <tr className="bg-[#2D4033]">
                 <th className="sticky-col sticky z-30 px-4 py-3 bg-[#2D4033] wms-resizable-th overflow-hidden"
@@ -840,7 +848,7 @@ export default function ProductMasterPage() {
                 <SortHeader label="상품 코드" sortKey="code" sort={sort} onSort={toggleSort} className="sticky-col sticky z-30" style={{ width: cw.code, minWidth: cw.code, maxWidth: cw.code, left: stickyLeftOf('code') }} onResizeStart={(e) => startResize('code', e)} />
                 <SortHeader label="자재번호" sortKey="materialNo" sort={sort} onSort={toggleSort} className="sticky-col sticky z-30" style={{ width: cw.materialNo, minWidth: cw.materialNo, maxWidth: cw.materialNo, left: stickyLeftOf('materialNo') }} onResizeStart={(e) => startResize('materialNo', e)} />
                 <SortHeader label="바코드" sortKey="barcode" sort={sort} onSort={toggleSort} className="sticky-col sticky z-30" style={{ width: cw.barcode, minWidth: cw.barcode, maxWidth: cw.barcode, left: stickyLeftOf('barcode') }} onResizeStart={(e) => startResize('barcode', e)} />
-                <SortHeader label="상품명" sortKey="name" sort={sort} onSort={toggleSort} className="sticky z-30 shadow-[3px_0_5px_-3px_rgba(0,0,0,0.35)]" style={{ width: cw.name, minWidth: cw.name, maxWidth: cw.name, left: stickyLeftOf('name') }} onResizeStart={(e) => startResize('name', e)} />
+                <SortHeader label="상품명" sortKey="name" sort={sort} onSort={toggleSort} className="sticky-col sticky z-30 shadow-[3px_0_5px_-3px_rgba(0,0,0,0.35)]" style={{ width: cw.name, minWidth: cw.name, maxWidth: cw.name, left: stickyLeftOf('name') }} onResizeStart={(e) => startResize('name', e)} />
                 <SortHeader label="카테고리" sortKey="category" sort={sort} onSort={toggleSort} style={{ width: cw.category }} onResizeStart={(e) => startResize('category', e)} />
                 <SortHeader label="옵션" sortKey="optionName" sort={sort} onSort={toggleSort} style={{ width: cw.optionName }} onResizeStart={(e) => startResize('optionName', e)} />
                 <SortHeader label="규격" sortKey="spec" sort={sort} onSort={toggleSort} style={{ width: cw.spec }} onResizeStart={(e) => startResize('spec', e)} />
@@ -950,9 +958,16 @@ export default function ProductMasterPage() {
                       <EditableCell id={p.id} field="spec" value={p.spec ?? ''}
                         editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} />
                     </td>
-                    <td className="py-1.5 px-2 text-center font-mono text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                    <td className="py-1.5 px-2 text-center font-mono text-xs text-gray-600 dark:text-gray-400">
                       <div className="flex items-center justify-center gap-1">
-                        <span className="block min-w-0 truncate" title={p.defaultLocation?.code ?? ''}>{p.defaultLocation?.code ?? '-'}</span>
+                        <div className="min-w-0">
+                          <span className="block truncate" title={p.defaultLocation?.code ?? ''}>{p.defaultLocation?.code ?? '-'}</span>
+                          {p.defaultLocation && (p.defaultLocation.aisle || p.defaultLocation.rack || p.defaultLocation.shelf) && (
+                            <span className="block truncate text-[10px] text-gray-400 dark:text-gray-500">
+                              {[p.defaultLocation.aisle, p.defaultLocation.rack, p.defaultLocation.shelf].filter(Boolean).join('/')}
+                            </span>
+                          )}
+                        </div>
                         <button
                           type="button"
                           onClick={(e) => {
@@ -1429,7 +1444,12 @@ export default function ProductMasterPage() {
                 />
               </div>
               <div className="max-h-72 overflow-y-auto space-y-1">
-                {filteredLocations.length === 0 ? (
+                {locationsLoading ? (
+                  <div className="py-8 text-center text-sm text-gray-400">
+                    <div className="mx-auto mb-2 h-5 w-5 animate-spin rounded-full border-2 border-gray-200 border-t-emerald-500" />
+                    위치 목록 불러오는 중...
+                  </div>
+                ) : filteredLocations.length === 0 ? (
                   <div className="py-8 text-center text-sm text-gray-400">등록된 위치가 없습니다.</div>
                 ) : filteredLocations.map((location) => (
                   <button

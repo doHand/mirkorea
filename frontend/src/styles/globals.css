@@ -145,12 +145,24 @@
   }
 
   .wms-resizable-table {
-    table-layout: auto;
+    table-layout: fixed;
   }
 
   .wms-resizable-th {
     position: relative;
     overflow: hidden;
+  }
+
+  .wms-resizable-th > button {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .wms-resizable-th > button > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .wms-column-resizer {

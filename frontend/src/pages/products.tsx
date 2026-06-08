@@ -400,15 +400,15 @@ export default function ProductsPage() {
 
   const PRODUCT_COLS = useMemo(() => ({
     chk:         { width: 40,  minWidth: 40,  sticky: true },
-    client:      { width: 144, minWidth: 60,  sticky: true },
-    code:        { width: 144, minWidth: 60,  sticky: true },
-    materialNo:  { width: 144, minWidth: 60,  sticky: true },
-    barcode:     { width: 160, minWidth: 60,  sticky: true },
-    name:        { width: 192, minWidth: 80,  sticky: true },
+    client:      { width: 144, minWidth: 40,  sticky: true },
+    code:        { width: 144, minWidth: 40,  sticky: true },
+    materialNo:  { width: 144, minWidth: 40,  sticky: true },
+    barcode:     { width: 160, minWidth: 40,  sticky: true },
+    name:        { width: 192, minWidth: 48,  sticky: true },
     unit:        { width: 80,  minWidth: 50,  sticky: false },
-    boxQty:      { width: 100, minWidth: 60,  sticky: false },
-    boxStock:    { width: 110, minWidth: 60,  sticky: false },
-    eachStock:   { width: 110, minWidth: 60,  sticky: false },
+    boxQty:      { width: 120, minWidth: 70,  sticky: false },
+    boxStock:    { width: 120, minWidth: 70,  sticky: false },
+    eachStock:   { width: 120, minWidth: 70,  sticky: false },
     category:    { width: 120, minWidth: 60,  sticky: false },
     location:    { width: 120, minWidth: 60,  sticky: false },
     sellPrice:   { width: 100, minWidth: 60,  sticky: false },
@@ -420,8 +420,8 @@ export default function ProductsPage() {
     reserved:    { width: 90,  minWidth: 60,  sticky: false },
     available:   { width: 90,  minWidth: 60,  sticky: false },
     safetyStock: { width: 90,  minWidth: 60,  sticky: false },
-    saleStatus:  { width: 80,  minWidth: 60,  sticky: false },
-    createdAt:   { width: 100, minWidth: 60,  sticky: false },
+    saleStatus:  { width: 110,  minWidth: 60,  sticky: false },
+    createdAt:   { width: 150, minWidth: 60,  sticky: false },
     actions:     { width: 72,  minWidth: 72,  sticky: false },
   }), [])
 
@@ -468,7 +468,7 @@ export default function ProductsPage() {
     placeholderData: [],
   })
 
-  const { data: allLocations = [] } = useQuery<Location[]>({
+  const { data: allLocations = [], isLoading: locationsLoading } = useQuery<Location[]>({
     queryKey: ['locations-for-product-form', warehouse?.id],
     queryFn:  () => warehouseApi.findLocations(warehouse!.id),
     enabled:  !!warehouse?.id,
@@ -974,7 +974,15 @@ export default function ProductsPage() {
       {/* 테이블 */}
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="mobile-unpin-grid wms-resizable-table w-full text-sm border-collapse" style={{ width: totalWidth }}>
+          <table
+            className="mobile-unpin-grid wms-resizable-table text-sm border-collapse"
+            style={{ width: totalWidth, minWidth: totalWidth, maxWidth: totalWidth }}
+          >
+            <colgroup>
+              {Object.keys(PRODUCT_COLS).map((key) => (
+                <col key={key} style={{ width: cw[key] }} />
+              ))}
+            </colgroup>
             <thead>
               <tr className="bg-[#2D4033]">
                 <th className="sticky-col sticky z-30 px-3 py-3 border-r border-white/20 bg-[#2D4033] overflow-hidden wms-resizable-th"
@@ -990,9 +998,9 @@ export default function ProductsPage() {
                 </th>
                 <SortHeader label="거래처명" sortKey="client" sort={sort} onSort={toggleSort} className="sticky-col sticky z-30" style={{ width: cw.client, minWidth: cw.client, maxWidth: cw.client, left: stickyLeftOf('client') }} onResizeStart={(e) => startResize('client', e)} />
                 <SortHeader label="상품코드" sortKey="code" sort={sort} onSort={toggleSort} className="sticky-col sticky z-30" style={{ width: cw.code, minWidth: cw.code, maxWidth: cw.code, left: stickyLeftOf('code') }} onResizeStart={(e) => startResize('code', e)} />
-                <SortHeader label="자재번호" sortKey="materialNo" sort={sort} onSort={toggleSort} className="sticky-col sticky z-30" style={{ width: cw.materialNo, minWidth: cw.materialNo, maxWidth: cw.materialNo, left: stickyLeftOf('materialNo') }} onResizeStart={(e) => startResize('materialNo', e)} />
+                <SortHeader label="자재번호" sortKey="materialNo" sort={sort} onSort={toggleSort} className="sticky-col sticky" style={{ width: cw.materialNo, minWidth: cw.materialNo, maxWidth: cw.materialNo, left: stickyLeftOf('materialNo') }} onResizeStart={(e) => startResize('materialNo', e)} />
                 <SortHeader label="바코드" sortKey="barcode" sort={sort} onSort={toggleSort} className="sticky-col sticky z-30" style={{ width: cw.barcode, minWidth: cw.barcode, maxWidth: cw.barcode, left: stickyLeftOf('barcode') }} onResizeStart={(e) => startResize('barcode', e)} />
-                <SortHeader label="상품명" sortKey="name" sort={sort} onSort={toggleSort} className="sticky z-30 shadow-[3px_0_5px_-3px_rgba(0,0,0,0.35)]" style={{ width: cw.name, minWidth: cw.name, maxWidth: cw.name, left: stickyLeftOf('name') }} onResizeStart={(e) => startResize('name', e)} />
+                <SortHeader label="상품명" sortKey="name" sort={sort} onSort={toggleSort} className="sticky-col sticky z-30 shadow-[3px_0_5px_-3px_rgba(0,0,0,0.35)]" style={{ width: cw.name, minWidth: cw.name, maxWidth: cw.name, left: stickyLeftOf('name') }} onResizeStart={(e) => startResize('name', e)} />
                 <SortHeader label="기준단위" sortKey="unit" sort={sort} onSort={toggleSort} align="center" style={{ width: cw.unit }} onResizeStart={(e) => startResize('unit', e)} />
                 <SortHeader label="1BOX(입수량)" sortKey="boxQty" sort={sort} onSort={toggleSort} align="right" style={{ width: cw.boxQty }} onResizeStart={(e) => startResize('boxQty', e)} />
                 <SortHeader label="재고수량(박스)" sortKey="boxStock" sort={sort} onSort={toggleSort} align="right" style={{ width: cw.boxStock }} onResizeStart={(e) => startResize('boxStock', e)} />
@@ -1734,7 +1742,12 @@ export default function ProductsPage() {
             </div>
 
             <div className="overflow-y-auto flex-1">
-              {filteredLocations.length === 0 ? (
+              {locationsLoading ? (
+                <div className="py-12 text-center text-gray-400 text-sm">
+                  <div className="mx-auto mb-2 h-6 w-6 animate-spin rounded-full border-2 border-gray-200 border-t-emerald-500" />
+                  위치 목록 불러오는 중...
+                </div>
+              ) : filteredLocations.length === 0 ? (
                 <div className="py-12 text-center text-gray-400 text-sm">
                   <MapPin size={28} className="mx-auto mb-2 opacity-30" />
                   {locationPickerSearch ? '검색 결과 없음' : '등록된 위치가 없습니다'}

@@ -24,7 +24,8 @@ export function useColumnResize(
       const saved = JSON.parse(localStorage.getItem(storageKey) ?? '{}')
       const result: ColWidths = {}
       for (const col of Object.keys(initialCols)) {
-        result[col] = saved[col] ?? initialCols[col].width
+        const minWidth = initialCols[col].minWidth ?? 50
+        result[col] = Math.max(minWidth, saved[col] ?? initialCols[col].width)
       }
       return result
     } catch {
