@@ -274,47 +274,63 @@ function ReceivePanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
     queryKey: QUERY_KEYS.locations(order.warehouseId),
     queryFn:  () => warehouseApi.findLocations(order.warehouseId),
   })
-  const receivingLocations = locations.filter(
+  const filteredReceivingLocations = locations.filter(
     (l) => l.zone?.type === 'RECEIVING' || l.zone?.type === 'STORAGE'
   )
+  const receivingLocations = filteredReceivingLocations.length > 0 ? filteredReceivingLocations : locations
 
   const receiveMutation = useMutation({
     mutationFn: (items: ReceiveItemRequest[]) => inboundApi.receive(order.id, items),
-    onSuccess: () => { toast.success('수령 정보가 저장되었습니다'); onDone() },
-    onError:   () => toast.error('저장에 실패했습니다'),
   })
 
   const inspectMutation = useMutation({
     mutationFn: (items: InspectItemRequest[]) => inboundApi.inspect(order.id, items),
-    onSuccess: () => { toast.success('검수 단계로 이동했습니다'); onDone() },
-    onError:   () => toast.error('이동에 실패했습니다'),
   })
 
   const completeMutation = useMutation({
     mutationFn: () => inboundApi.complete(order.id),
-    onSuccess: () => { toast.success('입고 완료 · 재고가 증가되었습니다'); onDone() },
-    onError:   () => toast.error('완료 처리에 실패했습니다'),
   })
 
-  const handleReceive = () => {
-    const items: ReceiveItemRequest[] = order.items.map((i) => ({
+  const buildReceiveItems = (): ReceiveItemRequest[] => order.items.map((i) => ({
       itemId:      i.id,
       receivedQty: parseInt(state[i.id]?.qty ?? '0') || 0,
       locationId:  state[i.id]?.locationId || undefined,
-    }))
-    receiveMutation.mutate(items)
+  }))
+
+  const handleReceive = async () => {
+    try {
+      await receiveMutation.mutateAsync(buildReceiveItems())
+      toast.success('수령 정보가 저장되었습니다')
+      onDone()
+    } catch {
+      toast.error('저장에 실패했습니다')
+    }
   }
 
-  const handleMoveToInspect = () => {
-    const items: InspectItemRequest[] = order.items.map((i) => ({
-      itemId: i.id, passedQty: i.receivedQty, defectQty: 0,
-    }))
-    inspectMutation.mutate(items)
+  const handleMoveToInspect = async () => {
+    try {
+      const saved = await receiveMutation.mutateAsync(buildReceiveItems())
+      const items: InspectItemRequest[] = saved.items.map((i) => ({
+        itemId: i.id, passedQty: i.receivedQty, defectQty: 0,
+      }))
+      await inspectMutation.mutateAsync(items)
+      toast.success('수령 정보를 저장하고 검수 단계로 이동했습니다')
+      onDone()
+    } catch {
+      toast.error('수령 정보 저장 또는 단계 이동에 실패했습니다')
+    }
   }
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     if (!confirm('검수 없이 바로 입고 완료 처리합니다. 계속하시겠습니까?')) return
-    completeMutation.mutate()
+    try {
+      await receiveMutation.mutateAsync(buildReceiveItems())
+      await completeMutation.mutateAsync()
+      toast.success('수령 정보를 저장하고 입고를 완료했습니다')
+      onDone()
+    } catch {
+      toast.error('수령 정보 저장 또는 완료 처리에 실패했습니다')
+    }
   }
 
   const isPending = receiveMutation.isPending || inspectMutation.isPending || completeMutation.isPending
@@ -420,37 +436,53 @@ function InspectPanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
 
   const inspectMutation = useMutation({
     mutationFn: (items: InspectItemRequest[]) => inboundApi.inspect(order.id, items),
-    onSuccess: () => { toast.success('검수 정보가 저장되었습니다'); onDone() },
-    onError:   () => toast.error('저장에 실패했습니다'),
   })
 
   const completeMutation = useMutation({
     mutationFn: () => inboundApi.complete(order.id),
-    onSuccess: () => { toast.success('입고 완료 · 재고가 자동 증가되었습니다'); onDone() },
-    onError:   () => toast.error('완료 처리에 실패했습니다'),
   })
 
-  const handleInspect = () => {
+  const buildInspectItems = (): InspectItemRequest[] | null => {
     for (const i of order.items) {
       const passed = parseInt(state[i.id]?.passed ?? '0') || 0
       const defect = parseInt(state[i.id]?.defect ?? '0') || 0
       if (passed + defect > i.receivedQty) {
         toast.error(`${i.product?.name}: 검수 수량(${formatNumber(passed + defect)})이 수령 수량(${formatNumber(i.receivedQty)})을 초과합니다`)
-        return
+        return null
       }
     }
-    const items: InspectItemRequest[] = order.items.map((i) => ({
+    return order.items.map((i) => ({
       itemId:           i.id,
       passedQty:        parseInt(state[i.id]?.passed ?? '0') || 0,
       defectQty:        parseInt(state[i.id]?.defect ?? '0') || 0,
       defectLocationId: state[i.id]?.defectLoc || undefined,
     }))
-    inspectMutation.mutate(items)
   }
 
-  const handleComplete = () => {
+  const handleInspect = async () => {
+    const items = buildInspectItems()
+    if (!items) return
+    try {
+      await inspectMutation.mutateAsync(items)
+      toast.success('검수 정보가 저장되었습니다')
+      onDone()
+    } catch {
+      toast.error('저장에 실패했습니다')
+    }
+  }
+
+  const handleComplete = async () => {
     if (!confirm('입고를 완료하면 검수 합격 수량만큼 재고가 자동으로 증가합니다. 계속하시겠습니까?')) return
-    completeMutation.mutate()
+    const items = buildInspectItems()
+    if (!items) return
+    try {
+      await inspectMutation.mutateAsync(items)
+      await completeMutation.mutateAsync()
+      toast.success('검수 정보를 저장하고 입고를 완료했습니다')
+      onDone()
+    } catch {
+      toast.error('검수 정보 저장 또는 완료 처리에 실패했습니다')
+    }
   }
 
   const isPending = inspectMutation.isPending || completeMutation.isPending

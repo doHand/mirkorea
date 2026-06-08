@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Check, ClipboardList, FilePlus2, PackageCheck, PackageSearch, Printer, Search, Send, X } from 'lucide-react'
@@ -21,16 +21,6 @@ const STATUS_STYLE: Record<PurchaseOrderStatus, string> = {
   CONVERTED: 'bg-emerald-100 text-emerald-700', CANCELLED: 'bg-red-100 text-red-600',
 }
 const today = () => new Date().toISOString().slice(0, 10)
-
-export default function PurchaseOrdersPage() {
-  const router = useRouter()
-
-  useEffect(() => {
-    router.replace('/quotes?tab=PURCHASE')
-  }, [router])
-
-  return <div className="py-20 text-center text-gray-400">출력서류 관리로 이동 중...</div>
-}
 
 export function PurchaseOrdersContent({ embedded = false }: { embedded?: boolean }) {
   const router = useRouter()

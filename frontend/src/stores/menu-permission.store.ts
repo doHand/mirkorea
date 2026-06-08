@@ -14,25 +14,25 @@ const ALL: UserRole[] = ['ADMIN', 'MANAGER', 'WORKER', 'VIEWER']
 const ADMIN_ONLY: UserRole[] = ['ADMIN']
 
 export const DEFAULT_MENUS: MenuDef[] = [
-  { menuId: 'dashboard',        href: '/',                 label: '대시보드',          section: '운영', roles: ALL },
-  { menuId: 'products',         href: '/products',         label: '상품 관리',         section: '운영', roles: ALL },
-  { menuId: 'inbound',          href: '/inbound',          label: '입고 관리',         section: '입출고', roles: ['ADMIN', 'MANAGER', 'WORKER'] },
-  { menuId: 'scan',             href: '/scan',             label: '스캔',              section: '운영', roles: ALL },
-  { menuId: 'barcodes',         href: '/barcodes',         label: '바코드 관리',       section: '운영', roles: ALL },
-  { menuId: 'product-attrs',    href: '/product-attrs',    label: '상품 마스터',       section: '상품 마스터 관리', roles: ALL },
-  { menuId: 'units',            href: '/units',            label: '단위 관리',         section: '상품 마스터 관리', roles: ALL },
-  { menuId: 'clients',          href: '/clients',          label: '거래처 관리',       section: '영업', roles: ['ADMIN', 'MANAGER'] },
-  { menuId: 'quotes',           href: '/quotes',           label: '출력서류 관리',      section: '영업', roles: ['ADMIN', 'MANAGER'] },
-  { menuId: 'warehouse',        href: '/warehouse',        label: '창고/위치',         section: '관리', roles: ALL },
-  { menuId: 'transactions',     href: '/transactions',     label: '이력 조회',         section: '관리', roles: ALL },
-  { menuId: 'users',            href: '/users',            label: '사용자 & 역할 관리', section: '관리', roles: ADMIN_ONLY },
-  { menuId: 'permissions',      href: '/permissions',      label: '권한 관리',         section: '관리', roles: ['ADMIN', 'MANAGER'] },
-  { menuId: 'supplier-settings', href: '/supplier-settings', label: '공급자 정보',    section: '관리', roles: ADMIN_ONLY },
-  { menuId: 'menu-permissions', href: '/menu-permissions', label: '메뉴 권한',         section: '관리', roles: ADMIN_ONLY },
+  { menuId: 'dashboard',        href: '/',                 label: '대시보드',          section: '홈', roles: ALL },
+  { menuId: 'products',         href: '/products',         label: '상품 관리',         section: '상품 관리', roles: ALL },
+  { menuId: 'product-attrs',    href: '/product-attrs',    label: '상품 마스터',       section: '상품 관리', roles: ALL },
+  { menuId: 'barcodes',         href: '/barcodes',         label: '바코드 관리',       section: '상품 관리', roles: ALL },
+  { menuId: 'units',            href: '/units',            label: '단위 관리',         section: '상품 관리', roles: ALL },
+  { menuId: 'inbound',          href: '/inbound',          label: '입고 관리',         section: '입출고 관리', roles: ['ADMIN', 'MANAGER', 'WORKER'] },
+  { menuId: 'scan',             href: '/scan',             label: '스캔',              section: '입출고 관리', roles: ALL },
+  { menuId: 'transactions',     href: '/transactions',     label: '이력 조회',         section: '입출고 관리', roles: ALL },
+  { menuId: 'clients',          href: '/clients',          label: '거래처 관리',       section: '영업 관리', roles: ['ADMIN', 'MANAGER'] },
+  { menuId: 'quotes',           href: '/quotes',           label: '출력서류 관리',      section: '영업 관리', roles: ['ADMIN', 'MANAGER'] },
+  { menuId: 'warehouse',        href: '/warehouse',        label: '창고/위치',         section: '시스템 관리', roles: ALL },
+  { menuId: 'users',            href: '/users',            label: '사용자 & 역할 관리', section: '시스템 관리', roles: ADMIN_ONLY },
+  { menuId: 'permissions',      href: '/permissions',      label: '권한 관리',         section: '시스템 관리', roles: ['ADMIN', 'MANAGER'] },
+  { menuId: 'supplier-settings', href: '/supplier-settings', label: '공급자 정보',    section: '시스템 관리', roles: ADMIN_ONLY },
+  { menuId: 'menu-permissions', href: '/menu-permissions', label: '메뉴 권한',         section: '시스템 관리', roles: ADMIN_ONLY },
   { menuId: 'profile',          href: '/profile',          label: '내 계정',           section: '계정', roles: ALL },
 ]
 
-export const DEFAULT_SECTION_ORDER = ['운영', '입출고', '영업', '상품 마스터 관리', '관리', '계정']
+export const DEFAULT_SECTION_ORDER = ['홈', '상품 관리', '입출고 관리', '영업 관리', '시스템 관리', '계정']
 
 interface MenuPermissionState {
   menus: MenuDef[]

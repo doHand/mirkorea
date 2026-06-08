@@ -8,7 +8,7 @@ import toast from 'react-hot-toast'
 import { clientApi } from '@/api/client.api'
 import { productApi } from '@/api/product.api'
 import { quoteApi } from '@/api/quote.api'
-import { PurchaseOrdersContent } from '@/pages/purchase-orders'
+import { PurchaseOrdersContent } from '@/components/PurchaseOrdersContent'
 import { useSupplierInfoStore } from '@/stores/supplier-info.store'
 import { formatNumber } from '@/utils/format'
 import {

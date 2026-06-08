@@ -215,17 +215,19 @@ function SortHeader({
   sort,
   onSort,
   align = 'left',
+  className,
 }: {
   label: string
   sortKey: ProductSortKey
   sort: ProductSortState
   onSort: (key: ProductSortKey) => void
   align?: 'left' | 'center' | 'right'
+  className?: string
 }) {
   const active = sort?.key === sortKey
   const Icon = active ? (sort.direction === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown
   return (
-    <th className={cn(TH, align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left')}>
+    <th className={cn(TH, align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left', className)}>
       <button
         type="button"
         onClick={() => onSort(sortKey)}
@@ -374,6 +376,7 @@ export default function ProductsPage() {
   const [showClientPicker, setShowClientPicker] = useState(false)
   const [clientPickerSearch, setClientPickerSearch] = useState('')
   const [selectedClient, setSelectedClient] = useState<ClientOption | null>(null)
+  const [clientTargetProduct, setClientTargetProduct] = useState<Product | null>(null)
   const [showLocationPicker, setShowLocationPicker] = useState(false)
   const [locationPickerSearch, setLocationPickerSearch] = useState('')
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null)
@@ -423,7 +426,7 @@ export default function ProductsPage() {
   const { data: clients = [] } = useQuery<Client[]>({
     queryKey: ['clients-all'],
     queryFn:  () => clientApi.findAllActive(),
-    enabled:  showModal,
+    enabled:  showModal || showClientPicker,
     placeholderData: [],
   })
 
@@ -599,6 +602,32 @@ export default function ProductsPage() {
 
   const saveStatus = (id: string, saleStatus: SaleStatus) => {
     gridUpdateMutation.mutate({ id, patch: { saleStatus } })
+  }
+
+  const openGridClientPicker = (product: Product) => {
+    setClientTargetProduct(product)
+    setClientPickerSearch('')
+    setShowClientPicker(true)
+  }
+
+  const closeClientPicker = () => {
+    setShowClientPicker(false)
+    setClientTargetProduct(null)
+  }
+
+  const selectClient = (client: ClientOption) => {
+    if (clientTargetProduct) {
+      gridUpdateMutation.mutate({
+        id: clientTargetProduct.id,
+        patch: { clientId: client.id },
+      })
+      closeClientPicker()
+      return
+    }
+
+    setSelectedClient(client)
+    setForm((p) => ({ ...p, clientId: client.id }))
+    setShowClientPicker(false)
   }
 
   const openGridLocationPicker = (product: Product) => {
@@ -899,7 +928,7 @@ export default function ProductsPage() {
           <table className="w-full min-w-[2480px] text-sm border-collapse">
             <thead>
               <tr className="bg-[#2D4033]">
-                <th className="px-3 py-3 w-10 border-r border-white/20 bg-[#2D4033]">
+                <th className="sticky left-0 z-30 w-10 min-w-10 max-w-10 px-3 py-3 border-r border-white/20 bg-[#2D4033]">
                   <input
                     type="checkbox"
                     checked={allChecked}
@@ -908,11 +937,11 @@ export default function ProductsPage() {
                     className="rounded accent-indigo-600 cursor-pointer"
                   />
                 </th>
-                <SortHeader label="거래처명" sortKey="client" sort={sort} onSort={toggleSort} />
-                <SortHeader label="상품코드" sortKey="code" sort={sort} onSort={toggleSort} />
-                <SortHeader label="자재번호" sortKey="materialNo" sort={sort} onSort={toggleSort} />
-                <SortHeader label="바코드" sortKey="barcode" sort={sort} onSort={toggleSort} />
-                <SortHeader label="상품명" sortKey="name" sort={sort} onSort={toggleSort} />
+                <SortHeader label="거래처명" sortKey="client" sort={sort} onSort={toggleSort} className="sticky left-10 z-30 w-36 min-w-36 max-w-36" />
+                <SortHeader label="상품코드" sortKey="code" sort={sort} onSort={toggleSort} className="sticky left-[184px] z-30 w-36 min-w-36 max-w-36" />
+                <SortHeader label="자재번호" sortKey="materialNo" sort={sort} onSort={toggleSort} className="sticky left-[328px] z-30 w-36 min-w-36 max-w-36" />
+                <SortHeader label="바코드" sortKey="barcode" sort={sort} onSort={toggleSort} className="sticky left-[472px] z-30 w-40 min-w-40 max-w-40" />
+                <SortHeader label="상품명" sortKey="name" sort={sort} onSort={toggleSort} className="sticky left-[632px] z-30 w-48 min-w-48 max-w-48 shadow-[3px_0_5px_-3px_rgba(0,0,0,0.35)]" />
                 <SortHeader label="기준단위" sortKey="unit" sort={sort} onSort={toggleSort} align="center" />
                 <SortHeader label="1BOX(입수량)" sortKey="boxQty" sort={sort} onSort={toggleSort} align="right" />
                 <SortHeader label="재고수량(박스)" sortKey="boxStock" sort={sort} onSort={toggleSort} align="right" />
@@ -956,22 +985,25 @@ export default function ProductsPage() {
                 const eachStockQty = getEachStockQty(p)
                 const isBelowSafety = boxStockQty < p.safetyStock
                 const rowBase = isSelected
-                  ? 'bg-indigo-50/60 dark:bg-indigo-900/10'
+                  ? 'bg-indigo-50 dark:bg-indigo-950'
                   : isBelowSafety
-                    ? 'bg-red-50 dark:bg-red-900/10 hover:bg-red-100/60 dark:hover:bg-red-900/20'
+                    ? 'bg-red-50 hover:bg-red-100 dark:bg-red-950 dark:hover:bg-red-900'
                     : 'hover:bg-indigo-50/40 dark:hover:bg-indigo-900/5'
-                /* 거래처명 열 배경: 행 배경보다 한 단계 진한 파란빛 */
-                const clientBg = isSelected
-                  ? 'bg-indigo-100/60 dark:bg-indigo-900/20'
+                const fixedBg = isSelected
+                  ? 'bg-indigo-100 group-hover:bg-indigo-200 dark:bg-indigo-900 dark:group-hover:bg-indigo-800'
                   : isBelowSafety
-                    ? 'bg-red-100/50 dark:bg-red-900/20'
-                    : 'bg-sky-50/70 dark:bg-sky-900/10 group-hover:bg-sky-100/60 dark:group-hover:bg-sky-900/20'
+                    ? 'bg-red-100 group-hover:bg-red-100 dark:bg-red-900 dark:group-hover:bg-red-900'
+                    : 'bg-slate-50 group-hover:bg-indigo-50 dark:bg-slate-800 dark:group-hover:bg-indigo-950'
                 return (
                   <tr
                     key={p.id}
-                    className={cn('group transition-colors', rowBase)}
+                    className={cn(
+                      'group transition-colors',
+                      rowBase,
+                      isBelowSafety && '[&>td]:!bg-red-100 [&>td]:hover:!bg-red-100 dark:[&>td]:!bg-red-900 dark:[&>td]:hover:!bg-red-900',
+                    )}
                   >
-                    <td className="px-2 py-1.5 border-r border-gray-200 dark:border-gray-700 text-center" onClick={(e) => e.stopPropagation()}>
+                    <td className={cn('sticky left-0 z-20 w-10 min-w-10 max-w-10 px-2 py-1.5 border-r border-gray-200 text-center dark:border-gray-700', fixedBg)} onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={isSelected}
@@ -980,19 +1012,26 @@ export default function ProductsPage() {
                       />
                     </td>
                     {/* 거래처명 - 앞쪽 고정 표시 */}
-                    <td className={cn(TD_TEXT, clientBg)}>
+                    <td
+                      className={cn(TD_TEXT, fixedBg, 'sticky left-10 z-20 w-36 min-w-36 max-w-36 cursor-pointer hover:!bg-indigo-50 dark:hover:!bg-indigo-900/30')}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        openGridClientPicker(p)
+                      }}
+                      title="거래처 변경"
+                    >
                       <span className="block truncate" title={p.client?.name ?? ''}>{p.client?.name || '—'}</span>
                     </td>
                     {/* 상품코드 */}
-                    <td className={cn(TD_TEXT, 'font-mono text-xs text-gray-500 dark:text-gray-400')}>
+                    <td className={cn(TD_TEXT, fixedBg, 'sticky left-[184px] z-20 w-36 min-w-36 max-w-36 font-mono text-xs text-gray-500 dark:text-gray-400')}>
                       <EditableCell id={p.id} field="code" value={p.code} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} />
                     </td>
                     {/* 자재번호 */}
-                    <td className={cn(TD_TEXT, 'font-mono text-xs text-gray-500 dark:text-gray-400')}>
+                    <td className={cn(TD_TEXT, fixedBg, 'sticky left-[328px] z-20 w-36 min-w-36 max-w-36 font-mono text-xs text-gray-500 dark:text-gray-400')}>
                       <EditableCell id={p.id} field="materialNo" value={p.materialNo ?? ''} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} />
                     </td>
                      {/* 바코드 */}
-                    <td className={TD_TEXT} onClick={(e) => e.stopPropagation()}>
+                    <td className={cn(TD_TEXT, fixedBg, 'sticky left-[472px] z-20 w-40 min-w-40 max-w-40')} onClick={(e) => e.stopPropagation()}>
                       <button
                         type="button"
                         onClick={() => setBarcodeModal(p)}
@@ -1003,7 +1042,7 @@ export default function ProductsPage() {
                       </button>
                     </td>
                     {/* 상품명 */}
-                    <td className={cn(TD_TEXT, 'font-semibold text-gray-900 dark:text-gray-100')}>
+                    <td className={cn(TD_TEXT, fixedBg, 'sticky left-[632px] z-20 w-48 min-w-48 max-w-48 font-semibold text-gray-900 shadow-[3px_0_5px_-3px_rgba(0,0,0,0.25)] dark:text-gray-100')}>
                       <EditableCell id={p.id} field="name" value={p.name} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} />
                     </td>
         
@@ -1540,7 +1579,7 @@ export default function ProductsPage() {
                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">선택하면 거래처명이 자동 입력됩니다</p>
               </div>
               <button
-                onClick={() => setShowClientPicker(false)}
+                onClick={closeClientPicker}
                 className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-200 transition-colors"
               >
                 <X size={16} />
@@ -1573,11 +1612,7 @@ export default function ProductsPage() {
                     <button
                       key={c.id}
                       type="button"
-                      onClick={() => {
-                        setSelectedClient(c)
-                        setForm((p) => ({ ...p, clientId: c.id }))
-                        setShowClientPicker(false)
-                      }}
+                      onClick={() => selectClient(c)}
                       className="w-full px-5 py-3 text-left hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
                     >
                       <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{c.name}</p>
@@ -1595,7 +1630,7 @@ export default function ProductsPage() {
             <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-700 shrink-0">
               <button
                 type="button"
-                onClick={() => setShowClientPicker(false)}
+                onClick={closeClientPicker}
                 className="w-full py-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
               >
                 취소
