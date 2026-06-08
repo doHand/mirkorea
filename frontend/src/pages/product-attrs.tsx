@@ -366,7 +366,7 @@ export default function ProductMasterPage() {
     materialNo:       { width: 144, minWidth: 40,  sticky: true },
     barcode:          { width: 144, minWidth: 40,  sticky: true },
     name:             { width: 192, minWidth: 48,  sticky: true },
-    category:         { width: 110, minWidth: 60,  sticky: false },
+    category:         { width: 110, minWidth: 60,  sticky: true },
     optionName:       { width: 110, minWidth: 60,  sticky: false },
     spec:             { width: 110, minWidth: 60,  sticky: false },
     location:         { width: 110, minWidth: 60,  sticky: false },
@@ -816,7 +816,7 @@ export default function ProductMasterPage() {
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
         <div className="overflow-auto max-h-[calc(100vh-260px)]">
           <table
-            className="mobile-unpin-grid wms-resizable-table text-sm border-separate border-spacing-0 [&_td]:border-r [&_td]:border-gray-100 [&_th]:border-r [&_th]:border-gray-200 dark:[&_td]:border-gray-800 dark:[&_th]:border-gray-700"
+            className="mobile-unpin-grid wms-no-resize wms-resizable-table text-sm border-separate border-spacing-0 [&_td]:border-r [&_td]:border-gray-100 [&_th]:border-r [&_th]:border-gray-200 dark:[&_td]:border-gray-800 dark:[&_th]:border-gray-700"
             style={{ width: totalWidth, minWidth: totalWidth, maxWidth: totalWidth }}
           >
             <colgroup>
@@ -848,8 +848,8 @@ export default function ProductMasterPage() {
                 <SortHeader label="상품 코드" sortKey="code" sort={sort} onSort={toggleSort} className="sticky-col sticky z-30" style={{ width: cw.code, minWidth: cw.code, maxWidth: cw.code, left: stickyLeftOf('code') }} onResizeStart={(e) => startResize('code', e)} />
                 <SortHeader label="자재번호" sortKey="materialNo" sort={sort} onSort={toggleSort} className="sticky-col sticky z-30" style={{ width: cw.materialNo, minWidth: cw.materialNo, maxWidth: cw.materialNo, left: stickyLeftOf('materialNo') }} onResizeStart={(e) => startResize('materialNo', e)} />
                 <SortHeader label="바코드" sortKey="barcode" sort={sort} onSort={toggleSort} className="sticky-col sticky z-30" style={{ width: cw.barcode, minWidth: cw.barcode, maxWidth: cw.barcode, left: stickyLeftOf('barcode') }} onResizeStart={(e) => startResize('barcode', e)} />
-                <SortHeader label="상품명" sortKey="name" sort={sort} onSort={toggleSort} className="sticky-col sticky z-30 shadow-[3px_0_5px_-3px_rgba(0,0,0,0.35)]" style={{ width: cw.name, minWidth: cw.name, maxWidth: cw.name, left: stickyLeftOf('name') }} onResizeStart={(e) => startResize('name', e)} />
-                <SortHeader label="카테고리" sortKey="category" sort={sort} onSort={toggleSort} style={{ width: cw.category }} onResizeStart={(e) => startResize('category', e)} />
+                <SortHeader label="상품명" sortKey="name" sort={sort} onSort={toggleSort} className="sticky-col sticky z-30" style={{ width: cw.name, minWidth: cw.name, maxWidth: cw.name, left: stickyLeftOf('name') }} onResizeStart={(e) => startResize('name', e)} />
+                <SortHeader label="카테고리" sortKey="category" sort={sort} onSort={toggleSort} className="sticky-col sticky z-30 shadow-[3px_0_5px_-3px_rgba(0,0,0,0.35)]" style={{ width: cw.category, minWidth: cw.category, maxWidth: cw.category, left: stickyLeftOf('category') }} onResizeStart={(e) => startResize('category', e)} />
                 <SortHeader label="옵션" sortKey="optionName" sort={sort} onSort={toggleSort} style={{ width: cw.optionName }} onResizeStart={(e) => startResize('optionName', e)} />
                 <SortHeader label="규격" sortKey="spec" sort={sort} onSort={toggleSort} style={{ width: cw.spec }} onResizeStart={(e) => startResize('spec', e)} />
                 <SortHeader label="기본 위치" sortKey="location" sort={sort} onSort={toggleSort} style={{ width: cw.location }} onResizeStart={(e) => startResize('location', e)} />
@@ -939,11 +939,15 @@ export default function ProductMasterPage() {
                     >
                       {barcode?.barcode ?? '-'}
                     </td>
-                    <td className={cn('sticky-col sticky z-20 py-1.5 pr-1 shadow-[3px_0_5px_-3px_rgba(0,0,0,0.25)] overflow-hidden', fixedBg)} style={{ width: cw.name, minWidth: cw.name, maxWidth: cw.name, left: stickyLeftOf('name') }}>
+                    <td className={cn('sticky-col sticky z-20 py-1.5 pr-1 overflow-hidden', fixedBg)} style={{ width: cw.name, minWidth: cw.name, maxWidth: cw.name, left: stickyLeftOf('name') }}>
                       <EditableCell id={p.id} field="name" value={p.name}
                         editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} />
                     </td>
-                    <td className="py-1.5 pr-1" onClick={(e) => e.stopPropagation()}>
+                    <td
+                      className={cn('sticky-col sticky z-20 py-1.5 pr-1 shadow-[3px_0_5px_-3px_rgba(0,0,0,0.25)] overflow-hidden', fixedBg)}
+                      style={{ width: cw.category, minWidth: cw.category, maxWidth: cw.category, left: stickyLeftOf('category') }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <CategorySelect
                         value={p.category ?? ''}
                         onChange={(val) => updateMutation.mutate({ id: p.id, patch: { category: val || undefined } })}

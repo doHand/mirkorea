@@ -11,6 +11,14 @@ function getColumnCells(table: HTMLTableElement, columnIndex: number) {
 }
 
 function makeResizable(table: HTMLTableElement) {
+  if (table.classList.contains('wms-no-resize')) {
+    table.querySelectorAll('thead th > span.wms-column-resizer').forEach((handle) => handle.remove())
+    table.querySelectorAll('thead th[data-resize-handle]').forEach((cell) => {
+      delete (cell as HTMLElement).dataset.resizeHandle
+    })
+    delete table.dataset.resizableTable
+    return
+  }
   if (table.dataset.resizableTable === 'true') return
 
   const headerRow = table.tHead?.rows[0] ?? table.querySelector('tr')
@@ -71,7 +79,7 @@ function makeResizable(table: HTMLTableElement) {
 export function ResizableTables() {
   useEffect(() => {
     const refreshTables = () => {
-      document.querySelectorAll<HTMLTableElement>('table:not(.wms-no-resize)').forEach(makeResizable)
+      document.querySelectorAll<HTMLTableElement>('table').forEach(makeResizable)
     }
 
     refreshTables()

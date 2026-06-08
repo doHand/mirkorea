@@ -160,7 +160,7 @@ public class ProductService {
             .orElseThrow(() -> new BusinessException(ErrorCode.BARCODE_NOT_FOUND));
 
         Product product = barcode.getProduct();
-        int qtyPerScan = isSingleUnitBarcode(barcode.getType()) ? 1 : Math.max(1, barcode.getUnitQty());
+        int qtyPerScan = qtyPerScan(barcode);
 
         return new BarcodeResolveResult(product, barcode.getType(), qtyPerScan);
     }
@@ -169,6 +169,21 @@ public class ProductService {
 
     private int normalizeBarcodeQty(BarcodeUnitType type, int unitQty) {
         return isSingleUnitBarcode(type) ? 1 : Math.max(1, unitQty);
+    }
+
+    private int qtyPerScan(Barcode barcode) {
+        if (isSingleUnitBarcode(barcode.getType())) {
+            return 1;
+        }
+        if (barcode.getType() == BarcodeUnitType.CXD_BOX) {
+            int inboxUnitQty = barcodeRepo.findByProductIdOrderByIsPrimaryDesc(barcode.getProductId()).stream()
+                .filter(item -> item.getType() == BarcodeUnitType.CXD && item.isActive())
+                .mapToInt(Barcode::getUnitQty)
+                .findFirst()
+                .orElse(1);
+            return Math.max(1, inboxUnitQty) * Math.max(1, barcode.getUnitQty());
+        }
+        return Math.max(1, barcode.getUnitQty());
     }
 
     private boolean isSingleUnitBarcode(BarcodeUnitType type) {

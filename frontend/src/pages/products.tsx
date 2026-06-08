@@ -975,7 +975,7 @@ export default function ProductsPage() {
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table
-            className="mobile-unpin-grid wms-resizable-table text-sm border-collapse"
+            className="mobile-unpin-grid wms-no-resize wms-resizable-table text-sm border-collapse"
             style={{ width: totalWidth, minWidth: totalWidth, maxWidth: totalWidth }}
           >
             <colgroup>

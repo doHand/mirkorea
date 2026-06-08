@@ -15,11 +15,14 @@ const TYPES: BarcodeUnitType[] = ['UNIT', 'CXD', 'CXD_BOX']
 const TYPE_ORDER: Record<BarcodeUnitType, number> = { UNIT: 0, CXD: 1, CXD_BOX: 2 }
 type BarcodeForm = { barcode: string; type: BarcodeUnitType; unitQty: number; isPrimary: boolean }
 const emptyForm = (): BarcodeForm => ({ barcode: '', type: 'UNIT', unitQty: 1, isPrimary: false })
-const stockForBarcode = (product: Product, barcode: Barcode) => {
+const stockForBarcode = (product: Product, barcode: Barcode, barcodes: Barcode[]) => {
   const stock = Number(product.stockQty ?? 0)
   if (barcode.type === 'CXD') return { qty: stock / Math.max(1, barcode.unitQty), unit: 'INBOX' }
   if (barcode.type === 'CXD_BOX') {
-    return { qty: stock / Math.max(1, barcode.unitQty), unit: 'OUTBOX' }
+    const inboxUnitQty = barcodes.find((item) => item.type === 'CXD' && item.isPrimary)?.unitQty
+      ?? barcodes.find((item) => item.type === 'CXD')?.unitQty
+      ?? 1
+    return { qty: stock / (Math.max(1, inboxUnitQty) * Math.max(1, barcode.unitQty)), unit: 'OUTBOX' }
   }
   return { qty: stock, unit: 'EA' }
 }
@@ -83,7 +86,7 @@ export function ProductBarcodeModal({ product, onClose }: { product: Product; on
           바코드 유형
           <select value={form.type} onChange={(e) => {
             const type = e.target.value as BarcodeUnitType
-            setForm({ ...form, type, unitQty: type === 'UNIT' || type === 'CXD_BOX' ? 1 : form.unitQty })
+            setForm({ ...form, type, unitQty: type === 'UNIT' ? 1 : form.unitQty })
           }}
             className="mt-1 w-full rounded-md border border-[#D4BF99] bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800">
             {TYPES.map((type) => <option key={type} value={type}>{TYPE_LABEL[type]}</option>)}
@@ -143,7 +146,7 @@ export function ProductBarcodeModal({ product, onClose }: { product: Product; on
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="truncate font-mono text-sm">{barcode.barcode}</span>
                   <span className="shrink-0 whitespace-nowrap text-[11px] font-semibold text-gray-500 dark:text-gray-400">
-                    현재 재고 : <span className="text-gray-900 dark:text-gray-100">{formatDecimal(stockForBarcode(product, barcode).qty)}</span> ({stockForBarcode(product, barcode).unit})
+                    현재 재고 : <span className="text-gray-900 dark:text-gray-100">{formatDecimal(stockForBarcode(product, barcode, barcodes).qty)}</span> ({stockForBarcode(product, barcode, barcodes).unit})
                   </span>
                 </div>
                 <div className="mt-1.5 flex flex-wrap items-center gap-1.5">

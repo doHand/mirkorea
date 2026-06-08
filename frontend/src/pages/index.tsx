@@ -343,6 +343,16 @@ export default function DashboardPage() {
       .sort((a, b) => b.items.length - a.items.length || b.totalShortage - a.totalShortage)
   }, [lowStock])
 
+  const lowStockPreview = useMemo(() => {
+    return [...(lowStock as any[])]
+      .sort((a, b) => {
+        const aShortage = Number(a.product?.safetyStock ?? 0) - Number(a.quantity ?? 0)
+        const bShortage = Number(b.product?.safetyStock ?? 0) - Number(b.quantity ?? 0)
+        return bShortage - aShortage
+      })
+      .slice(0, 6)
+  }, [lowStock])
+
   if (!warehouse) {
     return (
       <div className="flex items-center justify-center h-64 text-gray-400 dark:text-gray-500">
@@ -457,22 +467,56 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
         {stats.map(({ label, value, icon: Icon, bg, border, tone, sub }) => (
-          <div key={label} className={`relative overflow-hidden rounded-[16px] border ${border} ${bg} p-4 text-white shadow-xl shadow-slate-900/10`}>
-            <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/18" />
-            <div className="pointer-events-none absolute right-8 top-10 h-16 w-16 rounded-2xl bg-white/12 rotate-45" />
-            <div className="relative flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold text-white/85">{label}</p>
-                <p className="mt-1 text-2xl font-bold tabular-nums text-white">{formatNumber(value)}</p>
+          <div key={label} className={label === '안전재고 미달' ? 'group relative z-20' : 'relative'}>
+            <div className={`relative overflow-hidden rounded-[16px] border ${border} ${bg} p-4 text-white shadow-xl shadow-slate-900/10`}>
+              <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/18" />
+              <div className="pointer-events-none absolute right-8 top-10 h-16 w-16 rounded-2xl bg-white/12 rotate-45" />
+              <div className="relative flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold text-white/85">{label}</p>
+                  <p className="mt-1 text-2xl font-bold tabular-nums text-white">{formatNumber(value)}</p>
+                </div>
+                <div className="w-10 h-10 rounded-2xl border border-white/25 bg-white/18 flex items-center justify-center shrink-0 backdrop-blur">
+                  <Icon size={18} className={tone} />
+                </div>
               </div>
-              <div className="w-10 h-10 rounded-2xl border border-white/25 bg-white/18 flex items-center justify-center shrink-0 backdrop-blur">
-                <Icon size={18} className={tone} />
+              <div className="relative mt-3 flex items-center justify-between border-t border-white/20 pt-2">
+                <p className="text-xs text-white/75">{sub}</p>
+                <span className="h-1.5 w-10 rounded-full bg-white/50" />
               </div>
             </div>
-            <div className="relative mt-3 flex items-center justify-between border-t border-white/20 pt-2">
-              <p className="text-xs text-white/75">{sub}</p>
-              <span className="h-1.5 w-10 rounded-full bg-white/50" />
-            </div>
+
+            {label === '안전재고 미달' && (
+              <div className="pointer-events-none invisible absolute left-0 top-[calc(100%+8px)] z-50 w-full min-w-72 translate-y-1 rounded-2xl border border-rose-200 bg-white p-3 opacity-0 shadow-2xl transition-all group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 dark:border-rose-800 dark:bg-slate-900">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="text-xs font-bold text-gray-950 dark:text-white">안전재고 미달 미리보기</p>
+                  <span className="text-[10px] font-semibold text-rose-500">{formatNumber((lowStock as any[]).length)}개 품목</span>
+                </div>
+                {lowStockPreview.length === 0 ? (
+                  <p className="rounded-xl bg-gray-50 px-3 py-4 text-center text-xs text-gray-400 dark:bg-slate-800">미달 품목이 없습니다</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {lowStockPreview.map((inv) => (
+                      <div key={inv.id} className="flex items-center gap-2 rounded-xl bg-rose-50/70 px-2.5 py-2 dark:bg-rose-950/35">
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-xs font-semibold text-gray-900 dark:text-gray-100">{inv.product?.name ?? '상품 정보 없음'}</p>
+                          <p className="truncate text-[10px] text-gray-400">{inv.product?.code ?? '-'} · {inv.location?.code ?? '위치 미지정'}</p>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <p className="text-xs font-bold tabular-nums text-rose-600 dark:text-rose-300">{formatNumber(inv.quantity ?? 0)}</p>
+                          <p className="text-[10px] text-gray-400">안전 {formatNumber(inv.product?.safetyStock ?? 0)}</p>
+                        </div>
+                      </div>
+                    ))}
+                    {(lowStock as any[]).length > lowStockPreview.length && (
+                      <p className="pt-1 text-center text-[10px] font-medium text-rose-500">
+                        외 {formatNumber((lowStock as any[]).length - lowStockPreview.length)}개 더 있음
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         ))}
       </div>

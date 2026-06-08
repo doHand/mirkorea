@@ -20,7 +20,7 @@ import { formatDecimal, formatNumber } from '@/utils/format'
 import { cn } from '@/utils/cn'
 import { CameraScanner } from '@/components/CameraScanner'
 import { useMenuLabel } from '@/hooks/use-menu-label'
-import type { BarcodeResolveResult, Zone, BarcodeUnitType } from '@/types/api.types'
+import type { Barcode as ProductBarcode, BarcodeResolveResult, Zone, BarcodeUnitType } from '@/types/api.types'
 
 const UNIT_LABEL: Record<BarcodeUnitType, string> = {
   UNIT: '일반바코드', CXD: 'CXD낱개(INBOX)', CXD_BOX: 'CXD BOX',
@@ -30,10 +30,15 @@ const UNIT_CLS: Record<BarcodeUnitType, string> = {
   CXD:  'bg-violet-100 text-violet-700 dark:bg-violet-900/20 dark:text-violet-400',
   CXD_BOX: 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400',
 }
-const displayBarcodeStock = (stockQty: number | undefined, boxQty: number | undefined, type: BarcodeUnitType, unitQty: number) => {
+const displayBarcodeStock = (stockQty: number | undefined, type: BarcodeUnitType, unitQty: number, barcodes: ProductBarcode[]) => {
   const stock = Number(stockQty ?? 0)
   if (type === 'CXD') return `${formatDecimal(stock / Math.max(1, unitQty))}INBOX`
-  if ( type === 'CXD_BOX') return `${formatDecimal(stock / Math.max(1, boxQty || 1))}BOX`
+  if (type === 'CXD_BOX') {
+    const inboxUnitQty = barcodes.find((barcode) => barcode.type === 'CXD' && barcode.isPrimary)?.unitQty
+      ?? barcodes.find((barcode) => barcode.type === 'CXD')?.unitQty
+      ?? 1
+    return `${formatDecimal(stock / (Math.max(1, inboxUnitQty) * Math.max(1, unitQty)))}OUTBOX`
+  }
   return `${formatNumber(stock)}EA`
 }
 
@@ -613,9 +618,9 @@ export default function ScanPage() {
                             {UNIT_LABEL[bc.type]}
                           </span>
                           <span className="text-xs text-gray-400 tabular-nums shrink-0">
-                            {bc.type === 'UNIT' && `현재 재고 :  ${displayBarcodeStock(lastResult.product.stockQty, lastResult.product.boxQty, bc.type, bc.unitQty)}`}
-                            {bc.type === 'CXD' && `현재 재고 :  ${displayBarcodeStock(lastResult.product.stockQty, lastResult.product.boxQty, bc.type, bc.unitQty)} · SET 구성 ${formatNumber(bc.unitQty)}개`}
-                            {bc.type === 'CXD_BOX' && `현재 재고 :  ${displayBarcodeStock(lastResult.product.stockQty, lastResult.product.boxQty, bc.type, bc.unitQty)} · INBOX ${formatNumber(bc.unitQty)}개 포함`}
+                            {bc.type === 'UNIT' && `현재 재고 :  ${displayBarcodeStock(lastResult.product.stockQty, bc.type, bc.unitQty, inquiryBarcodes)}`}
+                            {bc.type === 'CXD' && `현재 재고 :  ${displayBarcodeStock(lastResult.product.stockQty, bc.type, bc.unitQty, inquiryBarcodes)} · 낱개 구성 ${formatNumber(bc.unitQty)}개`}
+                            {bc.type === 'CXD_BOX' && `현재 재고 :  ${displayBarcodeStock(lastResult.product.stockQty, bc.type, bc.unitQty, inquiryBarcodes)} · INBOX ${formatNumber(bc.unitQty)}개 포함`}
                           </span>
                           {bc.isPrimary && <Star size={11} className="text-amber-400 fill-amber-400 shrink-0" />}
                         </div>
