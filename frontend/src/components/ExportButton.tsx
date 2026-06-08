@@ -37,10 +37,12 @@ export function ExportButton({ filename, getData, label = '엑셀' }: Props) {
     <button
       onClick={handleExport}
       disabled={loading}
-      className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 text-white text-sm rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+      title={loading ? '내보내기 준비 중' : label}
+      aria-label={loading ? '내보내기 준비 중' : label}
+      className="responsive-icon-action bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
     >
       <Upload size={14} />
-      {loading ? '준비 중...' : label}
+      <span className="responsive-action-label">{loading ? '준비 중...' : label}</span>
     </button>
   )
 }

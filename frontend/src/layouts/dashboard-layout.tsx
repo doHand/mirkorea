@@ -1,24 +1,19 @@
 'use client'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/router'
-import type { NextRouter } from 'next/router'
 import { X } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth.store'
 import { useOpenTabsStore } from '@/stores/open-tabs.store'
-import { useMenuPermissionStore } from '@/stores/menu-permission.store'
 import { useWarehouseStore } from '@/stores/warehouse.store'
 import { useQuery } from '@tanstack/react-query'
 import { warehouseApi } from '@/api/warehouse.api'
 import { QUERY_KEYS } from '@/constants/query-keys'
 import { SidebarNav } from '@/layouts/sidebar-nav'
 import { HeaderBar } from '@/layouts/header-bar'
-import { OpenTabsBar } from '@/layouts/open-tabs-bar'
-import { cn } from '@/utils/cn'
-import type { OpenTab } from '@/stores/open-tabs.store'
+import { OpenTabsBar, SplitTabsBar } from '@/layouts/open-tabs-bar'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router        = useRouter()
-  const pathname      = router.pathname
   const isAuth        = useAuthStore((s) => s.isAuth)
   const hasHydrated   = useAuthStore((s) => s._hasHydrated)
   const sessionExpiry = useAuthStore((s) => s.sessionExpiresAt)
@@ -26,10 +21,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const clearAuth     = useAuthStore((s) => s.clearAuth)
   const splitHref     = useOpenTabsStore((s) => s.splitHref)
   const setSplit      = useOpenTabsStore((s) => s.setSplit)
+  const splitTabs     = useOpenTabsStore((s) => s.splitTabs)
+  const closeSplitTab = useOpenTabsStore((s) => s.closeSplitTab)
+  const clearSplitTabs = useOpenTabsStore((s) => s.clearSplitTabs)
   const splitRatio    = useOpenTabsStore((s) => s.splitRatio)
   const setSplitRatio = useOpenTabsStore((s) => s.setSplitRatio)
-  const tabs          = useOpenTabsStore((s) => s.tabs)
-  const menus         = useMenuPermissionStore((s) => s.menus)
   const user          = useAuthStore((s) => s.user)
   const warehouse     = useWarehouseStore((s) => s.selectedWarehouse)
   const setWarehouse  = useWarehouseStore((s) => s.setWarehouse)
@@ -42,11 +38,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     enabled:  hasHydrated && isAuth,
   })
 
-  const [isEmbed] = useState(() =>
-    typeof window !== 'undefined'
-      ? new URLSearchParams(window.location.search).get('embed') === '1'
-      : false,
-  )
+  const [isEmbed, setIsEmbed] = useState(false)
+
+  useEffect(() => {
+    setIsEmbed(
+      window.parent !== window
+      || new URLSearchParams(window.location.search).get('embed') === '1',
+    )
+  }, [router.asPath])
 
   const containerRef   = useRef<HTMLDivElement>(null)
   const mainPanelRef   = useRef<HTMLDivElement>(null)
@@ -120,16 +119,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [hasHydrated, isAuth]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (isEmbed) return
-    const onMessage = (e: MessageEvent) => {
-      if (e.origin !== window.location.origin) return
-      if (e.data?.type === 'split-navigate') setSplit(e.data.href)
-    }
-    window.addEventListener('message', onMessage)
-    return () => window.removeEventListener('message', onMessage)
-  }, [isEmbed, setSplit])
-
-  useEffect(() => {
     if (!warehouses.length) return
 
     const activeWarehouses = warehouses.filter((w) => w.isActive)
@@ -164,13 +153,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (isEmbed) {
     return (
-      <EmbedLayout tabs={tabs} pathname={pathname} router={router}>
+      <EmbedLayout>
         {children}
       </EmbedLayout>
     )
   }
-
-  const splitLabel = menus.find((m) => m.href === splitHref)?.label ?? splitHref ?? ''
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#F9F7F2] dark:bg-[#0a0f0b]">
@@ -192,7 +179,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white dark:bg-slate-950 border-l border-[#203127] dark:border-white/5">
         <HeaderBar onMenuClick={() => setSidebarOpen(true)}>
-          <OpenTabsBar />
+          <div className="wms-tabs-layout flex w-full min-w-0 items-end">
+            <div
+              className="wms-main-tabs flex min-w-0"
+              style={{ width: splitHref ? `${splitRatio}%` : '100%' }}
+            >
+              <OpenTabsBar />
+            </div>
+            {splitHref && (
+              <>
+                <div className="w-1 shrink-0" />
+                <div
+                  className="wms-split-tabs flex min-w-0 border-l border-gray-200 pl-1 dark:border-slate-700"
+                  style={{ width: `${100 - splitRatio}%` }}
+                >
+                  <SplitTabsBar />
+                </div>
+              </>
+            )}
+          </div>
         </HeaderBar>
 
         <div
@@ -202,7 +207,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         >
           <div
             ref={mainPanelRef}
-            className="overflow-auto p-3 lg:p-5"
+            className="wms-main-panel overflow-auto p-3 lg:p-5"
             style={{ width: splitHref ? `${splitRatio}%` : '100%' }}
           >
             {children}
@@ -212,32 +217,63 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <>
               <div
                 onMouseDown={startResize}
-                className="w-1 shrink-0 cursor-col-resize bg-gray-200 dark:bg-slate-700 hover:bg-[#D2691E] dark:hover:bg-[#c05c18] transition-colors active:bg-[#D2691E]"
+                className="wms-split-divider w-1 shrink-0 cursor-col-resize bg-gray-200 dark:bg-slate-700 hover:bg-[#D2691E] dark:hover:bg-[#c05c18] transition-colors active:bg-[#D2691E]"
               />
 
               <div
                 ref={splitPanelRef}
-                className="flex flex-col bg-white dark:bg-slate-900 overflow-hidden"
+                className="wms-split-panel flex flex-col bg-white dark:bg-slate-900 overflow-hidden"
                 style={{ width: `${100 - splitRatio}%` }}
               >
-                <div className="h-8 shrink-0 flex items-center justify-between px-3 bg-gray-50 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700">
-                  <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
-                    {splitLabel}
-                  </span>
+                <div className="hidden">
+                  {splitTabs.map((tab) => (
+                    <div
+                      key={tab.href}
+                      className={[
+                        'flex h-8 min-w-0 max-w-48 shrink-0 items-center rounded-t-lg text-xs',
+                        splitHref === tab.href
+                          ? 'bg-white text-gray-900 border border-b-white border-gray-200 dark:bg-slate-900 dark:text-white dark:border-slate-700 dark:border-b-slate-900'
+                          : 'text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-slate-700',
+                      ].join(' ')}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setSplit(tab.href)}
+                        className="min-w-0 flex-1 truncate py-1 pl-2.5 pr-1 text-left"
+                      >
+                        {tab.label}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => closeSplitTab(tab.href)}
+                        title={`${tab.label} 닫기`}
+                        className="mr-1 flex h-4 w-4 shrink-0 items-center justify-center rounded text-gray-400 hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-slate-600 dark:hover:text-white"
+                      >
+                        <X size={10} />
+                      </button>
+                    </div>
+                  ))}
                   <button
-                    onClick={() => setSplit(null)}
+                    onClick={clearSplitTabs}
                     title="분리 닫기"
-                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                    className="ml-auto mb-1.5 shrink-0 p-1 rounded hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
                   >
                     <X size={13} />
                   </button>
                 </div>
-                <iframe
-                  key={splitHref}
-                  src={`${splitHref}?embed=1`}
-                  className="flex-1 border-0 w-full"
-                  title={splitLabel}
-                />
+                <div className="relative flex-1">
+                  {splitTabs.map((tab) => (
+                    <iframe
+                      key={tab.href}
+                      src={`${tab.href}?embed=1`}
+                      className={[
+                        'absolute inset-0 h-full w-full border-0',
+                        splitHref === tab.href ? 'block' : 'hidden',
+                      ].join(' ')}
+                      title={tab.label}
+                    />
+                  ))}
+                </div>
               </div>
             </>
           )}
@@ -248,44 +284,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 }
 
 function EmbedLayout({
-  tabs, pathname, router, children,
+  children,
 }: {
-  tabs: OpenTab[]
-  pathname: string
-  router: NextRouter
   children: React.ReactNode
 }) {
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.parent !== window) {
-      window.parent.postMessage(
-        { type: 'split-navigate', href: pathname },
-        window.location.origin,
-      )
-    }
-  }, [pathname])
-
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-gray-100 dark:bg-slate-950">
-      <div className="h-8 shrink-0 flex items-end gap-0.5 px-2 pt-1 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 overflow-x-auto">
-        {tabs.map((tab) => {
-          const active = pathname === tab.href || (tab.href !== '/' && pathname.startsWith(tab.href))
-          return (
-            <button
-              key={tab.href}
-              onClick={() => router.push(`${tab.href}?embed=1`)}
-              className={cn(
-                'h-7 px-2.5 text-[11px] font-medium rounded-t-lg shrink-0 whitespace-nowrap transition-colors',
-                active
-                  ? 'bg-[#D2691E] text-white'
-                  : 'text-gray-500 dark:text-slate-400 hover:text-gray-800 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800',
-              )}
-            >
-              {tab.label}
-            </button>
-          )
-        })}
-      </div>
-      <div className="flex-1 overflow-auto p-4 lg:p-6">
+    <div className="h-screen overflow-auto bg-[#F9F7F2] p-3 dark:bg-slate-950 lg:p-5">
+      <div className="min-h-full">
         {children}
       </div>
     </div>

@@ -516,7 +516,7 @@ export default function MenuPermissionsPage() {
                       {sectionOrder.map((s) => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     {ROLES.map(({ role, label: roleLabel, headerCls, checkCls }) => {
                       const isAdmin = role === 'ADMIN'
                       const checked = menu.roles.includes(role)
@@ -560,7 +560,7 @@ export default function MenuPermissionsPage() {
       </div>
 
       {/* 역할 설명 카드 */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
         {ROLES.map(({ role, label, headerCls }) => (
           <div key={role} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-3">
             <p className={cn('text-xs font-bold mb-1', headerCls)}>{label}</p>

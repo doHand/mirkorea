@@ -108,6 +108,15 @@ export interface ProductUnit {
   createdAt: string
 }
 
+export interface ProductCategory {
+  id: string
+  name: string
+  description?: string
+  sortOrder: number
+  isActive: boolean
+  createdAt: string
+}
+
 export interface Barcode {
   id: string
   productId: string

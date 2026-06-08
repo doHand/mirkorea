@@ -60,13 +60,13 @@ export default function RoleManagementPage() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className={ui.h2Cls}>역할 관리</h2>
           <p className={ui.subText}>시스템 역할을 추가·수정·삭제합니다 · 전체 {formatNumber(roles.length)}개</p>
         </div>
-        <button onClick={openAdd} className={cn(ui.btnPrimary, 'flex items-center gap-1.5')}>
-          <Plus size={14} />역할 추가
+        <button onClick={openAdd} title="역할 추가" aria-label="역할 추가" className={cn(ui.btnPrimary, 'responsive-icon-action self-start px-0 sm:self-auto sm:px-3')}>
+          <Plus size={14} /><span className="responsive-action-label">역할 추가</span>
         </button>
       </div>
 

@@ -148,10 +148,12 @@ export function ImportButton({ onImported }: Props) {
 
       <button
         onClick={() => fileRef.current?.click()}
-        className="flex items-center gap-1.5 px-3 py-2 bg-accent-500 text-white text-sm rounded-md hover:bg-accent-600 transition-colors font-medium"
+        title="가져오기"
+        aria-label="가져오기"
+        className="responsive-icon-action bg-accent-500 text-white hover:bg-accent-600"
       >
         <Download size={14} />
-        가져오기
+        <span className="responsive-action-label">가져오기</span>
       </button>
 
       {preview && (

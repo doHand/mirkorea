@@ -10,6 +10,7 @@ import { useWarehouseStore } from '@/stores/warehouse.store'
 import { inboundApi } from '@/api/inbound.api'
 import type { CreateInboundOrderRequest } from '@/api/inbound.api'
 import { productApi } from '@/api/product.api'
+import { purchaseOrderApi } from '@/api/purchase-order.api'
 import { QUERY_KEYS } from '@/constants/query-keys'
 import { cn } from '@/utils/cn'
 import { formatNumber } from '@/utils/format'
@@ -57,6 +58,16 @@ export default function InboundPage() {
     enabled:  !!warehouse?.id,
   })
 
+  const { data: draftPurchaseOrders } = useQuery({
+    queryKey: ['purchase-orders', 'inbound-summary', warehouse?.id, 'DRAFT'],
+    queryFn: () => purchaseOrderApi.findAll({
+      warehouseId: warehouse!.id,
+      status: 'DRAFT',
+      limit: 1,
+    }),
+    enabled: !!warehouse?.id,
+  })
+
   const orders    = page?.items ?? []
   const allOrders = allPage?.items ?? []
   const filtered = useMemo(() => {
@@ -78,25 +89,34 @@ export default function InboundPage() {
   return (
     <div className="space-y-4">
       {/* 헤더 */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0">
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">입고 관리</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-0.5 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
             발주서 작성·출력 → 입고 예정 등록 → 수령 · 검수 · 재고 증가
           </p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => router.push('/quotes?tab=PURCHASE')} className="flex items-center gap-2 rounded-lg bg-[#2D4033] px-4 py-2 text-sm font-medium text-white">
-            <ClipboardList size={15} /> 발주서 작성·출력
+          <button onClick={() => router.push('/quotes?tab=PURCHASE')} title="발주서 작성·출력" aria-label="발주서 작성·출력" className="responsive-icon-action bg-[#2D4033] text-white">
+            <ClipboardList size={15} /> <span className="responsive-action-label">발주서 작성·출력</span>
           </button>
-          <button onClick={() => setCreateOpen(true)} className="flex items-center gap-2 rounded-lg bg-[#D2691E] px-4 py-2 text-sm font-medium text-white">
-            <Plus size={15} /> 직접 입고 예정 등록
+          <button onClick={() => setCreateOpen(true)} title="직접 입고 예정 등록" aria-label="직접 입고 예정 등록" className="responsive-icon-action bg-[#D2691E] text-white">
+            <Plus size={15} /> <span className="responsive-action-label">직접 입고 예정 등록</span>
           </button>
         </div>
       </div>
 
       {/* 요약 카드 */}
-      <div className="grid grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+        <button
+          onClick={() => router.push('/quotes?tab=PURCHASE')}
+          className="rounded-2xl border border-orange-200 bg-orange-50 p-3 text-left transition-all hover:border-orange-400 hover:shadow-sm dark:border-orange-900/60 dark:bg-orange-950/20"
+        >
+          <p className="text-xl font-bold tabular-nums text-orange-600 dark:text-orange-400">
+            {formatNumber(draftPurchaseOrders?.total ?? 0)}
+          </p>
+          <p className="mt-0.5 text-xs text-orange-700 dark:text-orange-300">작성중인 발주서</p>
+        </button>
         {(['', ...Object.keys(STATUS_LABEL)] as (InboundStatus | '')[]).map((s) => {
           const count = s === ''
             ? allOrders.length
@@ -302,7 +322,7 @@ function CreateModal({
         </div>
 
         <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">공급업체</label>
               <input value={supplier} onChange={(e) => setSupplier(e.target.value)}

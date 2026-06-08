@@ -33,11 +33,12 @@ export default function TransactionsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-lg font-bold text-gray-900 dark:text-white">재고 변경 이력</h2>
-        <ExportButton
-          filename="재고 변경 이력"
-          getData={async () => {
+        <div className="self-start sm:self-auto">
+          <ExportButton
+            filename="재고 변경 이력"
+            getData={async () => {
             const all = await stockApi.getTransactions({
               warehouseId: warehouse?.id,
               txType: txType as TxType || undefined,
@@ -58,8 +59,9 @@ export default function TransactionsPage() {
               '작업자':   t.createdByUser?.fullName ?? t.createdByUser?.username ?? '',
               '일시':     formatDateTime(t.createdAt),
             }))
-          }}
-        />
+            }}
+          />
+        </div>
       </div>
 
       {/* 필터 */}
@@ -89,7 +91,7 @@ export default function TransactionsPage() {
           <thead>
             <tr className="bg-[#2D4033] text-white">
               <th className="text-center px-4 py-3 font-semibold w-36">거래번호</th>
-              <th className="text-center px-4 py-3 font-semibold w-28">유형</th>
+              <th className="text-center px-4 py-3 font-semibold w-29">유형</th>
               <th className="text-center px-4 py-3 font-semibold">상품</th>
               <th className="text-center px-4 py-3 font-semibold w-28">위치</th>
               <th className="text-center px-4 py-3 font-semibold w-20">변동</th>

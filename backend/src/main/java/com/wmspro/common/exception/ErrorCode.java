@@ -33,6 +33,10 @@ public enum ErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND,            "사용자를 찾을 수 없습니다"),
     USER_DUPLICATE(HttpStatus.CONFLICT,             "이미 존재하는 사용자명입니다"),
 
+    // Category
+    CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND,        "카테고리를 찾을 수 없습니다"),
+    CATEGORY_DUPLICATE(HttpStatus.CONFLICT,         "이미 존재하는 카테고리명입니다"),
+
     // Client / Quote
     CLIENT_NOT_FOUND(HttpStatus.NOT_FOUND,           "거래처를 찾을 수 없습니다"),
     QUOTE_NOT_FOUND(HttpStatus.NOT_FOUND,            "문서를 찾을 수 없습니다"),

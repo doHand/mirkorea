@@ -11,7 +11,8 @@ import type { Barcode, BarcodeUnitType, Product } from '@/types/api.types'
 const TYPE_LABEL: Record<BarcodeUnitType, string> = {
   UNIT: '일반 바코드', CXD: 'CXD INBOX', CXD_BOX: 'CXD OUTBOX',
 }
-const TYPES: BarcodeUnitType[] = ['UNIT',  'CXD', 'CXD_BOX']
+const TYPES: BarcodeUnitType[] = ['UNIT', 'CXD', 'CXD_BOX']
+const TYPE_ORDER: Record<BarcodeUnitType, number> = { UNIT: 0, CXD: 1, CXD_BOX: 2 }
 type BarcodeForm = { barcode: string; type: BarcodeUnitType; unitQty: number; isPrimary: boolean }
 const emptyForm = (): BarcodeForm => ({ barcode: '', type: 'UNIT', unitQty: 1, isPrimary: false })
 const stockForBarcode = (product: Product, barcode: Barcode) => {
@@ -77,7 +78,7 @@ export function ProductBarcodeModal({ product, onClose }: { product: Product; on
         placeholder="바코드 번호"
         className="w-full rounded-md border border-[#D4BF99] bg-white px-3 py-2 font-mono text-sm outline-none focus:border-[#D2691E] dark:border-gray-700 dark:bg-gray-800"
       />
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <label className="text-xs font-medium text-gray-600 dark:text-gray-300">
           바코드 유형
           <select value={form.type} onChange={(e) => {
@@ -134,7 +135,7 @@ export function ProductBarcodeModal({ product, onClose }: { product: Product; on
         <div className="max-h-[78vh] space-y-2 overflow-y-auto p-5">
           {isLoading && <p className="py-8 text-center text-sm text-gray-400">불러오는 중...</p>}
           {!isLoading && barcodes.length === 0 && !adding && <p className="py-8 text-center text-sm text-gray-400">등록된 바코드가 없습니다</p>}
-          {barcodes.map((barcode) => editingId === barcode.id ? (
+          {[...barcodes].sort((a, b) => TYPE_ORDER[a.type] - TYPE_ORDER[b.type]).map((barcode) => editingId === barcode.id ? (
             <div key={barcode.id}>{editor('edit')}</div>
           ) : (
             <div key={barcode.id} className="flex items-center gap-3 rounded-md border border-gray-100 px-4 py-3 dark:border-gray-800">

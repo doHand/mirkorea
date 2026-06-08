@@ -27,7 +27,7 @@ export default function SupplierSettingsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="flex items-center gap-2 text-lg font-bold tracking-tight text-gray-900 dark:text-white">
             <Building2 size={18} className="text-indigo-500" />
@@ -37,9 +37,11 @@ export default function SupplierSettingsPage() {
         </div>
         <button
           onClick={handleReset}
-          className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+          title="기본값 복원"
+          aria-label="기본값 복원"
+          className="responsive-icon-action self-start border border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 sm:self-auto"
         >
-          <RotateCcw size={14} />기본값
+          <RotateCcw size={14} /><span className="responsive-action-label">기본값</span>
         </button>
       </div>
 
@@ -73,8 +75,8 @@ export default function SupplierSettingsPage() {
 
       <div className="max-w-3xl overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
         <div className="bg-blue-50 px-5 py-3 text-sm font-semibold text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">거래명세서 표시 예시</div>
-        <div className="grid grid-cols-[80px_1fr] border-t border-blue-700 text-sm text-blue-900 dark:text-blue-200">
-          <div className="flex items-center justify-center border-r border-blue-700 bg-blue-50 font-semibold dark:bg-blue-900/20">공급자</div>
+        <div className="grid grid-cols-1 border-t border-blue-700 text-sm text-blue-900 dark:text-blue-200 sm:grid-cols-[80px_1fr]">
+          <div className="flex items-center justify-center border-b border-blue-700 bg-blue-50 py-2 font-semibold dark:bg-blue-900/20 sm:border-b-0 sm:border-r sm:py-0">공급자</div>
           <div>
             <div className="grid grid-cols-[90px_1fr] border-b border-blue-700">
               <div className="border-r border-blue-700 bg-blue-50 px-2 py-1 font-semibold dark:bg-blue-900/20">사업번호</div>
@@ -84,7 +86,7 @@ export default function SupplierSettingsPage() {
               <div className="border-r border-blue-700 bg-blue-50 px-2 py-1 font-semibold dark:bg-blue-900/20">상호</div>
               <div className="px-2 py-1">{info.name}</div>
             </div>
-            <div className="grid grid-cols-[90px_1fr_80px_1fr] border-b border-blue-700">
+            <div className="grid grid-cols-[90px_1fr] border-b border-blue-700 sm:grid-cols-[90px_1fr_80px_1fr]">
               <div className="border-r border-blue-700 bg-blue-50 px-2 py-1 font-semibold dark:bg-blue-900/20">전화번호</div>
               <div className="border-r border-blue-700 px-2 py-1">{info.phone}</div>
               <div className="border-r border-blue-700 bg-blue-50 px-2 py-1 font-semibold dark:bg-blue-900/20">대표자</div>

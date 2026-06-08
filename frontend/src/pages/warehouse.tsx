@@ -99,7 +99,7 @@ export default function WarehousePage() {
       <div className="rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-sm">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-start gap-3 min-w-0">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm shadow-indigo-500/20">
+            <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm shadow-indigo-500/20 sm:flex">
               <Warehouse size={18} />
             </div>
             <div className="min-w-0">
@@ -121,18 +121,22 @@ export default function WarehousePage() {
             />
             <button
               onClick={() => setShowZoneModal(true)}
-              className={cn(ui.btnSecondary, 'flex flex-1 items-center justify-center gap-1.5 sm:flex-none')}
+              title="구역 추가"
+              aria-label="구역 추가"
+              className={cn(ui.btnSecondary, 'responsive-icon-action px-0 sm:px-3')}
             >
-              <Plus size={14} /><span>구역 추가</span>
+              <Plus size={14} /><span className="responsive-action-label">구역 추가</span>
             </button>
             <button
               onClick={() => {
                 setLocForm({ zoneId: selectedZone, code: '', aisle: '', rack: '', shelf: '' })
                 setShowLocationModal(true)
               }}
-              className={cn(ui.btnPrimary, 'flex flex-1 items-center justify-center gap-1.5 sm:flex-none')}
+              title="위치 추가"
+              aria-label="위치 추가"
+              className={cn(ui.btnPrimary, 'responsive-icon-action px-0 sm:px-3')}
             >
-              <Plus size={15} /><span>위치 추가</span>
+              <Plus size={15} /><span className="responsive-action-label">위치 추가</span>
             </button>
           </div>
         </div>

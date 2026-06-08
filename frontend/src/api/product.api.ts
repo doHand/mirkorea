@@ -1,5 +1,5 @@
 import { get, post, put, del, patch } from './client'
-import type { Product, Barcode, BarcodeUnitType, PageResponse, SaleStatus, BarcodeResolveResult, ProductPricing, ProductUnit } from '@/types/api.types'
+import type { Product, Barcode, BarcodeUnitType, PageResponse, SaleStatus, BarcodeResolveResult, ProductPricing, ProductUnit, ProductCategory } from '@/types/api.types'
 
 interface ProductFilter {
   search?: string
@@ -68,4 +68,13 @@ export const unitApi = {
   update: (id: string, data: { code?: string; label?: string; description?: string; sortOrder?: number; isActive?: boolean }) =>
     put<ProductUnit>(`/product-units/${id}`, data),
   delete: (id: string) => del(`/product-units/${id}`),
+}
+
+export const categoryApi = {
+  findAll: () => get<ProductCategory[]>('/product-categories'),
+  create: (data: { name: string; description?: string; sortOrder?: number }) =>
+    post<ProductCategory>('/product-categories', data),
+  update: (id: string, data: { name?: string; description?: string; sortOrder?: number; isActive?: boolean }) =>
+    put<ProductCategory>(`/product-categories/${id}`, data),
+  delete: (id: string) => del(`/product-categories/${id}`),
 }

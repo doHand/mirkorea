@@ -82,15 +82,15 @@ export default function ProfilePage() {
 
         {/* 읽기 전용 정보 */}
         <div className="space-y-3 mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg text-sm">
-          <div className="flex justify-between">
+          <div className="flex flex-col gap-1 sm:flex-row sm:justify-between">
             <span className="text-gray-500 dark:text-gray-400">아이디</span>
             <span className="font-mono text-gray-900 dark:text-gray-100">{me?.username}</span>
           </div>
-          <div className="flex justify-between">
+          <div className="flex flex-col gap-1 sm:flex-row sm:justify-between">
             <span className="text-gray-500 dark:text-gray-400">이메일</span>
-            <span className="text-gray-900 dark:text-gray-100">{me?.email}</span>
+            <span className="break-all text-gray-900 dark:text-gray-100">{me?.email}</span>
           </div>
-          <div className="flex justify-between">
+          <div className="flex flex-col gap-1 sm:flex-row sm:justify-between">
             <span className="text-gray-500 dark:text-gray-400">마지막 로그인</span>
             <span className="text-gray-900 dark:text-gray-100">
               {me?.lastLoginAt ? formatDateTime(me.lastLoginAt) : '-'}

@@ -162,7 +162,7 @@ function OrderHeader({
               {STATUS_LABEL[order.status]}
             </span>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-1 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-1 text-sm">
             <div>
               <span className="text-gray-400 text-xs">공급업체</span>
               <p className="font-medium text-gray-800 dark:text-gray-200">{order.supplier || '-'}</p>
@@ -537,7 +537,11 @@ function InspectPanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
                   <input
                     type="number" min={0}
                     value={s?.defect ?? ''}
-                    onChange={(e) => setState((p) => ({ ...p, [item.id]: { ...p[item.id], defect: e.target.value } }))}
+                    onChange={(e) => {
+                      const defect = parseInt(e.target.value) || 0
+                      const passed = Math.max(0, item.receivedQty - defect)
+                      setState((p) => ({ ...p, [item.id]: { ...p[item.id], defect: e.target.value, passed: String(passed) } }))
+                    }}
                     className={cn(
                       'w-28 px-3 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-red-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-right tabular-nums font-semibold',
                       over ? 'border-red-400' : 'border-gray-200 dark:border-gray-600'
@@ -606,7 +610,7 @@ function CompletedPanel({ order }: { order: InboundOrder }) {
           <p className="text-xs text-emerald-600 dark:text-emerald-500">재고가 자동으로 증가되었습니다</p>
         </div>
       </div>
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
           { label: '예정 수량', value: totalExpected, color: 'text-gray-700 dark:text-gray-300' },
           { label: '수령 수량', value: totalReceived, color: 'text-amber-600 dark:text-amber-400' },

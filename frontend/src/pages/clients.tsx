@@ -214,9 +214,11 @@ export default function ClientsPage() {
         </div>
         <button
           onClick={openCreate}
-          className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white shadow-sm shadow-indigo-500/20 transition-colors hover:bg-indigo-700"
+          title="거래처 등록"
+          aria-label="거래처 등록"
+          className="responsive-icon-action bg-indigo-600 text-white shadow-sm shadow-indigo-500/20 hover:bg-indigo-700"
         >
-          <Plus size={15} />거래처 등록
+          <Plus size={15} /><span className="responsive-action-label">거래처 등록</span>
         </button>
       </div>
 
@@ -345,7 +347,7 @@ export default function ClientsPage() {
               {/* ── 기본 정보 ── */}
               <section>
                 <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">기본 정보</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <Field label="거래처명 *" className="col-span-2 sm:col-span-1">
                     <input
                       autoFocus
@@ -385,7 +387,7 @@ export default function ClientsPage() {
               {/* ── 사업자 정보 ── */}
               <section className="border-t border-gray-100 dark:border-gray-700 pt-5">
                 <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">사업자 정보</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <Field label="사업자번호">
                     <input value={form.businessNo} onChange={(e) => set('businessNo', e.target.value)} className={inputCls} placeholder="000-00-00000" />
                   </Field>
@@ -395,7 +397,7 @@ export default function ClientsPage() {
                   <Field label="대표자명">
                     <input value={form.ceoName} onChange={(e) => set('ceoName', e.target.value)} className={inputCls} />
                   </Field>
-                  <div className="grid grid-cols-2 gap-3 col-span-1">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 col-span-1">
                     <Field label="업태">
                       <input value={form.industry} onChange={(e) => set('industry', e.target.value)} className={inputCls} />
                     </Field>
@@ -452,7 +454,7 @@ export default function ClientsPage() {
               {/* ── 담당자 정보 ── */}
               <section className="border-t border-gray-100 dark:border-gray-700 pt-5">
                 <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">담당자 정보</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <Field label="받는이(담당자)">
                     <input
                       value={form.contactName}
@@ -479,7 +481,7 @@ export default function ClientsPage() {
               {/* ── 거래 정보 ── */}
               <section className="border-t border-gray-100 dark:border-gray-700 pt-5">
                 <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">거래 정보</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <Field label="가격등급">
                     <select value={form.pricePolicy} onChange={(e) => set('pricePolicy', e.target.value)} className={inputCls}>
                       <option>매출단가적용</option>
@@ -520,7 +522,7 @@ export default function ClientsPage() {
               {/* ── 관리 정보 ── */}
               <section className="border-t border-gray-100 dark:border-gray-700 pt-5">
                 <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">관리 정보</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <Field label="등록일자">
                     <input type="date" value={form.registrationDate} onChange={(e) => set('registrationDate', e.target.value)} className={inputCls} />
                   </Field>

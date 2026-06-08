@@ -133,14 +133,14 @@ export default function UsersPage() {
             filename="사용자목록"
             getData={() => users.map((u) => ({ '아이디': u.username, '이름': u.fullName, '이메일': u.email, '역할': ROLE_META[u.role].label, '활성': u.isActive ? 'Y' : 'N', '마지막 로그인': u.lastLoginAt ? formatDateTime(u.lastLoginAt) : '-', '등록일': formatDateTime(u.createdAt) }))}
           />
-          <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm rounded-xl font-medium hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-500/20">
-            <Plus size={15} />사용자 추가
+          <button onClick={openCreate} title="사용자 추가" aria-label="사용자 추가" className="responsive-icon-action bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm shadow-indigo-500/20">
+            <Plus size={15} /><span className="responsive-action-label">사용자 추가</span>
           </button>
         </div>
       </div>
 
       {/* Split layout */}
-      <div className="grid grid-cols-[1fr_380px] gap-4 items-start">
+      <div className="grid grid-cols-1 gap-4 items-start xl:grid-cols-[1fr_380px]">
 
         {/* ── Left: Users list ── */}
         <div className="space-y-3">
@@ -347,7 +347,7 @@ export default function UsersPage() {
                 <input type="password" value={form.password} onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))} placeholder={editing ? '변경하지 않으면 비워두세요' : '비밀번호'}
                   className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">역할 *</label>
                   <select value={form.role} onChange={(e) => setForm((p) => ({ ...p, role: e.target.value }))}

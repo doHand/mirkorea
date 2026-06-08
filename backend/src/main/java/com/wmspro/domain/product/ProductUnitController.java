@@ -61,7 +61,7 @@ public class ProductUnitController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
     @Transactional
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         unitRepo.deleteById(id);

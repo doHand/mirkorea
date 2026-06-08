@@ -298,13 +298,13 @@ export default function QuotesPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">출력서류관리</h2>
           {data && <p className="text-xs text-gray-400 mt-0.5">전체 {formatNumber(data.total)}건</p>}
         </div>
-        <button onClick={openCreate} className="flex items-center gap-2 rounded-lg bg-[#2D4033] px-4 py-2 text-sm font-semibold text-white hover:bg-[#24352a]">
-          <Plus size={16} />문서 작성
+        <button onClick={openCreate} title="문서 작성" aria-label="문서 작성" className="responsive-icon-action self-start bg-[#2D4033] font-semibold text-white hover:bg-[#24352a] sm:self-auto">
+          <Plus size={16} /><span className="responsive-action-label">문서 작성</span>
         </button>
       </div>
 
@@ -424,7 +424,7 @@ export default function QuotesPage() {
 
             <form onSubmit={(e) => { e.preventDefault(); submitForm() }} className="p-5 space-y-4 overflow-y-auto">
               {/* 기본 정보 */}
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">문서 종류</label>
                   <select value={form.docType} onChange={(e) => setForm((p) => ({ ...p, docType: e.target.value }))} className={inputCls}>

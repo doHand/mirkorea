@@ -72,14 +72,15 @@ export default function PricingPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className={ui.h2Cls}>가격 재고현황</h2>
           <p className={ui.subText}>전체 {formatNumber(items.length)}개 상품 · 재고 {formatNumber(totalStock)}개</p>
         </div>
-        <ExportButton
-          filename="가격_재고현황"
-          getData={() => filtered.map((p) => ({
+        <div className="self-start sm:self-auto">
+          <ExportButton
+            filename="가격_재고현황"
+            getData={() => filtered.map((p) => ({
             상품코드: p.code,
             상품명: p.name,
             카테고리: p.category ?? '',
@@ -89,12 +90,13 @@ export default function PricingPage() {
             판매가: p.sellPrice ?? 0,
             판매기준금액: Number(p.sellPrice ?? 0) * p.totalStock,
             상태: SALE_STATUS_LABEL[p.saleStatus],
-          }))}
-        />
+            }))}
+          />
+        </div>
       </div>
 
       {/* 요약 카드 */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className={cn(ui.cardFlat, 'p-4')}>
           <p className={ui.subText}>상품 수</p>
           <p className="text-lg font-bold text-gray-900 dark:text-white tabular-nums mt-1">{formatNumber(filtered.length)}</p>

@@ -123,6 +123,14 @@
            bg-rose-500 hover:bg-rose-600 text-white transition-colors shadow-sm;
   }
 
+  .responsive-icon-action {
+    @apply flex h-9 w-9 items-center justify-center gap-1.5 rounded-lg text-sm font-medium transition-colors sm:h-auto sm:w-auto sm:px-3 sm:py-2;
+  }
+
+  .responsive-action-label {
+    @apply hidden whitespace-nowrap sm:inline;
+  }
+
   /* 테이블 헤더 셀 */
   .th {
     @apply px-3 py-2.5 text-[11px] font-semibold text-gray-500 dark:text-gray-400
@@ -142,6 +150,7 @@
 
   .wms-resizable-th {
     position: relative;
+    overflow: hidden;
   }
 
   .wms-column-resizer {
@@ -247,6 +256,10 @@
   color: var(--wms-forest);
 }
 
+.wms-workspace button {
+  word-break: keep-all;
+}
+
 .wms-workspace .accent-indigo-600 {
   accent-color: var(--wms-terracotta);
 }
@@ -268,4 +281,79 @@
 
 .dark .wms-workspace table tbody tr:hover {
   background-color: #1d3025;
+}
+
+@media (max-width: 767px) {
+  .page-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .page-actions {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .search-input {
+    width: 100%;
+  }
+
+  .mobile-unpin-grid th[class*="sticky"][class*="left-"],
+  .mobile-unpin-grid td[class*="sticky"][class*="left-"],
+  .mobile-unpin-grid th.sticky-col,
+  .mobile-unpin-grid td.sticky-col {
+    position: static !important;
+    left: auto !important;
+    box-shadow: none !important;
+  }
+
+  .mobile-unpin-grid th[class*="z-"],
+  .mobile-unpin-grid td[class*="z-"] {
+    z-index: auto !important;
+  }
+
+
+  .wms-column-resizer {
+    display: none;
+  }
+
+  .wms-tabs-layout {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .wms-main-tabs,
+  .wms-split-tabs {
+    width: 100% !important;
+  }
+
+  .wms-split-tabs {
+    border-left: 0;
+    border-top: 1px solid #e5e7eb;
+    padding-left: 0;
+  }
+
+  .wms-workspace {
+    flex-direction: column;
+  }
+
+  .wms-main-panel,
+  .wms-split-panel {
+    width: 100% !important;
+  }
+
+  .wms-main-panel {
+    min-height: 50%;
+  }
+
+  .wms-split-panel {
+    min-height: 50%;
+  }
+
+  .wms-split-divider {
+    width: 100%;
+    height: 4px;
+    cursor: row-resize;
+    pointer-events: none;
+  }
 }

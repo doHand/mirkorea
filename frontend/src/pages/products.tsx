@@ -1,5 +1,6 @@
 ﻿'use client'
 import { useState, useMemo } from 'react'
+import { useColumnResize } from '@/hooks/useColumnResize'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, Plus, Search, Package, Pencil, Trash2, X, FileText, Building2, QrCode, Star, MapPin } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -21,6 +22,7 @@ import { useWarehouseStore } from '@/stores/warehouse.store'
 import { printQuoteDocument } from '@/utils/printDocument'
 import type { Product, SaleStatus, Barcode, ProductUnit, Client, Location, BarcodeUnitType, Inventory } from '@/types/api.types'
 import { ProductBarcodeModal } from '@/components/ProductBarcodeModal'
+import { CategorySelect } from '@/components/CategorySelect'
 
 const EMPTY_PRODUCT_FORM = {
   code: '',
@@ -216,6 +218,8 @@ function SortHeader({
   onSort,
   align = 'left',
   className,
+  style,
+  onResizeStart,
 }: {
   label: string
   sortKey: ProductSortKey
@@ -223,11 +227,13 @@ function SortHeader({
   onSort: (key: ProductSortKey) => void
   align?: 'left' | 'center' | 'right'
   className?: string
+  style?: React.CSSProperties
+  onResizeStart?: (e: React.MouseEvent) => void
 }) {
   const active = sort?.key === sortKey
   const Icon = active ? (sort.direction === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown
   return (
-    <th className={cn(TH, align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left', className)}>
+    <th className={cn(TH, 'wms-resizable-th', align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left', className)} style={style}>
       <button
         type="button"
         onClick={() => onSort(sortKey)}
@@ -241,6 +247,9 @@ function SortHeader({
         <span>{label}</span>
         <Icon size={12} className={active ? 'opacity-100' : 'opacity-45'} />
       </button>
+      {onResizeStart && (
+        <div className="wms-column-resizer" onMouseDown={onResizeStart} />
+      )}
     </th>
   )
 }
@@ -389,6 +398,35 @@ export default function ProductsPage() {
   const [barcodeModal, setBarcodeModal] = useState<Product | null>(null)
   const [pendingBarcodes, setPendingBarcodes] = useState<Array<{ barcode: string; type: BarcodeUnitType; unitQty: number; isPrimary: boolean }>>([])
 
+  const PRODUCT_COLS = useMemo(() => ({
+    chk:         { width: 40,  minWidth: 40,  sticky: true },
+    client:      { width: 144, minWidth: 60,  sticky: true },
+    code:        { width: 144, minWidth: 60,  sticky: true },
+    materialNo:  { width: 144, minWidth: 60,  sticky: true },
+    barcode:     { width: 160, minWidth: 60,  sticky: true },
+    name:        { width: 192, minWidth: 80,  sticky: true },
+    unit:        { width: 80,  minWidth: 50,  sticky: false },
+    boxQty:      { width: 100, minWidth: 60,  sticky: false },
+    boxStock:    { width: 110, minWidth: 60,  sticky: false },
+    eachStock:   { width: 110, minWidth: 60,  sticky: false },
+    category:    { width: 120, minWidth: 60,  sticky: false },
+    location:    { width: 120, minWidth: 60,  sticky: false },
+    sellPrice:   { width: 100, minWidth: 60,  sticky: false },
+    priceB:      { width: 110, minWidth: 60,  sticky: false },
+    retailPrice: { width: 100, minWidth: 60,  sticky: false },
+    priceA:      { width: 100, minWidth: 60,  sticky: false },
+    memo:        { width: 160, minWidth: 60,  sticky: false },
+    currentStock:{ width: 100, minWidth: 60,  sticky: false },
+    reserved:    { width: 90,  minWidth: 60,  sticky: false },
+    available:   { width: 90,  minWidth: 60,  sticky: false },
+    safetyStock: { width: 90,  minWidth: 60,  sticky: false },
+    saleStatus:  { width: 80,  minWidth: 60,  sticky: false },
+    createdAt:   { width: 100, minWidth: 60,  sticky: false },
+    actions:     { width: 72,  minWidth: 72,  sticky: false },
+  }), [])
+
+  const { widths: cw, startResize, stickyLeftOf, totalWidth, resetWidths } = useColumnResize('products', PRODUCT_COLS)
+
   const { data, isLoading } = useQuery({
     queryKey: QUERY_KEYS.products({ search, page, limit: PAGE_SIZE }),
     queryFn:  () => productApi.findAll({ search: search || undefined, page, limit: PAGE_SIZE }),
@@ -433,8 +471,9 @@ export default function ProductsPage() {
   const { data: allLocations = [] } = useQuery<Location[]>({
     queryKey: ['locations-for-product-form', warehouse?.id],
     queryFn:  () => warehouseApi.findLocations(warehouse!.id),
-    enabled:  (showModal || showLocationPicker) && !!warehouse?.id,
+    enabled:  !!warehouse?.id,
     placeholderData: [],
+    staleTime: 60_000,
   })
 
   const { data: inventory = [] } = useQuery<Inventory[]>({
@@ -838,9 +877,11 @@ export default function ProductsPage() {
           />
           <button
             onClick={openCreate}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-sm shadow-indigo-500/20"
+            title="상품 추가"
+            aria-label="상품 추가"
+            className="responsive-icon-action bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm shadow-indigo-500/20"
           >
-            <Plus size={15} />상품 추가
+            <Plus size={15} /><span className="responsive-action-label">상품 추가</span>
           </button>
           {canAccessQuotes && (
            <button
@@ -899,6 +940,14 @@ export default function ProductsPage() {
           >
             초기화
           </button>
+          <button
+            type="button"
+            onClick={resetWidths}
+            className="hidden sm:block px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium whitespace-nowrap"
+            title="컬럼 너비를 기본값으로 초기화"
+          >
+            컬럼 초기화
+          </button>
         </div>
       </div>
 
@@ -925,10 +974,11 @@ export default function ProductsPage() {
       {/* 테이블 */}
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[2480px] text-sm border-collapse">
+          <table className="mobile-unpin-grid wms-resizable-table w-full text-sm border-collapse" style={{ width: totalWidth }}>
             <thead>
               <tr className="bg-[#2D4033]">
-                <th className="sticky left-0 z-30 w-10 min-w-10 max-w-10 px-3 py-3 border-r border-white/20 bg-[#2D4033]">
+                <th className="sticky-col sticky z-30 px-3 py-3 border-r border-white/20 bg-[#2D4033] overflow-hidden wms-resizable-th"
+                    style={{ width: cw.chk, minWidth: cw.chk, maxWidth: cw.chk, left: stickyLeftOf('chk') }}>
                   <input
                     type="checkbox"
                     checked={allChecked}
@@ -936,32 +986,31 @@ export default function ProductsPage() {
                     onChange={toggleAll}
                     className="rounded accent-indigo-600 cursor-pointer"
                   />
+                  <div className="wms-column-resizer" onMouseDown={(e) => startResize('chk', e)} />
                 </th>
-                <SortHeader label="거래처명" sortKey="client" sort={sort} onSort={toggleSort} className="sticky left-10 z-30 w-36 min-w-36 max-w-36" />
-                <SortHeader label="상품코드" sortKey="code" sort={sort} onSort={toggleSort} className="sticky left-[184px] z-30 w-36 min-w-36 max-w-36" />
-                <SortHeader label="자재번호" sortKey="materialNo" sort={sort} onSort={toggleSort} className="sticky left-[328px] z-30 w-36 min-w-36 max-w-36" />
-                <SortHeader label="바코드" sortKey="barcode" sort={sort} onSort={toggleSort} className="sticky left-[472px] z-30 w-40 min-w-40 max-w-40" />
-                <SortHeader label="상품명" sortKey="name" sort={sort} onSort={toggleSort} className="sticky left-[632px] z-30 w-48 min-w-48 max-w-48 shadow-[3px_0_5px_-3px_rgba(0,0,0,0.35)]" />
-                <SortHeader label="기준단위" sortKey="unit" sort={sort} onSort={toggleSort} align="center" />
-                <SortHeader label="1BOX(입수량)" sortKey="boxQty" sort={sort} onSort={toggleSort} align="right" />
-                <SortHeader label="재고수량(박스)" sortKey="boxStock" sort={sort} onSort={toggleSort} align="right" />
-                <SortHeader label="재고수량(낱개)" sortKey="eachStock" sort={sort} onSort={toggleSort} align="right" />
-                <SortHeader label="카테고리" sortKey="category" sort={sort} onSort={toggleSort} />
-                <SortHeader label="위치" sortKey="location" sort={sort} onSort={toggleSort} />
-                {/* <SortHeader label="매입가" sortKey="costPrice" sort={sort} onSort={toggleSort} align="right" /> */}
-                <SortHeader label="판매가" sortKey="sellPrice" sort={sort} onSort={toggleSort} align="right" />
-                <SortHeader label="해피미르단가" sortKey="priceB" sort={sort} onSort={toggleSort} align="right" />
-                <SortHeader label="네이버단가" sortKey="retailPrice" sort={sort} onSort={toggleSort} align="right" />
-                <SortHeader label="SSG단가" sortKey="priceA" sort={sort} onSort={toggleSort} align="right" />
-                {/* <SortHeader label="C단가" sortKey="priceC" sort={sort} onSort={toggleSort} align="right" /> */}
-                <SortHeader label="메모" sortKey="memo" sort={sort} onSort={toggleSort} />
-                <SortHeader label="현재고" sortKey="currentStock" sort={sort} onSort={toggleSort} align="right" />
-                <SortHeader label="예약" sortKey="reserved" sort={sort} onSort={toggleSort} align="right" />
-                <SortHeader label="가용" sortKey="available" sort={sort} onSort={toggleSort} align="right" />
-                <SortHeader label="안전재고" sortKey="safetyStock" sort={sort} onSort={toggleSort} align="right" />
-                <SortHeader label="상태" sortKey="saleStatus" sort={sort} onSort={toggleSort} align="center" />
-                <SortHeader label="등록일" sortKey="createdAt" sort={sort} onSort={toggleSort} />
-                <th className="px-3 py-3 w-20" />
+                <SortHeader label="거래처명" sortKey="client" sort={sort} onSort={toggleSort} className="sticky-col sticky z-30" style={{ width: cw.client, minWidth: cw.client, maxWidth: cw.client, left: stickyLeftOf('client') }} onResizeStart={(e) => startResize('client', e)} />
+                <SortHeader label="상품코드" sortKey="code" sort={sort} onSort={toggleSort} className="sticky-col sticky z-30" style={{ width: cw.code, minWidth: cw.code, maxWidth: cw.code, left: stickyLeftOf('code') }} onResizeStart={(e) => startResize('code', e)} />
+                <SortHeader label="자재번호" sortKey="materialNo" sort={sort} onSort={toggleSort} className="sticky-col sticky z-30" style={{ width: cw.materialNo, minWidth: cw.materialNo, maxWidth: cw.materialNo, left: stickyLeftOf('materialNo') }} onResizeStart={(e) => startResize('materialNo', e)} />
+                <SortHeader label="바코드" sortKey="barcode" sort={sort} onSort={toggleSort} className="sticky-col sticky z-30" style={{ width: cw.barcode, minWidth: cw.barcode, maxWidth: cw.barcode, left: stickyLeftOf('barcode') }} onResizeStart={(e) => startResize('barcode', e)} />
+                <SortHeader label="상품명" sortKey="name" sort={sort} onSort={toggleSort} className="sticky z-30 shadow-[3px_0_5px_-3px_rgba(0,0,0,0.35)]" style={{ width: cw.name, minWidth: cw.name, maxWidth: cw.name, left: stickyLeftOf('name') }} onResizeStart={(e) => startResize('name', e)} />
+                <SortHeader label="기준단위" sortKey="unit" sort={sort} onSort={toggleSort} align="center" style={{ width: cw.unit }} onResizeStart={(e) => startResize('unit', e)} />
+                <SortHeader label="1BOX(입수량)" sortKey="boxQty" sort={sort} onSort={toggleSort} align="right" style={{ width: cw.boxQty }} onResizeStart={(e) => startResize('boxQty', e)} />
+                <SortHeader label="재고수량(박스)" sortKey="boxStock" sort={sort} onSort={toggleSort} align="right" style={{ width: cw.boxStock }} onResizeStart={(e) => startResize('boxStock', e)} />
+                <SortHeader label="재고수량(낱개)" sortKey="eachStock" sort={sort} onSort={toggleSort} align="right" style={{ width: cw.eachStock }} onResizeStart={(e) => startResize('eachStock', e)} />
+                <SortHeader label="카테고리" sortKey="category" sort={sort} onSort={toggleSort} style={{ width: cw.category }} onResizeStart={(e) => startResize('category', e)} />
+                <SortHeader label="위치" sortKey="location" sort={sort} onSort={toggleSort} style={{ width: cw.location }} onResizeStart={(e) => startResize('location', e)} />
+                <SortHeader label="판매가" sortKey="sellPrice" sort={sort} onSort={toggleSort} align="right" style={{ width: cw.sellPrice }} onResizeStart={(e) => startResize('sellPrice', e)} />
+                <SortHeader label="해피미르단가" sortKey="priceB" sort={sort} onSort={toggleSort} align="right" style={{ width: cw.priceB }} onResizeStart={(e) => startResize('priceB', e)} />
+                <SortHeader label="네이버단가" sortKey="retailPrice" sort={sort} onSort={toggleSort} align="right" style={{ width: cw.retailPrice }} onResizeStart={(e) => startResize('retailPrice', e)} />
+                <SortHeader label="SSG단가" sortKey="priceA" sort={sort} onSort={toggleSort} align="right" style={{ width: cw.priceA }} onResizeStart={(e) => startResize('priceA', e)} />
+                <SortHeader label="메모" sortKey="memo" sort={sort} onSort={toggleSort} style={{ width: cw.memo }} onResizeStart={(e) => startResize('memo', e)} />
+                <SortHeader label="현재고" sortKey="currentStock" sort={sort} onSort={toggleSort} align="right" style={{ width: cw.currentStock }} onResizeStart={(e) => startResize('currentStock', e)} />
+                <SortHeader label="예약" sortKey="reserved" sort={sort} onSort={toggleSort} align="right" style={{ width: cw.reserved }} onResizeStart={(e) => startResize('reserved', e)} />
+                <SortHeader label="가용" sortKey="available" sort={sort} onSort={toggleSort} align="right" style={{ width: cw.available }} onResizeStart={(e) => startResize('available', e)} />
+                <SortHeader label="안전재고" sortKey="safetyStock" sort={sort} onSort={toggleSort} align="right" style={{ width: cw.safetyStock }} onResizeStart={(e) => startResize('safetyStock', e)} />
+                <SortHeader label="상태" sortKey="saleStatus" sort={sort} onSort={toggleSort} align="center" style={{ width: cw.saleStatus }} onResizeStart={(e) => startResize('saleStatus', e)} />
+                <SortHeader label="등록일" sortKey="createdAt" sort={sort} onSort={toggleSort} style={{ width: cw.createdAt }} onResizeStart={(e) => startResize('createdAt', e)} />
+                <th className="px-3 py-3" style={{ width: cw.actions }} />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -1003,7 +1052,7 @@ export default function ProductsPage() {
                       isBelowSafety && '[&>td]:!bg-red-100 [&>td]:hover:!bg-red-100 dark:[&>td]:!bg-red-900 dark:[&>td]:hover:!bg-red-900',
                     )}
                   >
-                    <td className={cn('sticky left-0 z-20 w-10 min-w-10 max-w-10 px-2 py-1.5 border-r border-gray-200 text-center dark:border-gray-700', fixedBg)} onClick={(e) => e.stopPropagation()}>
+                    <td className={cn('sticky-col sticky z-20 px-2 py-1.5 border-r border-gray-200 text-center dark:border-gray-700 overflow-hidden', fixedBg)} style={{ width: cw.chk, minWidth: cw.chk, maxWidth: cw.chk, left: stickyLeftOf('chk') }} onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={isSelected}
@@ -1013,25 +1062,23 @@ export default function ProductsPage() {
                     </td>
                     {/* 거래처명 - 앞쪽 고정 표시 */}
                     <td
-                      className={cn(TD_TEXT, fixedBg, 'sticky left-10 z-20 w-36 min-w-36 max-w-36 cursor-pointer hover:!bg-indigo-50 dark:hover:!bg-indigo-900/30')}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        openGridClientPicker(p)
-                      }}
+                      className={cn(TD_TEXT, fixedBg, 'sticky-col sticky z-20 cursor-pointer hover:!bg-indigo-50 dark:hover:!bg-indigo-900/30 overflow-hidden')}
+                      style={{ width: cw.client, minWidth: cw.client, maxWidth: cw.client, left: stickyLeftOf('client') }}
+                      onClick={(e) => { e.stopPropagation(); openGridClientPicker(p) }}
                       title="거래처 변경"
                     >
                       <span className="block truncate" title={p.client?.name ?? ''}>{p.client?.name || '—'}</span>
                     </td>
                     {/* 상품코드 */}
-                    <td className={cn(TD_TEXT, fixedBg, 'sticky left-[184px] z-20 w-36 min-w-36 max-w-36 font-mono text-xs text-gray-500 dark:text-gray-400')}>
+                    <td className={cn(TD_TEXT, fixedBg, 'sticky-col sticky z-20 font-mono text-xs text-gray-500 dark:text-gray-400 overflow-hidden')} style={{ width: cw.code, minWidth: cw.code, maxWidth: cw.code, left: stickyLeftOf('code') }}>
                       <EditableCell id={p.id} field="code" value={p.code} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} />
                     </td>
                     {/* 자재번호 */}
-                    <td className={cn(TD_TEXT, fixedBg, 'sticky left-[328px] z-20 w-36 min-w-36 max-w-36 font-mono text-xs text-gray-500 dark:text-gray-400')}>
+                    <td className={cn(TD_TEXT, fixedBg, 'sticky-col sticky z-20 font-mono text-xs text-gray-500 dark:text-gray-400 overflow-hidden')} style={{ width: cw.materialNo, minWidth: cw.materialNo, maxWidth: cw.materialNo, left: stickyLeftOf('materialNo') }}>
                       <EditableCell id={p.id} field="materialNo" value={p.materialNo ?? ''} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} />
                     </td>
-                     {/* 바코드 */}
-                    <td className={cn(TD_TEXT, fixedBg, 'sticky left-[472px] z-20 w-40 min-w-40 max-w-40')} onClick={(e) => e.stopPropagation()}>
+                    {/* 바코드 */}
+                    <td className={cn(TD_TEXT, fixedBg, 'sticky-col sticky z-20 overflow-hidden')} style={{ width: cw.barcode, minWidth: cw.barcode, maxWidth: cw.barcode, left: stickyLeftOf('barcode') }} onClick={(e) => e.stopPropagation()}>
                       <button
                         type="button"
                         onClick={() => setBarcodeModal(p)}
@@ -1042,7 +1089,7 @@ export default function ProductsPage() {
                       </button>
                     </td>
                     {/* 상품명 */}
-                    <td className={cn(TD_TEXT, fixedBg, 'sticky left-[632px] z-20 w-48 min-w-48 max-w-48 font-semibold text-gray-900 shadow-[3px_0_5px_-3px_rgba(0,0,0,0.25)] dark:text-gray-100')}>
+                    <td className={cn(TD_TEXT, fixedBg, 'sticky-col sticky z-20 font-semibold text-gray-900 shadow-[3px_0_5px_-3px_rgba(0,0,0,0.25)] dark:text-gray-100 overflow-hidden')} style={{ width: cw.name, minWidth: cw.name, maxWidth: cw.name, left: stickyLeftOf('name') }}>
                       <EditableCell id={p.id} field="name" value={p.name} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} />
                     </td>
         
@@ -1061,8 +1108,12 @@ export default function ProductsPage() {
                     {/* 재고수량(낱개) */}
                     <td className={TD_NUM}>{formatNumber(eachStockQty)}</td>
                     {/* 카테고리 */}
-                    <td className={TD_TEXT}>
-                      <EditableCell id={p.id} field="category" value={p.category ?? ''} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} />
+                    <td className={TD_TEXT} onClick={(e) => e.stopPropagation()}>
+                      <CategorySelect
+                        value={p.category ?? ''}
+                        onChange={(val) => gridUpdateMutation.mutate({ id: p.id, patch: { category: val || undefined } })}
+                        variant="cell"
+                      />
                     </td>
                                 {/* 위치 */}
                     <td className={TD_TEXT}>
@@ -1191,7 +1242,7 @@ export default function ProductsPage() {
               {/* ── 기본 정보 ── */}
               <section>
                 <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">기본 정보</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
                     <label className={labelCls}>상품코드 *</label>
                     <input
@@ -1227,9 +1278,10 @@ export default function ProductsPage() {
                   </div>
                   <div>
                     <label className={labelCls}>카테고리(품목분류)</label>
-                    <input type="text" placeholder="카테고리" value={form.category}
-                      onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
-                      className={inputCls} />
+                    <CategorySelect
+                      value={form.category}
+                      onChange={(val) => setForm((p) => ({ ...p, category: val }))}
+                    />
                   </div>
                   <div>
                     <label className={labelCls}>거래처</label>
@@ -1408,7 +1460,7 @@ export default function ProductsPage() {
               {/* ── 수량 / 위치 ── */}
               <section className="border-t border-gray-100 dark:border-gray-700 pt-4">
                 <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">수량 / 위치</p>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <div>
                     <label className={labelCls}>단위</label>
                     <select
@@ -1479,7 +1531,7 @@ export default function ProductsPage() {
               {/* ── 가격 ── */}
               <section className="border-t border-gray-100 dark:border-gray-700 pt-4">
                 <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">가격 정보</p>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <div>
                     <label className={labelCls}>매입단가 (₩)</label>
                     <input type="number" min={0} value={form.costPrice}
@@ -1522,7 +1574,7 @@ export default function ProductsPage() {
               {/* ── 상태 & 메모 ── */}
               <section className="border-t border-gray-100 dark:border-gray-700 pt-4">
                 <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">상태 & 메모</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
                     <label className={labelCls}>판매 상태</label>
                     <select
