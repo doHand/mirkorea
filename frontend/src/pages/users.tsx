@@ -157,10 +157,10 @@ export default function UsersPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-gray-50/80 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700">
-                    <th className="text-center px-4 py-3 font-medium text-gray-600 dark:text-gray-400">사용자</th>
-                    <th className="text-center px-3 py-3 font-medium text-gray-600 dark:text-gray-400 w-24">역할</th>
-                    <th className="text-center px-3 py-3 font-medium text-gray-600 dark:text-gray-400 w-16">상태</th>
+                  <tr className="bg-[#2D4033] text-white">
+                    <th className="text-center px-4 py-3 font-semibold">사용자</th>
+                    <th className="text-center px-3 py-3 font-semibold w-24">역할</th>
+                    <th className="text-center px-3 py-3 font-semibold w-16">상태</th>
                     <th className="px-3 py-3 w-16" />
                   </tr>
                 </thead>

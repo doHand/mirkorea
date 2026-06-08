@@ -238,13 +238,13 @@ export default function ClientsPage() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[780px] text-sm">
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50/80 dark:border-gray-700 dark:bg-gray-800/60">
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">상호명</th>
-                <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 md:table-cell">사업자번호</th>
-                <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 lg:table-cell">대표자</th>
-                <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 lg:table-cell">업태/종목</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">연락처</th>
-                <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 xl:table-cell">등록일</th>
+              <tr className="bg-[#2D4033] text-white">
+                <th className="px-4 py-3 text-left font-semibold">상호명</th>
+                <th className="hidden px-4 py-3 text-left font-semibold md:table-cell">사업자번호</th>
+                <th className="hidden px-4 py-3 text-left font-semibold lg:table-cell">대표자</th>
+                <th className="hidden px-4 py-3 text-left font-semibold lg:table-cell">업태/종목</th>
+                <th className="px-4 py-3 text-left font-semibold">연락처</th>
+                <th className="hidden px-4 py-3 text-left font-semibold xl:table-cell">등록일</th>
                 <th className="w-20 px-4 py-3" />
               </tr>
             </thead>

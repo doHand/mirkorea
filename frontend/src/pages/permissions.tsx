@@ -98,13 +98,13 @@ export default function PermissionsPage() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-sm">
             <thead>
-              <tr className="bg-gray-50/80 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700">
-                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">사용자</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">이메일</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide w-28">역할</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide w-32">담당 창고</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide w-20">상태</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide w-36">마지막 로그인</th>
+              <tr className="bg-[#2D4033] text-white">
+                <th className="text-center px-4 py-3 font-semibold">사용자</th>
+                <th className="text-center px-4 py-3 font-semibold">이메일</th>
+                <th className="text-center px-4 py-3 font-semibold w-28">역할</th>
+                <th className="text-center px-4 py-3 font-semibold w-32">담당 창고</th>
+                <th className="text-center px-4 py-3 font-semibold w-20">상태</th>
+                <th className="text-center px-4 py-3 font-semibold w-36">마지막 로그인</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">

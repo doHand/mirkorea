@@ -149,7 +149,7 @@ async function adjustBoxStockQty({
 }
 
 /* 공통 셀 border 클래스 */
-const TH = 'px-3 py-3 text-xs font-semibold text-indigo-900 dark:text-indigo-100 uppercase tracking-wide border-r border-indigo-200 dark:border-indigo-800 last:border-r-0 whitespace-nowrap bg-indigo-50/90 dark:bg-indigo-950/50'
+const TH = 'px-3 py-3 font-semibold border-r border-white/20 last:border-r-0 whitespace-nowrap bg-[#2D4033] text-white'
 const TD_BASE = 'px-2 py-1.5 border-r border-gray-200 dark:border-gray-700 last:border-r-0 whitespace-nowrap'
 const TD_TEXT = cn(TD_BASE, 'text-left text-gray-700 dark:text-gray-300')
 const TD_NUM  = cn(TD_BASE, 'text-right tabular-nums text-gray-900 dark:text-gray-100')
@@ -775,7 +775,7 @@ export default function ProductsPage() {
           <ExportButton
             filename="상품목록"
             getData={async () => {
-              const all = await productApi.findAll({ search: search || undefined, status: status as SaleStatus || undefined, limit: 9999 })
+              const all = await productApi.findAll({ search: search || undefined, limit: 9999 })
               return all.items.map((p: Product) => ({
                 '상품코드': p.code,
                 '자재번호': p.materialNo ?? '',
@@ -898,8 +898,8 @@ export default function ProductsPage() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[2480px] text-sm border-collapse">
             <thead>
-              <tr className="border-b border-indigo-200 dark:border-indigo-800">
-                <th className="px-3 py-3 w-10 border-r border-gray-200 dark:border-gray-700">
+              <tr className="bg-[#2D4033]">
+                <th className="px-3 py-3 w-10 border-r border-white/20 bg-[#2D4033]">
                   <input
                     type="checkbox"
                     checked={allChecked}
@@ -1054,10 +1054,10 @@ export default function ProductsPage() {
                     {/* <td className={TD_NUM}>
                       <EditableCell id={p.id} field="retailPrice" value={p.retailPrice ?? 0} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} align="right" />
                     </td> */}
-                    {/* A/B/C 단가 */}
-                    <td className={TD_NUM}><EditableCell id={p.id} field="priceA" value={p.priceA ?? 0} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} align="right" /></td>
+                    {/* 해피미르/네이버/SSG 단가 */}
                     <td className={TD_NUM}><EditableCell id={p.id} field="priceB" value={p.priceB ?? 0} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} align="right" /></td>
-                    <td className={TD_NUM}><EditableCell id={p.id} field="priceC" value={p.priceC ?? 0} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} align="right" /></td>
+                    <td className={TD_NUM}><EditableCell id={p.id} field="retailPrice" value={p.retailPrice ?? 0} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} align="right" /></td>
+                    <td className={TD_NUM}><EditableCell id={p.id} field="priceA" value={p.priceA ?? 0} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} align="right" /></td>
              
                     {/* 메모 */}
                     <td className={cn(TD_TEXT, 'max-w-48')} title={p.memo || ''}>
@@ -1249,11 +1249,11 @@ export default function ProductsPage() {
                             <span className="font-mono text-sm text-gray-800 dark:text-gray-200 flex-1 truncate">{bc.barcode}</span>
                             <span className={cn(
                               'text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0',
-                              bc.type === 'BOX' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
+                              bc.type === 'CXD_BOX' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
                                 : bc.type === 'CXD' ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/20 dark:text-violet-400'
                                 : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400',
                             )}>
-                              {bc.type === 'BOX' ? '박스' : bc.type === 'CXD' ? 'CXD' : '낱개'}
+                              {bc.type === 'CXD_BOX' ? 'CXD BOX' : bc.type === 'CXD' ? 'CXD 낱개' : '낱개'}
                             </span>
                             <span className="text-xs text-gray-400 tabular-nums shrink-0">×{bc.unitQty}</span>
                             {bc.isPrimary && <Star size={11} className="text-amber-400 fill-amber-400 shrink-0" />}
@@ -1287,11 +1287,11 @@ export default function ProductsPage() {
                             <span className="font-mono text-sm text-gray-800 dark:text-gray-200 flex-1 truncate">{bc.barcode}</span>
                             <span className={cn(
                               'text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0',
-                              bc.type === 'BOX' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
+                              bc.type === 'CXD_BOX' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
                                 : bc.type === 'CXD' ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/20 dark:text-violet-400'
                                 : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400',
                             )}>
-                              {bc.type === 'BOX' ? '박스' : bc.type === 'CXD' ? 'CXD' : '낱개'}
+                              {bc.type === 'CXD_BOX' ? 'CXD BOX' : bc.type === 'CXD' ? 'CXD 낱개' : '낱개'}
                             </span>
                             <span className="text-xs text-gray-400 tabular-nums shrink-0">×{bc.unitQty}</span>
                             {bc.isPrimary && <Star size={11} className="text-amber-400 fill-amber-400 shrink-0" />}
@@ -1330,8 +1330,7 @@ export default function ProductsPage() {
                       className="text-xs px-2.5 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none"
                     >
                       <option value="UNIT">낱개</option>
-                      <option value="BOX">박스</option>
-                      <option value="CXD">CXD 낱개(INBOX)</option>
+                      <option value="CXD">CXD 낱개</option>
                       <option value="CXD_BOX">CXD BOX</option>
                     </select>
                     <input

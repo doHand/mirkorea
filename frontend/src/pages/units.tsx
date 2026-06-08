@@ -75,12 +75,12 @@ export default function UnitsPage() {
         <div className="overflow-x-auto">
         <table className="w-full min-w-[560px] text-sm">
           <thead>
-            <tr className="bg-gray-50/80 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700">
+            <tr className="bg-[#2D4033] text-white">
               <th className="w-8" />
-              <th className="text-center px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide w-24">코드</th>
-              <th className="text-center px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide w-32">레이블</th>
-              <th className="text-center px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">설명</th>
-              <th className="text-center px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide w-20">순서</th>
+              <th className="text-center px-4 py-3 font-semibold w-24">코드</th>
+              <th className="text-center px-4 py-3 font-semibold w-32">레이블</th>
+              <th className="text-center px-4 py-3 font-semibold">설명</th>
+              <th className="text-center px-4 py-3 font-semibold w-20">순서</th>
               <th className="w-20" />
             </tr>
           </thead>

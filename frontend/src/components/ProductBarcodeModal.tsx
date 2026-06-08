@@ -17,8 +17,8 @@ const emptyForm = (): BarcodeForm => ({ barcode: '', type: 'UNIT', unitQty: 1, i
 const stockForBarcode = (product: Product, barcode: Barcode) => {
   const stock = Number(product.stockQty ?? 0)
   if (barcode.type === 'CXD') return { qty: stock / Math.max(1, barcode.unitQty), unit: 'INBOX' }
-  if ( barcode.type === 'CXD_BOX') {
-    return { qty: stock / Math.max(1, product.boxQty || 1), unit: 'OUTBOX' }
+  if (barcode.type === 'CXD_BOX') {
+    return { qty: stock / Math.max(1, barcode.unitQty), unit: 'OUTBOX' }
   }
   return { qty: stock, unit: 'EA' }
 }
@@ -139,7 +139,12 @@ export function ProductBarcodeModal({ product, onClose }: { product: Product; on
           ) : (
             <div key={barcode.id} className="flex items-center gap-3 rounded-md border border-gray-100 px-4 py-3 dark:border-gray-800">
               <div className="min-w-0 flex-1">
-                <span className="block truncate font-mono text-sm">{barcode.barcode}</span>
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="truncate font-mono text-sm">{barcode.barcode}</span>
+                  <span className="shrink-0 whitespace-nowrap text-[11px] font-semibold text-gray-500 dark:text-gray-400">
+                    현재 재고 : <span className="text-gray-900 dark:text-gray-100">{formatDecimal(stockForBarcode(product, barcode).qty)}</span> ({stockForBarcode(product, barcode).unit})
+                  </span>
+                </div>
                 <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                   <span className="rounded-full bg-[#E5D3B3]/60 px-2 py-0.5 text-[10px] font-semibold text-[#2D4033]">{TYPE_LABEL[barcode.type]}</span>
                   {(barcode.type === 'CXD' || barcode.type === 'CXD_BOX') && (
@@ -147,9 +152,6 @@ export function ProductBarcodeModal({ product, onClose }: { product: Product; on
                       {barcode.type === 'CXD' ? '낱개 구성' : 'INBOX 포함'} {formatNumber(barcode.unitQty)}개
                     </span>
                   )}
-                  <span className="whitespace-nowrap text-[11px] font-semibold text-[#D2691E]">
-                    현재 재고 : {formatDecimal(stockForBarcode(product, barcode).qty)} ({stockForBarcode(product, barcode).unit})
-                  </span>
                 </div>
               </div>
               {barcode.isPrimary && <Star size={12} className="fill-[#D2691E] text-[#D2691E]" />}

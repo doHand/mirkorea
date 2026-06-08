@@ -611,14 +611,14 @@ function ItemsTable({ order }: { order: InboundOrder }) {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] text-sm">
           <thead>
-            <tr className="bg-gray-50 dark:bg-gray-700/50 text-xs">
-              <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-gray-400">상품</th>
-              <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-gray-400">예정</th>
-              <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-gray-400">수령</th>
-              <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-gray-400">합격</th>
-              <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-gray-400">불량</th>
-              <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-gray-400">입고 위치</th>
-              <th className="text-center px-4 py-3 font-medium text-gray-500 dark:text-gray-400">LOT / 유통기한</th>
+            <tr className="bg-[#2D4033] text-white">
+              <th className="text-center px-4 py-3 font-semibold">상품</th>
+              <th className="text-center px-4 py-3 font-semibold">예정</th>
+              <th className="text-center px-4 py-3 font-semibold">수령</th>
+              <th className="text-center px-4 py-3 font-semibold">합격</th>
+              <th className="text-center px-4 py-3 font-semibold">불량</th>
+              <th className="text-center px-4 py-3 font-semibold">입고 위치</th>
+              <th className="text-center px-4 py-3 font-semibold">LOT / 유통기한</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-700">

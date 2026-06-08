@@ -63,11 +63,11 @@ export default function BoxQtyPage() {
         <div className="overflow-x-auto">
         <table className="w-full min-w-[480px] text-sm">
           <thead>
-            <tr className="bg-gray-50/80 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700">
-              <th className="text-center px-5 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide w-32">코드</th>
-              <th className="text-center px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">상품명</th>
-              <th className="text-center px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide w-32">단위</th>
-              <th className="text-center px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wide w-28">박스 입수</th>
+            <tr className="bg-[#2D4033] text-white">
+              <th className="text-center px-5 py-3 font-semibold w-32">코드</th>
+              <th className="text-center px-4 py-3 font-semibold">상품명</th>
+              <th className="text-center px-4 py-3 font-semibold w-32">단위</th>
+              <th className="text-center px-4 py-3 font-semibold w-28">박스 입수</th>
             </tr>
           </thead>
           <tbody>

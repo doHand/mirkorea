@@ -436,15 +436,15 @@ export default function MenuPermissionsPage() {
           <SortableContext items={flatIds} strategy={verticalListSortingStrategy}>
             <table className="w-full text-sm border-collapse">
               <thead>
-                <tr className="bg-gray-50/80 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700">
-                  <th className="w-8 border-r border-gray-200 dark:border-gray-700" />
-                  <th className="text-center px-4 py-3.5 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide border-r border-gray-200 dark:border-gray-700">메뉴</th>
-                  {ROLES.map(({ role, label, headerCls }) => (
-                    <th key={role} className="text-center px-4 py-3.5 w-24 border-r border-gray-200 dark:border-gray-700">
-                      <span className={cn('text-xs font-semibold uppercase tracking-wide', headerCls)}>{label}</span>
+                <tr className="bg-[#2D4033] text-white">
+                  <th className="w-8 border-r border-white/20" />
+                  <th className="text-center px-4 py-3 font-semibold border-r border-white/20">메뉴</th>
+                  {ROLES.map(({ role, label }) => (
+                    <th key={role} className="text-center px-4 py-3 w-24 font-semibold border-r border-white/20">
+                      {label}
                     </th>
                   ))}
-                  <th className="text-center pr-4 py-3.5 w-28 text-xs font-semibold text-gray-400 dark:text-gray-600">폴더</th>
+                  <th className="text-center pr-4 py-3 w-28 font-semibold">폴더</th>
                 </tr>
               </thead>
               <tbody>

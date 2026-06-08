@@ -146,12 +146,12 @@ export function printQuoteDocument(
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: #fff; color: #000; font-family: 'Malgun Gothic', '맑은 고딕', Arial, sans-serif; font-size: 11px; }
     .sheet { width: 190mm; min-height: 270mm; margin: 0 auto; position: relative; padding: 10mm 2mm 6mm; }
-    .statement { color: #0018aa; --line: #0018aa; padding: 8mm 0 4mm; }
-    .quote { color: #000; --line: #000; border: 1px solid var(--line); padding: 8mm 0 5mm; position: relative; }
-    .title { position: relative; display: table; text-align: center; font-size: 22px; letter-spacing: 10px; font-weight: 700; margin: 0 auto 8mm; padding-bottom: 2.2mm; }
+    .statement { color: #17251c; --line: #2d4033; padding: 8mm 0 4mm; }
+    .quote { color: #17251c; --line: #2d4033; border: 1px solid var(--line); padding: 8mm 0 5mm; position: relative; }
+    .title { position: relative; display: table; text-align: center; font-size: 26px; letter-spacing: 12px; font-weight: 700; margin: 0 auto 8mm; padding-bottom: 2.2mm; }
     .title::after { content: ""; position: absolute; left: 0; right: 10px; bottom: 0; height: 1.4mm; border-top: 1px solid currentColor; border-bottom: 1px solid currentColor; }
-    .quote .title { letter-spacing: 14px; margin-bottom: 10mm; }
-    .statement .title { font-size: 19px; letter-spacing: 8px; margin-bottom: 7mm; }
+    .quote .title { letter-spacing: 16px; margin-bottom: 10mm; }
+    .statement .title { font-size: 23px; letter-spacing: 10px; margin-bottom: 7mm; }
     .doc-top { display: flex; justify-content: space-between; margin-bottom: 2mm; }
     .statement .doc-top { margin-bottom: 0; padding: 0 1mm; font-size: 10px; }
     .quote-fax { position: absolute; right: 2mm; top: 3mm; font-size: 10px; }
@@ -159,11 +159,11 @@ export function printQuoteDocument(
     th, td { border: 1px solid var(--line); height: 6.2mm; padding: 1mm 1.5mm; font-size: 10px; text-align: center; vertical-align: middle; }
     .left { text-align: left; } .right { text-align: right; }
     .party-grid { position: relative; display: grid; grid-template-columns: 8mm 87mm 8mm 87mm; align-items: stretch; margin-bottom: -1px; }
-    .party-label { border: 1px solid var(--line); border-right: 0; display: flex; align-items: center; justify-content: center; text-align: center; font-weight: 700; line-height: 1.25; background: #eef8ff; }
-    .party-table th { width: 18mm; background: #f8fbff; font-weight: 700; }
+    .party-label { border: 1px solid var(--line); border-right: 0; display: flex; align-items: center; justify-content: center; text-align: center; font-weight: 700; line-height: 1.25; background: #edf0ec; }
+    .party-table th { width: 18mm; background: #edf0ec; font-weight: 700; }
     .party-table td { text-align: left; }
     .statement .party-table th, .statement .party-table td { height: 5.4mm; padding: 0.4mm 1mm; font-size: 9px; }
-    .statement .party-label { font-size: 10px; background: #eef8ff; }
+    .statement .party-label { font-size: 10px; background: #edf0ec; }
     .stamp { position: absolute; color: #e5002b; border: 2px solid #e5002b; width: 16mm; height: 16mm; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; transform: rotate(-12deg); z-index: 1; background: transparent; }
     .party-grid .stamp { left: calc(50% - 9mm); top: 8mm; }
     .quote-header-grid { display: grid; grid-template-columns: 1fr 92mm; gap: 3mm; margin-bottom: 0; align-items: start; }
@@ -172,21 +172,21 @@ export function printQuoteDocument(
     .quote-msg { margin-top: 3mm; }
     .quote-party { position: relative; display: grid; grid-template-columns: 8mm 1fr; }
     .quote-party .stamp { left: auto; right: 3mm; top: 3mm; }
-    .quote-total-line { display: flex; align-items: center; height: 9mm; border: 1px solid var(--line); margin-top: -1px; font-size: 13px; font-weight: 700; padding: 0 3mm; gap: 6mm; }
+    .quote-total-line { display: flex; align-items: center; height: 9mm; border: 1px solid var(--line); margin-top: -1px; font-size: 13px; font-weight: 700; padding: 0 3mm; gap: 6mm; background: #edf0ec; }
     .tl-label { flex: 1; }
     .tl-num { text-align: center; min-width: 28mm; }
     .tl-vat { text-align: right; }
     .items { margin-top: 0; }
-    .items th { background: ${isStatement ? '#eef8ff' : '#e8f4f8'}; font-weight: 700; height: 6mm; }
+    .items th { background: #2d4033; color: white; font-weight: 700; height: 6mm; }
     .items td { height: ${isStatement ? '5.95mm' : '7.1mm'}; }
     .statement .items th, .statement .items td { padding: 0.35mm 1mm; font-size: 9px; }
-    .summary { width: 58mm; margin-left: auto; } .summary th { background: #eef8ff; font-weight: 700; } .summary td { text-align: right; }
+    .summary { width: 58mm; margin-left: auto; } .summary th { background: #edf0ec; font-weight: 700; } .summary td { text-align: right; }
     .bottom-row { display: grid; grid-template-columns: 1fr 58mm; }
     .memo-space { border-left: 1px solid var(--line); border-bottom: 1px solid var(--line); min-height: 21mm; }
     .footer-page { position: absolute; bottom: 5mm; right: 4mm; font-size: 10px; }
     .statement-footer { margin-top: -1px; }
     .statement-footer th, .statement-footer td { height: 6.2mm; padding: 0.6mm 1mm; font-size: 9px; }
-    .statement-footer .label { background: #eef8ff; font-weight: 700; text-align: center; }
+    .statement-footer .label { background: #edf0ec; font-weight: 700; text-align: center; }
     @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .sheet { margin: 0 auto; } }
   </style>
 </head>

@@ -123,9 +123,9 @@ const STATUS_CLS: Record<SaleStatus, string> = {
 }
 
 const BARCODE_TYPE_LABEL: Record<BarcodeUnitType, string> = {
-  UNIT: '일반낱개',
+  UNIT: '낱개',
   BOX:  '박스',
-  CXD:  'CXD낱개(INBOX)',
+  CXD:  'CXD 낱개',
   CXD_BOX: 'CXD BOX',
 }
 
@@ -265,7 +265,7 @@ const getMasterSortValue = (
   }
 }
 
-const MASTER_TH = 'text-center px-2 py-3.5 text-xs font-semibold text-indigo-900 dark:text-indigo-100 uppercase tracking-wide bg-indigo-50/90 dark:bg-indigo-950/50'
+const MASTER_TH = 'text-center px-2 py-3 font-semibold bg-[#2D4033] text-white'
 
 function SortHeader({
   label,
@@ -739,8 +739,8 @@ export default function ProductMasterPage() {
         <div className="overflow-auto max-h-[calc(100vh-260px)]">
           <table className="w-full min-w-[2920px] text-sm border-separate border-spacing-0 [&_td]:border-r [&_td]:border-gray-100 [&_th]:border-r [&_th]:border-gray-200 dark:[&_td]:border-gray-800 dark:[&_th]:border-gray-700">
             <thead className="sticky top-0 z-10">
-              <tr className="border-b border-indigo-200 dark:border-indigo-800">
-                <th className="px-4 py-3.5 w-8 bg-indigo-50/90 dark:bg-indigo-950/50">
+              <tr className="bg-[#2D4033]">
+                <th className="px-4 py-3 w-8 bg-[#2D4033]">
                   <input
                     type="checkbox"
                     checked={allChecked}
@@ -778,7 +778,7 @@ export default function ProductMasterPage() {
                 <SortHeader label="상태" sortKey="saleStatus" sort={sort} onSort={toggleSort} className="w-20" />
                 <SortHeader label="위치" sortKey="inventoryLocations" sort={sort} onSort={toggleSort} className="w-32" />
                 <SortHeader label="메모" sortKey="memo" sort={sort} onSort={toggleSort} className="min-w-[180px]" />
-                <th className="w-10 bg-indigo-50/90 dark:bg-indigo-950/50" />
+                <th className="w-10 bg-[#2D4033]" />
               </tr>
             </thead>
             <tbody>
@@ -1048,11 +1048,11 @@ export default function ProductMasterPage() {
                         <span className="font-mono text-sm text-gray-800 dark:text-gray-200 flex-1 truncate">{bc.barcode}</span>
                         <span className={cn(
                           'text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0',
-                          bc.type === 'BOX' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
+                          bc.type === 'CXD_BOX' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
                             : bc.type === 'CXD' ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/20 dark:text-violet-400'
                             : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400',
                         )}>
-                          {bc.type === 'BOX' ? '박스' : bc.type === 'CXD' ? 'CXD' : '낱개'}
+                          {bc.type === 'CXD_BOX' ? 'CXD BOX' : bc.type === 'CXD' ? 'CXD 낱개' : '낱개'}
                         </span>
                         <span className="text-xs text-gray-400 tabular-nums shrink-0">×{bc.unitQty}</span>
                         <button
@@ -1084,8 +1084,7 @@ export default function ProductMasterPage() {
                     <select value={newBcType} onChange={(e) => setNewBcType(e.target.value as BarcodeUnitType)}
                       className="text-xs px-2.5 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none">
                       <option value="UNIT">낱개</option>
-                      <option value="BOX">박스</option>
-                      <option value="CXD">CXD 낱개(INBOX)</option>
+                      <option value="CXD">CXD 낱개</option>
                       <option value="CXD_BOX">CXD BOX</option>
                     </select>
                     <input type="number" min={1} value={newBcQty} onChange={(e) => setNewBcQty(Number(e.target.value))}
