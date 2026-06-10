@@ -64,6 +64,14 @@ public class UserController {
 
     // ── 관리자 전용 ──────────────────────────────────────────────────────
 
+    @GetMapping("/staff")
+    public ApiResponse<List<Map<String, Object>>> findActiveStaff() {
+        return ApiResponse.ok(userRepo.findAll().stream()
+            .filter(User::isActive)
+            .map(this::toMap)
+            .toList());
+    }
+
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<List<Map<String, Object>>> findAll() {

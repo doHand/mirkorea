@@ -6,6 +6,7 @@ import java.util.*;
 
 public class PurchaseOrderRequest {
     public UUID warehouseId;
+    public UUID clientId;
     public String supplier;
     public LocalDate orderDate;
     public LocalDate expectedDate;

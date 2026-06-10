@@ -6,7 +6,7 @@ import {
   Package, BarChart3, Warehouse, ScanLine, ClipboardList,
   LayoutDashboard, LogOut, X, ShieldCheck, UserCog, Tags, LayoutGrid,
   Hash, Barcode, FileText, BoxSelect, FlaskConical, Ruler, ChevronDown,
-  PackageCheck, Building2, Receipt, FileCog, Users, Shield, Tag,
+  PackageCheck, Building2, Receipt, FileCog, Users, Shield, Tag, Truck,
 } from 'lucide-react'
 import { cn } from '@/utils/cn'
 import { useAuthStore } from '@/stores/auth.store'
@@ -26,6 +26,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   units:              Ruler,
   categories:         Tag,
   inbound:            PackageCheck,
+  outbound:           Truck,
   pricing:            Tags,
   warehouse:          Warehouse,
   transactions:       ClipboardList,

@@ -60,6 +60,7 @@ export function printQuoteDocument(
   printTitle?: string,
 ) {
   const isStatement = doc.docType === 'STATEMENT'
+  const stampUrl = `${window.location.origin}/company-stamp.png`
   const title = isStatement ? '거 래 명 세 서' : formatPrintTitle(printTitle || '견적서')
   const total = Number(doc.totalAmount ?? 0)
   const vat = 0
@@ -104,7 +105,7 @@ export function printQuoteDocument(
         <tr><th>전화번호</th><td>${escapeHtml(supplier.phone)}</td><th>대표자</th><td>${escapeHtml(supplier.ceo)}</td></tr>
         <tr><th>주&nbsp;&nbsp;&nbsp;&nbsp;소</th><td colspan="3">${escapeHtml(supplier.address)}</td></tr>
       </tbody></table>
-      <div class="stamp">印</div>
+      <img class="stamp" src="${stampUrl}" alt="직인">
       <div class="party-label">공<br/>급<br/>받<br/>는<br/>자</div>
       <table class="party-table"><tbody>
         <tr><th>사업번호</th><td colspan="3"><b>${escapeHtml(receiver.businessNo)}</b></td></tr>
@@ -131,7 +132,7 @@ export function printQuoteDocument(
           <tr><th>전화번호</th><td>${escapeHtml(supplier.phone)}</td><th>대표자</th><td>${escapeHtml(supplier.ceo)}</td></tr>
           <tr><th>주&nbsp;&nbsp;&nbsp;&nbsp;소</th><td colspan="3">${escapeHtml(supplier.address)}</td></tr>
         </tbody></table>
-        <div class="stamp">印</div>
+        <img class="stamp" src="${stampUrl}" alt="직인">
       </div>
     </div>
     <div class="quote-total-line"><span class="tl-label">합계금액 : ${toKoreanMoney(total)} 원정</span><span class="tl-num">( ${money(total)} )</span><span class="tl-vat">부가세별도</span></div>`
@@ -164,7 +165,7 @@ export function printQuoteDocument(
     .party-table td { text-align: left; }
     .statement .party-table th, .statement .party-table td { height: 5.4mm; padding: 0.4mm 1mm; font-size: 9px; }
     .statement .party-label { font-size: 10px; background: #edf0ec; }
-    .stamp { position: absolute; color: #e5002b; border: 2px solid #e5002b; width: 16mm; height: 16mm; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; transform: rotate(-12deg); z-index: 1; background: transparent; }
+    .stamp { position: absolute; width: 17mm; height: 17mm; object-fit: contain; z-index: 1; }
     .party-grid .stamp { left: calc(50% - 9mm); top: 8mm; }
     .quote-header-grid { display: grid; grid-template-columns: 1fr 92mm; gap: 3mm; margin-bottom: 0; align-items: start; }
     .quote-to { line-height: 2.4; padding-right: 2mm; }
@@ -180,9 +181,7 @@ export function printQuoteDocument(
     .items th { background: #2d4033; color: white; font-weight: 700; height: 6mm; }
     .items td { height: ${isStatement ? '5.95mm' : '7.1mm'}; }
     .statement .items th, .statement .items td { padding: 0.35mm 1mm; font-size: 9px; }
-    .summary { width: 58mm; margin-left: auto; } .summary th { background: #edf0ec; font-weight: 700; } .summary td { text-align: right; }
-    .bottom-row { display: grid; grid-template-columns: 1fr 58mm; }
-    .memo-space { border-left: 1px solid var(--line); border-bottom: 1px solid var(--line); min-height: 21mm; }
+    .summary { margin-top: -1px; } .summary th { background: #edf0ec; font-weight: 700; } .summary td { text-align: right; }
     .footer-page { position: absolute; bottom: 5mm; right: 4mm; font-size: 10px; }
     .statement-footer { margin-top: -1px; }
     .statement-footer th, .statement-footer td { height: 6.2mm; padding: 0.6mm 1mm; font-size: 9px; }
@@ -197,7 +196,7 @@ export function printQuoteDocument(
     <table class="items"><colgroup><col style="width:8mm"><col style="width:82mm"><col style="width:13mm"><col style="width:18mm"><col style="width:27mm"><col style="width:34mm"></colgroup><thead><tr><th>${isStatement ? '순번' : 'No'}</th><th>품명 / 규격</th><th>단위</th><th>수량</th><th>단가</th><th>금액</th></tr></thead><tbody>${rows}</tbody></table>
     ${isStatement
       ? `<table class="statement-footer"><colgroup><col style="width:15mm"><col style="width:31mm"><col style="width:16mm"><col style="width:33mm"><col style="width:16mm"><col style="width:29mm"><col style="width:15mm"><col style="width:35mm"></colgroup><tbody><tr><th class="label">전표메모</th><td></td><th class="label">공급가</th><td class="right">${money(supplyTotal)}</td><th class="label">부가세</th><td class="right">${money(vat)}</td><th class="label">합계</th><td class="right">${money(total)}</td></tr><tr><th class="label">전미수</th><td></td><th class="label">입금액</th><td></td><th class="label">미수잔액</th><td class="right">${money(total)}</td><th class="label">인수자</th><td class="right">(인)</td></tr></tbody></table>`
-      : `<div class="bottom-row"><div class="memo-space"></div><table class="summary"><tbody><tr><th>공급가</th><td>${money(supplyTotal)}</td></tr><tr><th>부가세</th><td>${money(vat)}</td></tr><tr><th>합계금액</th><td>${money(total)}</td></tr></tbody></table></div><div class="footer-page">Page: 1 / 1</div>`
+      : `<table class="summary"><colgroup><col style="width:8mm"><col style="width:82mm"><col style="width:13mm"><col style="width:18mm"><col style="width:27mm"><col style="width:34mm"></colgroup><tbody><tr><td rowspan="3" colspan="4"></td><th>공급가</th><td>${money(supplyTotal)}</td></tr><tr><th>부가세</th><td>${money(vat)}</td></tr><tr><th>합계금액</th><td>${money(total)}</td></tr></tbody></table><div class="footer-page">Page: 1 / 1</div>`
     }
   </div>
   <script>window.onload = function() { window.print(); }<\/script>

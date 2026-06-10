@@ -232,6 +232,7 @@ export interface PurchaseOrder {
   id: string
   orderNo: string
   warehouseId: string
+  clientId?: string
   supplier?: string
   orderDate: string
   expectedDate?: string
@@ -243,6 +244,35 @@ export interface PurchaseOrder {
   inboundOrderId?: string
   createdAt: string
   items: PurchaseOrderItem[]
+}
+
+export type OutboundOrderStatus = 'COLLECTED' | 'INSTRUCTED' | 'CANCELLED'
+
+export interface OutboundOrderItem {
+  id: string
+  productId: string
+  boxCount: number
+  sortOrder: number
+  product?: Product
+}
+
+export interface OutboundOrder {
+  id: string
+  orderNo: string
+  warehouseId: string
+  channel?: string
+  externalOrderNo?: string
+  customer: string
+  recipient?: string
+  phone?: string
+  address?: string
+  orderDate: string
+  requestedShipDate?: string
+  status: OutboundOrderStatus
+  instructedAt?: string
+  memo?: string
+  createdAt: string
+  items: OutboundOrderItem[]
 }
 
 export interface Client {

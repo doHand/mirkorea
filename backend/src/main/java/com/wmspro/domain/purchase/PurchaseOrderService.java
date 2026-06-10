@@ -35,7 +35,7 @@ public class PurchaseOrderService {
     @Transactional
     public PurchaseOrder create(PurchaseOrderRequest req, UUID userId) {
         PurchaseOrder order = PurchaseOrder.builder()
-            .orderNo(generateOrderNo()).warehouseId(req.warehouseId).supplier(req.supplier)
+            .orderNo(generateOrderNo()).warehouseId(req.warehouseId).clientId(req.clientId).supplier(req.supplier)
             .orderDate(req.orderDate != null ? req.orderDate : LocalDate.now(ZoneId.of("Asia/Seoul")))
             .expectedDate(req.expectedDate).manager(req.manager).phone(req.phone).fax(req.fax)
             .memo(req.memo).createdBy(userId).build();
@@ -47,6 +47,7 @@ public class PurchaseOrderService {
     public PurchaseOrder update(UUID id, PurchaseOrderRequest req) {
         PurchaseOrder order = findById(id);
         ensureEditable(order);
+        order.setClientId(req.clientId);
         order.setSupplier(req.supplier);
         if (req.orderDate != null) order.setOrderDate(req.orderDate);
         order.setExpectedDate(req.expectedDate);

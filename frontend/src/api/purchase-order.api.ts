@@ -3,6 +3,7 @@ import type { PageResponse, PurchaseOrder, PurchaseOrderStatus } from '@/types/a
 
 export interface PurchaseOrderRequest {
   warehouseId: string
+  clientId: string
   supplier?: string
   orderDate: string
   expectedDate?: string

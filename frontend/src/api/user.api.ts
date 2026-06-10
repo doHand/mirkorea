@@ -26,6 +26,8 @@ interface UpdateUserData {
 export const userApi = {
   getMe: () => get<UserDetail>('/users/me'),
 
+  findStaff: () => get<UserDetail[]>('/users/staff'),
+
   updateMe: (data: { fullName?: string; email?: string; phone?: string; password?: string }) =>
     patch<UserDetail>('/users/me', data),
 

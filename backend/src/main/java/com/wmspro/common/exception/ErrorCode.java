@@ -44,6 +44,10 @@ public enum ErrorCode {
     PURCHASE_ORDER_NOT_FOUND(HttpStatus.NOT_FOUND,   "발주서를 찾을 수 없습니다"),
     PURCHASE_ORDER_INVALID_STATUS(HttpStatus.CONFLICT, "현재 발주서 상태에서는 처리할 수 없습니다"),
 
+    // Outbound
+    OUTBOUND_ORDER_NOT_FOUND(HttpStatus.NOT_FOUND,   "출고 주문을 찾을 수 없습니다"),
+    OUTBOUND_ORDER_INVALID_STATUS(HttpStatus.CONFLICT, "현재 출고 주문 상태에서는 처리할 수 없습니다"),
+
     // Inbound
     INBOUND_ORDER_NOT_FOUND(HttpStatus.NOT_FOUND,   "입고 주문을 찾을 수 없습니다"),
     INBOUND_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND,    "입고 품목을 찾을 수 없습니다"),

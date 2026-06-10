@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Check, ClipboardList, FilePlus2, PackageCheck, PackageSearch, Printer, Search, Send, X } from 'lucide-react'
@@ -8,11 +8,11 @@ import toast from 'react-hot-toast'
 import { purchaseOrderApi, type PurchaseOrderRequest } from '@/api/purchase-order.api'
 import { productApi } from '@/api/product.api'
 import { clientApi } from '@/api/client.api'
+import { userApi } from '@/api/user.api'
 import { QUERY_KEYS } from '@/constants/query-keys'
 import { useWarehouseStore } from '@/stores/warehouse.store'
 import type { Product, PurchaseOrder, PurchaseOrderStatus } from '@/types/api.types'
 import { printPurchaseOrder } from '@/utils/printPurchaseOrder'
-import { formatPhoneInput } from '@/utils/format'
 
 const STATUS: Record<PurchaseOrderStatus, string> = {
   DRAFT: '작성 중', ORDERED: '발주 완료', CONVERTED: '입고예정 등록', CANCELLED: '취소',
@@ -35,6 +35,10 @@ export function PurchaseOrdersContent({ embedded = false }: { embedded?: boolean
     queryKey: QUERY_KEYS.purchaseOrders({ warehouseId: warehouse?.id, status, search }),
     queryFn: () => purchaseOrderApi.findAll({ warehouseId: warehouse!.id, status: status || undefined, search: search || undefined }),
     enabled: !!warehouse,
+  })
+  const { data: clients = [] } = useQuery({
+    queryKey: ['clients-all'],
+    queryFn: clientApi.findAllActive,
   })
   const orders = data?.items ?? []
   const refresh = () => {
@@ -93,7 +97,11 @@ export function PurchaseOrdersContent({ embedded = false }: { embedded?: boolean
             <td className="px-3 py-3 text-center">{o.items.length}종</td><td className="px-3 py-3 text-right font-semibold">{total(o).toLocaleString()}원</td>
             <td className="px-3 py-3 text-center"><span className={`px-2 py-1 text-xs font-medium ${STATUS_STYLE[o.status]}`}>{STATUS[o.status]}</span></td>
             <td className="px-3 py-2"><div className="flex justify-center gap-1">
-              <IconButton title="출력" onClick={() => printPurchaseOrder(o)}><Printer size={15} /></IconButton>
+              <IconButton title="출력" onClick={() => printPurchaseOrder(
+                o,
+                clients.find((client) => client.id === o.clientId)
+                  ?? clients.find((client) => client.name === o.supplier),
+              )}><Printer size={15} /></IconButton>
               {(o.status === 'DRAFT' || o.status === 'ORDERED') && <IconButton title="수정" onClick={() => setEditing(o)}><ClipboardList size={15} /></IconButton>}
               {o.status === 'DRAFT' && <IconButton title="발주 완료" onClick={() => action.mutate({ kind: 'ordered', id: o.id })}><Send size={15} /></IconButton>}
               {o.status === 'ORDERED' && <button onClick={() => action.mutate({ kind: 'convert', id: o.id })} className="flex items-center gap-1 bg-[#D2691E] px-2 py-1.5 text-xs font-semibold text-white hover:bg-[#b85b19]"><PackageCheck size={14} />입고예정 등록</button>}
@@ -119,13 +127,27 @@ function OrderModal({ warehouseId, order, onClose, onSaved }: { warehouseId: str
   const [phone, setPhone] = useState(order?.phone ?? '')
   const [fax, setFax] = useState(order?.fax ?? '')
   const [memo, setMemo] = useState(order?.memo ?? '')
-  const [clientId, setClientId] = useState('')
+  const [clientId, setClientId] = useState(order?.clientId ?? '')
   const [productPickerOpen, setProductPickerOpen] = useState(false)
   const [items, setItems] = useState((order?.items ?? []).map((i) => ({
     productId: i.productId, product: i.product, boxCount: i.boxCount ?? 0,
     quantity: i.quantity, capSize: i.capSize ?? '', unitPrice: Number(i.unitPrice || 0),
   })))
-  const { data: clients } = useQuery({ queryKey: ['clients-all'], queryFn: clientApi.findAllActive })
+  const { data: clients = [] } = useQuery({ queryKey: ['clients-all'], queryFn: clientApi.findAllActive })
+  const { data: staff = [] } = useQuery({ queryKey: ['users', 'staff'], queryFn: userApi.findStaff })
+  useEffect(() => {
+    if (clientId || !order?.supplier) return
+    const matched = clients.find((client) => client.name === order.supplier)
+    if (matched) setClientId(matched.id)
+  }, [clientId, clients, order?.supplier])
+  useEffect(() => {
+    if (!clientId) return
+    const client = clients.find((item) => item.id === clientId)
+    if (!client) return
+    setSupplier(client.name)
+    setPhone(client.phone || client.mobile || '')
+    setFax(client.fax || '')
+  }, [clientId, clients])
   const save = useMutation({
     mutationFn: (req: PurchaseOrderRequest) => order ? purchaseOrderApi.update(order.id, req) : purchaseOrderApi.create(req),
     onSuccess: () => { toast.success('발주서를 저장했습니다'); onSaved() }, onError: () => toast.error('저장에 실패했습니다'),
@@ -143,18 +165,18 @@ function OrderModal({ warehouseId, order, onClose, onSaved }: { warehouseId: str
   }
   const selectClient = (id: string) => {
     setClientId(id)
-    const client = clients?.find((item) => item.id === id)
-    if (!client) return
-    setSupplier(client.name)
-    setManager(client.contactName || client.managerName || client.salesperson || '')
-    setPhone(client.phone || client.mobile || '')
-    setFax(client.fax || '')
+    if (!id) {
+      setSupplier('')
+      setPhone('')
+      setFax('')
+    }
   }
   const submit = () => {
-    if (!supplier.trim()) return toast.error('공급업체를 입력하세요')
+    if (!clientId || !supplier.trim()) return toast.error('거래처를 선택하세요')
+    if (!manager) return toast.error('담당 직원을 선택하세요')
     if (!items.length) return toast.error('품목을 추가하세요')
     save.mutate({
-      warehouseId, supplier, orderDate, expectedDate: expectedDate || undefined,
+      warehouseId, clientId, supplier, orderDate, expectedDate: expectedDate || undefined,
       manager: manager || undefined, phone: phone || undefined, fax: fax || undefined, memo: memo || undefined,
       items: items.map(({ productId, boxCount, quantity, capSize, unitPrice }) => ({
         productId, boxCount, quantity, capSize: capSize || undefined, unitPrice,
@@ -166,22 +188,30 @@ function OrderModal({ warehouseId, order, onClose, onSaved }: { warehouseId: str
     <div className="flex-1 space-y-4 overflow-y-auto p-5">
       <div className="grid gap-3 md:grid-cols-3">
         <label className="block text-xs font-medium text-gray-600">
-          거래처 불러오기
+          거래처 선택
           <select
             value={clientId}
             onChange={(e) => selectClient(e.target.value)}
             className="mt-1 w-full border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-[#2D4033] dark:bg-gray-800"
           >
             <option value="">거래처를 선택하세요</option>
-            {(clients ?? []).map((client) => <option key={client.id} value={client.id}>{client.name}</option>)}
+            {clients.map((client) => <option key={client.id} value={client.id}>{client.name}</option>)}
           </select>
         </label>
-        <Field label="업체명"><input value={supplier} onChange={(e) => setSupplier(e.target.value)} placeholder="업체명" /></Field>
+        <Field label="업체명"><input value={supplier} readOnly placeholder="거래처 선택 시 자동 입력" /></Field>
         <Field label="발주일"><input type="date" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} /></Field>
-        <Field label="담당자"><input value={manager} onChange={(e) => setManager(e.target.value)} placeholder="담당자명" /></Field>
+        <label className="block text-xs font-medium text-gray-600">
+          담당자
+          <select value={manager} onChange={(e) => setManager(e.target.value)}
+            className="mt-1 w-full border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-[#2D4033] dark:bg-gray-800">
+            <option value="">우리 직원 선택</option>
+            {manager && !staff.some((user) => user.fullName === manager) && <option value={manager}>{manager}</option>}
+            {staff.filter((user) => user.isActive).map((user) => <option key={user.id} value={user.fullName}>{user.fullName}</option>)}
+          </select>
+        </label>
         <Field label="입고일"><input type="date" value={expectedDate} onChange={(e) => setExpectedDate(e.target.value)} /></Field>
-        <Field label="전화번호"><input value={phone} onChange={(e) => setPhone(formatPhoneInput(e.target.value))} inputMode="numeric" placeholder="전화번호" /></Field>
-        <Field label="팩스"><input value={fax} onChange={(e) => setFax(formatPhoneInput(e.target.value))} inputMode="numeric" placeholder="팩스번호" /></Field>
+        <Field label="전화번호"><input value={phone} readOnly placeholder="거래처 전화번호" /></Field>
+        <Field label="팩스"><input value={fax} readOnly placeholder="거래처 팩스번호" /></Field>
       </div>
       <div className="flex items-center justify-between border border-[#d8ddd8] bg-[#f7f8f5] px-4 py-3">
         <div><p className="text-sm font-semibold text-gray-800">발주 제품</p><p className="text-xs text-gray-500">상품 마스터에 등록된 제품을 불러옵니다</p></div>
