@@ -7,6 +7,7 @@ import { warehouseApi } from '@/api/warehouse.api'
 import { useAuthStore } from '@/stores/auth.store'
 import { formatDateTime, formatNumber } from '@/utils/format'
 import { cn } from '@/utils/cn'
+import * as ui from '@/styles/ui'
 import type { UserRole } from '@/types/api.types'
 
 const ROLE_META: Record<UserRole, { label: string; cls: string }> = {
@@ -98,16 +99,16 @@ export default function PermissionsPage() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-sm">
             <thead>
-              <tr className="bg-[#2D4033] text-white">
-                <th className="text-center px-4 py-3 font-semibold">사용자</th>
-                <th className="text-center px-4 py-3 font-semibold">이메일</th>
-                <th className="text-center px-4 py-3 font-semibold w-28">역할</th>
-                <th className="text-center px-4 py-3 font-semibold w-32">담당 창고</th>
-                <th className="text-center px-4 py-3 font-semibold w-20">상태</th>
-                <th className="text-center px-4 py-3 font-semibold w-36">마지막 로그인</th>
+              <tr className={ui.thead}>
+                <th className={ui.th}>사용자</th>
+                <th className={ui.th}>이메일</th>
+                <th className={cn(ui.th, 'w-28')}>역할</th>
+                <th className={cn(ui.th, 'w-32')}>담당 창고</th>
+                <th className={cn(ui.th, 'w-20')}>상태</th>
+                <th className={cn(ui.th, 'w-36')}>마지막 로그인</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+            <tbody className={ui.tbody}>
               {isLoading && (
                 <tr><td colSpan={6} className="text-center py-10 text-gray-400 dark:text-gray-500">로딩 중...</td></tr>
               )}
@@ -117,7 +118,7 @@ export default function PermissionsPage() {
               {filtered.map((u) => {
                 const warehouseName = warehouses.find((w: any) => w.id === u.warehouseId)?.name
                 return (
-                  <tr key={u.id} className={cn('hover:bg-gray-50/30 dark:hover:bg-gray-800/10 transition-colors', !u.isActive && 'opacity-50')}>
+                  <tr key={u.id} className={cn(ui.tr, !u.isActive && 'opacity-50')}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
                         <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-sm shrink-0">

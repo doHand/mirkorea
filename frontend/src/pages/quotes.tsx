@@ -11,6 +11,9 @@ import { quoteApi } from '@/api/quote.api'
 import { PurchaseOrdersContent } from '@/components/PurchaseOrdersContent'
 import { useSupplierInfoStore } from '@/stores/supplier-info.store'
 import { formatNumber } from '@/utils/format'
+import { cn } from '@/utils/cn'
+import { editableRowProps } from '@/utils/table'
+import * as ui from '@/styles/ui'
 import {
   QUOTE_PRINT_TITLES, type QuotePrintTitle,
   printQuoteDocument,
@@ -333,21 +336,23 @@ export default function QuotesPage() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] text-sm">
             <thead>
-              <tr className="bg-[#2D4033] text-white">
-                <th className="px-3 py-3 text-left">거래처</th>
-                <th className="px-3 py-3 text-left">문서번호</th>
-                <th className="px-3 py-3 text-center">종류</th>
-                <th className="px-3 py-3 text-center">날짜</th>
-                <th className="px-3 py-3 text-right">합계금액</th>
-                <th className="px-3 py-3 text-center">상태</th>
-                <th className="px-3 py-3 w-28" />
+              <tr className={ui.thead}>
+                <th className={cn(ui.th, 'text-left')}>거래처</th>
+                <th className={cn(ui.th, 'text-left')}>문서번호</th>
+                <th className={ui.th}>종류</th>
+                <th className={ui.th}>날짜</th>
+                <th className={ui.thR}>합계금액</th>
+                <th className={ui.th}>상태</th>
+                <th className="w-28 px-3 py-3" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+            <tbody className={ui.tbody}>
               {isLoading && <tr><td colSpan={7} className="text-center py-10 text-gray-400">불러오는 중...</td></tr>}
               {!isLoading && data?.items.length === 0 && <tr><td colSpan={7} className="text-center py-10 text-gray-400">문서가 없습니다</td></tr>}
-              {data?.items.map((quote) => (
-                <tr key={quote.id} className="hover:bg-[#f7f8f5] dark:hover:bg-gray-800/40">
+              {data?.items.map((quote) => {
+                const { className: editableClass, ...editableHandlers } = editableRowProps(true, () => openEdit(quote))
+                return (
+                <tr key={quote.id} {...editableHandlers} className={cn(ui.tr, editableClass)}>
                   <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{quote.clientName ?? '-'}</td>
                   <td className="px-3 py-3 font-mono text-xs text-[#2D4033] dark:text-gray-300 font-semibold">{quote.docNo}</td>
                   <td className="px-3 py-3 text-center"><span className={`px-2 py-0.5 text-xs font-medium ${quote.docType === 'STATEMENT' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400' : 'bg-violet-50 text-violet-700 dark:bg-violet-900/20 dark:text-violet-400'}`}>{DOC_TYPE_LABEL[quote.docType]}</span></td>
@@ -357,16 +362,17 @@ export default function QuotesPage() {
                   <td className="px-3 py-2">
                     <div className="flex justify-center gap-1">
                       {quote.docType === 'QUOTE' ? (
-                        <button onClick={() => setListPrint({ quote, title: '견적서' })} className="border border-gray-200 p-1.5 text-gray-600 hover:border-[#2D4033] hover:text-[#2D4033]" title="인쇄 (제목 선택)"><Printer size={14} /></button>
+                        <button onClick={(e) => { e.stopPropagation(); setListPrint({ quote, title: '견적서' }) }} className={ui.btnIconPrint} title="인쇄 (제목 선택)"><Printer size={14} /></button>
                       ) : (
-                        <button onClick={() => printQuoteDocument(quote, null, findClientForQuote(quote), supplierInfo)} className="border border-gray-200 p-1.5 text-gray-600 hover:border-[#2D4033] hover:text-[#2D4033]" title="인쇄"><Printer size={14} /></button>
+                        <button onClick={(e) => { e.stopPropagation(); printQuoteDocument(quote, null, findClientForQuote(quote), supplierInfo) }} className={ui.btnIconPrint} title="인쇄"><Printer size={14} /></button>
                       )}
-                      <button onClick={() => openEdit(quote)} className="border border-gray-200 p-1.5 text-gray-600 hover:border-[#2D4033] hover:text-[#2D4033]" title="수정"><Pencil size={14} /></button>
-                      <button onClick={() => { if (confirm('삭제하시겠습니까?')) deleteMutation.mutate(quote.id) }} className="border border-gray-200 p-1.5 text-gray-600 hover:border-red-400 hover:text-red-500" title="삭제"><Trash2 size={14} /></button>
+                      <button onClick={(e) => { e.stopPropagation(); openEdit(quote) }} className={ui.btnIconEdit} title="수정"><Pencil size={14} /></button>
+                      <button onClick={(e) => { e.stopPropagation(); if (confirm('삭제하시겠습니까?')) deleteMutation.mutate(quote.id) }} className={ui.btnIconDelete} title="삭제"><Trash2 size={14} /></button>
                     </div>
                   </td>
                 </tr>
-              ))}
+                )
+              })}
             </tbody>
           </table>
         </div>

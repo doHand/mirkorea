@@ -34,9 +34,20 @@ public class OutboundOrderController {
         return ApiResponse.ok(service.update(id, req), "주문을 수정했습니다");
     }
 
+    @DeleteMapping("/{id}") @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','WORKER')")
+    public void delete(@PathVariable UUID id) {
+        service.delete(id);
+    }
+
     @PostMapping("/{id}/instruct") @PreAuthorize("hasAnyRole('ADMIN','MANAGER','WORKER')")
     public ApiResponse<OutboundOrder> instruct(@PathVariable UUID id) {
         return ApiResponse.ok(service.instruct(id), "출고지시를 생성했습니다");
+    }
+
+    @PostMapping("/complete-picking") @PreAuthorize("hasAnyRole('ADMIN','MANAGER','WORKER')")
+    public ApiResponse<java.util.List<OutboundOrder>> completePicking(@RequestBody PickingCompletionRequest req) {
+        return ApiResponse.ok(service.completePicking(req), "선택한 피킹을 완료했습니다");
     }
 
     @PostMapping("/{id}/cancel") @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")

@@ -9,6 +9,7 @@ import { ExportButton } from '@/components/ExportButton'
 import { useAuthStore } from '@/stores/auth.store'
 import { formatNumber } from '@/utils/format'
 import { cn } from '@/utils/cn'
+import { editableRowProps } from '@/utils/table'
 import { SALE_STATUS_LABEL } from '@/constants/stock.constants'
 import * as ui from '@/styles/ui'
 import type { ProductPricing } from '@/types/api.types'
@@ -154,8 +155,10 @@ export default function PricingPage() {
               {filtered.map((p) => {
                 const sellAmount = Number(p.sellPrice ?? 0) * p.totalStock
                 const belowSafety = p.totalStock <= p.safetyStock && p.safetyStock > 0
+                const { className: editableClass, ...editableHandlers } = editableRowProps(true, () => openEdit(p))
                 return (
-                  <tr key={p.id} className={cn(ui.tr, belowSafety && 'bg-red-50/50 dark:bg-red-900/5')}>
+                  <tr key={p.id} {...editableHandlers}
+                    className={cn(ui.tr, belowSafety && 'bg-red-50/50 dark:bg-red-900/5', editableClass)}>
                     <td className="px-4 py-3 font-mono text-xs text-gray-600 dark:text-gray-400">{p.code}</td>
                     <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{p.name}</td>
                     <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{p.category || '-'}</td>
@@ -182,7 +185,7 @@ export default function PricingPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button onClick={() => openEdit(p)} className={ui.btnIcon} title="가격 수정">
+                      <button onClick={(e) => { e.stopPropagation(); openEdit(p) }} className={ui.btnIconEdit} title="가격 수정">
                         <Pencil size={13} />
                       </button>
                     </td>

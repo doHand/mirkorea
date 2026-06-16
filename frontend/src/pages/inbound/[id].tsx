@@ -4,7 +4,7 @@ import { useRouter } from 'next/router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft, Truck, PackageCheck, ClipboardCheck, Check,
-  Ban, BarChart3, AlertTriangle, RefreshCw, Save,
+  Ban, BarChart3, AlertTriangle, RefreshCw, Save, Trash2,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { inboundApi } from '@/api/inbound.api'
@@ -12,6 +12,7 @@ import type { ReceiveItemRequest, InspectItemRequest } from '@/api/inbound.api'
 import { warehouseApi } from '@/api/warehouse.api'
 import { QUERY_KEYS } from '@/constants/query-keys'
 import { cn } from '@/utils/cn'
+import * as ui from '@/styles/ui'
 import { formatNumber } from '@/utils/format'
 import type { InboundStatus, InboundOrder } from '@/types/api.types'
 
@@ -133,6 +134,7 @@ function OrderHeader({
   onCancel: () => void
   qc: ReturnType<typeof useQueryClient>
 }) {
+  const router  = useRouter()
   const isFinal = order.status === 'COMPLETED' || order.status === 'CANCELLED'
 
   const cancelMutation = useMutation({
@@ -145,9 +147,27 @@ function OrderHeader({
     onError: () => toast.error('취소에 실패했습니다'),
   })
 
+  const deleteMutation = useMutation({
+    mutationFn: () => inboundApi.delete(order.id),
+    onSuccess: () => {
+      toast.success('입고 주문이 삭제되었습니다')
+      qc.invalidateQueries({ queryKey: ['inbound'] })
+      router.push('/inbound')
+    },
+    onError: () => toast.error('삭제에 실패했습니다'),
+  })
+
   const handleCancel = () => {
     if (!confirm('입고 주문을 취소하시겠습니까?')) return
     cancelMutation.mutate()
+  }
+
+  const handleDelete = () => {
+    const message = order.status === 'COMPLETED'
+      ? `${order.orderNo} 입고 주문을 삭제하시겠습니까?\n이미 증가된 재고는 자동으로 되돌려지지 않습니다.`
+      : `${order.orderNo} 입고 주문을 삭제하시겠습니까?`
+    if (!confirm(message)) return
+    deleteMutation.mutate()
   }
 
   return (
@@ -205,6 +225,14 @@ function OrderHeader({
               주문 취소
             </button>
           )}
+          <button
+            onClick={handleDelete}
+            disabled={deleteMutation.isPending}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors disabled:opacity-50"
+          >
+            <Trash2 size={13} />
+            삭제
+          </button>
         </div>
       </div>
     </div>
@@ -647,19 +675,19 @@ function ItemsTable({ order }: { order: InboundOrder }) {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] text-sm">
           <thead>
-            <tr className="bg-[#2D4033] text-white">
-              <th className="text-center px-4 py-3 font-semibold">상품</th>
-              <th className="text-center px-4 py-3 font-semibold">예정</th>
-              <th className="text-center px-4 py-3 font-semibold">수령</th>
-              <th className="text-center px-4 py-3 font-semibold">합격</th>
-              <th className="text-center px-4 py-3 font-semibold">불량</th>
-              <th className="text-center px-4 py-3 font-semibold">입고 위치</th>
-              <th className="text-center px-4 py-3 font-semibold">LOT / 유통기한</th>
+            <tr className={ui.thead}>
+              <th className={ui.th}>상품</th>
+              <th className={ui.th}>예정</th>
+              <th className={ui.th}>수령</th>
+              <th className={ui.th}>합격</th>
+              <th className={ui.th}>불량</th>
+              <th className={ui.th}>입고 위치</th>
+              <th className={ui.th}>LOT / 유통기한</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+          <tbody className={ui.tbody}>
             {order.items.map((item) => (
-              <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+              <tr key={item.id} className={ui.tr}>
                 <td className="px-4 py-3">
                   <p className="font-medium text-gray-800 dark:text-gray-200">{item.product?.name}</p>
                   <p className="text-xs text-gray-400">{item.product?.code}</p>

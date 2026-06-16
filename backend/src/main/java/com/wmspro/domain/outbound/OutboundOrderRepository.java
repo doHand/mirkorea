@@ -8,7 +8,10 @@ import java.util.UUID;
 
 public interface OutboundOrderRepository extends JpaRepository<OutboundOrder, UUID> {
     @Query("""
-        SELECT o FROM OutboundOrder o
+        SELECT DISTINCT o FROM OutboundOrder o
+        LEFT JOIN FETCH o.items oi
+        LEFT JOIN FETCH oi.product p
+        LEFT JOIN FETCH p.defaultLocation
         WHERE o.warehouseId = :warehouseId
           AND (:status IS NULL OR o.status = :status)
           AND (:search = '' OR LOWER(o.orderNo) LIKE LOWER(CONCAT('%', :search, '%'))

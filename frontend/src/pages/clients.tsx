@@ -7,6 +7,8 @@ import toast from 'react-hot-toast'
 import { clientApi } from '@/api/client.api'
 import { formatBusinessNoInput, formatDateTime, formatNumber, formatPhoneInput } from '@/utils/format'
 import { cn } from '@/utils/cn'
+import { editableRowProps } from '@/utils/table'
+import * as ui from '@/styles/ui'
 import type { Client } from '@/types/api.types'
 
 declare global {
@@ -240,17 +242,17 @@ export default function ClientsPage() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[780px] text-sm">
             <thead>
-              <tr className="bg-[#2D4033] text-white">
-                <th className="px-4 py-3 text-left font-semibold">상호명</th>
-                <th className="hidden px-4 py-3 text-left font-semibold md:table-cell">사업자번호</th>
-                <th className="hidden px-4 py-3 text-left font-semibold lg:table-cell">대표자</th>
-                <th className="hidden px-4 py-3 text-left font-semibold lg:table-cell">업태/종목</th>
-                <th className="px-4 py-3 text-left font-semibold">연락처</th>
-                <th className="hidden px-4 py-3 text-left font-semibold xl:table-cell">등록일</th>
+              <tr className={ui.thead}>
+                <th className={cn(ui.th, 'text-left')}>상호명</th>
+                <th className={cn(ui.th, 'hidden text-left md:table-cell')}>사업자번호</th>
+                <th className={cn(ui.th, 'hidden text-left lg:table-cell')}>대표자</th>
+                <th className={cn(ui.th, 'hidden text-left lg:table-cell')}>업태/종목</th>
+                <th className={cn(ui.th, 'text-left')}>연락처</th>
+                <th className={cn(ui.th, 'hidden text-left xl:table-cell')}>등록일</th>
                 <th className="w-20 px-4 py-3" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+            <tbody className={ui.tbody}>
               {isLoading && <tr><td colSpan={7} className="py-12 text-center text-gray-400">불러오는 중...</td></tr>}
               {!isLoading && data?.items.length === 0 && (
                 <tr>
@@ -260,8 +262,11 @@ export default function ClientsPage() {
                   </td>
                 </tr>
               )}
-              {data?.items.map((client) => (
-                <tr key={client.id} className="group transition-colors hover:bg-gray-50/60 dark:hover:bg-gray-800/40">
+              {data?.items.map((client) => {
+                const { className: editableClass, ...editableHandlers } = editableRowProps(true, () => openEdit(client))
+                return (
+                <tr key={client.id} {...editableHandlers}
+                  className={cn('group', ui.tr, editableClass)}>
                   <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
                     {client.name}
                     {client.customerType && (
@@ -283,16 +288,17 @@ export default function ClientsPage() {
                   <td className="hidden px-4 py-3 text-xs text-gray-400 xl:table-cell">{formatDateTime(client.createdAt)}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                      <button onClick={() => openEdit(client)} className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/30" title="수정">
+                      <button onClick={(e) => { e.stopPropagation(); openEdit(client) }} className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/30" title="수정">
                         <Pencil size={14} />
                       </button>
-                      <button onClick={() => handleDelete(client)} className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/30" title="삭제">
+                      <button onClick={(e) => { e.stopPropagation(); handleDelete(client) }} className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/30" title="삭제">
                         <Trash2 size={14} />
                       </button>
                     </div>
                   </td>
                 </tr>
-              ))}
+                )
+              })}
             </tbody>
           </table>
         </div>

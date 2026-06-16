@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth.store'
 import { useRoleStore, COLOR_OPTIONS } from '@/stores/role.store'
 import type { RoleDef } from '@/stores/role.store'
 import { cn } from '@/utils/cn'
+import { editableRowProps } from '@/utils/table'
 import { formatNumber } from '@/utils/format'
 import * as ui from '@/styles/ui'
 
@@ -103,8 +104,10 @@ export default function RoleManagementPage() {
               </tr>
             </thead>
             <tbody className={ui.tbody}>
-              {roles.map((r) => (
-                <tr key={r.id} className={ui.tr}>
+              {roles.map((r) => {
+                const { className: editableClass, ...editableHandlers } = editableRowProps(true, () => openEdit(r))
+                return (
+                <tr key={r.id} {...editableHandlers} className={cn(ui.tr, editableClass)}>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <Shield size={14} className={r.color} />
@@ -126,14 +129,14 @@ export default function RoleManagementPage() {
                   <td className="px-3 py-3">
                     <div className="flex items-center gap-1 justify-end">
                       <button
-                        onClick={() => openEdit(r)}
-                        className={ui.btnIcon}
+                        onClick={(e) => { e.stopPropagation(); openEdit(r) }}
+                        className={ui.btnIconEdit}
                         title="수정"
                       >
                         <Pencil size={13} />
                       </button>
                       <button
-                        onClick={() => !r.builtIn && setDeleting(r)}
+                        onClick={(e) => { e.stopPropagation(); !r.builtIn && setDeleting(r) }}
                         disabled={r.builtIn}
                         className={cn(
                           'p-1.5 rounded-lg transition-colors',
@@ -148,7 +151,8 @@ export default function RoleManagementPage() {
                     </div>
                   </td>
                 </tr>
-              ))}
+                )
+              })}
             </tbody>
           </table>
         </div>

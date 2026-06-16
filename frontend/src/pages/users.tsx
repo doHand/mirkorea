@@ -170,6 +170,7 @@ export default function UsersPage() {
                   {filtered.map((u) => (
                     <tr key={u.id}
                       onClick={() => selectUser(u)}
+                      onDoubleClick={() => openEdit(u)}
                       className={cn('cursor-pointer transition-colors',
                         selectedUser?.id === u.id ? 'bg-indigo-50 dark:bg-indigo-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50',
                         !u.isActive && 'opacity-50')}>

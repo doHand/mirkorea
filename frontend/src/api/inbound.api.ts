@@ -1,4 +1,4 @@
-import { get, post, patch } from './client'
+import { get, post, patch, del } from './client'
 import type { InboundOrder, InboundOrderItem, InboundStatus, PageResponse } from '@/types/api.types'
 
 export interface CreateInboundOrderRequest {
@@ -49,4 +49,6 @@ export const inboundApi = {
   complete: (id: string) => post<InboundOrder>(`/inbound/${id}/complete`),
 
   cancel: (id: string) => post<InboundOrder>(`/inbound/${id}/cancel`),
+
+  delete: (id: string) => del(`/inbound/${id}`),
 }

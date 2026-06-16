@@ -5,6 +5,7 @@ import { Ruler, Plus, Pencil, Trash2, Check, X, GripVertical } from 'lucide-reac
 import toast from 'react-hot-toast'
 import { unitApi } from '@/api/product.api'
 import { cn } from '@/utils/cn'
+import * as ui from '@/styles/ui'
 import { formatNumber } from '@/utils/format'
 import type { ProductUnit } from '@/types/api.types'
 
@@ -75,12 +76,12 @@ export default function UnitsPage() {
         <div className="overflow-x-auto">
         <table className="w-full min-w-[560px] text-sm">
           <thead>
-            <tr className="bg-[#2D4033] text-white">
+            <tr className={ui.thead}>
               <th className="w-8" />
-              <th className="text-center px-4 py-3 font-semibold w-24">코드</th>
-              <th className="text-center px-4 py-3 font-semibold w-32">레이블</th>
-              <th className="text-center px-4 py-3 font-semibold">설명</th>
-              <th className="text-center px-4 py-3 font-semibold w-20">순서</th>
+              <th className={cn(ui.th, 'w-24')}>코드</th>
+              <th className={cn(ui.th, 'w-32')}>레이블</th>
+              <th className={ui.th}>설명</th>
+              <th className={cn(ui.th, 'w-20')}>순서</th>
               <th className="w-20" />
             </tr>
           </thead>
@@ -90,7 +91,7 @@ export default function UnitsPage() {
               <tr><td colSpan={6} className="text-center py-10 text-gray-300 text-sm">단위가 없습니다</td></tr>
             )}
             {units.map((u: ProductUnit) => (
-              <tr key={u.id} className="border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50/30 dark:hover:bg-gray-800/10 transition-colors group/row">
+              <tr key={u.id} className={cn('border-t border-gray-100 dark:border-gray-800 group/row', ui.tr)}>
                 <td className="pl-3 pr-0 py-3 w-8">
                   <GripVertical size={14} className="text-gray-300 dark:text-gray-700" />
                 </td>

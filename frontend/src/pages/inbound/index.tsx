@@ -13,6 +13,7 @@ import { productApi } from '@/api/product.api'
 import { purchaseOrderApi } from '@/api/purchase-order.api'
 import { QUERY_KEYS } from '@/constants/query-keys'
 import { cn } from '@/utils/cn'
+import * as ui from '@/styles/ui'
 import { formatNumber } from '@/utils/format'
 import type { InboundStatus, Product } from '@/types/api.types'
 
@@ -184,17 +185,17 @@ export default function InboundPage() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[700px] text-sm">
             <thead>
-              <tr className="bg-[#2D4033] text-white">
-                <th className="text-center px-4 py-3 font-semibold">주문번호</th>
-                <th className="text-center px-4 py-3 font-semibold">공급업체</th>
-                <th className="text-center px-4 py-3 font-semibold">예정일</th>
-                <th className="text-center px-4 py-3 font-semibold">품목수</th>
-                <th className="text-center px-4 py-3 font-semibold">상태</th>
-                <th className="text-center px-4 py-3 font-semibold">등록일</th>
-                <th className="px-4 py-3 w-10" />
+              <tr className={ui.thead}>
+                <th className={ui.th}>주문번호</th>
+                <th className={ui.th}>공급업체</th>
+                <th className={ui.th}>예정일</th>
+                <th className={ui.th}>품목수</th>
+                <th className={ui.th}>상태</th>
+                <th className={ui.th}>등록일</th>
+                <th className="w-10 px-4 py-3" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+            <tbody className={ui.tbody}>
               {isLoading && (
                 <tr><td colSpan={7} className="text-center py-10 text-gray-400">로딩 중...</td></tr>
               )}

@@ -73,10 +73,14 @@ public class WarehouseService {
     }
 
     @Transactional
-    public Location updateLocation(UUID id, Boolean isActive, Integer capacityUnit) {
+    public Location updateLocation(UUID id, Boolean isActive, Integer capacityUnit,
+                                   Integer putawayPriority, Integer pickPriority, Boolean allowMixedProducts) {
         Location loc = findLocation(id);
         if (isActive     != null) loc.setActive(isActive);
         if (capacityUnit != null) loc.setCapacityUnit(capacityUnit);
+        if (putawayPriority != null) loc.setPutawayPriority(Math.max(0, putawayPriority));
+        if (pickPriority != null) loc.setPickPriority(Math.max(0, pickPriority));
+        if (allowMixedProducts != null) loc.setAllowMixedProducts(allowMixedProducts);
         return locationRepo.save(loc);
     }
 

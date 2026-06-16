@@ -60,6 +60,9 @@ export interface Location {
   shelf?: string
   bin?: string
   capacityUnit: number
+  putawayPriority: number
+  pickPriority: number
+  allowMixedProducts: boolean
   isActive: boolean
   zone?: Zone
 }
@@ -246,12 +249,14 @@ export interface PurchaseOrder {
   items: PurchaseOrderItem[]
 }
 
-export type OutboundOrderStatus = 'COLLECTED' | 'INSTRUCTED' | 'CANCELLED'
+export type OutboundOrderStatus = 'COLLECTED' | 'INSTRUCTED' | 'PICKED' | 'CANCELLED'
+export type OutboundOrderType = 'INTERNAL' | 'EXTERNAL'
 
 export interface OutboundOrderItem {
   id: string
   productId: string
   boxCount: number
+  pickedBoxCount: number
   sortOrder: number
   product?: Product
 }
@@ -260,6 +265,8 @@ export interface OutboundOrder {
   id: string
   orderNo: string
   warehouseId: string
+  clientId?: string
+  orderType: OutboundOrderType
   channel?: string
   externalOrderNo?: string
   customer: string
@@ -270,6 +277,7 @@ export interface OutboundOrder {
   requestedShipDate?: string
   status: OutboundOrderStatus
   instructedAt?: string
+  pickedAt?: string
   memo?: string
   createdAt: string
   items: OutboundOrderItem[]
@@ -314,6 +322,9 @@ export interface QuoteItem {
   productId?: string
   productCode?: string
   productName?: string
+  category?: string
+  barcode?: string
+  spec?: string
   unit?: string
   qty: number
   unitPrice: number

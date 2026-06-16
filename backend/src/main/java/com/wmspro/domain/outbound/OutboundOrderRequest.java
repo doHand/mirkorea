@@ -5,6 +5,8 @@ import java.util.*;
 
 public class OutboundOrderRequest {
     public UUID warehouseId;
+    public UUID clientId;
+    public OutboundOrderType orderType;
     public String channel;
     public String externalOrderNo;
     public String customer;

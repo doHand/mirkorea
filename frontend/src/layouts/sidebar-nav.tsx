@@ -27,6 +27,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   categories:         Tag,
   inbound:            PackageCheck,
   outbound:           Truck,
+  'picking-list':     ClipboardList,
   pricing:            Tags,
   warehouse:          Warehouse,
   transactions:       ClipboardList,

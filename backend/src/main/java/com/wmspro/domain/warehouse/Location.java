@@ -44,6 +44,18 @@ public class Location {
     @Builder.Default
     private int capacityUnit = 9999;
 
+    @Column(name = "putaway_priority", nullable = false)
+    @Builder.Default
+    private int putawayPriority = 100;
+
+    @Column(name = "pick_priority", nullable = false)
+    @Builder.Default
+    private int pickPriority = 100;
+
+    @Column(name = "allow_mixed_products", nullable = false)
+    @Builder.Default
+    private boolean allowMixedProducts = true;
+
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private boolean isActive = true;

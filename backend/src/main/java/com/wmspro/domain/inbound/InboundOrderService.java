@@ -177,6 +177,13 @@ public class InboundOrderService {
         return orderRepo.save(order);
     }
 
+    // ── 삭제 ─────────────────────────────────────────────────────
+    @Transactional
+    public void delete(UUID id) {
+        InboundOrder order = findById(id);
+        orderRepo.delete(order);
+    }
+
     // ── Private ───────────────────────────────────────────────────
     private String generateOrderNo() {
         Long seq  = jdbcTemplate.queryForObject("SELECT nextval('inbound_seq')", Long.class);

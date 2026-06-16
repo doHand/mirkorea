@@ -25,7 +25,13 @@ export const warehouseApi = {
     zoneId: string; code: string; aisle?: string; rack?: string; shelf?: string; bin?: string
   }) => post<Location>(`/warehouses/${warehouseId}/locations`, data),
 
-  updateLocation: (locationId: string, data: { isActive?: boolean; capacityUnit?: number }) =>
+  updateLocation: (locationId: string, data: {
+    isActive?: boolean
+    capacityUnit?: number
+    putawayPriority?: number
+    pickPriority?: number
+    allowMixedProducts?: boolean
+  }) =>
     patch<Location>(`/warehouses/locations/${locationId}`, data),
 
   deleteZone: (warehouseId: string, zoneId: string) =>

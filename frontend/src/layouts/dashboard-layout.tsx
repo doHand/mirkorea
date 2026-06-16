@@ -16,6 +16,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router        = useRouter()
   const isAuth        = useAuthStore((s) => s.isAuth)
   const hasHydrated   = useAuthStore((s) => s._hasHydrated)
+  const setHasHydrated = useAuthStore((s) => s.setHasHydrated)
   const sessionExpiry = useAuthStore((s) => s.sessionExpiresAt)
   const extendSession = useAuthStore((s) => s.extendSession)
   const clearAuth     = useAuthStore((s) => s.clearAuth)
@@ -31,6 +32,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const setWarehouse  = useWarehouseStore((s) => s.setWarehouse)
 
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  useEffect(() => {
+    if (hasHydrated) return
+    const fallback = window.setTimeout(() => setHasHydrated(true), 1000)
+    return () => window.clearTimeout(fallback)
+  }, [hasHydrated, setHasHydrated])
 
   const { data: warehouses = [] } = useQuery({
     queryKey: QUERY_KEYS.warehouses(),

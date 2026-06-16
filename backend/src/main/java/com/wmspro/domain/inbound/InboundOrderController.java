@@ -79,4 +79,11 @@ public class InboundOrderController {
     public ApiResponse<InboundOrder> cancel(@PathVariable UUID id) {
         return ApiResponse.ok(service.cancel(id), "입고 주문이 취소되었습니다");
     }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    public void delete(@PathVariable UUID id) {
+        service.delete(id);
+    }
 }

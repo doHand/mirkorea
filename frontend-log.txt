@@ -1,0 +1,135 @@
+
+> wms-pro-frontend@1.0.0 dev
+> next dev
+
+  ▲ Next.js 14.2.5
+  - Local:        http://localhost:3000
+
+ ✓ Starting...
+ ✓ Ready in 1920ms
+ ○ Compiling / ...
+ ✓ Compiled / in 1272ms (1214 modules)
+ GET / 200 in 2527ms
+ GET / 200 in 18ms
+(node:18328) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ Compiled /_error in 414ms (1216 modules)
+ GET /manifest.json 404 in 469ms
+ ✓ Compiled /products in 498ms (1289 modules)
+ ✓ Compiled /product-attrs in 359ms (1295 modules)
+ ✓ Compiled /picking-list in 437ms (1307 modules)
+ ✓ Compiled /outbound in 285ms (1317 modules)
+ GET / 200 in 127ms
+ GET /manifest.json 404 in 25ms
+ ○ Compiling /categories ...
+ ✓ Compiled /categories in 2.6s (1264 modules)
+ GET /picking-list 200 in 78ms
+ GET /manifest.json 404 in 18ms
+ GET /manifest.json 404 in 15ms
+ GET /outbound?embed=1 200 in 25ms
+ GET /outbound?embed=1 200 in 13ms
+ GET /picking-list 200 in 10ms
+ GET /manifest.json 404 in 11ms
+ GET /manifest.json 404 in 9ms
+ GET /picking-list 200 in 14ms
+ GET /manifest.json 404 in 14ms
+ GET /manifest.json 404 in 15ms
+ ○ Compiling /inbound ...
+ ✓ Compiled /inbound in 757ms (1253 modules)
+ GET /picking-list 200 in 70ms
+ GET /manifest.json 404 in 19ms
+ GET /manifest.json 404 in 11ms
+ GET /picking-list 200 in 12ms
+ GET /manifest.json 404 in 10ms
+ GET /manifest.json 404 in 11ms
+ GET /picking-list 200 in 10ms
+ GET /manifest.json 404 in 11ms
+ GET /manifest.json 404 in 10ms
+ GET /picking-list 200 in 11ms
+ GET /manifest.json 404 in 9ms
+ GET /manifest.json 404 in 11ms
+ ✓ Compiled in 832ms (1239 modules)
+ ✓ Compiled in 478ms (1239 modules)
+ ✓ Compiled in 410ms (1239 modules)
+ ✓ Compiled in 413ms (1239 modules)
+ ✓ Compiled in 628ms (1239 modules)
+ GET /picking-list 200 in 74ms
+ ✓ Compiled /_error in 281ms (1241 modules)
+ GET /manifest.json 404 in 346ms
+ GET /manifest.json 404 in 10ms
+ GET /picking-list 200 in 19ms
+ GET /manifest.json 404 in 10ms
+ GET /manifest.json 404 in 7ms
+ ✓ Compiled in 589ms (1241 modules)
+ ✓ Compiled in 405ms (1239 modules)
+ ✓ Compiled in 478ms (1239 modules)
+ ✓ Compiled in 320ms (1239 modules)
+ ✓ Compiled in 433ms (1239 modules)
+ ✓ Compiled in 324ms (1239 modules)
+ ✓ Compiled in 648ms (1239 modules)
+ ✓ Compiled /_error in 277ms (1241 modules)
+ GET /manifest.json 404 in 359ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 310ms
+ ✓ Compiled in 750ms (1241 modules)
+ ✓ Compiled in 342ms (1241 modules)
+ ✓ Compiled in 413ms (1241 modules)
+ ✓ Compiled in 283ms (1241 modules)
+ ✓ Compiled in 352ms (1239 modules)
+ ✓ Compiled /menu-permissions in 484ms (1264 modules)
+ ✓ Compiled in 384ms (1264 modules)
+ ✓ Compiled in 456ms (1264 modules)
+ ✓ Compiled in 765ms (1264 modules)
+ GET /picking-list 200 in 63ms
+ ✓ Compiled /_error in 179ms (1266 modules)
+ GET /manifest.json 404 in 226ms
+ GET /manifest.json 404 in 9ms
+ ✓ Compiled in 363ms (1252 modules)
+ ✓ Compiled in 332ms (1252 modules)
+ ✓ Compiled in 355ms (1252 modules)
+ ✓ Compiled in 349ms (1250 modules)
+ ✓ Compiled in 301ms (1250 modules)
+ ○ Compiling /scan ...
+ ✓ Compiled /scan in 796ms (1522 modules)
+ ○ Compiling /product-attrs ...
+ ✓ Compiled /product-attrs in 784ms (1568 modules)
+ ✓ Compiled /outbound in 394ms (1566 modules)
+ ✓ Compiled in 345ms (1238 modules)
+ ✓ Compiled in 331ms (1238 modules)
+ GET /picking-list 200 in 59ms
+ ✓ Compiled /_error in 292ms (1240 modules)
+ GET /manifest.json 404 in 352ms
+ GET /manifest.json 404 in 7ms
+ ✓ Compiled in 306ms (1240 modules)
+ GET /picking-list 200 in 35ms
+ GET /manifest.json 404 in 14ms
+ GET /manifest.json 404 in 16ms
+ ✓ Compiled in 354ms (1240 modules)
+ ✓ Compiled in 355ms (1240 modules)
+ ✓ Compiled in 376ms (1240 modules)
+ ✓ Compiled in 419ms (1240 modules)
+ ✓ Compiled in 303ms (1240 modules)
+ ✓ Compiled in 396ms (1240 modules)
+ ○ Compiling /transactions ...
+ ✓ Compiled /transactions in 679ms (1257 modules)
+ ✓ Compiled /clients in 249ms (1257 modules)
+ ✓ Compiled /quotes in 248ms (1285 modules)
+ ✓ Compiled /warehouse in 192ms (1301 modules)
+ ✓ Compiled /users in 344ms (1317 modules)
+ ✓ Compiled in 222ms (1029 modules)
+ ✓ Compiled in 716ms (1317 modules)
+ ✓ Compiled in 475ms (1319 modules)
+ ○ Compiling /supplier-settings ...
+ ✓ Compiled /supplier-settings in 607ms (1329 modules)
+ ✓ Compiled in 436ms (1329 modules)
+ ✓ Compiled /menu-permissions in 366ms (1350 modules)
+ ✓ Compiled /profile in 334ms (1358 modules)
+ ✓ Compiled /inbound in 367ms (1366 modules)
+ ○ Compiling /scan ...
+ ✓ Compiled /scan in 551ms (1626 modules)
+ ✓ Compiled /products in 345ms (1662 modules)
+ GET /picking-list 200 in 69ms
+ ✓ Compiled /_error in 285ms (1259 modules)
+ GET /manifest.json 404 in 357ms
+ GET /manifest.json 404 in 8ms
+ ✓ Compiled /warehouse in 153ms (1281 modules)
+ ✓ Compiled /menu-permissions in 134ms (1284 modules)

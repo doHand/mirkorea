@@ -5,6 +5,7 @@ import { Tag, Plus, Pencil, Trash2, Check, X, GripVertical, Package } from 'luci
 import toast from 'react-hot-toast'
 import { categoryApi } from '@/api/product.api'
 import { cn } from '@/utils/cn'
+import * as ui from '@/styles/ui'
 import { formatNumber } from '@/utils/format'
 import type { ProductCategory } from '@/types/api.types'
 
@@ -82,11 +83,11 @@ export default function CategoriesPage() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[520px] text-sm">
             <thead>
-              <tr className="bg-[#2D4033] text-white">
+              <tr className={ui.thead}>
                 <th className="w-8" />
-                <th className="text-left px-4 py-3 font-semibold">카테고리명</th>
-                <th className="text-left px-4 py-3 font-semibold">설명</th>
-                <th className="text-center px-4 py-3 font-semibold w-20">순서</th>
+                <th className={cn(ui.th, 'text-left')}>카테고리명</th>
+                <th className={cn(ui.th, 'text-left')}>설명</th>
+                <th className={cn(ui.th, 'w-20')}>순서</th>
                 <th className="w-20" />
               </tr>
             </thead>
@@ -113,8 +114,8 @@ export default function CategoriesPage() {
                 <tr
                   key={c.id}
                   className={cn(
-                    'border-t border-gray-100 dark:border-gray-800 transition-colors group/row',
-                    'hover:bg-gray-50/30 dark:hover:bg-gray-800/10',
+                    'border-t border-gray-100 dark:border-gray-800 group/row',
+                    ui.tr,
                     !c.isActive && 'opacity-50',
                   )}
                 >

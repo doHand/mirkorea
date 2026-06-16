@@ -16,6 +16,7 @@ public class OutboundOrderItem {
     @JsonBackReference private OutboundOrder order;
     @Column(name = "product_id", nullable = false) private UUID productId;
     @Column(name = "box_count", nullable = false) private int boxCount;
+    @Column(name = "picked_box_count", nullable = false) @Builder.Default private int pickedBoxCount = 0;
     @Column(name = "sort_order", nullable = false) private int sortOrder;
 
     @ManyToOne(fetch = FetchType.EAGER) @JoinColumn(name = "product_id", insertable = false, updatable = false)

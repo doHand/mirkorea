@@ -78,7 +78,12 @@ public class WarehouseController {
     ) {
         Boolean isActive     = body.containsKey("isActive") ? (Boolean) body.get("isActive") : null;
         Integer capacityUnit = body.containsKey("capacityUnit") ? (Integer) body.get("capacityUnit") : null;
-        return ApiResponse.ok(warehouseService.updateLocation(locationId, isActive, capacityUnit));
+        Integer putawayPriority = body.containsKey("putawayPriority") ? (Integer) body.get("putawayPriority") : null;
+        Integer pickPriority = body.containsKey("pickPriority") ? (Integer) body.get("pickPriority") : null;
+        Boolean allowMixedProducts = body.containsKey("allowMixedProducts") ? (Boolean) body.get("allowMixedProducts") : null;
+        return ApiResponse.ok(warehouseService.updateLocation(
+            locationId, isActive, capacityUnit, putawayPriority, pickPriority, allowMixedProducts
+        ));
     }
 
     @DeleteMapping("/{warehouseId}/zones/{zoneId}")

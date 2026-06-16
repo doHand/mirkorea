@@ -16,6 +16,9 @@ public class OutboundOrder {
     @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
     @Column(name = "order_no", nullable = false, unique = true, length = 30) private String orderNo;
     @Column(name = "warehouse_id", nullable = false) private UUID warehouseId;
+    @Column(name = "client_id") private UUID clientId;
+    @Enumerated(EnumType.STRING) @Column(name = "order_type", nullable = false, length = 20) @Builder.Default
+    private OutboundOrderType orderType = OutboundOrderType.EXTERNAL;
     @Column(length = 100) private String channel;
     @Column(name = "external_order_no", length = 100) private String externalOrderNo;
     @Column(nullable = false, length = 200) private String customer;
@@ -27,6 +30,7 @@ public class OutboundOrder {
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20) @Builder.Default
     private OutboundOrderStatus status = OutboundOrderStatus.COLLECTED;
     @Column(name = "instructed_at") private Instant instructedAt;
+    @Column(name = "picked_at") private Instant pickedAt;
     @Column(columnDefinition = "TEXT") private String memo;
     @Column(name = "created_by", nullable = false) private UUID createdBy;
     @CreationTimestamp @Column(name = "created_at", updatable = false) private Instant createdAt;
