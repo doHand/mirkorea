@@ -133,3 +133,144 @@
  GET /manifest.json 404 in 8ms
  ✓ Compiled /warehouse in 153ms (1281 modules)
  ✓ Compiled /menu-permissions in 134ms (1284 modules)
+ ✓ Compiled in 710ms (1259 modules)
+ ○ Compiling /products ...
+ ✓ Compiled /products in 552ms (1308 modules)
+ ✓ Compiled / in 499ms (1300 modules)
+ ✓ Compiled in 648ms (1258 modules)
+ ✓ Compiled in 193ms (992 modules)
+ ✓ Compiled in 195ms (992 modules)
+ ✓ Compiled in 204ms (992 modules)
+ ✓ Compiled in 305ms (992 modules)
+ ✓ Compiled in 242ms (992 modules)
+ ✓ Compiled in 230ms (992 modules)
+ ✓ Compiled in 265ms (992 modules)
+ ✓ Compiled in 232ms (992 modules)
+ ✓ Compiled in 243ms (992 modules)
+ ✓ Compiled in 193ms (992 modules)
+ ✓ Compiled in 232ms (992 modules)
+ ✓ Compiled in 222ms (992 modules)
+ ✓ Compiled in 215ms (992 modules)
+ ✓ Compiled in 223ms (992 modules)
+ ✓ Compiled in 192ms (992 modules)
+ ✓ Compiled in 284ms (992 modules)
+ ✓ Compiled in 220ms (992 modules)
+ ✓ Compiled in 189ms (992 modules)
+ ✓ Compiled in 228ms (992 modules)
+ ✓ Compiled in 187ms (992 modules)
+ ✓ Compiled in 202ms (992 modules)
+ ✓ Compiled in 206ms (992 modules)
+ ✓ Compiled in 210ms (992 modules)
+ ✓ Compiled in 182ms (992 modules)
+ ✓ Compiled in 181ms (992 modules)
+ ✓ Compiled in 205ms (992 modules)
+ ✓ Compiled in 232ms (992 modules)
+ ✓ Compiled in 206ms (992 modules)
+ ✓ Compiled in 160ms (992 modules)
+ ✓ Compiled in 213ms (992 modules)
+ ✓ Compiled in 217ms (992 modules)
+ ✓ Compiled in 181ms (992 modules)
+ ✓ Compiled in 211ms (992 modules)
+ ✓ Compiled in 177ms (992 modules)
+ ✓ Compiled in 191ms (992 modules)
+ ✓ Compiled in 179ms (992 modules)
+ ✓ Compiled in 206ms (992 modules)
+ ✓ Compiled in 208ms (992 modules)
+ ✓ Compiled in 180ms (992 modules)
+ ✓ Compiled in 244ms (992 modules)
+ ✓ Compiled in 183ms (992 modules)
+ GET / 200 in 128ms
+ ✓ Compiled /_error in 498ms (1260 modules)
+ GET /manifest.json 404 in 565ms
+ GET /manifest.json 404 in 8ms
+ ○ Compiling /picking-list ...
+ ✓ Compiled /picking-list in 769ms (1279 modules)
+ GET /picking-list 200 in 62ms
+ GET /manifest.json 404 in 15ms
+ GET /manifest.json 404 in 10ms
+ ✓ Compiled in 319ms (987 modules)
+ ✓ Compiled in 276ms (987 modules)
+ ✓ Compiled in 259ms (987 modules)
+ ✓ Compiled in 262ms (987 modules)
+ ✓ Compiled in 237ms (987 modules)
+ ✓ Compiled in 881ms (1248 modules)
+ ✓ Compiled in 373ms (1248 modules)
+ ✓ Compiled in 405ms (1248 modules)
+ ✓ Compiled in 880ms (1249 modules)
+ ✓ Compiled in 690ms (1255 modules)
+ GET /picking-list 200 in 61ms
+ ✓ Compiled /_error in 339ms (1257 modules)
+ GET /manifest.json 404 in 399ms
+ GET /manifest.json 404 in 12ms
+ ✓ Compiled in 452ms (1257 modules)
+ GET /picking-list 200 in 38ms
+ GET /manifest.json 404 in 12ms
+ GET /manifest.json 404 in 11ms
+ ✓ Compiled in 495ms (1255 modules)
+ GET /picking-list 200 in 42ms
+ ✓ Compiled /_error in 149ms (1257 modules)
+ GET /manifest.json 404 in 182ms
+ GET /manifest.json 404 in 14ms
+ ✓ Compiled in 448ms (1255 modules)
+ GET /picking-list 200 in 57ms
+ ✓ Compiled /_error in 151ms (1257 modules)
+ GET /manifest.json 404 in 193ms
+ GET /manifest.json 404 in 8ms
+ GET /picking-list 200 in 16ms
+ GET /manifest.json 404 in 9ms
+ GET /manifest.json 404 in 10ms
+ GET /picking-list 200 in 6ms
+ GET /picking-list 200 in 5ms
+ ✓ Compiled in 529ms (1255 modules)
+ ○ Compiling /outbound ...
+ ✓ Compiled /outbound in 749ms (1272 modules)
+ GET /outbound 200 in 62ms
+ ✓ Compiled /_error in 123ms (1262 modules)
+ GET /manifest.json 404 in 166ms
+ GET /manifest.json 404 in 8ms
+ GET /picking-list 200 in 14ms
+ ✓ Compiled in 473ms (1249 modules)
+ ✓ Compiled in 518ms (1247 modules)
+ ○ Compiling /products ...
+ ✓ Compiled /products in 680ms (1305 modules)
+ ✓ Compiled /product-attrs in 283ms (1311 modules)
+ ✓ Compiled /categories in 285ms (1301 modules)
+ ✓ Compiled /units in 306ms (1301 modules)
+ ✓ Compiled /inbound in 394ms (1313 modules)
+ ○ Compiling /inbound/[id] ...
+ ✓ Compiled /inbound/[id] in 547ms (1329 modules)
+ ✓ Compiled /quotes in 437ms (1355 modules)
+ ✓ Compiled /warehouse in 404ms (1347 modules)
+ ✓ Compiled /outbound in 266ms (1311 modules)
+ ✓ Compiled /picking-list in 122ms (1317 modules)
+ ✓ Compiled in 513ms (1275 modules)
+ ✓ Compiled in 287ms (1275 modules)
+ ✓ Compiled in 261ms (999 modules)
+ ✓ Compiled in 237ms (999 modules)
+ ✓ Compiled in 276ms (999 modules)
+ ○ Compiling /clients ...
+ ✓ Compiled /clients in 762ms (1270 modules)
+ ✓ Compiled /quotes in 366ms (1287 modules)
+ ✓ Compiled /users in 316ms (1303 modules)
+ ✓ Compiled /permissions in 174ms (1309 modules)
+ ✓ Compiled /supplier-settings in 192ms (1319 modules)
+ ✓ Compiled /menu-permissions in 277ms (1340 modules)
+ ✓ Compiled /outbound in 182ms (1348 modules)
+ ✓ Compiled /picking-list in 172ms (1354 modules)
+ ✓ Compiled /scan in 434ms (1616 modules)
+ ✓ Compiled /transactions in 322ms (1620 modules)
+ ✓ Compiled /inbound in 348ms (1618 modules)
+ ✓ Compiled /inbound/[id] in 345ms (1632 modules)
+ ✓ Compiled /products in 503ms (1319 modules)
+ ✓ Compiled /product-attrs in 342ms (1325 modules)
+ ✓ Compiled /barcodes in 165ms (1331 modules)
+ ✓ Compiled /scan in 207ms (1579 modules)
+ ✓ Compiled /inbound in 205ms (1589 modules)
+ ✓ Compiled /picking-list in 361ms (1595 modules)
+ ✓ Compiled in 605ms (1595 modules)
+ ✓ Compiled in 414ms (1595 modules)
+ ✓ Compiled in 467ms (1595 modules)
+ ✓ Compiled in 519ms (1266 modules)
+ ✓ Compiled in 319ms (1266 modules)
+ ✓ Compiled in 289ms (1266 modules)
+ ✓ Compiled in 302ms (1266 modules)
