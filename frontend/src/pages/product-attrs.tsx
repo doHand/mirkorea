@@ -659,7 +659,7 @@ export default function ProductMasterPage() {
     router.push(`/quotes?productIds=${encodeURIComponent(ids.join(','))}`)
   }
 
-  const inputCls = 'w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400'
+  const inputCls = 'w-full border border-gray-200 dark:border-gray-700 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#2D4033]/30 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400'
 
   return (
     <div className="space-y-4">
@@ -742,21 +742,21 @@ export default function ProductMasterPage() {
       </div>
 
       {/* 검색/필터 */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-3 shadow-sm">
-        <div className="flex flex-col gap-2.5 md:flex-row">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-2">
+        <div className="flex flex-col gap-1.5 md:flex-row">
           <div className="relative flex-1">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             <input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') setSearch(searchInput) }}
               placeholder="거래처, 상품코드, 자재번호, 상품명, 위치, 카테고리, 상태 검색"
-              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 transition-shadow"
+              className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded focus:outline-none focus:ring-1 focus:ring-[#2D4033]/30 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 transition-colors"
             />
           </div>
           <button
             onClick={() => setSearch(searchInput)}
-            className="px-3.5 py-2 text-sm bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-medium"
+            className="px-3 py-1.5 text-sm bg-[#2D4033] text-white rounded hover:bg-[#253628] transition-colors font-medium"
           >
             검색
           </button>
@@ -764,13 +764,13 @@ export default function ProductMasterPage() {
             type="button"
             onClick={() => setShowSafetyOnly((prev) => !prev)}
             className={cn(
-              'inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-xl border transition-colors font-medium whitespace-nowrap',
+              'inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded border transition-colors font-medium whitespace-nowrap',
               showSafetyOnly
                 ? 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-900/70 dark:bg-red-950/30 dark:text-red-300 dark:hover:bg-red-950/50'
                 : 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800',
             )}
           >
-            <AlertTriangle size={14} />
+            <AlertTriangle size={13} />
             안전재고 경고만
           </button>
           <button
@@ -780,14 +780,14 @@ export default function ProductMasterPage() {
               setSearch('')
               setShowSafetyOnly(false)
             }}
-            className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium whitespace-nowrap"
+            className="px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium whitespace-nowrap"
           >
             초기화
           </button>
           <button
             type="button"
             onClick={resetWidths}
-            className="hidden sm:block px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium whitespace-nowrap"
+            className="hidden sm:block px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium whitespace-nowrap"
             title="컬럼 너비를 기본값으로 초기화"
           >
             컬럼 초기화
@@ -797,7 +797,7 @@ export default function ProductMasterPage() {
 
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
-        <div className="flex items-center gap-3 bg-indigo-600 text-white px-4 py-2.5 rounded-xl shadow-lg shadow-indigo-500/20">
+        <div className="flex items-center gap-3 bg-[#2D4033] text-white px-3 py-2 rounded">
           <span className="text-sm font-semibold flex-1">{formatNumber(selectedIds.size)}개 선택됨</span>
           <button
             onClick={handleBulkDelete}
@@ -1075,61 +1075,59 @@ export default function ProductMasterPage() {
 
       {/* Add modal */}
       {showAdd && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92vh] overflow-y-auto border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 dark:border-gray-700">
-              <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
-                <Package size={16} className="text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <h3 className="font-semibold text-gray-900 dark:text-white flex-1">상품 등록</h3>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700 w-full max-w-3xl max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 bg-[#2D4033]">
+              <Package size={14} className="text-white shrink-0" />
+              <h3 className="text-sm font-semibold text-white flex-1">상품 등록</h3>
               <button
                 onClick={() => {
                   setShowAdd(false)
                   setSelectedClient(null)
                   setSelectedLocation(null)
                 }}
-                className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400"
+                className="p-1 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors"
               >
-                <X size={16} />
+                <X size={14} />
               </button>
             </div>
-            <div className="p-6 space-y-5">
+            <div className="p-4 space-y-4">
               <section>
-                <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">기본 정보</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 pb-1 mb-2">기본 정보</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">상품코드 *</label>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">상품코드 *</label>
                     <input autoFocus placeholder="PRD-001" value={form.code}
                       onChange={(e) => setForm((p) => ({ ...p, code: e.target.value }))}
                       className={inputCls} />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">상품명 *</label>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">상품명 *</label>
                     <input placeholder="상품명" value={form.name}
                       onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
                       className={inputCls} />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">규격</label>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">규격</label>
                     <input placeholder="규격" value={form.spec}
                       onChange={(e) => setForm((p) => ({ ...p, spec: e.target.value }))}
                       className={inputCls} />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">자재번호</label>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">자재번호</label>
                     <input placeholder="자재번호" value={form.materialNo}
                       onChange={(e) => setForm((p) => ({ ...p, materialNo: e.target.value }))}
                       className={inputCls} />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">카테고리</label>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">카테고리</label>
                     <CategorySelect
                       value={form.category}
                       onChange={(val) => setForm((p) => ({ ...p, category: val }))}
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">거래처</label>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">거래처</label>
                     <button
                       type="button"
                       onClick={() => { setClientPickerSearch(''); setShowClientPicker(true) }}
@@ -1231,10 +1229,10 @@ export default function ProductMasterPage() {
               </section>
 
               <section className="border-t border-gray-100 dark:border-gray-700 pt-4">
-                <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">수량 / 위치</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 pb-1 mb-2 block w-full">수량 / 위치</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">단위</label>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">단위</label>
                     <select value={form.unit} onChange={(e) => setForm((p) => ({ ...p, unit: e.target.value }))} className={inputCls}>
                       {unitOptions.length > 0
                         ? unitOptions.map((u) => <option key={u.id} value={u.code}>{u.code}{u.label ? ` (${u.label})` : ''}</option>)
@@ -1243,25 +1241,25 @@ export default function ProductMasterPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">박스당 낱개 수량</label>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">박스당 낱개 수량</label>
                     <input type="number" min={1} value={form.boxQty}
                       onChange={(e) => setForm((p) => ({ ...p, boxQty: +e.target.value }))}
                       className={inputCls} />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">안전재고</label>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">안전재고</label>
                     <input type="number" min={0} value={form.safetyStock}
                       onChange={(e) => setForm((p) => ({ ...p, safetyStock: +e.target.value }))}
                       className={inputCls} />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">재주문점</label>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">재주문점</label>
                     <input type="number" min={0} value={form.reorderPoint}
                       onChange={(e) => setForm((p) => ({ ...p, reorderPoint: +e.target.value }))}
                       className={inputCls} />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">보관위치</label>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">보관위치</label>
                     <button
                       type="button"
                       onClick={() => { setLocationPickerSearch(''); setShowLocationPicker(true) }}
@@ -1284,29 +1282,29 @@ export default function ProductMasterPage() {
               </section>
 
               <section className="border-t border-gray-100 dark:border-gray-700 pt-4">
-                <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">가격 정보</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 pb-1 mb-2 block w-full">가격 정보</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">원가</label>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">원가</label>
                     <input type="number" min={0} value={form.costPrice}
                       onChange={(e) => setForm((p) => ({ ...p, costPrice: +e.target.value }))}
                       className={inputCls} />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">판매가</label>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">판매가</label>
                     <input type="number" min={0} value={form.sellPrice}
                       onChange={(e) => setForm((p) => ({ ...p, sellPrice: +e.target.value }))}
                       className={inputCls} />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">소매단가</label>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">소매단가</label>
                     <input type="number" min={0} value={form.retailPrice}
                       onChange={(e) => setForm((p) => ({ ...p, retailPrice: +e.target.value }))}
                       className={inputCls} />
                   </div>
                   {(['priceA', 'priceB', 'priceC'] as const).map((key) => (
                     <div key={key}>
-                      <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
                         {key === 'priceA' ? '해피미르 단가' : key === 'priceB' ? '네이버 단가' : 'SSG 단가'}
                       </label>
                       <input type="number" min={0} value={form[key]}
@@ -1318,10 +1316,10 @@ export default function ProductMasterPage() {
               </section>
 
               <section className="border-t border-gray-100 dark:border-gray-700 pt-4">
-                <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">상태 & 메모</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 pb-1 mb-2 block w-full">상태 & 메모</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">판매 상태</label>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">판매 상태</label>
                     <select value={form.saleStatus} onChange={(e) => setForm((p) => ({ ...p, saleStatus: e.target.value as SaleStatus }))} className={inputCls}>
                       {Object.entries(SALE_STATUS_LABEL).map(([k, v]) => (
                         <option key={k} value={k}>{v}</option>
@@ -1329,7 +1327,7 @@ export default function ProductMasterPage() {
                     </select>
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide">메모</label>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">메모</label>
                     <textarea rows={3} placeholder="메모 입력..." value={form.memo}
                       onChange={(e) => setForm((p) => ({ ...p, memo: e.target.value }))}
                       className={cn(inputCls, 'resize-none')} />
@@ -1344,14 +1342,14 @@ export default function ProductMasterPage() {
                   setSelectedClient(null)
                   setSelectedLocation(null)
                 }}
-                className="flex-1 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                className="flex-1 py-2 border border-gray-200 dark:border-gray-700 rounded text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
               >
                 취소
               </button>
               <button
                 onClick={() => createMutation.mutate()}
                 disabled={!form.code.trim() || !form.name.trim() || createMutation.isPending}
-                className="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50"
+                className="flex-1 py-2 bg-[#2D4033] text-white rounded text-sm font-semibold hover:bg-[#253628] disabled:opacity-50"
               >
                 {createMutation.isPending ? '등록 중...' : '등록'}
               </button>

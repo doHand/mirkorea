@@ -116,13 +116,13 @@ function ProductRankCard({
           <h3 className="text-sm font-bold text-gray-950 dark:text-white">{title}</h3>
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{caption}</p>
         </div>
-        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${toneCls.iconBg}`}>
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded ${toneCls.iconBg}`}>
           <Icon size={17} className={toneCls.iconText} />
         </div>
       </div>
 
       {items.length === 0 ? (
-        <div className="rounded-xl border border-gray-100 bg-gray-50/80 px-4 py-6 text-center text-sm text-gray-500 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300">
+        <div className="rounded border border-gray-100 bg-gray-50/80 px-4 py-6 text-center text-sm text-gray-500 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300">
           집계할 거래 내역이 없습니다
         </div>
       ) : (
@@ -130,7 +130,7 @@ function ProductRankCard({
           {items.slice(0, 4).map((item, index) => (
             <div
               key={item.id}
-              className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/70 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/70"
+              className="flex items-center gap-3 rounded border border-gray-100 bg-gray-50/70 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/70"
             >
               <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${toneCls.pill}`}>
                 {index + 1}
@@ -164,7 +164,7 @@ function LowStockByClientCard({
     <div className="flex h-full min-h-0 flex-col bg-white/95 dark:bg-slate-900 rounded-[18px] border border-white/80 dark:border-rose-700/60 p-4 shadow-lg shadow-slate-900/5">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-100 dark:border-rose-700/60 flex items-center justify-center">
+          <div className="w-8 h-8 rounded bg-rose-50 dark:bg-rose-950/60 border border-rose-100 dark:border-rose-700/60 flex items-center justify-center">
             <TrendingDown size={16} className="text-rose-600 dark:text-rose-100" />
           </div>
           <div>
@@ -177,7 +177,7 @@ function LowStockByClientCard({
       </div>
 
       {groups.length === 0 ? (
-        <div className="rounded-xl border border-gray-100 bg-gray-50/80 px-4 py-6 text-center text-sm text-gray-500 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300">
+        <div className="rounded border border-gray-100 bg-gray-50/80 px-4 py-6 text-center text-sm text-gray-500 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300">
           현재 안전재고 미달 품목이 없습니다
         </div>
       ) : (
@@ -185,7 +185,7 @@ function LowStockByClientCard({
           {groups.slice(0, compact ? 3 : 4).map((group) => (
             <div
               key={group.clientId}
-              className="rounded-2xl border border-rose-100 bg-rose-50/60 p-2.5 dark:border-rose-700/50 dark:bg-rose-950/35"
+              className="rounded border border-rose-100 bg-rose-50/60 p-2.5 dark:border-rose-700/50 dark:bg-rose-950/35"
             >
               <div className="mb-2 flex items-center justify-between gap-3">
                 <div className="min-w-0">
@@ -202,7 +202,7 @@ function LowStockByClientCard({
                 {group.items.slice(0, compact ? 1 : 2).map((inv) => (
                   <div
                     key={inv.id}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-white/70 bg-white/75 px-2.5 py-1.5 dark:border-slate-700 dark:bg-slate-900/55"
+                    className="flex items-center justify-between gap-3 rounded border border-white/70 bg-white/75 px-2.5 py-1.5 dark:border-slate-700 dark:bg-slate-900/55"
                   >
                     <div className="min-w-0">
                       <p className="truncate text-xs font-semibold text-gray-800 dark:text-slate-100">{inv.product?.name}</p>
@@ -243,9 +243,9 @@ function SquareQuickLinksCard({
           <Link
             key={href}
             href={href}
-            className="group flex aspect-square min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 text-center transition-all hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-indigo-500 dark:hover:bg-indigo-950/35"
+            className="group flex aspect-square min-h-24 flex-col items-center justify-center gap-2 rounded border border-gray-200 bg-gray-50 text-center transition-all hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-indigo-500 dark:hover:bg-indigo-950/35"
           >
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-gray-700 shadow-sm transition-colors group-hover:text-indigo-700 dark:bg-slate-900 dark:text-slate-100">
+            <span className="flex h-10 w-10 items-center justify-center rounded bg-white text-gray-700 shadow-sm transition-colors group-hover:text-indigo-700 dark:bg-slate-900 dark:text-slate-100">
               <Icon size={18} />
             </span>
             <span className="px-2 text-xs font-bold text-gray-800 dark:text-slate-100">
@@ -420,12 +420,12 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <div className="inline-flex max-w-full gap-1 overflow-x-auto rounded-2xl border border-gray-200 bg-gray-50 p-1 dark:border-slate-700 dark:bg-slate-800">
+            <div className="inline-flex max-w-full gap-1 overflow-x-auto rounded border border-gray-200 bg-gray-50 p-1 dark:border-slate-700 dark:bg-slate-800">
               {allowedModes.map((mode) => (
                 <button
                   key={mode}
                   onClick={() => setSelectedMode(mode)}
-                  className={`h-8 shrink-0 rounded-xl px-3 text-xs font-semibold transition-colors ${
+                  className={`h-8 shrink-0 rounded px-3 text-xs font-semibold transition-colors ${
                     role === mode
                       ? 'bg-gray-950 text-white dark:bg-white dark:text-slate-950'
                       : 'text-gray-500 hover:bg-white hover:text-gray-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white'
@@ -439,7 +439,7 @@ export default function DashboardPage() {
             {(role === 'ADMIN' || role === 'MANAGER') && (
               <button
                 onClick={() => setQuickLinksOpen((open) => !open)}
-                className="inline-flex h-10 items-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 text-xs font-semibold text-gray-600 transition-colors hover:bg-white hover:text-gray-950 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                className="inline-flex h-10 items-center gap-2 rounded border border-gray-200 bg-gray-50 px-3 text-xs font-semibold text-gray-600 transition-colors hover:bg-white hover:text-gray-950 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
                 aria-expanded={quickLinksOpen}
               >
                 업무 바로가기
@@ -455,7 +455,7 @@ export default function DashboardPage() {
               <Link
                 key={href}
                 href={href}
-                className="inline-flex h-9 items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 text-xs font-semibold text-gray-700 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-indigo-500"
+                className="inline-flex h-9 items-center gap-2 rounded border border-gray-200 bg-gray-50 px-3 text-xs font-semibold text-gray-700 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-indigo-500"
               >
                 <Icon size={14} />
                 {label}
@@ -470,7 +470,7 @@ export default function DashboardPage() {
           <div key={label} className={label === '안전재고 미달' ? 'group relative z-20' : 'relative'}>
             <div className={`relative overflow-hidden rounded-[16px] border ${border} ${bg} p-4 text-white shadow-xl shadow-slate-900/10`}>
               <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/18" />
-              <div className="pointer-events-none absolute right-8 top-10 h-16 w-16 rounded-2xl bg-white/12 rotate-45" />
+              <div className="pointer-events-none absolute right-8 top-10 h-16 w-16 rounded bg-white/12 rotate-45" />
               <div className="relative flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold text-white/85">{label}</p>
@@ -479,14 +479,14 @@ export default function DashboardPage() {
                 {label === '안전재고 미달' ? (
                   <Link
                     href="/products?safety=1"
-                    className="pointer-events-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/25 bg-white/18 backdrop-blur transition-colors hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-white/70"
+                    className="pointer-events-auto flex h-10 w-10 shrink-0 items-center justify-center rounded border border-white/25 bg-white/18 backdrop-blur transition-colors hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-white/70"
                     title="안전재고 미달 상품만 보기"
                     aria-label="안전재고 미달 상품만 보기"
                   >
                     <Icon size={18} className={tone} />
                   </Link>
                 ) : (
-                  <div className="w-10 h-10 rounded-2xl border border-white/25 bg-white/18 flex items-center justify-center shrink-0 backdrop-blur">
+                  <div className="w-10 h-10 rounded border border-white/25 bg-white/18 flex items-center justify-center shrink-0 backdrop-blur">
                     <Icon size={18} className={tone} />
                   </div>
                 )}
@@ -498,17 +498,17 @@ export default function DashboardPage() {
             </div>
 
             {label === '안전재고 미달' && (
-              <div className="pointer-events-none invisible absolute left-0 top-[calc(100%+8px)] z-50 w-full min-w-72 translate-y-1 rounded-2xl border border-rose-200 bg-white p-3 opacity-0 shadow-2xl transition-all group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 dark:border-rose-800 dark:bg-slate-900">
+              <div className="pointer-events-none invisible absolute left-0 top-[calc(100%+8px)] z-50 w-full min-w-72 translate-y-1 rounded border border-rose-200 bg-white p-3 opacity-0 shadow-2xl transition-all group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 dark:border-rose-800 dark:bg-slate-900">
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <p className="text-xs font-bold text-gray-950 dark:text-white">안전재고 미달 미리보기</p>
                   <span className="text-[10px] font-semibold text-rose-500">{formatNumber((lowStock as any[]).length)}개 품목</span>
                 </div>
                 {lowStockPreview.length === 0 ? (
-                  <p className="rounded-xl bg-gray-50 px-3 py-4 text-center text-xs text-gray-400 dark:bg-slate-800">미달 품목이 없습니다</p>
+                  <p className="rounded bg-gray-50 px-3 py-4 text-center text-xs text-gray-400 dark:bg-slate-800">미달 품목이 없습니다</p>
                 ) : (
                   <div className="space-y-1.5">
                     {lowStockPreview.map((inv) => (
-                      <div key={inv.id} className="flex items-center gap-2 rounded-xl bg-rose-50/70 px-2.5 py-2 dark:bg-rose-950/35">
+                      <div key={inv.id} className="flex items-center gap-2 rounded bg-rose-50/70 px-2.5 py-2 dark:bg-rose-950/35">
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-xs font-semibold text-gray-900 dark:text-gray-100">{inv.product?.name ?? '상품 정보 없음'}</p>
                           <p className="truncate text-[10px] text-gray-400">{inv.product?.code ?? '-'} · {inv.location?.code ?? '위치 미지정'}</p>

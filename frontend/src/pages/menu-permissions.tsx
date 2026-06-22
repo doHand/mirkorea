@@ -233,7 +233,7 @@ function SortableMenuRow({
 function DragGhost({ id, menus }: { id: string; menus: MenuDef[] }) {
   if (id.startsWith('section-')) {
     return (
-      <div className="flex items-center gap-2 bg-white dark:bg-gray-900 border border-indigo-200 dark:border-indigo-700 rounded-xl px-4 py-2 shadow-xl opacity-95">
+      <div className="flex items-center gap-2 bg-white dark:bg-gray-900 border border-indigo-200 dark:border-indigo-700 rounded px-4 py-2 shadow-xl opacity-95">
         <GripVertical size={13} className="text-indigo-400" />
         <Folder size={13} className="text-indigo-400" />
         <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
@@ -245,7 +245,7 @@ function DragGhost({ id, menus }: { id: string; menus: MenuDef[] }) {
   const menu = menus.find((m) => m.menuId === id)
   if (!menu) return null
   return (
-    <div className="flex items-center gap-2 bg-white dark:bg-gray-900 border border-indigo-200 dark:border-indigo-700 rounded-xl px-4 py-2.5 shadow-xl opacity-95">
+    <div className="flex items-center gap-2 bg-white dark:bg-gray-900 border border-indigo-200 dark:border-indigo-700 rounded px-4 py-2.5 shadow-xl opacity-95">
       <GripVertical size={13} className="text-indigo-400" />
       <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{menu.label}</span>
     </div>
@@ -401,14 +401,14 @@ export default function MenuPermissionsPage() {
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={handleAddSection}
-            className="flex items-center gap-1.5 px-3 py-2 text-sm bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/40 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 text-sm bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/40 rounded hover:bg-indigo-100 dark:hover:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 transition-colors"
           >
             <FolderPlus size={14} />
             <span className="hidden sm:inline">새 폴더</span>
           </button>
           <button
             onClick={handleReset}
-            className="flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-colors"
           >
             <RotateCcw size={14} />
             <span className="hidden sm:inline">초기화</span>
@@ -417,7 +417,7 @@ export default function MenuPermissionsPage() {
       </div>
 
       {/* 안내 배너 */}
-      <div className="flex items-start gap-2.5 bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800/30 rounded-xl px-4 py-3">
+      <div className="flex items-start gap-2.5 bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800/30 rounded px-4 py-3">
         <Info size={15} className="text-indigo-500 dark:text-indigo-400 mt-0.5 shrink-0" />
         <p className="text-xs text-indigo-700 dark:text-indigo-300 leading-relaxed">
           <strong>관리자(ADMIN)</strong>는 모든 메뉴에 항상 접근 가능합니다. 폴더 이름을 클릭하면 이름을 변경할 수 있으며, 드래그 핸들(<GripVertical size={11} className="inline" />)로 순서를 조정합니다.
@@ -426,7 +426,7 @@ export default function MenuPermissionsPage() {
       </div>
 
       {/* ── 데스크톱: DnD 테이블 ─────────────────────────────────────── */}
-      <div className="hidden md:block bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
+      <div className="hidden md:block bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -489,7 +489,7 @@ export default function MenuPermissionsPage() {
       {/* ── 모바일: 섹션별 카드 ──────────────────────────────────────── */}
       <div className="md:hidden space-y-4">
         {sections.map(({ label, items }) => (
-          <div key={label} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
+          <div key={label} className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
             <div className="px-4 py-2.5 bg-gray-50/80 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
               <Folder size={11} className="text-gray-400 dark:text-gray-500 shrink-0" />
               <p className="text-[10px] font-bold text-gray-400 dark:text-gray-600 uppercase tracking-widest flex-1">{label}</p>
@@ -526,7 +526,7 @@ export default function MenuPermissionsPage() {
                           disabled={isAdmin}
                           onClick={() => handleToggle(menu.menuId, role, checked, menu.label)}
                           className={cn(
-                            'flex items-center gap-2 px-3 py-2 rounded-xl border text-left transition-all',
+                            'flex items-center gap-2 px-3 py-2 rounded border text-left transition-all',
                             checked
                               ? 'border-indigo-200 dark:border-indigo-800/50 bg-indigo-50 dark:bg-indigo-900/10'
                               : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50',
@@ -552,7 +552,7 @@ export default function MenuPermissionsPage() {
 
         <button
           onClick={handleAddSection}
-          className="w-full flex items-center justify-center gap-2 py-3.5 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl text-sm text-gray-400 dark:text-gray-600 hover:border-indigo-300 hover:text-indigo-500 dark:hover:border-indigo-700 dark:hover:text-indigo-400 transition-colors"
+          className="w-full flex items-center justify-center gap-2 py-3.5 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded text-sm text-gray-400 dark:text-gray-600 hover:border-indigo-300 hover:text-indigo-500 dark:hover:border-indigo-700 dark:hover:text-indigo-400 transition-colors"
         >
           <FolderPlus size={15} />
           새 폴더 추가
@@ -562,7 +562,7 @@ export default function MenuPermissionsPage() {
       {/* 역할 설명 카드 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
         {ROLES.map(({ role, label, headerCls }) => (
-          <div key={role} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-3">
+          <div key={role} className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800 p-3">
             <p className={cn('text-xs font-bold mb-1', headerCls)}>{label}</p>
             <p className="text-[11px] text-gray-400 dark:text-gray-500 leading-relaxed">{ROLE_DESC[role]}</p>
           </div>

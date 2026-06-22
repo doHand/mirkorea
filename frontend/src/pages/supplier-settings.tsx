@@ -46,7 +46,7 @@ export default function SupplierSettingsPage() {
         </button>
       </div>
 
-      <div className="max-w-3xl rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="max-w-3xl rounded border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
         <div className="border-b border-gray-100 px-5 py-4 dark:border-gray-800">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white">출력용 공급자 정보</h3>
         </div>
@@ -65,7 +65,7 @@ export default function SupplierSettingsPage() {
                 })}
                 placeholder={field.placeholder}
                 inputMode={field.key === 'phone' || field.key === 'fax' || field.key === 'businessNo' ? 'numeric' : undefined}
-                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                className="w-full rounded border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
               />
             </label>
           ))}
@@ -74,14 +74,14 @@ export default function SupplierSettingsPage() {
           <p className="text-xs text-gray-400">입력하면 자동 저장되고, 다음 출력부터 바로 반영됩니다.</p>
           <button
             onClick={() => toast.success('공급자 정보가 저장되어 있습니다')}
-            className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
+            className="flex items-center gap-1.5 rounded bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
           >
             <Save size={14} />저장 확인
           </button>
         </div>
       </div>
 
-      <div className="max-w-3xl overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="max-w-3xl overflow-hidden rounded border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
         <div className="bg-blue-50 px-5 py-3 text-sm font-semibold text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">거래명세서 표시 예시</div>
         <div className="grid grid-cols-1 border-t border-blue-700 text-sm text-blue-900 dark:text-blue-200 sm:grid-cols-[80px_1fr]">
           <div className="flex items-center justify-center border-b border-blue-700 bg-blue-50 py-2 font-semibold dark:bg-blue-900/20 sm:border-b-0 sm:border-r sm:py-0">공급자</div>

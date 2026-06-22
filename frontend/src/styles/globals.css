@@ -92,12 +92,12 @@
 
   /* 데이터 카드 (테이블 래퍼) */
   .data-card {
-    @apply bg-white dark:bg-gray-900 rounded-xl border border-gray-200/80 dark:border-gray-800 overflow-hidden shadow-sm;
+    @apply bg-white dark:bg-gray-900 rounded border border-gray-200/80 dark:border-gray-800 overflow-hidden;
   }
 
   /* 검색 인풋 공통 */
   .search-input {
-    @apply pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg
+    @apply pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded
            bg-white dark:bg-gray-900 outline-none focus:border-[#2D4033] dark:focus:border-[#5f9e78]
            focus:ring-1 focus:ring-[#2D4033]/20 dark:focus:ring-[#5f9e78]/20
            text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-600
@@ -106,25 +106,25 @@
 
   /* 프라이머리 버튼 */
   .btn-primary {
-    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium
-           bg-[#2D4033] hover:bg-[#253628] text-white transition-colors shadow-sm;
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium
+           bg-[#2D4033] hover:bg-[#253628] text-white transition-colors;
   }
 
   /* 아웃라인 버튼 */
   .btn-outline {
-    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium
            border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300
            hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors;
   }
 
   /* 위험 버튼 */
   .btn-danger {
-    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium
-           bg-rose-500 hover:bg-rose-600 text-white transition-colors shadow-sm;
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium
+           bg-rose-500 hover:bg-rose-600 text-white transition-colors;
   }
 
   .responsive-icon-action {
-    @apply flex h-9 w-9 items-center justify-center gap-1.5 rounded-lg text-sm font-medium transition-colors sm:h-auto sm:w-auto sm:px-3 sm:py-2;
+    @apply flex h-7 w-7 items-center justify-center gap-1.5 rounded text-sm font-medium transition-colors sm:h-auto sm:w-auto sm:px-3 sm:py-1.5;
   }
 
   .responsive-action-label {
@@ -133,14 +133,14 @@
 
   /* 테이블 헤더 셀 */
   .th {
-    @apply px-3 py-2.5 text-[11px] font-semibold text-gray-500 dark:text-gray-400
-           uppercase tracking-wide bg-gray-50 dark:bg-gray-800/60
+    @apply px-3 py-2 text-[11px] font-semibold text-gray-500 dark:text-gray-400
+           bg-gray-50 dark:bg-gray-800/60
            border-b border-gray-200 dark:border-gray-700 whitespace-nowrap text-left;
   }
 
   /* 테이블 데이터 셀 기본 */
   .td {
-    @apply px-3 py-3 text-[13px] border-b border-gray-100 dark:border-gray-800
+    @apply px-3 py-2 text-[13px] border-b border-gray-100 dark:border-gray-800
            text-gray-700 dark:text-gray-300;
   }
 
@@ -209,19 +209,40 @@
   color: #26332b;
 }
 
-.wms-workspace [class*="rounded-2xl"] {
-  border-radius: 6px;
-}
-
+.wms-workspace [class*="rounded-2xl"],
+.wms-workspace [class*="rounded-xl"],
 .wms-workspace [class*="rounded-[18px]"],
 .wms-workspace [class*="rounded-[20px]"] {
-  border-radius: 6px;
+  border-radius: 4px;
 }
 
 .wms-workspace [class*="shadow-sm"],
 .wms-workspace [class*="shadow-lg"],
-.wms-workspace [class*="shadow-xl"] {
+.wms-workspace [class*="shadow-xl"],
+.wms-workspace [class*="shadow-2xl"] {
   box-shadow: none;
+}
+
+.wms-workspace [class*="backdrop-blur"] {
+  backdrop-filter: none;
+}
+
+/* Compact inputs/selects — override py-2, py-2.5, py-3 */
+.wms-workspace input:not([type="checkbox"]):not([type="radio"]) {
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+.wms-workspace select {
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+/* Remove decorative uppercase/letter-spacing from labels and section headings */
+.wms-workspace label,
+.wms-workspace [class*="tracking-wide"],
+.wms-workspace [class*="tracking-\\["] {
+  text-transform: none !important;
+  letter-spacing: normal !important;
 }
 
 .wms-workspace [class*="bg-white"][class*="border"] {

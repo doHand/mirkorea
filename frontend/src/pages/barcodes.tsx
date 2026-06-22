@@ -29,7 +29,7 @@ export default function BarcodesPage() {
       </div>
 
       {/* 검색 */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-3 flex gap-2 shadow-sm">
+      <div className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800 p-3 flex gap-2 shadow-sm">
         <div className="relative flex-1">
           <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           <input
@@ -37,19 +37,19 @@ export default function BarcodesPage() {
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') setSearch(searchInput) }}
             placeholder="상품코드 / 상품명"
-            className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2D4033]/25 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400"
+            className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-[#2D4033]/25 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400"
           />
         </div>
         <button
           onClick={() => setSearch(searchInput)}
-          className="px-3.5 py-2 text-sm bg-[#2D4033] hover:bg-[#253628] text-white rounded-xl transition-colors font-medium"
+          className="px-3.5 py-2 text-sm bg-[#2D4033] hover:bg-[#253628] text-white rounded transition-colors font-medium"
         >
           검색
         </button>
       </div>
 
       {/* 상품 목록 */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm divide-y divide-gray-100 dark:divide-gray-800">
+      <div className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm divide-y divide-gray-100 dark:divide-gray-800">
         {isLoading && <p className="text-center py-10 text-gray-400 text-sm animate-pulse">불러오는 중...</p>}
         {!isLoading && products.length === 0 && (
           <div className="text-center py-16 text-gray-400 dark:text-gray-600">

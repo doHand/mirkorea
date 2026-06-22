@@ -75,7 +75,7 @@ export default function ProfilePage() {
       </div>
 
       {/* 계정 정보 카드 */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 p-6">
         <div className="flex items-center gap-4 mb-6">
           <div className="w-14 h-14 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center text-brand-600 dark:text-brand-400 font-bold text-2xl shrink-0">
             {me?.fullName?.charAt(0) ?? 'U'}
@@ -189,7 +189,7 @@ export default function ProfilePage() {
       </div>
 
       {/* 권한/보안 정보 */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 p-4">
         <div className="flex items-center gap-2 mb-3">
           <ShieldCheck size={15} className="text-gray-400" />
           <p className="text-sm font-medium text-gray-700 dark:text-gray-300">권한 정보</p>

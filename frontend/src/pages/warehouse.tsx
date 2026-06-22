@@ -170,10 +170,10 @@ export default function WarehousePage() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-sm">
+      <div className="rounded border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 shadow-sm">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-start gap-3 min-w-0">
-            <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm shadow-indigo-500/20 sm:flex">
+            <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded bg-indigo-600 text-white shadow-sm shadow-indigo-500/20 sm:flex">
               <Warehouse size={18} />
             </div>
             <div className="min-w-0">
@@ -221,7 +221,7 @@ export default function WarehousePage() {
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         {/* 구역 패널 */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <div className="rounded border border-gray-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
           <div className="mb-3 flex items-center justify-between gap-2">
             <h3 className="flex items-center gap-2 text-sm font-bold text-gray-950 dark:text-white">
               <FolderOpen size={15} className="text-indigo-500" />구역
@@ -234,7 +234,7 @@ export default function WarehousePage() {
             <button
               onClick={() => setSelectedZone('')}
               className={cn(
-                'w-full px-3 py-2 rounded-xl text-sm transition-colors text-left',
+                'w-full px-3 py-2 rounded text-sm transition-colors text-left',
                 !selectedZone
                   ? 'bg-indigo-100 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-100 font-semibold'
                   : 'hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-200',
@@ -246,7 +246,7 @@ export default function WarehousePage() {
               <div
                 key={z.id}
                 className={cn(
-                  'flex items-center rounded-xl transition-colors group/zone',
+                  'flex items-center rounded transition-colors group/zone',
                   selectedZone === z.id
                     ? 'bg-indigo-100 dark:bg-indigo-950/70'
                     : 'hover:bg-gray-50 dark:hover:bg-slate-800',
@@ -283,7 +283,7 @@ export default function WarehousePage() {
         </div>
 
         {/* 위치 목록 */}
-        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900 xl:col-span-2">
+        <div className="rounded border border-gray-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900 xl:col-span-2">
           <div className="flex items-center justify-between gap-2 border-b border-gray-100 p-4 dark:border-slate-700">
             <h3 className="text-sm font-bold text-gray-950 dark:text-white">
               선반 위치 ({formatNumber((locations as Location[]).length)})
@@ -488,7 +488,7 @@ export default function WarehousePage() {
                   onChange={(e) => setStrategyLocation((prev) => prev ? { ...prev, pickPriority: Math.max(0, Number(e.target.value) || 0) } : prev)}
                   className={ui.formInput} /><p className="mt-1 text-[10px] text-gray-400">낮을수록 먼저 피킹</p></div>
               </div>
-              <label className="flex items-center gap-2 rounded-xl border p-3 text-sm dark:border-slate-700">
+              <label className="flex items-center gap-2 rounded border p-3 text-sm dark:border-slate-700">
                 <input type="checkbox" checked={strategyLocation.allowMixedProducts}
                   onChange={(e) => setStrategyLocation((prev) => prev ? { ...prev, allowMixedProducts: e.target.checked } : prev)} />
                 서로 다른 상품 혼적 허용
@@ -511,7 +511,7 @@ export default function WarehousePage() {
               <button onClick={() => setMoveInventory(null)} className={ui.btnIcon}><X size={16} /></button>
             </div>
             <div className="space-y-3">
-              <div className="rounded-xl bg-gray-50 p-3 text-sm dark:bg-slate-800">
+              <div className="rounded bg-gray-50 p-3 text-sm dark:bg-slate-800">
                 현재 위치 <b className="font-mono">{moveInventory.location?.code ?? sortedLocations.find((loc) => loc.id === moveInventory.locationId)?.code}</b>
                 <span className="float-right">이동 가능 <b>{formatNumber(moveInventory.availableQty)}</b></span>
               </div>

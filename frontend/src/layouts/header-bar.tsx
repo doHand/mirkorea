@@ -22,7 +22,7 @@ export function HeaderBar({ onMenuClick, children }: Props) {
   return (
     <header className="bg-white dark:bg-slate-900 shrink-0 sticky top-0 z-30 border-b border-[#E5D3B3]/70 dark:border-slate-700">
       {/* 상단 컨트롤 행 */}
-      <div className="h-[50px] flex items-center px-3 lg:px-4 gap-2">
+      <div className="h-[38px] flex items-center px-3 lg:px-4 gap-2">
         <button
           onClick={onMenuClick}
           className="lg:hidden p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 dark:text-slate-400 transition-colors"
@@ -40,7 +40,7 @@ export function HeaderBar({ onMenuClick, children }: Props) {
 
         <div className="flex items-center gap-1.5">
           {warehouse && (
-            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-[#F9F7F2] dark:bg-slate-800 border border-[#E5D3B3] dark:border-slate-700">
+            <div className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded bg-[#F9F7F2] dark:bg-slate-800 border border-[#E5D3B3] dark:border-slate-700">
               <Warehouse size={11} className="text-[#D2691E] shrink-0" />
               <span className="text-[11px] font-medium text-gray-600 dark:text-slate-300 max-w-[80px] truncate">
                 {warehouse.name}
@@ -56,14 +56,14 @@ export function HeaderBar({ onMenuClick, children }: Props) {
 
           <button
             onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors"
+            className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors"
             aria-label="테마 전환"
           >
-            {resolvedTheme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+            {resolvedTheme === 'dark' ? <Sun size={13} /> : <Moon size={13} />}
           </button>
 
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-md bg-[#D2691E] flex items-center justify-center text-white font-bold text-xs shrink-0">
+          <div className="flex items-center gap-1.5">
+            <div className="w-6 h-6 rounded bg-[#D2691E] flex items-center justify-center text-white font-bold text-xs shrink-0">
               {user?.fullName?.charAt(0)?.toUpperCase() ?? 'U'}
             </div>
             <span className="hidden sm:block text-[12px] font-medium text-gray-700 dark:text-slate-300 max-w-[100px] truncate">

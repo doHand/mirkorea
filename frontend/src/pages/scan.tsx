@@ -262,7 +262,7 @@ export default function ScanPage() {
           {/* ── Left: 스캔 패널 ── */}
           <div className="space-y-3">
             {/* 모드 선택 */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-3">
+            <div className="bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 p-4 space-y-3">
               <div>
                 <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">스캔 모드</p>
                 <div className="flex gap-2">
@@ -306,7 +306,7 @@ export default function ScanPage() {
 
             {/* 입고 위치 선택 */}
             {mode === 'INBOUND' && (
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+              <div className="bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 p-4">
                 <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">입고 위치</p>
                 <select
                   value={selectedLocation?.id ?? ''}
@@ -340,7 +340,7 @@ export default function ScanPage() {
 
             {/* 바코드 입력 */}
             <div className={cn(
-              'bg-white dark:bg-gray-800 rounded-xl border-2 p-4 transition-colors',
+              'bg-white dark:bg-gray-800 rounded border-2 p-4 transition-colors',
               pendingScan ? 'border-gray-200 dark:border-gray-700' : 'border-[#2D4033]',
             )}>
               <div className="flex flex-wrap items-center gap-3 mb-3">
@@ -380,7 +380,7 @@ export default function ScanPage() {
 
               {/* 미등록 바코드 알림 */}
               {notFoundBarcode && (
-                <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+                <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
                   <div className="flex items-start gap-2">
                     <AlertTriangle size={16} className="text-red-500 shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
@@ -400,7 +400,7 @@ export default function ScanPage() {
 
             {/* ── 스캔 확인 패널 (수량 입력 + 저장) ── */}
             {pendingScan && (
-              <div className="bg-white dark:bg-gray-800 rounded-xl border-2 border-[#D2691E] p-4 shadow-sm">
+              <div className="bg-white dark:bg-gray-800 rounded border-2 border-[#D2691E] p-4 shadow-sm">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-7 h-7 rounded-lg bg-[#D2691E] flex items-center justify-center shrink-0">
                     <Package size={14} className="text-white" />
@@ -501,7 +501,7 @@ export default function ScanPage() {
 
             {/* 처리 대기 목록 */}
             {!instantMode && cart.length > 0 && (
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+              <div className="bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
                 <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                   <span className="font-medium text-gray-900 dark:text-gray-100">처리 대기 ({formatNumber(cart.length)})</span>
                   <button onClick={clearCart} className="text-xs text-gray-400 hover:text-red-500 transition-colors">전체 삭제</button>
@@ -531,7 +531,7 @@ export default function ScanPage() {
             )}
 
             {/* 스캔 이력 */}
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700">
+            <div className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700">
               <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Clock size={14} className="text-[#D2691E]" />
@@ -572,9 +572,9 @@ export default function ScanPage() {
             ) : (
               <>
                 {/* 상품 헤더 */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                <div className="bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 p-4">
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#2D4033]/10 flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded bg-[#2D4033]/10 flex items-center justify-center shrink-0">
                       <Package size={18} className="text-[#2D4033] dark:text-emerald-400" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -601,7 +601,7 @@ export default function ScanPage() {
                 </div>
 
                 {/* 등록 바코드 */}
-                <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+                <div className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800 overflow-hidden">
                   <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
                     <Barcode size={13} className="text-[#D2691E]" />
                     <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">등록 바코드</span>
@@ -630,7 +630,7 @@ export default function ScanPage() {
                 </div>
 
                 {/* 위치별 재고 */}
-                <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+                <div className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800 overflow-hidden">
                   <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
                     <MapPin size={13} className="text-[#2D4033]" />
                     <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">위치별 재고</span>
@@ -652,7 +652,7 @@ export default function ScanPage() {
 
                 {/* 가격 정보 */}
                 {(lastResult.product.sellPrice != null || lastResult.product.retailPrice != null) && (
-                  <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+                  <div className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800 p-4">
                     <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-3">가격 정보</p>
                     <div className="space-y-2">
                       {lastResult.product.sellPrice != null && (

@@ -69,22 +69,22 @@ export function CollectOrderModal({ warehouseId, order, onClose, onSaved }: {
   }
 
   return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4">
-    <div className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900">
+    <div className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded bg-white shadow-2xl dark:bg-gray-900">
       <div className="flex items-center justify-between border-b px-5 py-4 dark:border-gray-800">
         <div><h3 className="font-bold">{order ? '출고 주문 수정' : '주문수집'}</h3><p className="text-xs text-gray-400">모든 주문 수량은 BOX 단위입니다</p></div>
         <button onClick={onClose}><X size={18} /></button>
       </div>
       <div className="space-y-4 overflow-y-auto p-5">
-        <div className="grid grid-cols-2 divide-x divide-gray-200 rounded-xl border border-gray-200 dark:divide-gray-700 dark:border-gray-700">
+        <div className="grid grid-cols-2 divide-x divide-gray-200 rounded border border-gray-200 dark:divide-gray-700 dark:border-gray-700">
           <div className="space-y-3 p-4">
             <p className="text-xs font-bold text-[#2D4033] dark:text-emerald-400">출고 / 거래처</p>
             <Field label="출고 구분 *"><select value={orderType} onChange={(e) => setOrderType(e.target.value as OutboundOrderType)}
-              className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800">
+              className="mt-1 w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800">
               <option value="EXTERNAL">외부 출고</option><option value="INTERNAL">내부 출고</option>
             </select></Field>
             <div className="relative">
               <Field label="거래처 검색"><input value={clientSearch} onChange={(e) => setClientSearch(e.target.value)} placeholder="거래처명 검색" /></Field>
-              {!!clientSearch && clientCandidates.length > 0 && <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+              {!!clientSearch && clientCandidates.length > 0 && <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded border bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
                 {clientCandidates.map((client) => <button key={client.id} onClick={() => {
                   setClientId(client.id)
                   setCustomer(client.name)
@@ -113,14 +113,14 @@ export function CollectOrderModal({ warehouseId, order, onClose, onSaved }: {
         <Field label="메모"><input value={memo} onChange={(e) => setMemo(e.target.value)} /></Field>
         <div className="relative">
           <Field label="상품 추가"><input value={productSearch} onChange={(e) => setProductSearch(e.target.value)} placeholder="상품명 또는 코드 검색" /></Field>
-          {!!productSearch && candidates.length > 0 && <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+          {!!productSearch && candidates.length > 0 && <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded border bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
             {candidates.map((product) => <button key={product.id} onClick={() => { setItems((prev) => [...prev, { productId: product.id, boxCount: 1, product }]); setProductSearch('') }}
               className="flex w-full justify-between px-4 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700">
               <span>{product.name}</span><span className="font-mono text-xs text-gray-400">{product.code}</span>
             </button>)}
           </div>}
         </div>
-        <div className="overflow-hidden rounded-xl border dark:border-gray-800">
+        <div className="overflow-hidden rounded border dark:border-gray-800">
           <table className="w-full text-sm"><thead className="bg-gray-50 dark:bg-gray-800"><tr>
             <th className="p-2 text-left">상품</th><th className="p-2">기본위치</th><th className="p-2">박스수량</th><th className="w-10"></th>
           </tr></thead><tbody className="divide-y dark:divide-gray-800">
@@ -141,8 +141,8 @@ export function CollectOrderModal({ warehouseId, order, onClose, onSaved }: {
       </div>
       <div className="flex items-center justify-between border-t px-5 py-4 dark:border-gray-800">
         <b className="text-[#D2691E]">합계 {formatNumber(totalBoxes)} BOX</b>
-        <div className="flex gap-2"><button onClick={onClose} className="rounded-xl border px-4 py-2 text-sm">취소</button>
-          <button onClick={submit} disabled={save.isPending} className="flex items-center gap-1.5 rounded-xl bg-[#2D4033] px-5 py-2 text-sm font-semibold text-white disabled:opacity-50">
+        <div className="flex gap-2"><button onClick={onClose} className="rounded border px-4 py-2 text-sm">취소</button>
+          <button onClick={submit} disabled={save.isPending} className="flex items-center gap-1.5 rounded bg-[#2D4033] px-5 py-2 text-sm font-semibold text-white disabled:opacity-50">
             <PackageCheck size={15} /> {order ? '수정 저장' : '수집 저장'}
           </button></div>
       </div>
@@ -152,6 +152,6 @@ export function CollectOrderModal({ warehouseId, order, onClose, onSaved }: {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">{label}
-    <div className="[&_input]:mt-1 [&_input]:w-full [&_input]:rounded-xl [&_input]:border [&_input]:border-gray-200 [&_input]:px-3 [&_input]:py-2 [&_input]:text-sm [&_input]:outline-none [&_input]:focus:border-[#2D4033] dark:[&_input]:border-gray-700 dark:[&_input]:bg-gray-800">{children}</div>
+    <div className="[&_input]:mt-1 [&_input]:w-full [&_input]:rounded [&_input]:border [&_input]:border-gray-200 [&_input]:px-3 [&_input]:py-2 [&_input]:text-sm [&_input]:outline-none [&_input]:focus:border-[#2D4033] dark:[&_input]:border-gray-700 dark:[&_input]:bg-gray-800">{children}</div>
   </label>
 }

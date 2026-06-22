@@ -822,8 +822,8 @@ export default function ProductsPage() {
   const allChecked = currentPageIds.length > 0 && currentPageIds.every((id) => selectedIds.has(id))
   const someChecked = currentPageIds.some((id) => selectedIds.has(id))
 
-  const inputCls = 'w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-shadow'
-  const labelCls = 'block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wide'
+  const inputCls = 'w-full border border-gray-200 dark:border-gray-700 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#2D4033]/30 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-colors'
+  const labelCls = 'block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1'
 
   const openQuoteScreen = () => {
     const ids = [...selectedIds]
@@ -894,7 +894,7 @@ export default function ProductsPage() {
            <button
             onClick={openQuoteScreen}
             disabled={selectedIds.size === 0}
-            className="flex items-center gap-1.5 px-3 py-2 text-sm border border-emerald-200 text-emerald-700 dark:border-emerald-800 dark:text-emerald-400 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-900/20 disabled:opacity-40 disabled:hover:bg-transparent transition-colors font-medium"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-emerald-200 text-emerald-700 dark:border-emerald-800 dark:text-emerald-400 rounded hover:bg-emerald-50 dark:hover:bg-emerald-900/20 disabled:opacity-40 disabled:hover:bg-transparent transition-colors font-medium"
           >
             <FileText size={14} />
             <span className="hidden sm:inline">거래명세서/견적서</span>
@@ -904,21 +904,21 @@ export default function ProductsPage() {
       </div>
 
       {/* 검색/필터 */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-3 shadow-sm">
-        <div className="flex flex-col gap-2.5 md:flex-row">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-2">
+        <div className="flex flex-col gap-1.5 md:flex-row">
           <div className="relative flex-1">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             <input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') { setSearch(searchInput); setPage(1) } }}
               placeholder="거래처, 상품코드, 자재번호, 상품명, 위치, 카테고리, 상태 검색"
-              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 transition-shadow"
+              className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded focus:outline-none focus:ring-1 focus:ring-[#2D4033]/30 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 transition-colors"
             />
           </div>
           <button
             onClick={() => { setSearch(searchInput); setPage(1) }}
-            className="px-3 py-2 text-sm bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-medium whitespace-nowrap"
+            className="px-3 py-1.5 text-sm bg-[#2D4033] text-white rounded hover:bg-[#253628] transition-colors font-medium whitespace-nowrap"
           >
             검색
           </button>
@@ -926,13 +926,13 @@ export default function ProductsPage() {
             type="button"
             onClick={() => setShowSafetyOnly((prev) => !prev)}
             className={cn(
-              'inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-xl border transition-colors font-medium whitespace-nowrap',
+              'inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded border transition-colors font-medium whitespace-nowrap',
               showSafetyOnly
                 ? 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-900/70 dark:bg-red-950/30 dark:text-red-300 dark:hover:bg-red-950/50'
                 : 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800',
             )}
           >
-            <AlertTriangle size={14} />
+            <AlertTriangle size={13} />
             안전재고 경고만
           </button>
           <button
@@ -943,14 +943,14 @@ export default function ProductsPage() {
               setShowSafetyOnly(false)
               setPage(1)
             }}
-            className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium whitespace-nowrap"
+            className="px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium whitespace-nowrap"
           >
             초기화
           </button>
           <button
             type="button"
             onClick={resetWidths}
-            className="hidden sm:block px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium whitespace-nowrap"
+            className="hidden sm:block px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium whitespace-nowrap"
             title="컬럼 너비를 기본값으로 초기화"
           >
             컬럼 초기화
@@ -960,7 +960,7 @@ export default function ProductsPage() {
 
       {/* 선택 액션 바 */}
       {selectedIds.size > 0 && (
-        <div className="flex flex-wrap items-center gap-3 bg-indigo-600 text-white px-4 py-2.5 rounded-xl shadow-lg shadow-indigo-500/20">
+        <div className="flex flex-wrap items-center gap-3 bg-[#2D4033] text-white px-3 py-2 rounded">
           <span className="text-sm font-semibold flex-1">{formatNumber(selectedIds.size)}개 선택됨</span>
           <button
             onClick={handleBulkDelete}
@@ -979,7 +979,7 @@ export default function ProductsPage() {
       )}
 
       {/* 테이블 */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 overflow-hidden">
         <div className="overflow-x-auto">
           <table
             className="mobile-unpin-grid wms-no-resize wms-resizable-table text-sm border-collapse"
@@ -1061,8 +1061,9 @@ export default function ProductsPage() {
                 return (
                   <tr
                     key={p.id}
+                    onDoubleClick={() => openEdit(p)}
                     className={cn(
-                      'group transition-colors',
+                      'group transition-colors cursor-pointer',
                       rowBase,
                       isBelowSafety && '[&>td]:!bg-red-100 [&>td]:hover:!bg-red-100 dark:[&>td]:!bg-red-900 dark:[&>td]:hover:!bg-red-900',
                     )}
@@ -1210,7 +1211,7 @@ export default function ProductsPage() {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="px-3.5 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-colors font-medium"
+            className="px-3 py-1 text-sm border border-gray-200 dark:border-gray-700 rounded disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-colors font-medium"
           >
             이전
           </button>
@@ -1223,7 +1224,7 @@ export default function ProductsPage() {
           <button
             onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
             disabled={page === data.totalPages}
-            className="px-3.5 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-xl disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-colors font-medium"
+            className="px-3 py-1 text-sm border border-gray-200 dark:border-gray-700 rounded disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-colors font-medium"
           >
             다음
           </button>
@@ -1232,31 +1233,28 @@ export default function ProductsPage() {
 
       {/* 상품 등록/수정 모달 */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92vh] overflow-y-auto border border-gray-200 dark:border-gray-700">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700 w-full max-w-3xl max-h-[92vh] overflow-y-auto">
             {/* 모달 헤더 */}
-            <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 dark:border-gray-700">
-              <div className={cn(
-                'w-9 h-9 rounded-xl flex items-center justify-center shrink-0',
-                editing ? 'bg-indigo-100 dark:bg-indigo-900/30' : 'bg-emerald-100 dark:bg-emerald-900/30'
-              )}>
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 bg-[#2D4033]">
+              <div className="shrink-0 text-white">
                 {editing
-                  ? <Pencil size={16} className="text-indigo-600 dark:text-indigo-400" />
-                  : <Package size={16} className="text-emerald-600 dark:text-emerald-400" />
+                  ? <Pencil size={14} />
+                  : <Package size={14} />
                 }
               </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 dark:text-white">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-semibold text-white">
                   {editing ? editing.name : '새 상품 등록'}
                 </h3>
-                {editing && <p className="text-xs text-gray-400 dark:text-gray-500 font-mono mt-0.5">{editing.code}</p>}
+                {editing && <p className="text-[10px] text-[#E5D3B3]/70 font-mono">{editing.code}</p>}
               </div>
             </div>
 
-            <div className="p-6 space-y-5">
+            <div className="p-4 space-y-4">
               {/* ── 기본 정보 ── */}
               <section>
-                <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">기본 정보</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 pb-1 mb-2">기본 정보</p>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
                     <label className={labelCls}>상품코드 *</label>
@@ -1331,10 +1329,10 @@ export default function ProductsPage() {
               </section>
 
               {/* ── 바코드 관리 ── */}
-              <section className="border-t border-gray-100 dark:border-gray-700 pt-4">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide flex items-center gap-1.5">
-                    <QrCode size={13} /> 바코드
+              <section className="border-t border-gray-100 dark:border-gray-700 pt-3">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1.5 border-b border-gray-100 dark:border-gray-700 pb-1 w-full">
+                    <QrCode size={12} /> 바코드
                   </p>
                   <button
                     type="button"
@@ -1351,7 +1349,7 @@ export default function ProductsPage() {
                     {pendingBarcodes.length > 0 && (
                       <div className="space-y-1.5 mb-3">
                         {pendingBarcodes.map((bc, idx) => (
-                          <div key={idx} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-800 group">
+                          <div key={idx} className="flex items-center gap-2 px-2.5 py-1.5 rounded bg-gray-50 dark:bg-gray-800 group">
                             <span className="font-mono text-sm text-gray-800 dark:text-gray-200 flex-1 truncate">{bc.barcode}</span>
                             <span className={cn(
                               'text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0',
@@ -1389,7 +1387,7 @@ export default function ProductsPage() {
                     {barcodes.length > 0 && (
                       <div className="space-y-1.5 mb-3">
                         {barcodes.map((bc) => (
-                          <div key={bc.id} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-800 group">
+                          <div key={bc.id} className="flex items-center gap-2 px-2.5 py-1.5 rounded bg-gray-50 dark:bg-gray-800 group">
                             <span className="font-mono text-sm text-gray-800 dark:text-gray-200 flex-1 truncate">{bc.barcode}</span>
                             <span className={cn(
                               'text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0',
@@ -1473,8 +1471,8 @@ export default function ProductsPage() {
               </section>
 
               {/* ── 수량 / 위치 ── */}
-              <section className="border-t border-gray-100 dark:border-gray-700 pt-4">
-                <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">수량 / 위치</p>
+              <section className="border-t border-gray-100 dark:border-gray-700 pt-3">
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 pb-1 mb-2">수량 / 위치</p>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <div>
                     <label className={labelCls}>단위</label>
@@ -1544,8 +1542,8 @@ export default function ProductsPage() {
               </section>
 
               {/* ── 가격 ── */}
-              <section className="border-t border-gray-100 dark:border-gray-700 pt-4">
-                <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">가격 정보</p>
+              <section className="border-t border-gray-100 dark:border-gray-700 pt-3">
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 pb-1 mb-2">가격 정보</p>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <div>
                     <label className={labelCls}>매입단가 (₩)</label>
@@ -1587,8 +1585,8 @@ export default function ProductsPage() {
               </section>
 
               {/* ── 상태 & 메모 ── */}
-              <section className="border-t border-gray-100 dark:border-gray-700 pt-4">
-                <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">상태 & 메모</p>
+              <section className="border-t border-gray-100 dark:border-gray-700 pt-3">
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 pb-1 mb-2">상태 & 메모</p>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
                     <label className={labelCls}>판매 상태</label>
@@ -1615,15 +1613,15 @@ export default function ProductsPage() {
                 </div>
               </section>
 
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
                 <button onClick={closeModal}
-                  className="flex-1 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  className="flex-1 py-2 border border-gray-200 dark:border-gray-700 rounded text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                   취소
                 </button>
                 <button
                   onClick={() => editing ? updateMutation.mutate() : createMutation.mutate()}
                   disabled={!form.code || !form.name || createMutation.isPending || updateMutation.isPending}
-                  className="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-sm shadow-indigo-500/20"
+                  className="flex-1 py-2 bg-[#2D4033] text-white rounded text-sm font-semibold hover:bg-[#253628] disabled:opacity-50 transition-colors"
                 >
                   {(createMutation.isPending || updateMutation.isPending) ? '처리 중...' : (editing ? '수정 완료' : '등록')}
                 </button>

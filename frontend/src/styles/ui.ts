@@ -13,12 +13,12 @@ export const filterCard = 'bg-white dark:bg-gray-900 rounded-md border border-wa
 
 // ── Table internals ─────────────────────────────────────────────────────────
 export const thead = 'bg-[#2D4033] text-white'
-export const th    = 'text-center px-3 py-3 text-sm font-semibold'
-export const thC   = 'text-center px-3 py-3 text-sm font-semibold'
-export const thR   = 'text-right px-3 py-3 text-sm font-semibold'
+export const th    = 'text-center px-3 py-2 text-xs font-semibold'
+export const thC   = 'text-center px-3 py-2 text-xs font-semibold'
+export const thR   = 'text-right px-3 py-2 text-xs font-semibold'
 export const tbody = 'divide-y divide-gray-100 dark:divide-gray-800'
 export const tr    = 'hover:bg-[#f7f8f5] dark:hover:bg-gray-800/10 transition-colors'
-export const td    = 'px-3 py-3 text-sm text-gray-600 dark:text-gray-400'
+export const td    = 'px-3 py-2 text-sm text-gray-600 dark:text-gray-400'
 
 // ── Typography ───────────────────────────────────────────────────────────────
 export const h2Cls   = 'text-lg font-bold text-gray-900 dark:text-white'
@@ -53,15 +53,15 @@ export const selectCls = [
 ].join(' ')
 
 // ── Buttons ──────────────────────────────────────────────────────────────────
-export const btnPrimary   = 'px-3.5 py-2 text-sm bg-brand-600 text-white rounded-md hover:bg-brand-700 transition-colors font-medium'
-export const btnSecondary = 'px-3.5 py-2 text-sm border border-warm-300/70 dark:border-gray-700 text-gray-600 dark:text-gray-400 rounded-md hover:bg-warm-50 dark:hover:bg-gray-800 transition-colors'
-export const btnDanger    = 'px-3.5 py-2 text-sm bg-rose-600 text-white rounded-md hover:bg-rose-700 transition-colors font-medium'
-export const btnIcon       = 'p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
-export const btnIconEdit   = 'p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors'
-export const btnIconDelete = 'p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors'
-export const btnIconPrint  = 'p-1.5 rounded-lg hover:bg-[#f7f8f5] dark:hover:bg-gray-800 text-gray-400 hover:text-[#2D4033] dark:hover:text-emerald-400 transition-colors'
+export const btnPrimary   = 'px-3 py-1.5 text-sm bg-brand-600 text-white rounded hover:bg-brand-700 transition-colors font-medium'
+export const btnSecondary = 'px-3 py-1.5 text-sm border border-warm-300/70 dark:border-gray-700 text-gray-600 dark:text-gray-400 rounded hover:bg-warm-50 dark:hover:bg-gray-800 transition-colors'
+export const btnDanger    = 'px-3 py-1.5 text-sm bg-rose-600 text-white rounded hover:bg-rose-700 transition-colors font-medium'
+export const btnIcon       = 'p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
+export const btnIconEdit   = 'p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors'
+export const btnIconDelete = 'p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors'
+export const btnIconPrint  = 'p-1 rounded hover:bg-[#f7f8f5] dark:hover:bg-gray-800 text-gray-400 hover:text-[#2D4033] dark:hover:text-emerald-400 transition-colors'
 
 // ── Modal ────────────────────────────────────────────────────────────────────
 export const modalOverlay = 'fixed inset-0 bg-black/40 dark:bg-black/60 flex items-center justify-center z-50'
-export const modalBox     = 'bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-sm p-6'
-export const modalBoxMd   = 'bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-md p-6'
+export const modalBox     = 'bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700 w-full max-w-sm p-4'
+export const modalBoxMd   = 'bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700 w-full max-w-md p-4'

@@ -62,8 +62,8 @@ function toNumber(value: unknown) {
 }
 
 const inputCls =
-  'w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-shadow'
-const labelCls = 'block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1'
+  'w-full border border-gray-200 dark:border-gray-700 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#2D4033]/30 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-colors'
+const labelCls = 'block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1'
 
 function Field({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
@@ -224,21 +224,21 @@ export default function ClientsPage() {
         </button>
       </div>
 
-      <div className="flex gap-2 rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="flex gap-2 border border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-gray-900">
         <div className="relative flex-1">
-          <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && commitSearch()}
             placeholder="거래처명, 사업자번호, 담당자, 연락처 검색"
-            className="w-full rounded-xl border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+            className="w-full rounded border border-gray-200 bg-white py-1.5 pl-8 pr-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#2D4033]/30 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
           />
         </div>
-        <button onClick={commitSearch} className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700">검색</button>
+        <button onClick={commitSearch} className="rounded bg-[#2D4033] px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[#253628]">검색</button>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="overflow-hidden border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[780px] text-sm">
             <thead>
@@ -322,24 +322,18 @@ export default function ClientsPage() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-2xl bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-700">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
             {/* 헤더 */}
-            <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-900 z-10">
-              <div className={cn(
-                'w-9 h-9 rounded-xl flex items-center justify-center shrink-0',
-                editing ? 'bg-indigo-100 dark:bg-indigo-900/30' : 'bg-emerald-100 dark:bg-emerald-900/30',
-              )}>
-                <Building2 size={16} className={editing ? 'text-indigo-600 dark:text-indigo-400' : 'text-emerald-600 dark:text-emerald-400'} />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-900 dark:text-white">
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-[#2D4033] z-10">
+              <Building2 size={14} className="text-white shrink-0" />
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-semibold text-white">
                   {editing ? `${editing.name} 수정` : '거래처 등록'}
                 </h3>
-                <p className="text-xs text-gray-400 mt-0.5">{editing ? '거래처 정보를 수정합니다' : '새 거래처를 등록합니다'}</p>
               </div>
-              <button onClick={closeModal} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-200 transition-colors">
-                <X size={16} />
+              <button onClick={closeModal} className="p-1 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors">
+                <X size={14} />
               </button>
             </div>
 
@@ -348,11 +342,11 @@ export default function ClientsPage() {
                 e.preventDefault()
                 editing ? updateMutation.mutate() : createMutation.mutate()
               }}
-              className="p-6 space-y-6"
+              className="p-4 space-y-4"
             >
               {/* ── 기본 정보 ── */}
               <section>
-                <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">기본 정보</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 pb-1 mb-2">기본 정보</p>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <Field label="거래처명 *" className="col-span-2 sm:col-span-1">
                     <input
@@ -392,7 +386,7 @@ export default function ClientsPage() {
 
               {/* ── 사업자 정보 ── */}
               <section className="border-t border-gray-100 dark:border-gray-700 pt-5">
-                <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">사업자 정보</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 pb-1 mb-2 w-full block">사업자 정보</p>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <Field label="사업자번호">
                     <input value={form.businessNo} onChange={(e) => set('businessNo', formatBusinessNoInput(e.target.value))} className={inputCls} placeholder="000-00-00000" inputMode="numeric" />
@@ -416,7 +410,7 @@ export default function ClientsPage() {
 
               {/* ── 주소 정보 ── */}
               <section className="border-t border-gray-100 dark:border-gray-700 pt-5">
-                <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">주소 정보</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 pb-1 mb-2 w-full block">주소 정보</p>
                 <div className="space-y-3">
                   <div>
                     <label className={labelCls}>우편번호</label>
@@ -459,7 +453,7 @@ export default function ClientsPage() {
 
               {/* ── 담당자 정보 ── */}
               <section className="border-t border-gray-100 dark:border-gray-700 pt-5">
-                <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">담당자 정보</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 pb-1 mb-2 w-full block">담당자 정보</p>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <Field label="받는이(담당자)">
                     <input
@@ -486,7 +480,7 @@ export default function ClientsPage() {
 
               {/* ── 거래 정보 ── */}
               <section className="border-t border-gray-100 dark:border-gray-700 pt-5">
-                <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">거래 정보</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 pb-1 mb-2 w-full block">거래 정보</p>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <Field label="가격등급">
                     <select value={form.pricePolicy} onChange={(e) => set('pricePolicy', e.target.value)} className={inputCls}>
@@ -527,7 +521,7 @@ export default function ClientsPage() {
 
               {/* ── 관리 정보 ── */}
               <section className="border-t border-gray-100 dark:border-gray-700 pt-5">
-                <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">관리 정보</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 pb-1 mb-2 w-full block">관리 정보</p>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <Field label="등록일자">
                     <input type="date" value={form.registrationDate} onChange={(e) => set('registrationDate', e.target.value)} className={inputCls} />
@@ -540,7 +534,7 @@ export default function ClientsPage() {
 
               {/* ── 메모 ── */}
               <section className="border-t border-gray-100 dark:border-gray-700 pt-5">
-                <p className="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide mb-3">메모</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 pb-1 mb-2 w-full block">메모</p>
                 <textarea
                   value={form.memo}
                   onChange={(e) => set('memo', e.target.value)}
@@ -555,14 +549,14 @@ export default function ClientsPage() {
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  className="px-4 py-2 rounded text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 >
                   취소
                 </button>
                 <button
                   type="submit"
                   disabled={createMutation.isPending || updateMutation.isPending}
-                  className="px-6 py-2.5 rounded-xl bg-indigo-600 text-sm font-semibold text-white shadow-sm shadow-indigo-500/20 hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                  className="px-5 py-2 rounded bg-[#2D4033] text-sm font-semibold text-white hover:bg-[#253628] disabled:opacity-50 transition-colors"
                 >
                   {createMutation.isPending || updateMutation.isPending
                     ? '저장 중...'

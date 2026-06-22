@@ -69,41 +69,41 @@ export function SidebarNav({ onClose }: Props) {
     setCollapsed((prev) => ({ ...prev, [label]: !prev[label] }))
 
   return (
-    <aside className="w-[248px] bg-[#2D4033] text-[#F9F7F2] flex flex-col h-full select-none shadow-xl shadow-black/15">
+    <aside className="w-[216px] bg-[#2D4033] text-[#F9F7F2] flex flex-col h-full select-none">
 
       {/* 로고 영역 */}
-      <div className="px-4 h-[68px] flex items-center justify-between shrink-0 border-b border-[#E5D3B3]/20">
+      <div className="px-3 h-[48px] flex items-center justify-between shrink-0 border-b border-[#E5D3B3]/20">
         <Link
           href="/"
           onClick={onClose}
-          className="flex items-center gap-3 hover:opacity-90 transition-opacity"
+          className="flex items-center gap-2 hover:opacity-90 transition-opacity"
         >
-          <div className="w-9 h-9 bg-[#F9F7F2] border border-[#E5D3B3]/70 rounded-md flex items-center justify-center shrink-0">
-            <Warehouse size={18} className="text-[#2D4033]" />
+          <div className="w-7 h-7 bg-[#F9F7F2] border border-[#E5D3B3]/70 rounded flex items-center justify-center shrink-0">
+            <Warehouse size={14} className="text-[#2D4033]" />
           </div>
           <div>
-            <h1 className="text-[14px] font-bold text-white leading-none">MK WMS</h1>
-            <p className="text-[10px] text-slate-500 mt-0.5 tracking-wide">창고 물류 관리 시스템</p>
+            <h1 className="text-[13px] font-bold text-white leading-none">MK WMS</h1>
+            <p className="text-[9px] text-slate-500 mt-0.5">창고 물류 관리 시스템</p>
           </div>
         </Link>
         <button
           onClick={onClose}
-          className="lg:hidden p-1.5 rounded-lg hover:bg-white/10 text-slate-400 transition-colors"
+          className="lg:hidden p-1 rounded hover:bg-white/10 text-slate-400 transition-colors"
         >
-          <X size={15} />
+          <X size={14} />
         </button>
       </div>
 
       {/* 네비게이션 */}
-      <nav className="flex-1 overflow-y-auto py-3 space-y-0.5">
+      <nav className="flex-1 overflow-y-auto py-2 space-y-0">
         {sections.map(({ label, items }, sectionIndex) => {
           const isOpen = !collapsed[label]
           return (
-            <div key={label} className={cn(sectionIndex > 0 ? 'mt-1' : '')}>
+            <div key={label} className={cn(sectionIndex > 0 ? 'mt-0.5' : '')}>
               {/* 섹션 헤더 */}
               <button
                 onClick={() => toggle(label)}
-                className="w-full flex items-center gap-2 px-4 py-1.5 hover:bg-black/10 transition-colors group"
+                className="w-full flex items-center gap-2 px-3 py-1 hover:bg-black/10 transition-colors group"
               >
                 <span className="text-[10px] font-bold tracking-[0.08em] text-[#E5D3B3]/55 group-hover:text-[#E5D3B3]/85 transition-colors flex-1 text-left truncate">
                   {label}
@@ -124,7 +124,7 @@ export function SidebarNav({ onClose }: Props) {
                   isOpen ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0',
                 )}
               >
-                <div className="px-2 pb-1 space-y-0.5">
+                <div className="px-1.5 pb-0.5 space-y-0">
                   {items.map(({ href, label: itemLabel, menuId }) => {
                     const Icon   = ICON_MAP[menuId] ?? LayoutDashboard
                     const active = pathname === href || (href !== '/' && pathname.startsWith(href))
@@ -134,7 +134,7 @@ export function SidebarNav({ onClose }: Props) {
                         href={href}
                         onClick={onClose}
                         className={cn(
-                          'group relative flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-all duration-150',
+                          'group relative flex items-center gap-2 px-2.5 py-1.5 rounded text-[12px] transition-all duration-150',
                           active
                             ? 'bg-[#F9F7F2] text-[#2D4033] font-semibold shadow-sm'
                             : 'text-[#F9F7F2]/65 font-medium hover:bg-black/10 hover:text-white',
@@ -169,21 +169,21 @@ export function SidebarNav({ onClose }: Props) {
       </nav>
 
       {/* 사용자 + 로그아웃 */}
-      <div className="px-3 py-3 border-t border-[#E5D3B3]/20 space-y-1 shrink-0">
-        <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-md bg-black/10 border border-[#E5D3B3]/10">
-          <div className="w-7 h-7 rounded-md bg-[#D2691E] flex items-center justify-center text-white font-bold text-xs shrink-0">
+      <div className="px-2.5 py-2 border-t border-[#E5D3B3]/20 space-y-0.5 shrink-0">
+        <div className="flex items-center gap-2 px-2 py-1.5 rounded bg-black/10 border border-[#E5D3B3]/10">
+          <div className="w-6 h-6 rounded bg-[#D2691E] flex items-center justify-center text-white font-bold text-xs shrink-0">
             {user?.fullName?.charAt(0)?.toUpperCase() ?? 'U'}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[12px] font-semibold text-white truncate leading-tight">{user?.fullName}</p>
+            <p className="text-[11px] font-semibold text-white truncate leading-tight">{user?.fullName}</p>
             <span className="text-[10px] text-[#E5D3B3]/60 font-medium">{user?.role}</span>
           </div>
         </div>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] text-[#E5D3B3]/55 hover:bg-black/10 hover:text-white transition-all duration-150"
+          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-[12px] text-[#E5D3B3]/55 hover:bg-black/10 hover:text-white transition-all duration-150"
         >
-          <LogOut size={14} className="shrink-0" />
+          <LogOut size={13} className="shrink-0" />
           로그아웃
         </button>
       </div>

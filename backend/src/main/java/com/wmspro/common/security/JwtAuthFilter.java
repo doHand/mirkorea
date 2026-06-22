@@ -18,6 +18,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
+    
 
     private final JwtTokenProvider tokenProvider;
 

@@ -133,7 +133,7 @@ export default function UsersPage() {
             filename="사용자목록"
             getData={() => users.map((u) => ({ '아이디': u.username, '이름': u.fullName, '이메일': u.email, '역할': ROLE_META[u.role].label, '활성': u.isActive ? 'Y' : 'N', '마지막 로그인': u.lastLoginAt ? formatDateTime(u.lastLoginAt) : '-', '등록일': formatDateTime(u.createdAt) }))}
           />
-          <button onClick={openCreate} title="사용자 추가" aria-label="사용자 추가" className="responsive-icon-action bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm shadow-indigo-500/20">
+          <button onClick={openCreate} title="사용자 추가" aria-label="사용자 추가" className="responsive-icon-action bg-indigo-600 text-white hover:bg-indigo-700 shadow-none shadow-indigo-500/20">
             <Plus size={15} /><span className="responsive-action-label">사용자 추가</span>
           </button>
         </div>
@@ -144,16 +144,16 @@ export default function UsersPage() {
 
         {/* ── Left: Users list ── */}
         <div className="space-y-3">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-3 flex gap-2.5 shadow-sm">
+          <div className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800 p-3 flex gap-2.5 shadow-none">
             <div className="relative flex-1">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               <input value={search} onChange={(e) => setSearch(e.target.value)}
                 placeholder="이름, 아이디, 이메일 검색"
-                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 transition-shadow" />
+                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 transition-shadow" />
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
+          <div className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800 overflow-hidden shadow-none">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -212,17 +212,17 @@ export default function UsersPage() {
         </div>
 
         {/* ── Right panel ── */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800 shadow-none overflow-hidden">
           {/* Tabs */}
           <div className="flex border-b border-gray-200 dark:border-gray-800">
             <button onClick={() => setRightTab('roles')}
-              className={cn('flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-semibold border-b-2 transition-colors',
+              className={cn('flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold border-b-2 transition-colors',
                 rightTab === 'roles' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300')}>
               <Shield size={12} />역할 관리
             </button>
             <button onClick={() => setRightTab('detail')}
               disabled={!selectedUser}
-              className={cn('flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-semibold border-b-2 transition-colors',
+              className={cn('flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold border-b-2 transition-colors',
                 rightTab === 'detail' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300',
                 !selectedUser && 'opacity-40 cursor-not-allowed')}>
               <UserCircle2 size={12} />사용자 상세
@@ -233,14 +233,14 @@ export default function UsersPage() {
           {rightTab === 'roles' && (
             <div className="p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">역할 목록 ({formatNumber(roles.length)})</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 font-medium">역할 목록 ({formatNumber(roles.length)})</p>
                 <button onClick={openAddRole} className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700 font-medium px-2 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors">
                   <Plus size={12} />추가
                 </button>
               </div>
               <div className="space-y-1.5">
                 {roles.map((r) => (
-                  <div key={r.id} className="flex items-center gap-2.5 p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 group/role transition-colors">
+                  <div key={r.id} className="flex items-center gap-2.5 p-2.5 rounded hover:bg-gray-50 dark:hover:bg-gray-800 group/role transition-colors">
                     <Shield size={13} className={r.color} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
@@ -298,12 +298,12 @@ export default function UsersPage() {
                 {/* Actions */}
                 <div className="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
                   <button onClick={() => openEdit(selectedUser)}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors">
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors">
                     <Pencil size={12} />수정
                   </button>
                   <button
                     onClick={() => { if (selectedUser.id === me?.id) { toast.error('본인 계정은 삭제할 수 없습니다'); return } if (confirm(`${selectedUser.fullName} 계정을 삭제하시겠습니까?`)) deleteMutation.mutate(selectedUser.id) }}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-colors border border-rose-200 dark:border-rose-900/40">
+                    className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded transition-colors border border-rose-200 dark:border-rose-900/40">
                     <Trash2 size={12} />삭제
                   </button>
                 </div>
@@ -321,7 +321,7 @@ export default function UsersPage() {
       {/* ── User create/edit modal ── */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 dark:bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-md p-6">
+          <div className="bg-white dark:bg-gray-800 rounded shadow-xl w-full max-w-md p-6">
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900 dark:text-white">
               {editing ? <><Pencil size={18} />사용자 수정</> : <><Plus size={18} />사용자 추가</>}
             </h3>
@@ -387,11 +387,11 @@ export default function UsersPage() {
               )}
             </div>
             <div className="flex gap-3 mt-6">
-              <button onClick={closeModal} className="flex-1 py-2 border border-gray-200 dark:border-gray-600 rounded-xl text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700">취소</button>
+              <button onClick={closeModal} className="flex-1 py-2 border border-gray-200 dark:border-gray-600 rounded text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700">취소</button>
               <button
                 onClick={() => editing ? updateMutation.mutate() : createMutation.mutate()}
                 disabled={createMutation.isPending || updateMutation.isPending || (!editing && (!form.username || !form.email || !form.password || !form.fullName))}
-                className="flex-1 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
+                className="flex-1 py-2 bg-indigo-600 text-white rounded text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
                 {(createMutation.isPending || updateMutation.isPending) ? '처리 중...' : (editing ? '수정' : '등록')}
               </button>
             </div>
@@ -401,8 +401,8 @@ export default function UsersPage() {
 
       {/* ── Role add/edit modal ── */}
       {(showAddRole || editingRole) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-none">
+          <div className="bg-white dark:bg-gray-800 rounded shadow-2xl w-full max-w-sm p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-bold text-gray-900 dark:text-white">{editingRole ? '역할 수정' : '역할 추가'}</h3>
               <button onClick={() => { setShowAddRole(false); setEditingRole(null) }} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 transition-colors"><X size={16} /></button>
@@ -413,12 +413,12 @@ export default function UsersPage() {
                 <input autoFocus value={roleForm.name} onChange={(e) => setRoleForm((p) => ({ ...p, name: e.target.value }))}
                   onKeyDown={(e) => e.key === 'Enter' && (editingRole ? handleEditRole() : handleAddRole())}
                   placeholder="예: 임시 작업자"
-                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">설명</label>
                 <textarea value={roleForm.description} onChange={(e) => setRoleForm((p) => ({ ...p, description: e.target.value }))} rows={2}
-                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 resize-none" />
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 resize-none" />
               </div>
               {!editingRole?.builtIn && (
                 <div>
@@ -435,9 +435,9 @@ export default function UsersPage() {
               )}
             </div>
             <div className="flex gap-3 mt-5">
-              <button onClick={() => { setShowAddRole(false); setEditingRole(null) }} className="flex-1 py-2 border border-gray-200 dark:border-gray-600 rounded-xl text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">취소</button>
+              <button onClick={() => { setShowAddRole(false); setEditingRole(null) }} className="flex-1 py-2 border border-gray-200 dark:border-gray-600 rounded text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">취소</button>
               <button onClick={editingRole ? handleEditRole : handleAddRole} disabled={!roleForm.name.trim()}
-                className="flex-1 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+                className="flex-1 py-2 bg-indigo-600 text-white rounded text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors">
                 {editingRole ? '저장' : '추가'}
               </button>
             </div>
@@ -447,15 +447,15 @@ export default function UsersPage() {
 
       {/* ── Role delete confirm ── */}
       {deletingRole && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-none">
+          <div className="bg-white dark:bg-gray-800 rounded shadow-2xl w-full max-w-sm p-6">
             <h3 className="text-base font-bold text-gray-900 dark:text-white mb-2">역할 삭제</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
               <span className={cn('font-semibold', deletingRole.color)}>{deletingRole.name}</span> 역할을 삭제할까요?
             </p>
             <div className="flex gap-3">
-              <button onClick={() => setDeletingRole(null)} className="flex-1 py-2 border border-gray-200 dark:border-gray-600 rounded-xl text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">취소</button>
-              <button onClick={handleDeleteRole} className="flex-1 py-2 bg-rose-600 text-white rounded-xl text-sm font-medium hover:bg-rose-700 transition-colors">삭제</button>
+              <button onClick={() => setDeletingRole(null)} className="flex-1 py-2 border border-gray-200 dark:border-gray-600 rounded text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">취소</button>
+              <button onClick={handleDeleteRole} className="flex-1 py-2 bg-rose-600 text-white rounded text-sm font-medium hover:bg-rose-700 transition-colors">삭제</button>
             </div>
           </div>
         </div>

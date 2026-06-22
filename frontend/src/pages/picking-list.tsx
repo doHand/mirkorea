@@ -86,7 +86,7 @@ export default function PickingListPage() {
   return <div className="space-y-4">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div><h2 className="text-lg font-bold">날짜별 피킹리스트</h2><p className="text-sm text-gray-500">출고지시 주문을 상품별 BOX 수량으로 합산합니다.</p></div>
-      <div className="flex items-center rounded-xl border bg-white dark:border-gray-700 dark:bg-gray-900">
+      <div className="flex items-center rounded border bg-white dark:border-gray-700 dark:bg-gray-900">
         <input type="date" value={pickingDate} onChange={(e) => setPickingDate(e.target.value)} className="rounded-l-xl bg-transparent px-3 py-2 text-sm outline-none" />
         <select value={printType} onChange={(e) => setPrintType(e.target.value as 'INTERNAL' | 'EXTERNAL')}
           className="border-l bg-transparent px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900">
@@ -102,7 +102,7 @@ export default function PickingListPage() {
     </div>
 
     <div className="grid gap-3 lg:grid-cols-2">
-      <div className="rounded-xl border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <div className="mb-3 flex items-center justify-between">
           <b>출고증 리스트 ({dailyOrders.length})</b>
           {!!dailyOrders.length && <button onClick={() => setExcludedOrderIds(new Set(availableOrders.map((order) => order.id)))}
@@ -135,7 +135,7 @@ export default function PickingListPage() {
           })}
         </div>
       </div>
-      <div className="rounded-xl border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <div className="mb-3 flex items-center justify-between">
           <b>제외된 주문 ({excludedOrders.length})</b>
           {!!excludedOrders.length && <button onClick={() => setExcludedOrderIds(new Set())}
@@ -155,7 +155,7 @@ export default function PickingListPage() {
       </div>
     </div>
 
-    <div className="overflow-hidden rounded-xl border border-[#D4BF99] bg-white dark:border-gray-800 dark:bg-gray-900">
+    <div className="overflow-hidden rounded border border-[#D4BF99] bg-white dark:border-gray-800 dark:bg-gray-900">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b bg-[#F9F7F2] px-4 py-3 dark:border-gray-800 dark:bg-gray-800">
         <b>[ {pickingDate} ] 피킹 해야 할 총 리스트</b>
         <div className="flex items-center gap-3"><b className="text-[#D2691E]">{dailyOrders.length}건 / 남은 {formatNumber(totalBoxes)} BOX</b>
@@ -196,7 +196,7 @@ function OrderDetailModal({ order, onClose }: { order: OutboundOrder; onClose: (
   const totalBoxes = order.items.reduce((sum, item) => sum + item.boxCount, 0)
   const pickedBoxes = order.items.reduce((sum, item) => sum + Number(item.pickedBoxCount || 0), 0)
   return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4" onClick={onClose}>
-    <div onClick={(e) => e.stopPropagation()} className="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900">
+    <div onClick={(e) => e.stopPropagation()} className="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded bg-white shadow-2xl dark:bg-gray-900">
       <div className="flex items-center justify-between border-b px-5 py-4 dark:border-gray-800">
         <div><h3 className="font-bold">{order.orderNo}</h3>
           <p className="text-xs text-gray-400">{order.orderType === 'EXTERNAL' ? '외부' : '내부'} 출고 · {order.requestedShipDate || '-'}</p></div>
@@ -212,7 +212,7 @@ function OrderDetailModal({ order, onClose }: { order: OutboundOrder; onClose: (
           <dt className="text-gray-400">주문일</dt><dd>{order.orderDate}</dd>
           <dt className="text-gray-400">메모</dt><dd className="break-words">{order.memo || '-'}</dd>
         </dl>
-        <div className="overflow-hidden rounded-xl border dark:border-gray-800">
+        <div className="overflow-hidden rounded border dark:border-gray-800">
           <table className="w-full text-xs"><thead className="bg-gray-50 dark:bg-gray-800"><tr>
             <th className="p-2 text-left">상품</th><th className="p-2">기본위치</th><th className="p-2">BOX</th><th className="p-2">피킹완료</th>
           </tr></thead><tbody className="divide-y dark:divide-gray-800">

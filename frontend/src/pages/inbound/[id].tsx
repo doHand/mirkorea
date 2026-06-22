@@ -171,7 +171,7 @@ function OrderHeader({
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5">
+    <div className="bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
@@ -219,7 +219,7 @@ function OrderHeader({
             <button
               onClick={handleCancel}
               disabled={cancelMutation.isPending}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl transition-colors disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 border border-red-200 dark:border-red-800 rounded transition-colors disabled:opacity-50"
             >
               <Ban size={13} />
               주문 취소
@@ -228,7 +228,7 @@ function OrderHeader({
           <button
             onClick={handleDelete}
             disabled={deleteMutation.isPending}
-            className="flex items-center gap-1.5 px-3 py-2 text-sm text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-2 text-sm text-white bg-red-600 hover:bg-red-700 rounded transition-colors disabled:opacity-50"
           >
             <Trash2 size={13} />
             삭제
@@ -245,7 +245,7 @@ function StepBar({ status }: { status: InboundStatus }) {
   const isCancelled = status === 'CANCELLED'
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 px-6 py-5">
+    <div className="bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 px-6 py-5">
       <div className="flex items-center">
         {STEPS.map((step, idx) => {
           const done    = !isCancelled && STEP_ORDER.indexOf(step.status) < currentIdx
@@ -364,7 +364,7 @@ function ReceivePanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
   const isPending = receiveMutation.isPending || inspectMutation.isPending || completeMutation.isPending
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 overflow-hidden">
       <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
         <Truck size={16} className="text-amber-500" />
         <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">수령 처리</h3>
@@ -391,7 +391,7 @@ function ReceivePanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
                   type="number" min={0}
                   value={state[item.id]?.qty ?? ''}
                   onChange={(e) => setState((p) => ({ ...p, [item.id]: { ...p[item.id], qty: e.target.value } }))}
-                  className="w-28 px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-right tabular-nums font-semibold"
+                  className="w-28 px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-right tabular-nums font-semibold"
                 />
               </div>
               <div className="flex-1 min-w-48">
@@ -399,7 +399,7 @@ function ReceivePanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
                 <select
                   value={state[item.id]?.locationId ?? ''}
                   onChange={(e) => setState((p) => ({ ...p, [item.id]: { ...p[item.id], locationId: e.target.value } }))}
-                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 >
                   <option value="">위치 선택</option>
                   {receivingLocations.map((l) => (
@@ -416,7 +416,7 @@ function ReceivePanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
         <button
           onClick={handleReceive}
           disabled={isPending}
-          className="flex items-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-medium disabled:opacity-50 transition-colors shadow-sm"
+          className="flex items-center gap-2 px-5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded text-sm font-medium disabled:opacity-50 transition-colors shadow-sm"
         >
           <Save size={14} />
           {receiveMutation.isPending ? '저장 중...' : '수령 정보 저장'}
@@ -426,7 +426,7 @@ function ReceivePanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
             <button
               onClick={handleMoveToInspect}
               disabled={isPending}
-              className="flex items-center gap-2 px-5 py-2.5 border-2 border-purple-300 dark:border-purple-700 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl text-sm font-medium disabled:opacity-50 transition-colors"
+              className="flex items-center gap-2 px-5 py-1.5 border-2 border-purple-300 dark:border-purple-700 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded text-sm font-medium disabled:opacity-50 transition-colors"
             >
               <ClipboardCheck size={14} />
               {inspectMutation.isPending ? '이동 중...' : '검수 단계로'}
@@ -434,7 +434,7 @@ function ReceivePanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
             <button
               onClick={handleComplete}
               disabled={isPending}
-              className="flex items-center gap-2 px-5 py-2.5 border-2 border-emerald-300 dark:border-emerald-700 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl text-sm font-medium disabled:opacity-50 transition-colors"
+              className="flex items-center gap-2 px-5 py-1.5 border-2 border-emerald-300 dark:border-emerald-700 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded text-sm font-medium disabled:opacity-50 transition-colors"
             >
               <Check size={14} />
               {completeMutation.isPending ? '처리 중...' : '바로 완료'}
@@ -516,7 +516,7 @@ function InspectPanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
   const isPending = inspectMutation.isPending || completeMutation.isPending
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 overflow-hidden">
       <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
         <ClipboardCheck size={16} className="text-purple-500" />
         <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">검수 처리</h3>
@@ -555,7 +555,7 @@ function InspectPanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
                     value={s?.passed ?? ''}
                     onChange={(e) => setState((p) => ({ ...p, [item.id]: { ...p[item.id], passed: e.target.value } }))}
                     className={cn(
-                      'w-28 px-3 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-right tabular-nums font-semibold',
+                      'w-28 px-3 py-2 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-right tabular-nums font-semibold',
                       over ? 'border-red-400' : 'border-gray-200 dark:border-gray-600'
                     )}
                   />
@@ -571,7 +571,7 @@ function InspectPanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
                       setState((p) => ({ ...p, [item.id]: { ...p[item.id], defect: e.target.value, passed: String(passed) } }))
                     }}
                     className={cn(
-                      'w-28 px-3 py-2 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-red-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-right tabular-nums font-semibold',
+                      'w-28 px-3 py-2 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-red-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-right tabular-nums font-semibold',
                       over ? 'border-red-400' : 'border-gray-200 dark:border-gray-600'
                     )}
                   />
@@ -582,7 +582,7 @@ function InspectPanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
                     <select
                       value={s?.defectLoc ?? ''}
                       onChange={(e) => setState((p) => ({ ...p, [item.id]: { ...p[item.id], defectLoc: e.target.value } }))}
-                      className="w-full px-3 py-2 text-sm border border-red-200 dark:border-red-900/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      className="w-full px-3 py-2 text-sm border border-red-200 dark:border-red-900/50 rounded focus:outline-none focus:ring-2 focus:ring-red-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     >
                       <option value="">위치 선택</option>
                       {damagedLocations.length > 0
@@ -602,7 +602,7 @@ function InspectPanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
         <button
           onClick={handleInspect}
           disabled={isPending}
-          className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-medium disabled:opacity-50 transition-colors shadow-sm"
+          className="flex items-center gap-2 px-5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm font-medium disabled:opacity-50 transition-colors shadow-sm"
         >
           <Save size={14} />
           {inspectMutation.isPending ? '저장 중...' : '검수 정보 저장'}
@@ -610,7 +610,7 @@ function InspectPanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
         <button
           onClick={handleComplete}
           disabled={isPending}
-          className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-medium disabled:opacity-50 transition-colors shadow-sm"
+          className="flex items-center gap-2 px-5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-sm font-medium disabled:opacity-50 transition-colors shadow-sm"
         >
           <BarChart3 size={14} />
           {completeMutation.isPending ? '처리 중...' : '입고 완료 · 재고 증가'}
@@ -628,7 +628,7 @@ function CompletedPanel({ order }: { order: InboundOrder }) {
   const totalDefect   = order.items.reduce((s, i) => s + i.defectQty,   0)
 
   return (
-    <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-200 dark:border-emerald-800 p-5">
+    <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded border border-emerald-200 dark:border-emerald-800 p-5">
       <div className="flex items-center gap-2 mb-4">
         <div className="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center">
           <Check size={16} className="text-white" />
@@ -645,7 +645,7 @@ function CompletedPanel({ order }: { order: InboundOrder }) {
           { label: '합격 수량', value: totalPassed,   color: 'text-emerald-700 dark:text-emerald-400' },
           { label: '불량 수량', value: totalDefect,   color: 'text-red-600 dark:text-red-400' },
         ].map(({ label, value, color }) => (
-          <div key={label} className="bg-white dark:bg-gray-800 rounded-xl p-3 text-center">
+          <div key={label} className="bg-white dark:bg-gray-800 rounded p-3 text-center">
             <p className={cn('text-2xl font-bold tabular-nums', color)}>{formatNumber(value)}</p>
             <p className="text-xs text-gray-400 mt-0.5">{label}</p>
           </div>
@@ -658,7 +658,7 @@ function CompletedPanel({ order }: { order: InboundOrder }) {
 // ── 취소 패널 ─────────────────────────────────────────────────────
 function CancelledPanel() {
   return (
-    <div className="bg-gray-50 dark:bg-gray-700/30 rounded-2xl border border-gray-200 dark:border-gray-600 p-8 flex items-center justify-center gap-3 text-gray-400">
+    <div className="bg-gray-50 dark:bg-gray-700/30 rounded border border-gray-200 dark:border-gray-600 p-8 flex items-center justify-center gap-3 text-gray-400">
       <Ban size={20} />
       <span className="text-sm font-medium">취소된 입고 주문입니다</span>
     </div>
@@ -668,7 +668,7 @@ function CancelledPanel() {
 // ── 품목 상세 테이블 ──────────────────────────────────────────────
 function ItemsTable({ order }: { order: InboundOrder }) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 overflow-hidden">
       <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
         <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">품목 상세</h3>
       </div>

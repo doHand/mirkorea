@@ -142,7 +142,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (!hasHydrated) return (
     <div className="h-screen w-full flex flex-col items-center justify-center bg-[#142318] dark:bg-[#0a0f0b] gap-4">
-      <div className="w-10 h-10 rounded-xl bg-[#D2691E] flex items-center justify-center shadow-lg shadow-[#D2691E]/30">
+      <div className="w-8 h-8 rounded bg-[#D2691E] flex items-center justify-center">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
           <path d="m3.3 7 8.7 5 8.7-5" /><path d="M12 22V12" />
@@ -214,7 +214,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         >
           <div
             ref={mainPanelRef}
-            className="wms-main-panel overflow-auto p-3 lg:p-5"
+            className="wms-main-panel overflow-auto p-2 lg:p-3"
             style={{ width: splitHref ? `${splitRatio}%` : '100%' }}
           >
             {children}
@@ -296,7 +296,7 @@ function EmbedLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="h-screen overflow-auto bg-[#F9F7F2] p-3 dark:bg-slate-950 lg:p-5">
+    <div className="h-screen overflow-auto bg-[#F9F7F2] p-2 dark:bg-slate-950 lg:p-3">
       <div className="min-h-full">
         {children}
       </div>

@@ -109,7 +109,7 @@ export function CategorySelect({ value, onChange, placeholder = '카테고리 �
       {open && typeof window !== 'undefined' && createPortal(
         <div
           ref={dropdownRef}
-          className="fixed z-[9999] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900"
+          className="fixed z-[9999] overflow-hidden rounded border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900"
           style={{ top: pos.top, left: pos.left, width: pos.width }}
         >
           <div className="p-2 border-b border-gray-100 dark:border-gray-800">

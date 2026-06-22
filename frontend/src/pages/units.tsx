@@ -67,12 +67,12 @@ export default function UnitsPage() {
           <p className="text-xs text-gray-400 mt-0.5">EA, BOX, PALLET 등 단위 마스터를 관리합니다.</p>
         </div>
         <button onClick={() => { setShowAdd(true); setForm(emptyForm()) }}
-          className="flex items-center gap-1.5 px-3 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors shadow-sm shadow-indigo-500/20">
+          className="flex items-center gap-1.5 px-3 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded transition-colors shadow-sm shadow-indigo-500/20">
           <Plus size={14} /><span className="hidden sm:inline">단위 추가</span>
         </button>
       </div>
 
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
+      <div className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
         <table className="w-full min-w-[560px] text-sm">
           <thead>
@@ -91,7 +91,7 @@ export default function UnitsPage() {
               <tr><td colSpan={6} className="text-center py-10 text-gray-300 text-sm">단위가 없습니다</td></tr>
             )}
             {units.map((u: ProductUnit) => (
-              <tr key={u.id} className={cn('border-t border-gray-100 dark:border-gray-800 group/row', ui.tr)}>
+              <tr key={u.id} onDoubleClick={() => startEdit(u)} className={cn('border-t border-gray-100 dark:border-gray-800 group/row cursor-pointer', ui.tr)}>
                 <td className="pl-3 pr-0 py-3 w-8">
                   <GripVertical size={14} className="text-gray-300 dark:text-gray-700" />
                 </td>

@@ -73,13 +73,13 @@ export default function CategoriesPage() {
         </div>
         <button
           onClick={() => { setShowAdd(true); setForm(emptyForm()) }}
-          className="flex items-center gap-1.5 px-3 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors shadow-sm shadow-indigo-500/20"
+          className="flex items-center gap-1.5 px-3 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded transition-colors shadow-sm shadow-indigo-500/20"
         >
           <Plus size={14} /><span className="hidden sm:inline">카테고리 추가</span>
         </button>
       </div>
 
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
+      <div className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[520px] text-sm">
             <thead>
@@ -113,8 +113,9 @@ export default function CategoriesPage() {
               {categories.map((c: ProductCategory) => (
                 <tr
                   key={c.id}
+                  onDoubleClick={() => startEdit(c)}
                   className={cn(
-                    'border-t border-gray-100 dark:border-gray-800 group/row',
+                    'border-t border-gray-100 dark:border-gray-800 group/row cursor-pointer',
                     ui.tr,
                     !c.isActive && 'opacity-50',
                   )}

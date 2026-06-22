@@ -125,3 +125,121 @@
  GET /manifest.json 404 in 10ms
 (node:9084) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
 (Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ Compiled in 2.2s (1225 modules)
+ ○ Compiling /products ...
+ ⚠ Fast Refresh had to perform a full reload when ./node_modules/next/dist/build/polyfills/polyfill-module.js changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled /products in 3.4s (1285 modules)
+ ✓ Compiled /_error in 160ms (1287 modules)
+ GET /warehouse 404 in 765ms
+ GET /_next/static/chunks/react-refresh.js 404 in 23ms
+ GET /_next/static/chunks/pages/_error.js 404 in 20ms
+ GET /manifest.json 404 in 15ms
+ GET /manifest.json 404 in 9ms
+ GET /warehouse 404 in 12ms
+ GET /_next/static/chunks/react-refresh.js 404 in 16ms
+ GET /_next/static/chunks/pages/_error.js 404 in 17ms
+ GET /manifest.json 404 in 16ms
+ GET /manifest.json 404 in 6ms
+ GET /warehouse 404 in 10ms
+ GET /_next/static/chunks/react-refresh.js 404 in 15ms
+ GET /_next/static/chunks/pages/_error.js 404 in 17ms
+ GET /manifest.json 404 in 13ms
+ GET /manifest.json 404 in 7ms
+ GET /warehouse 404 in 9ms
+ GET /_next/static/chunks/react-refresh.js 404 in 28ms
+ GET /_next/static/chunks/pages/_error.js 404 in 36ms
+ GET /manifest.json 404 in 33ms
+ GET /manifest.json 404 in 7ms
+ ○ Compiling / ...
+ ✓ Compiled / in 751ms (1311 modules)
+ ⨯ Error: Cannot find module './chunks/vendor-chunks/next.js'
+Require stack:
+- c:\wms-pro\frontend\.next\server\webpack-runtime.js
+- c:\wms-pro\frontend\.next\server\pages\_document.js
+- c:\wms-pro\frontend\node_modules\next\dist\server\require.js
+- c:\wms-pro\frontend\node_modules\next\dist\server\load-components.js
+- c:\wms-pro\frontend\node_modules\next\dist\build\utils.js
+- c:\wms-pro\frontend\node_modules\next\dist\server\dev\hot-middleware.js
+- c:\wms-pro\frontend\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- c:\wms-pro\frontend\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- c:\wms-pro\frontend\node_modules\next\dist\server\lib\router-server.js
+- c:\wms-pro\frontend\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1500:15)
+    at c:\wms-pro\frontend\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1071:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1095:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1116:12)
+    at Module._load (node:internal/modules/cjs/loader:1285:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1600:12)
+    at mod.require (c:\wms-pro\frontend\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:153:16)
+    at t.f.require (c:\wms-pro\frontend\.next\server\webpack-runtime.js:1:2320)
+    at c:\wms-pro\frontend\.next\server\webpack-runtime.js:1:1793
+    at Array.reduce (<anonymous>)
+    at t.e (c:\wms-pro\frontend\.next\server\webpack-runtime.js:1:1772)
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'c:\\wms-pro\\frontend\\.next\\server\\webpack-runtime.js',
+    'c:\\wms-pro\\frontend\\.next\\server\\pages\\_document.js',
+    'c:\\wms-pro\\frontend\\node_modules\\next\\dist\\server\\require.js',
+    'c:\\wms-pro\\frontend\\node_modules\\next\\dist\\server\\load-components.js',
+    'c:\\wms-pro\\frontend\\node_modules\\next\\dist\\build\\utils.js',
+    'c:\\wms-pro\\frontend\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'c:\\wms-pro\\frontend\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'c:\\wms-pro\\frontend\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'c:\\wms-pro\\frontend\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'c:\\wms-pro\\frontend\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ],
+  page: '/'
+}
+ GET / 500 in 913ms
+ ⨯ Error: Cannot find module './chunks/vendor-chunks/next.js'
+Require stack:
+- c:\wms-pro\frontend\.next\server\webpack-runtime.js
+- c:\wms-pro\frontend\.next\server\pages\_document.js
+- c:\wms-pro\frontend\node_modules\next\dist\server\require.js
+- c:\wms-pro\frontend\node_modules\next\dist\server\load-components.js
+- c:\wms-pro\frontend\node_modules\next\dist\build\utils.js
+- c:\wms-pro\frontend\node_modules\next\dist\server\dev\hot-middleware.js
+- c:\wms-pro\frontend\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- c:\wms-pro\frontend\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- c:\wms-pro\frontend\node_modules\next\dist\server\lib\router-server.js
+- c:\wms-pro\frontend\node_modules\next\dist\server\lib\start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1500:15)
+    at c:\wms-pro\frontend\node_modules\next\dist\server\require-hook.js:55:36
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1071:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1095:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1116:12)
+    at Module._load (node:internal/modules/cjs/loader:1285:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1600:12)
+    at mod.require (c:\wms-pro\frontend\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:153:16)
+    at t.f.require (c:\wms-pro\frontend\.next\server\webpack-runtime.js:1:2320)
+    at c:\wms-pro\frontend\.next\server\webpack-runtime.js:1:1793
+    at Array.reduce (<anonymous>)
+    at t.e (c:\wms-pro\frontend\.next\server\webpack-runtime.js:1:1772)
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'c:\\wms-pro\\frontend\\.next\\server\\webpack-runtime.js',
+    'c:\\wms-pro\\frontend\\.next\\server\\pages\\_document.js',
+    'c:\\wms-pro\\frontend\\node_modules\\next\\dist\\server\\require.js',
+    'c:\\wms-pro\\frontend\\node_modules\\next\\dist\\server\\load-components.js',
+    'c:\\wms-pro\\frontend\\node_modules\\next\\dist\\build\\utils.js',
+    'c:\\wms-pro\\frontend\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'c:\\wms-pro\\frontend\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'c:\\wms-pro\\frontend\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'c:\\wms-pro\\frontend\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'c:\\wms-pro\\frontend\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ],
+  page: '/'
+}
+ GET / 500 in 12ms
+ GET /_next/static/chunks/react-refresh.js 404 in 8ms
+ GET /_next/static/chunks/pages/_error.js 404 in 13ms
+ GET /manifest.json 404 in 11ms
+ GET /manifest.json 404 in 6ms
+[?25h

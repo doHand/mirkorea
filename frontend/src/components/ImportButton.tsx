@@ -157,8 +157,8 @@ export function ImportButton({ onImported }: Props) {
       </button>
 
       {preview && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col border border-gray-200 dark:border-gray-700">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-none flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col border border-gray-200 dark:border-gray-700">
 
             {/* 헤더 */}
             <div className="flex items-start justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
@@ -266,7 +266,7 @@ export function ImportButton({ onImported }: Props) {
             <div className="flex gap-3 px-5 py-4 border-t border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => setPreview(null)}
-                className="flex-1 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                className="flex-1 py-2.5 border border-gray-200 dark:border-gray-700 rounded text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
                 취소
               </button>

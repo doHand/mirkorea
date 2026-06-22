@@ -388,7 +388,7 @@ export default function QuotesPage() {
 
       {listPrint && (
         <div className="fixed inset-0 bg-black/40 dark:bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-xs p-5 border border-gray-200 dark:border-gray-800">
+          <div className="bg-white dark:bg-gray-900 rounded shadow-xl w-full max-w-xs p-5 border border-gray-200 dark:border-gray-800">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3">출력 제목 선택</h3>
             <div className="flex flex-wrap gap-1.5 mb-4">
               {QUOTE_PRINT_TITLES.map((t) => (
@@ -420,8 +420,8 @@ export default function QuotesPage() {
       )}
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700 flex flex-col">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-none flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700 flex flex-col">
             <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 dark:border-gray-700">
               <div className="w-9 h-9 flex items-center justify-center shrink-0 bg-[#edf0ec]"><FileText size={16} className="text-[#2D4033]" /></div>
               <div className="flex-1"><h3 className="font-semibold text-gray-900 dark:text-white">{editing ? '문서 수정' : '문서 작성'}</h3>{editing && <p className="text-xs text-gray-400 font-mono mt-0.5">{editing.docNo}</p>}</div>
@@ -485,7 +485,7 @@ export default function QuotesPage() {
               </div>
 
               {form.docType === 'QUOTE' && (
-                <div className="flex items-center gap-2 bg-[#edf0ec] dark:bg-gray-800/60 px-4 py-2.5 border border-[#d8ddd8] dark:border-gray-700">
+                <div className="flex items-center gap-2 bg-[#edf0ec] dark:bg-gray-800/60 px-4 py-1.5 border border-[#d8ddd8] dark:border-gray-700">
                   <Printer size={14} className="text-[#2D4033] shrink-0" />
                   <span className="text-xs font-medium text-[#2D4033] dark:text-gray-300 shrink-0">출력 제목</span>
                   <div className="flex gap-1.5 flex-wrap">
@@ -500,7 +500,7 @@ export default function QuotesPage() {
               )}
 
               {/* 품목 */}
-              <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+              <div className="border border-gray-200 dark:border-gray-700 rounded overflow-hidden">
                 <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/70 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                   <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
                     품목
@@ -550,7 +550,7 @@ export default function QuotesPage() {
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_220px]">
                 <div><label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">비고</label><textarea value={form.memo} onChange={(e) => setForm((p) => ({ ...p, memo: e.target.value }))} rows={3} className={inputCls} /></div>
-                <div className="bg-gray-50 dark:bg-gray-800/60 rounded-xl p-4 flex flex-col justify-between"><span className="text-sm text-gray-500">합계금액</span><span className="text-base font-bold text-gray-900 dark:text-white">￦{formatNumber(totalAmount)}</span></div>
+                <div className="bg-gray-50 dark:bg-gray-800/60 rounded p-4 flex flex-col justify-between"><span className="text-sm text-gray-500">합계금액</span><span className="text-base font-bold text-gray-900 dark:text-white">￦{formatNumber(totalAmount)}</span></div>
               </div>
 
               <div className="flex justify-end gap-2 pt-2">
@@ -619,7 +619,7 @@ function ClientPickerModal({ clients, onSelect, onClose }: {
           <h3 className="font-semibold text-gray-900 dark:text-white text-sm">거래처 선택</h3>
           <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><X size={16} /></button>
         </div>
-        <div className="px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 shrink-0">
+        <div className="px-4 py-1.5 border-b border-gray-200 dark:border-gray-700 shrink-0">
           <div className="relative">
             <Search size={14} className="absolute left-3 top-2.5 text-gray-400" />
             <input autoFocus value={search} onChange={(e) => setSearch(e.target.value)} placeholder="거래처명, 전화번호, 사업자번호 검색" className="w-full border border-gray-200 dark:border-gray-700 pl-8 pr-3 py-2 text-sm outline-none focus:border-[#2D4033] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
@@ -629,20 +629,20 @@ function ClientPickerModal({ clients, onSelect, onClose }: {
           <table className="w-full text-sm">
             <thead className="sticky top-0">
               <tr className="bg-[#2D4033] text-white">
-                <th className="px-4 py-2.5 text-left font-semibold">거래처명</th>
-                <th className="px-4 py-2.5 text-left font-semibold">전화번호</th>
-                <th className="px-4 py-2.5 text-left font-semibold">사업자번호</th>
-                <th className="px-4 py-2.5 text-left font-semibold">주소</th>
+                <th className="px-4 py-1.5 text-left font-semibold">거래처명</th>
+                <th className="px-4 py-1.5 text-left font-semibold">전화번호</th>
+                <th className="px-4 py-1.5 text-left font-semibold">사업자번호</th>
+                <th className="px-4 py-1.5 text-left font-semibold">주소</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
               {filtered.length === 0 && <tr><td colSpan={4} className="text-center py-8 text-gray-400">검색 결과가 없습니다</td></tr>}
               {filtered.map((client) => (
                 <tr key={client.id} onClick={() => onSelect(client)} className="cursor-pointer hover:bg-[#f7f8f5] dark:hover:bg-gray-800/40">
-                  <td className="px-4 py-2.5 font-medium text-gray-900 dark:text-gray-100">{client.name}</td>
-                  <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400">{client.phone ?? '-'}</td>
-                  <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400 font-mono text-xs">{client.businessNo ?? '-'}</td>
-                  <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400 truncate max-w-[180px]">{client.address ?? '-'}</td>
+                  <td className="px-4 py-1.5 font-medium text-gray-900 dark:text-gray-100">{client.name}</td>
+                  <td className="px-4 py-1.5 text-gray-500 dark:text-gray-400">{client.phone ?? '-'}</td>
+                  <td className="px-4 py-1.5 text-gray-500 dark:text-gray-400 font-mono text-xs">{client.businessNo ?? '-'}</td>
+                  <td className="px-4 py-1.5 text-gray-500 dark:text-gray-400 truncate max-w-[180px]">{client.address ?? '-'}</td>
                 </tr>
               ))}
             </tbody>
@@ -674,7 +674,7 @@ function ProductPickerModal({ products, onSelect, onClose }: {
           <h3 className="font-semibold text-gray-900 dark:text-white text-sm">상품 교체</h3>
           <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><X size={16} /></button>
         </div>
-        <div className="px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 shrink-0">
+        <div className="px-4 py-1.5 border-b border-gray-200 dark:border-gray-700 shrink-0">
           <div className="relative">
             <Search size={14} className="absolute left-3 top-2.5 text-gray-400" />
             <input autoFocus value={search} onChange={(e) => setSearch(e.target.value)} placeholder="상품명, 상품코드, 규격 검색" className="w-full border border-gray-200 dark:border-gray-700 pl-8 pr-3 py-2 text-sm outline-none focus:border-[#2D4033] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
@@ -684,22 +684,22 @@ function ProductPickerModal({ products, onSelect, onClose }: {
           <table className="w-full text-sm">
             <thead className="sticky top-0">
               <tr className="bg-[#2D4033] text-white">
-                <th className="px-4 py-2.5 text-left font-semibold">코드</th>
-                <th className="px-4 py-2.5 text-left font-semibold">상품명</th>
-                <th className="px-4 py-2.5 text-left font-semibold">규격</th>
-                <th className="px-4 py-2.5 text-center font-semibold">단위</th>
-                <th className="px-4 py-2.5 text-right font-semibold">판매단가</th>
+                <th className="px-4 py-1.5 text-left font-semibold">코드</th>
+                <th className="px-4 py-1.5 text-left font-semibold">상품명</th>
+                <th className="px-4 py-1.5 text-left font-semibold">규격</th>
+                <th className="px-4 py-1.5 text-center font-semibold">단위</th>
+                <th className="px-4 py-1.5 text-right font-semibold">판매단가</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
               {filtered.length === 0 && <tr><td colSpan={5} className="text-center py-8 text-gray-400">검색 결과가 없습니다</td></tr>}
               {filtered.map((product) => (
                 <tr key={product.id} onClick={() => onSelect(product)} className="cursor-pointer hover:bg-[#f7f8f5] dark:hover:bg-gray-800/40">
-                  <td className="px-4 py-2.5 font-mono text-xs text-[#2D4033] dark:text-[#7ba885]">{product.code}</td>
-                  <td className="px-4 py-2.5 font-medium text-gray-900 dark:text-gray-100">{product.name}</td>
-                  <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400 text-xs">{product.spec ?? '-'}</td>
-                  <td className="px-4 py-2.5 text-center text-gray-600 dark:text-gray-400">{product.unit}</td>
-                  <td className="px-4 py-2.5 text-right tabular-nums text-gray-900 dark:text-gray-100">￦{formatNumber(product.sellPrice ?? 0)}</td>
+                  <td className="px-4 py-1.5 font-mono text-xs text-[#2D4033] dark:text-[#7ba885]">{product.code}</td>
+                  <td className="px-4 py-1.5 font-medium text-gray-900 dark:text-gray-100">{product.name}</td>
+                  <td className="px-4 py-1.5 text-gray-500 dark:text-gray-400 text-xs">{product.spec ?? '-'}</td>
+                  <td className="px-4 py-1.5 text-center text-gray-600 dark:text-gray-400">{product.unit}</td>
+                  <td className="px-4 py-1.5 text-right tabular-nums text-gray-900 dark:text-gray-100">￦{formatNumber(product.sellPrice ?? 0)}</td>
                 </tr>
               ))}
             </tbody>
@@ -749,7 +749,7 @@ function ProductMultiPickerModal({ products, onConfirm, onClose }: {
           <h3 className="font-semibold text-gray-900 dark:text-white text-sm">상품 추가</h3>
           <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><X size={16} /></button>
         </div>
-        <div className="px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 shrink-0">
+        <div className="px-4 py-1.5 border-b border-gray-200 dark:border-gray-700 shrink-0">
           <div className="relative">
             <Search size={14} className="absolute left-3 top-2.5 text-gray-400" />
             <input autoFocus value={search} onChange={(e) => setSearch(e.target.value)} placeholder="상품명, 상품코드, 규격 검색" className="w-full border border-gray-200 dark:border-gray-700 pl-8 pr-3 py-2 text-sm outline-none focus:border-[#2D4033] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
@@ -759,7 +759,7 @@ function ProductMultiPickerModal({ products, onConfirm, onClose }: {
           <table className="w-full text-sm">
             <thead className="sticky top-0">
               <tr className="bg-[#2D4033] text-white">
-                <th className="px-3 py-2.5 w-10 text-center">
+                <th className="px-3 py-1.5 w-10 text-center">
                   <input
                     type="checkbox"
                     checked={allFilteredSelected}
@@ -767,11 +767,11 @@ function ProductMultiPickerModal({ products, onConfirm, onClose }: {
                     className="w-3.5 h-3.5 accent-white cursor-pointer"
                   />
                 </th>
-                <th className="px-4 py-2.5 text-left font-semibold">코드</th>
-                <th className="px-4 py-2.5 text-left font-semibold">상품명</th>
-                <th className="px-4 py-2.5 text-left font-semibold">규격</th>
-                <th className="px-4 py-2.5 text-center font-semibold">단위</th>
-                <th className="px-4 py-2.5 text-right font-semibold">판매단가</th>
+                <th className="px-4 py-1.5 text-left font-semibold">코드</th>
+                <th className="px-4 py-1.5 text-left font-semibold">상품명</th>
+                <th className="px-4 py-1.5 text-left font-semibold">규격</th>
+                <th className="px-4 py-1.5 text-center font-semibold">단위</th>
+                <th className="px-4 py-1.5 text-right font-semibold">판매단가</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -784,14 +784,14 @@ function ProductMultiPickerModal({ products, onConfirm, onClose }: {
                     onClick={() => toggle(product.id)}
                     className={`cursor-pointer transition-colors ${checked ? 'bg-[#edf0ec] dark:bg-[#2D4033]/20' : 'hover:bg-[#f7f8f5] dark:hover:bg-gray-800/40'}`}
                   >
-                    <td className="px-3 py-2.5 text-center">
+                    <td className="px-3 py-1.5 text-center">
                       <input type="checkbox" checked={checked} onChange={() => toggle(product.id)} onClick={(e) => e.stopPropagation()} className="w-3.5 h-3.5 accent-[#2D4033] cursor-pointer" />
                     </td>
-                    <td className="px-4 py-2.5 font-mono text-xs text-[#2D4033] dark:text-[#7ba885]">{product.code}</td>
-                    <td className="px-4 py-2.5 font-medium text-gray-900 dark:text-gray-100">{product.name}</td>
-                    <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400 text-xs">{product.spec ?? '-'}</td>
-                    <td className="px-4 py-2.5 text-center text-gray-600 dark:text-gray-400">{product.unit}</td>
-                    <td className="px-4 py-2.5 text-right tabular-nums text-gray-900 dark:text-gray-100">￦{formatNumber(product.sellPrice ?? 0)}</td>
+                    <td className="px-4 py-1.5 font-mono text-xs text-[#2D4033] dark:text-[#7ba885]">{product.code}</td>
+                    <td className="px-4 py-1.5 font-medium text-gray-900 dark:text-gray-100">{product.name}</td>
+                    <td className="px-4 py-1.5 text-gray-500 dark:text-gray-400 text-xs">{product.spec ?? '-'}</td>
+                    <td className="px-4 py-1.5 text-center text-gray-600 dark:text-gray-400">{product.unit}</td>
+                    <td className="px-4 py-1.5 text-right tabular-nums text-gray-900 dark:text-gray-100">￦{formatNumber(product.sellPrice ?? 0)}</td>
                   </tr>
                 )
               })}

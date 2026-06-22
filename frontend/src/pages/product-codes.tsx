@@ -56,11 +56,11 @@ export default function ProductCodesPage() {
         <div className="relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="코드 / 상품명 검색"
-            className="pl-8 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 outline-none focus:border-indigo-400 w-52" />
+            className="pl-8 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 outline-none focus:border-indigo-400 w-52" />
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
+      <div className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
         <table className="w-full min-w-[480px] text-sm">
           <thead>
@@ -75,7 +75,7 @@ export default function ProductCodesPage() {
             {isLoading && <tr><td colSpan={4} className="text-center py-10 text-gray-400 text-sm">불러오는 중...</td></tr>}
             {!isLoading && products.length === 0 && <tr><td colSpan={4} className="text-center py-10 text-gray-300 text-sm">검색 결과가 없습니다</td></tr>}
             {products.map((p: Product) => (
-              <tr key={p.id} className="border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors">
+              <tr key={p.id} onDoubleClick={() => startEdit(p)} className="border-t border-gray-100 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors cursor-pointer">
                 <td className="px-3 py-3">
                   {editId === p.id ? (
                     <div className="flex items-center gap-1.5">
