@@ -6,6 +6,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.*;
 import java.util.*;
 
@@ -31,6 +32,7 @@ public class OutboundOrder {
     private OutboundOrderStatus status = OutboundOrderStatus.COLLECTED;
     @Column(name = "instructed_at") private Instant instructedAt;
     @Column(name = "picked_at") private Instant pickedAt;
+    @Column(name = "discount_rate", nullable = false, precision = 5, scale = 2) private BigDecimal discountRate;
     @Column(columnDefinition = "TEXT") private String memo;
     @Column(name = "created_by", nullable = false) private UUID createdBy;
     @CreationTimestamp @Column(name = "created_at", updatable = false) private Instant createdAt;

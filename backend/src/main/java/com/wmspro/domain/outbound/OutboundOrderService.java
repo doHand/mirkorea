@@ -2,6 +2,7 @@ package com.wmspro.domain.outbound;
 
 import com.wmspro.common.PageResponse;
 import com.wmspro.common.exception.*;
+import com.wmspro.common.sse.SseService;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.Hibernate;
 import org.springframework.data.domain.*;
@@ -19,6 +20,7 @@ import java.util.*;
 public class OutboundOrderService {
     private final OutboundOrderRepository repository;
     private final JdbcTemplate jdbcTemplate;
+    private final SseService sseService;
 
     public PageResponse<OutboundOrder> findAll(UUID warehouseId, OutboundOrderStatus status, String search, int page, int limit) {
         String q = search != null ? search.trim() : "";
@@ -42,7 +44,9 @@ public class OutboundOrderService {
             .orderDate(req.orderDate != null ? req.orderDate : LocalDate.now(ZoneId.of("Asia/Seoul")))
             .requestedShipDate(req.requestedShipDate).memo(req.memo).createdBy(userId).build();
         applyItems(order, req);
-        return repository.save(order);
+        OutboundOrder saved = repository.save(order);
+        sseService.broadcast("outbound");
+        return saved;
     }
 
     @Transactional
@@ -63,7 +67,9 @@ public class OutboundOrderService {
         order.setMemo(req.memo);
         order.getItems().clear();
         applyItems(order, req);
-        return repository.save(order);
+        OutboundOrder saved = repository.save(order);
+        sseService.broadcast("outbound");
+        return saved;
     }
 
     @Transactional
@@ -72,7 +78,9 @@ public class OutboundOrderService {
         ensureCollected(order);
         order.setStatus(OutboundOrderStatus.INSTRUCTED);
         order.setInstructedAt(Instant.now());
-        return repository.save(order);
+        OutboundOrder saved = repository.save(order);
+        sseService.broadcast("outbound");
+        return saved;
     }
 
     @Transactional
@@ -123,7 +131,9 @@ public class OutboundOrderService {
                 order.setStatus(OutboundOrderStatus.PICKED);
                 order.setPickedAt(pickedAt);
             });
-        return repository.saveAll(orders);
+        List<OutboundOrder> result = repository.saveAll(orders);
+        sseService.broadcast("outbound");
+        return result;
     }
 
     @Transactional
@@ -131,7 +141,9 @@ public class OutboundOrderService {
         OutboundOrder order = findById(id);
         if (order.getStatus() == OutboundOrderStatus.CANCELLED) throw invalidStatus();
         order.setStatus(OutboundOrderStatus.CANCELLED);
-        return repository.save(order);
+        OutboundOrder saved = repository.save(order);
+        sseService.broadcast("outbound");
+        return saved;
     }
 
     @Transactional
@@ -139,6 +151,7 @@ public class OutboundOrderService {
         OutboundOrder order = findById(id);
         ensureEditable(order);
         repository.delete(order);
+        sseService.broadcast("outbound");
     }
 
     private void validate(OutboundOrderRequest req) {

@@ -2,6 +2,7 @@ package com.wmspro.domain.stock;
 
 import com.wmspro.common.exception.BusinessException;
 import com.wmspro.common.exception.ErrorCode;
+import com.wmspro.common.sse.SseService;
 import com.wmspro.domain.inventory.Inventory;
 import com.wmspro.domain.inventory.InventoryRepository;
 import com.wmspro.domain.stock.dto.*;
@@ -27,6 +28,7 @@ public class StockService {
     private final StockTransactionRepository txnRepo;
     private final InventoryRepository        invRepo;
     private final JdbcTemplate               jdbcTemplate;
+    private final SseService                 sseService;
 
     // ────────────────────────────────────────────────────────────
     // 입고
@@ -56,7 +58,7 @@ public class StockService {
                 .build());
         }
 
-        return saveTxn(StockTransaction.builder()
+        StockTransaction txn = saveTxn(StockTransaction.builder()
             .txType(TxType.INBOUND)
             .qty(req.quantity)
             .qtyBefore(beforeQty)
@@ -71,6 +73,8 @@ public class StockService {
             .memo(req.memo)
             .createdBy(userId)
             .build());
+        sseService.broadcast("inventory");
+        return txn;
     }
 
     // ────────────────────────────────────────────────────────────
@@ -91,7 +95,7 @@ public class StockService {
         inv.setLastSyncedAt(Instant.now());
         invRepo.save(inv);
 
-        return saveTxn(StockTransaction.builder()
+        StockTransaction txn = saveTxn(StockTransaction.builder()
             .txType(TxType.OUTBOUND)
             .qty(-req.quantity)
             .qtyBefore(beforeQty)
@@ -105,6 +109,8 @@ public class StockService {
             .memo(req.memo)
             .createdBy(userId)
             .build());
+        sseService.broadcast("inventory");
+        return txn;
     }
 
     // ────────────────────────────────────────────────────────────
@@ -136,7 +142,7 @@ public class StockService {
 
         TxType txType = delta >= 0 ? TxType.ADJUST_INCREASE : TxType.ADJUST_DECREASE;
 
-        return saveTxn(StockTransaction.builder()
+        StockTransaction txn = saveTxn(StockTransaction.builder()
             .txType(txType)
             .qty(delta)
             .qtyBefore(beforeQty)
@@ -149,6 +155,8 @@ public class StockService {
             .memo(req.memo)
             .createdBy(userId)
             .build());
+        sseService.broadcast("inventory");
+        return txn;
     }
 
     // ────────────────────────────────────────────────────────────
@@ -227,6 +235,7 @@ public class StockService {
             .reason(req.reason)
             .createdBy(userId)
             .build());
+        sseService.broadcast("inventory");
     }
 
     // ────────────────────────────────────────────────────────────
@@ -259,7 +268,7 @@ public class StockService {
         original.setCancelledAt(Instant.now());
         txnRepo.save(original);
 
-        return saveTxn(StockTransaction.builder()
+        StockTransaction txn = saveTxn(StockTransaction.builder()
             .txType(TxType.INBOUND_CANCEL)
             .qty(-original.getQty())
             .qtyBefore(beforeQty)
@@ -272,6 +281,8 @@ public class StockService {
             .reason(reason)
             .createdBy(userId)
             .build());
+        sseService.broadcast("inventory");
+        return txn;
     }
 
     // ────────────────────────────────────────────────────────────
@@ -312,7 +323,7 @@ public class StockService {
         original.setCancelledAt(Instant.now());
         txnRepo.save(original);
 
-        return saveTxn(StockTransaction.builder()
+        StockTransaction txn = saveTxn(StockTransaction.builder()
             .txType(TxType.OUTBOUND_CANCEL)
             .qty(cancelQty)
             .qtyBefore(beforeQty)
@@ -325,6 +336,8 @@ public class StockService {
             .reason(reason)
             .createdBy(userId)
             .build());
+        sseService.broadcast("inventory");
+        return txn;
     }
 
     // ────────────────────────────────────────────────────────────

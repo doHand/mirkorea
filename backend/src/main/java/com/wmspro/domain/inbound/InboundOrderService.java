@@ -3,6 +3,7 @@ package com.wmspro.domain.inbound;
 import com.wmspro.common.PageResponse;
 import com.wmspro.common.exception.BusinessException;
 import com.wmspro.common.exception.ErrorCode;
+import com.wmspro.common.sse.SseService;
 import com.wmspro.domain.inbound.dto.CreateInboundOrderRequest;
 import com.wmspro.domain.inbound.dto.InspectItemRequest;
 import com.wmspro.domain.inbound.dto.ReceiveItemRequest;
@@ -30,6 +31,7 @@ public class InboundOrderService {
     private final InboundOrderItemRepository itemRepo;
     private final StockService               stockService;
     private final JdbcTemplate               jdbcTemplate;
+    private final SseService                 sseService;
 
     // ── 목록 조회 ────────────────────────────────────────────────
     public PageResponse<InboundOrder> findAll(UUID warehouseId, InboundStatus status, int page, int limit) {
@@ -71,7 +73,9 @@ public class InboundOrderService {
                 order.getItems().add(item);
             }
         }
-        return orderRepo.save(order);
+        InboundOrder saved = orderRepo.save(order);
+        sseService.broadcast("inbound");
+        return saved;
     }
 
     // ── 바코드 스캔 수령 ─────────────────────────────────────────
@@ -96,7 +100,9 @@ public class InboundOrderService {
         if (order.getStatus() == InboundStatus.PENDING) {
             order.setStatus(InboundStatus.RECEIVING);
         }
-        return orderRepo.save(order);
+        InboundOrder saved = orderRepo.save(order);
+        sseService.broadcast("inbound");
+        return saved;
     }
 
     // ── 입고 검수 ─────────────────────────────────────────────────
@@ -121,7 +127,9 @@ public class InboundOrderService {
         }
 
         order.setStatus(InboundStatus.INSPECTING);
-        return orderRepo.save(order);
+        InboundOrder saved = orderRepo.save(order);
+        sseService.broadcast("inbound");
+        return saved;
     }
 
     // ── 완료: 자동 재고 증가 + 불량 처리 ──────────────────────────
@@ -163,7 +171,9 @@ public class InboundOrderService {
         }
 
         order.setStatus(InboundStatus.COMPLETED);
-        return orderRepo.save(order);
+        InboundOrder saved = orderRepo.save(order);
+        sseService.broadcast("inbound");
+        return saved;
     }
 
     // ── 취소 ──────────────────────────────────────────────────────
@@ -174,7 +184,9 @@ public class InboundOrderService {
             throw new BusinessException(ErrorCode.INBOUND_INVALID_STATUS);
         }
         order.setStatus(InboundStatus.CANCELLED);
-        return orderRepo.save(order);
+        InboundOrder saved = orderRepo.save(order);
+        sseService.broadcast("inbound");
+        return saved;
     }
 
     // ── 삭제 ─────────────────────────────────────────────────────
@@ -182,6 +194,7 @@ public class InboundOrderService {
     public void delete(UUID id) {
         InboundOrder order = findById(id);
         orderRepo.delete(order);
+        sseService.broadcast("inbound");
     }
 
     // ── Private ───────────────────────────────────────────────────

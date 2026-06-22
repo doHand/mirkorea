@@ -5,9 +5,15 @@ import { ToastProvider } from '@/providers/toast-provider'
 import { ThemeProvider } from '@/providers/theme-provider'
 import { ResizableTables } from '@/components/ResizableTables'
 import DashboardLayout from '@/layouts/dashboard-layout'
+import { useSSE } from '@/hooks/useSSE'
 import '../styles/globals.css'
 
 const AUTH_ROUTES = ['/login', '/register', '/forgot-password']
+
+function SSEInitializer() {
+  useSSE()
+  return null
+}
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter()
@@ -16,6 +22,7 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
       <QueryProvider>
+        <SSEInitializer />
         <ToastProvider />
         <ResizableTables />
         {isAuth ? (
