@@ -77,3 +77,51 @@
  GET /manifest.json 404 in 16ms
 (node:6616) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
 (Use `node --trace-deprecation ...` to show where the warning was created)
+ ⚠ Found a change in next.config.mjs. Restarting the server to apply the changes...
+  ▲ Next.js 14.2.5
+  - Local:        http://localhost:3000
+
+ ✓ Starting...
+ ✓ Ready in 2.1s
+ ○ Compiling /warehouse ...
+ ✓ Compiled /warehouse in 5.4s (1227 modules)
+ GET /_next/static/webpack/551a1aad16d265ce.webpack.hot-update.json 404 in 6242ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /warehouse 200 in 6251ms
+ GET /warehouse 200 in 8ms
+ GET /manifest.json 404 in 16ms
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../typescript/lib/typescript' in c:\wms-pro\frontend\node_modules\next\dist\build for build dependencies doesn't lead to expected result 'C:\wms-pro\frontend\node_modules\typescript\lib\typescript.js', but to 'c:\wms-pro\frontend\node_modules\typescript\lib\typescript.js' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../typescript/lib/typescript (expected C:\wms-pro\frontend\node_modules\typescript\lib\typescript.js)
+<w>  at file dependencies c:\wms-pro\frontend\node_modules\next\dist\build\load-jsconfig.js
+<w>  at file c:\wms-pro\frontend\node_modules\next\dist\build\load-jsconfig.js
+<w>  at file dependencies c:\wms-pro\frontend\node_modules\next\dist\build\webpack-config.js
+<w>  at file c:\wms-pro\frontend\node_modules\next\dist\build\webpack-config.js
+<w>  at file dependencies c:\wms-pro\frontend\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file c:\wms-pro\frontend\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs c:\wms-pro\frontend\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../typescript/lib/typescript' in c:\wms-pro\frontend\node_modules\next\dist\build for build dependencies doesn't lead to expected result 'C:\wms-pro\frontend\node_modules\typescript\lib\typescript.js', but to 'c:\wms-pro\frontend\node_modules\typescript\lib\typescript.js' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../typescript/lib/typescript (expected C:\wms-pro\frontend\node_modules\typescript\lib\typescript.js)
+<w>  at file dependencies c:\wms-pro\frontend\node_modules\next\dist\build\load-jsconfig.js
+<w>  at file c:\wms-pro\frontend\node_modules\next\dist\build\load-jsconfig.js
+<w>  at file dependencies c:\wms-pro\frontend\node_modules\next\dist\build\webpack-config.js
+<w>  at file c:\wms-pro\frontend\node_modules\next\dist\build\webpack-config.js
+<w>  at file dependencies c:\wms-pro\frontend\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file c:\wms-pro\frontend\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs c:\wms-pro\frontend\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+ GET /manifest.json 404 in 17ms
+ ⚠ Found a change in next.config.mjs. Restarting the server to apply the changes...
+  ▲ Next.js 14.2.5
+  - Local:        http://localhost:3000
+
+ ✓ Starting...
+ ✓ Ready in 1952ms
+ ○ Compiling /warehouse ...
+ ✓ Compiled /warehouse in 875ms (1227 modules)
+ GET /_next/static/webpack/243703961f894b41.webpack.hot-update.json 404 in 1695ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /warehouse 200 in 1691ms
+ GET /warehouse 200 in 9ms
+ GET /manifest.json 404 in 15ms
+ GET /manifest.json 404 in 10ms
+(node:9084) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
