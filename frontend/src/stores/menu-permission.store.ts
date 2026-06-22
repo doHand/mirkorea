@@ -25,6 +25,7 @@ export const DEFAULT_MENUS: MenuDef[] = [
   { menuId: 'picking-list',     href: '/picking-list',     label: '날짜별 피킹리스트', section: '입출고 관리', roles: ['ADMIN', 'MANAGER', 'WORKER'] },
   { menuId: 'scan',             href: '/scan',             label: '스캔',              section: '입출고 관리', roles: ALL },
   { menuId: 'transactions',     href: '/transactions',     label: '이력 조회',         section: '입출고 관리', roles: ALL },
+  { menuId: 'inventory-audit',  href: '/inventory-audit',  label: '재고조사',           section: '입출고 관리', roles: ['ADMIN', 'MANAGER'] },
   { menuId: 'clients',          href: '/clients',          label: '거래처 관리',       section: '영업 관리', roles: ['ADMIN', 'MANAGER'] },
   { menuId: 'quotes',           href: '/quotes',           label: '출력서류 관리',      section: '영업 관리', roles: ['ADMIN', 'MANAGER'] },
   { menuId: 'warehouse',        href: '/warehouse',        label: '창고/위치',         section: '시스템 관리', roles: ALL },
@@ -145,7 +146,7 @@ export const useMenuPermissionStore = create<MenuPermissionState>()(
     }),
     {
       name: 'wms-menu-permissions',
-      version: 17,
+      version: 18,
       migrate: (stored: unknown) => {
         const s = stored as Partial<MenuPermissionState>
         // Remove obsolete menus: product-codes/box-qty/lot merged into product-attrs,

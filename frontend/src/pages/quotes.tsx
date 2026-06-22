@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ChevronLeft, ChevronRight, FileText, Pencil, Plus, Printer, Search, Trash2, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, FileText, FilePlus2, Pencil, Plus, Printer, Search, Trash2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { clientApi } from '@/api/client.api'
 import { productApi } from '@/api/product.api'
@@ -15,7 +15,7 @@ import { cn } from '@/utils/cn'
 import { editableRowProps } from '@/utils/table'
 import * as ui from '@/styles/ui'
 import {
-  QUOTE_PRINT_TITLES, type QuotePrintTitle,
+  QUOTE_PRINT_TITLES,
   printQuoteDocument,
 } from '@/utils/printDocument'
 import type { Client, Product, Quote } from '@/types/api.types'
@@ -77,6 +77,7 @@ export default function QuotesPage() {
   const tabParam = (typeof q.tab === 'string' ? q.tab : '').toUpperCase()
   const [docTypeFilter, setDocTypeFilter] = useState(() => tabParam || 'STATEMENT')
   const [page, setPage] = useState(1)
+  const [purchaseCreateTrigger, setPurchaseCreateTrigger] = useState(0)
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Quote | null>(null)
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
@@ -277,46 +278,31 @@ export default function QuotesPage() {
     { value: 'PURCHASE',  label: '발주서',     href: null },
   ]
 
-  if (docTypeFilter === 'PURCHASE') {
-    return (
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">출력서류관리</h2>
-          <p className="text-xs text-gray-400 mt-0.5">발주서는 입고예정 등록 전까지 수량에 반영되지 않습니다</p>
-        </div>
-        <div className="flex items-center gap-1 border-b border-gray-200 dark:border-gray-700">
-          {DOC_TABS.map((tab) => (
-            <button key={tab.value} onClick={() => { setDocTypeFilter(tab.value); setPage(1) }}
-              className={['px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors',
-                docTypeFilter === tab.value
-                  ? 'border-[#2D4033] text-[#2D4033] dark:text-[#7ba885] dark:border-[#7ba885]'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200',
-              ].join(' ')}>{tab.label}</button>
-          ))}
-        </div>
-        <PurchaseOrdersContent embedded />
-      </div>
-    )
-  }
-
   return (
     <div className="flex h-[calc(100vh-150px)] min-h-0 flex-col gap-4 overflow-hidden">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      {/* 공통 헤더 */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between shrink-0">
         <div>
           <h2 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">출력서류관리</h2>
-          {data && <p className="text-xs text-gray-400 mt-0.5">전체 {formatNumber(data.total)}건</p>}
+          {docTypeFilter !== 'PURCHASE' && data && (
+            <p className="text-xs text-gray-400 mt-0.5">전체 {formatNumber(data.total)}건</p>
+          )}
+          {docTypeFilter === 'PURCHASE' && (
+            <p className="text-xs text-gray-400 mt-0.5">발주서는 입고예정 등록 전까지 수량에 반영되지 않습니다</p>
+          )}
         </div>
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        <div className="self-start sm:self-auto flex gap-2">
           <button onClick={openCreate} className="flex items-center gap-1.5 rounded border border-emerald-200 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400">
             <FileText size={14} /> 거래명세서/견적서 작성
           </button>
-          <button onClick={() => { setDocTypeFilter('PURCHASE'); setPage(1) }} className="flex items-center gap-1.5 rounded border border-[#D2691E] px-3 py-1.5 text-sm font-medium text-[#9a4d16] hover:bg-orange-50">
-            <Plus size={14} /> 발주서 생성
+          <button onClick={() => { setDocTypeFilter('PURCHASE'); setPurchaseCreateTrigger((n) => n + 1) }} className="flex items-center gap-1.5 rounded bg-[#2D4033] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#24352a]">
+            <FilePlus2 size={14} /> 발주서 작성
           </button>
         </div>
       </div>
 
-      <div className="flex items-center gap-1 border-b border-gray-200 dark:border-gray-700">
+      {/* 공통 탭 */}
+      <div className="flex items-center gap-1 border-b border-gray-200 dark:border-gray-700 shrink-0">
         {DOC_TABS.map((tab) => (
           <button key={tab.value} onClick={() => { setDocTypeFilter(tab.value); setPage(1) }}
             className={['px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors',
@@ -327,7 +313,14 @@ export default function QuotesPage() {
         ))}
       </div>
 
-      <div className="flex flex-wrap gap-2 border border-[#d8ddd8] bg-white p-3 shadow-sm dark:bg-gray-900">
+      {/* 발주서 탭 콘텐츠 */}
+      {docTypeFilter === 'PURCHASE' && (
+        <PurchaseOrdersContent createTrigger={purchaseCreateTrigger} />
+      )}
+
+      {/* 거래명세서 / 견적서 탭 콘텐츠 */}
+      {docTypeFilter !== 'PURCHASE' && (<>
+      <div className="flex flex-wrap gap-2 border border-[#d8ddd8] bg-white p-3 shadow-sm dark:bg-gray-900 shrink-0">
         <div className="relative min-w-60 flex-1 flex gap-1.5">
           <div className="relative flex-1">
             <Search size={15} className="absolute left-3 top-2.5 text-gray-400" />
@@ -384,12 +377,13 @@ export default function QuotesPage() {
       </div>
 
       {data && data.totalPages > 1 && (
-        <div className="flex justify-center items-center gap-2">
+        <div className="flex justify-center items-center gap-2 shrink-0">
           <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="p-2 rounded-lg border border-gray-200 disabled:opacity-40"><ChevronLeft size={16} /></button>
           <span className="text-sm text-gray-500">{formatNumber(page)} / {formatNumber(data.totalPages)}</span>
           <button onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))} disabled={page === data.totalPages} className="p-2 rounded-lg border border-gray-200 disabled:opacity-40"><ChevronRight size={16} /></button>
         </div>
       )}
+      </>)}
 
       {listPrint && (
         <div className="fixed inset-0 bg-black/40 dark:bg-black/60 flex items-center justify-center z-50">

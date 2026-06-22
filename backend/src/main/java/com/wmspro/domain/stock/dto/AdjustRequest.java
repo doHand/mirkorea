@@ -16,4 +16,6 @@ public class AdjustRequest {
     @NotBlank public String reason;
     public String memo;
     public String lotNumber;
+    public String referenceType;
+    public UUID   referenceId;
 }

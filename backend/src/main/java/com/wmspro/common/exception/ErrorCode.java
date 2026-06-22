@@ -54,7 +54,13 @@ public enum ErrorCode {
     INBOUND_INVALID_STATUS(HttpStatus.CONFLICT,     "현재 상태에서 허용되지 않는 작업입니다"),
     INBOUND_QTY_EXCEEDED(HttpStatus.BAD_REQUEST,    "검수 수량이 수령 수량을 초과합니다"),
 
+    // Inventory Audit
+    AUDIT_NOT_FOUND(HttpStatus.NOT_FOUND,            "재고조사를 찾을 수 없습니다"),
+    ALREADY_CONFIRMED(HttpStatus.CONFLICT,           "이미 확정된 재고조사입니다"),
+    CANNOT_DELETE_CONFIRMED(HttpStatus.CONFLICT,     "확정된 재고조사는 삭제할 수 없습니다"),
+
     // General
+    NOT_FOUND(HttpStatus.NOT_FOUND,                 "항목을 찾을 수 없습니다"),
     INVALID_REQUEST(HttpStatus.BAD_REQUEST,         "잘못된 요청입니다"),
     SAME_LOCATION(HttpStatus.BAD_REQUEST,           "출발지와 목적지가 동일합니다"),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR,"서버 내부 오류가 발생했습니다");

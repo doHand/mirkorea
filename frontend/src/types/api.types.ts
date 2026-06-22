@@ -373,3 +373,32 @@ export interface ProductPricing {
   saleStatus: SaleStatus
   totalStock: number
 }
+
+export type AuditStatus = 'DRAFT' | 'CONFIRMED'
+
+export interface InventoryAuditItem {
+  id: string
+  auditId: string
+  productId: string
+  locationId: string
+  lotNumber?: string
+  systemQty: number
+  countedQty: number | null
+  diffQty: number
+  txnId?: string
+  product?: Product
+  location?: Location
+}
+
+export interface InventoryAudit {
+  id: string
+  warehouseId: string
+  auditDate: string
+  memo?: string
+  status: AuditStatus
+  confirmedAt?: string
+  confirmedBy?: string
+  createdBy: string
+  createdAt: string
+  items: InventoryAuditItem[]
+}

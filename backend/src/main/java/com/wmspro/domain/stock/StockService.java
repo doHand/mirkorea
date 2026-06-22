@@ -151,6 +151,8 @@ public class StockService {
             .locationId(req.locationId)
             .warehouseId(req.warehouseId)
             .lotNumber(req.lotNumber)
+            .referenceType(req.referenceType)
+            .referenceId(req.referenceId)
             .reason(req.reason)
             .memo(req.memo)
             .createdBy(userId)

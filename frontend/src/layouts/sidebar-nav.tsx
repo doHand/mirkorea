@@ -6,7 +6,7 @@ import {
   Package, BarChart3, Warehouse, ScanLine, ClipboardList,
   LayoutDashboard, LogOut, X, ShieldCheck, UserCog, Tags, LayoutGrid,
   Hash, Barcode, FileText, BoxSelect, FlaskConical, Ruler, ChevronDown,
-  PackageCheck, Building2, Receipt, FileCog, Users, Shield, Tag, Truck, History, BellRing,
+  PackageCheck, Building2, Receipt, FileCog, Users, Shield, Tag, Truck, History, BellRing, ClipboardCheck,
 } from 'lucide-react'
 import { cn } from '@/utils/cn'
 import { useAuthStore } from '@/stores/auth.store'
@@ -41,6 +41,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   'audit-logs':        History,
   alerts:              BellRing,
   'permissions':       Users,
+  'inventory-audit':   ClipboardCheck,
 }
 
 interface Props {
