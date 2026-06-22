@@ -21,7 +21,6 @@ export default function PickingListPage() {
   const supplierInfo = useSupplierInfoStore((s) => s.info)
   const qc = useQueryClient()
   const [pickingDate, setPickingDate] = useState(today())
-  const [printType, setPrintType] = useState<'INTERNAL' | 'EXTERNAL'>('INTERNAL')
   const [dateInitialized, setDateInitialized] = useState(false)
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set())
   const [excludedOrderIds, setExcludedOrderIds] = useState<Set<string>>(new Set())
@@ -45,9 +44,6 @@ export default function PickingListPage() {
   const availableOrders = orders.filter((order) => order.status === 'INSTRUCTED' && order.requestedShipDate === pickingDate)
   const dailyOrders = availableOrders.filter((order) => !excludedOrderIds.has(order.id))
   const excludedOrders = availableOrders.filter((order) => excludedOrderIds.has(order.id))
-  const printOrders = printType === 'INTERNAL'
-    ? dailyOrders
-    : dailyOrders.filter((order) => order.orderType === 'EXTERNAL')
   const rows = buildDailyPickingRows(dailyOrders)
   const totalBoxes = rows.reduce((sum, row) => sum + row.boxCount, 0)
   const allSelected = rows.length > 0 && rows.every((row) => selectedRows.has(row.key))
@@ -83,28 +79,20 @@ export default function PickingListPage() {
 
   if (!warehouse) return <div className="flex h-64 items-center justify-center text-gray-400">창고를 먼저 선택하세요</div>
 
-  return <div className="space-y-4">
+  return <div className="flex h-[calc(100vh-150px)] min-h-0 flex-col gap-4 overflow-hidden">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div><h2 className="text-lg font-bold">날짜별 피킹리스트</h2><p className="text-sm text-gray-500">출고지시 주문을 상품별 BOX 수량으로 합산합니다.</p></div>
-      <div className="flex items-center rounded border bg-white dark:border-gray-700 dark:bg-gray-900">
-        <input type="date" value={pickingDate} onChange={(e) => setPickingDate(e.target.value)} className="rounded-l-xl bg-transparent px-3 py-2 text-sm outline-none" />
-        <select value={printType} onChange={(e) => setPrintType(e.target.value as 'INTERNAL' | 'EXTERNAL')}
-          className="border-l bg-transparent px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900">
-          <option value="INTERNAL">내부용 피킹리스트</option><option value="EXTERNAL">외부용 출고확인서</option>
-        </select>
-        <button onClick={() => printType === 'INTERNAL'
-          ? printInternalPickingList(pickingDate, printOrders)
-          : printExternalPickingList(pickingDate, printOrders, clients, supplierInfo)}
-          disabled={!printOrders.length} className="flex items-center gap-1.5 rounded-r-xl bg-[#2D4033] px-4 py-2 text-sm font-semibold text-white disabled:opacity-40">
-          <Printer size={15} /> 전체 출력
-        </button>
+      <div className="flex items-center gap-1 rounded border bg-white p-1 dark:border-gray-700 dark:bg-gray-900">
+        <input type="date" value={pickingDate} onChange={(e) => setPickingDate(e.target.value)} className="bg-transparent px-3 py-1.5 text-sm outline-none" />
+        <button onClick={() => printInternalPickingList(pickingDate, dailyOrders)} disabled={!dailyOrders.length} title="내부 피킹리스트 출력" className="flex items-center gap-1.5 rounded bg-[#2D4033] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40"><Printer size={15} /> 내부 출력</button>
+        <button onClick={() => printExternalPickingList(pickingDate, dailyOrders.filter((order) => order.orderType === 'EXTERNAL'), clients, supplierInfo)} disabled={!dailyOrders.some((order) => order.orderType === 'EXTERNAL')} title="외부 출고확인서 출력" className="flex items-center gap-1.5 rounded bg-[#D2691E] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40"><Printer size={15} /> 외부 출력</button>
       </div>
     </div>
 
     <div className="grid gap-3 lg:grid-cols-2">
       <div className="rounded border bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <div className="mb-3 flex items-center justify-between">
-          <b>출고증 리스트 ({dailyOrders.length})</b>
+          <div className="flex items-center gap-2"><b>출고증 리스트 ({dailyOrders.length})</b><span className="text-xs font-normal text-gray-500">내부용 피킹리스트는 한 번에 출력됩니다.</span></div>
           {!!dailyOrders.length && <button onClick={() => setExcludedOrderIds(new Set(availableOrders.map((order) => order.id)))}
             className="text-xs font-semibold text-red-600">전체 제외</button>}
         </div>
@@ -155,7 +143,7 @@ export default function PickingListPage() {
       </div>
     </div>
 
-    <div className="overflow-hidden rounded border border-[#D4BF99] bg-white dark:border-gray-800 dark:bg-gray-900">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded border border-[#D4BF99] bg-white dark:border-gray-800 dark:bg-gray-900">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b bg-[#F9F7F2] px-4 py-3 dark:border-gray-800 dark:bg-gray-800">
         <b>[ {pickingDate} ] 피킹 해야 할 총 리스트</b>
         <div className="flex items-center gap-3"><b className="text-[#D2691E]">{dailyOrders.length}건 / 남은 {formatNumber(totalBoxes)} BOX</b>
@@ -163,7 +151,7 @@ export default function PickingListPage() {
             className="rounded-lg bg-violet-700 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40">선택 완료 처리 ({selectedRows.size})</button>
         </div>
       </div>
-      <div className="max-h-[calc(100vh-230px)] overflow-auto">
+      <div className="min-h-0 flex-1 overflow-auto">
         <table className="w-full min-w-[850px] text-sm"><thead className="sticky top-0 bg-[#2D4033] text-white"><tr>
           <th className="w-12 px-3 py-2"><input type="checkbox" checked={allSelected} onChange={(e) => setSelectedRows(e.target.checked ? new Set(rows.map((row) => row.key)) : new Set())} /></th>
           <th className="px-3 py-2">기본위치</th><th className="px-3 py-2">상품코드</th><th className="px-3 py-2 text-left">상품명</th>

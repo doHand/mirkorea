@@ -6,6 +6,17 @@ export interface ApiResponse<T> {
   detail?: unknown
 }
 
+export interface AuditLog {
+  id: string
+  action: 'POST' | 'PUT' | 'PATCH' | 'DELETE'
+  targetType: string
+  targetId?: string
+  summary: string
+  actor?: string
+  requestPath?: string
+  createdAt: string
+}
+
 export interface PageResponse<T> {
   items: T[]
   total: number

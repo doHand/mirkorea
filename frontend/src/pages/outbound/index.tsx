@@ -53,7 +53,7 @@ export default function OutboundPage() {
   const unitPrice = (order: OutboundOrder, index: number) => Number(order.items[index]?.product?.sellPrice ?? 0)
 
   return (
-    <div className="space-y-4">
+    <div className="flex h-[calc(100vh-150px)] min-h-0 flex-col gap-4 overflow-hidden">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div><h2 className={ui.h2Cls}>출고관리</h2><p className="mt-0.5 text-sm text-gray-500">판매 전표처럼 거래처와 출고 품목을 한 화면에서 관리합니다.</p></div>
         <button onClick={() => setCreateOpen(true)} className="flex items-center justify-center gap-1.5 rounded-xl bg-[#D2691E] px-4 py-2 text-sm font-semibold text-white shadow-sm"><ClipboardPlus size={16} /> 신규 출고전표</button>
@@ -76,7 +76,7 @@ export default function OutboundPage() {
         </div>
       </section>
 
-      <section className="border border-gray-300 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <section className="flex min-h-0 flex-1 flex-col border border-gray-300 bg-white dark:border-gray-800 dark:bg-gray-900">
         <div className="flex flex-col gap-3 border-b border-gray-200 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-gray-800">
           <div><h3 className="text-sm font-bold text-gray-900 dark:text-white">판매(출고) 세부내역</h3><p className="text-xs text-gray-500">전표를 선택하면 상단 거래처 정보가 바뀝니다.</p></div>
           <div className="flex flex-wrap gap-2">
@@ -84,7 +84,7 @@ export default function OutboundPage() {
             <select value={status} onChange={(e) => setStatus(e.target.value as OutboundOrderStatus | '')} className="rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800"><option value="">전체 상태</option>{Object.entries(STATUS_LABEL).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select>
           </div>
         </div>
-        <div className="max-h-[calc(100vh-440px)] overflow-auto">
+        <div className="min-h-0 flex-1 overflow-auto">
           <table className="w-full min-w-[1110px] table-fixed text-sm">
             <thead className={ui.thead}><tr><th className={cn(ui.th, 'w-12')}>No</th><th className={cn(ui.th, 'w-24')}>출고일</th><th className={cn(ui.th, 'w-32')}>전표번호</th><th className={cn(ui.th, 'w-32')}>거래처</th><th className={cn(ui.th, 'w-44')}>품명</th><th className={cn(ui.th, 'w-28')}>규격</th><th className={cn(ui.th, 'w-16')}>수량</th><th className={cn(ui.th, 'w-14')}>단위</th><th className={cn(ui.th, 'w-20')}>단가</th><th className={cn(ui.th, 'w-24')}>금액</th><th className={cn(ui.th, 'w-28')}>자재번호</th><th className={cn(ui.th, 'w-20')}>상태</th><th className={cn(ui.th, 'w-24')}>작업</th></tr></thead>
             <tbody className={ui.tbody}>

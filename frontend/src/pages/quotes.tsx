@@ -300,15 +300,20 @@ export default function QuotesPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex h-[calc(100vh-150px)] min-h-0 flex-col gap-4 overflow-hidden">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">출력서류관리</h2>
           {data && <p className="text-xs text-gray-400 mt-0.5">전체 {formatNumber(data.total)}건</p>}
         </div>
-        <button onClick={openCreate} title="문서 작성" aria-label="문서 작성" className="responsive-icon-action self-start bg-[#2D4033] font-semibold text-white hover:bg-[#24352a] sm:self-auto">
-          <Plus size={16} /><span className="responsive-action-label">문서 작성</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button onClick={openCreate} className="flex items-center gap-1.5 rounded border border-emerald-200 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400">
+            <FileText size={14} /> 거래명세서/견적서 작성
+          </button>
+          <button onClick={() => { setDocTypeFilter('PURCHASE'); setPage(1) }} className="flex items-center gap-1.5 rounded border border-[#D2691E] px-3 py-1.5 text-sm font-medium text-[#9a4d16] hover:bg-orange-50">
+            <Plus size={14} /> 발주서 생성
+          </button>
+        </div>
       </div>
 
       <div className="flex items-center gap-1 border-b border-gray-200 dark:border-gray-700">
@@ -332,8 +337,8 @@ export default function QuotesPage() {
         </div>
       </div>
 
-      <div className="border border-[#d8ddd8] bg-white shadow-sm dark:bg-gray-900">
-        <div className="overflow-x-auto">
+      <div className="flex min-h-0 flex-1 flex-col border border-[#d8ddd8] bg-white shadow-sm dark:bg-gray-900">
+        <div className="min-h-0 flex-1 overflow-auto">
           <table className="w-full min-w-[720px] text-sm">
             <thead>
               <tr className={ui.thead}>
@@ -433,9 +438,12 @@ export default function QuotesPage() {
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">문서 종류</label>
-                  <select value={form.docType} onChange={(e) => setForm((p) => ({ ...p, docType: e.target.value }))} className={inputCls}>
+                  <select value={form.docType === 'QUOTE' ? `QUOTE|${form.printTitle}` : 'STATEMENT'} onChange={(e) => {
+                    const [docType, printTitle] = e.target.value.split('|')
+                    setForm((p) => ({ ...p, docType, printTitle: printTitle || p.printTitle }))
+                  }} className={inputCls}>
                     <option value="STATEMENT">거래명세서</option>
-                    <option value="QUOTE">견적서류</option>
+                    {QUOTE_PRINT_TITLES.map((title) => <option key={title} value={`QUOTE|${title}`}>{title}</option>)}
                   </select>
                 </div>
                 <div>
@@ -483,21 +491,6 @@ export default function QuotesPage() {
                   )}
                 </div>
               </div>
-
-              {form.docType === 'QUOTE' && (
-                <div className="flex items-center gap-2 bg-[#edf0ec] dark:bg-gray-800/60 px-4 py-1.5 border border-[#d8ddd8] dark:border-gray-700">
-                  <Printer size={14} className="text-[#2D4033] shrink-0" />
-                  <span className="text-xs font-medium text-[#2D4033] dark:text-gray-300 shrink-0">출력 제목</span>
-                  <div className="flex gap-1.5 flex-wrap">
-                    {QUOTE_PRINT_TITLES.map((t) => (
-                      <button key={t} type="button" onClick={() => setForm((p) => ({ ...p, printTitle: t }))}
-                        className={`px-2.5 py-1 text-xs border transition-colors font-medium ${form.printTitle === t ? 'bg-[#2D4033] text-white border-[#2D4033]' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-[#2D4033]'}`}>
-                        {t}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               {/* 품목 */}
               <div className="border border-gray-200 dark:border-gray-700 rounded overflow-hidden">

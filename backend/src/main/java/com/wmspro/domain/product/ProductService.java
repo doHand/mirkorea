@@ -114,6 +114,13 @@ public class ProductService {
         productRepo.save(product);
     }
 
+    @Transactional
+    public void restore(UUID id) {
+        Product product = findById(id);
+        product.setSaleStatus(SaleStatus.ACTIVE);
+        productRepo.save(product);
+    }
+
     public List<Barcode> findBarcodes(UUID productId) {
         return barcodeRepo.findByProductIdOrderByIsPrimaryDesc(productId);
     }

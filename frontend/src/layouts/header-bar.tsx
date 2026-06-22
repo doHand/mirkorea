@@ -1,8 +1,11 @@
 'use client'
-import type { ReactNode } from 'react'
-import { Menu, Sun, Moon, Warehouse } from 'lucide-react'
+import { useState, type ReactNode } from 'react'
+import { BellRing, Menu, Sun, Moon, Warehouse } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth.store'
 import { useWarehouseStore } from '@/stores/warehouse.store'
+import { auditLogApi } from '@/api/audit-log.api'
+import { formatDateTime } from '@/utils/format'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { useTheme } from 'next-themes'
@@ -16,6 +19,8 @@ export function HeaderBar({ onMenuClick, children }: Props) {
   const { user }                    = useAuthStore()
   const { resolvedTheme, setTheme } = useTheme()
   const warehouse                   = useWarehouseStore((s) => s.selectedWarehouse)
+  const [alertsOpen, setAlertsOpen] = useState(false)
+  const { data: alerts } = useQuery({ queryKey: ['alerts'], queryFn: () => auditLogApi.findAll({ limit: 8 }), refetchInterval: 30000 })
 
   const today = format(new Date(), 'M/d (EEE)', { locale: ko })
 
@@ -62,13 +67,20 @@ export function HeaderBar({ onMenuClick, children }: Props) {
             {resolvedTheme === 'dark' ? <Sun size={13} /> : <Moon size={13} />}
           </button>
 
-          <div className="flex items-center gap-1.5">
+          <div className="relative">
+          <button onClick={() => setAlertsOpen((open) => !open)} className="flex items-center gap-1.5 rounded px-1 py-0.5 hover:bg-gray-100 dark:hover:bg-slate-800" title="알림 보기">
             <div className="w-6 h-6 rounded bg-[#D2691E] flex items-center justify-center text-white font-bold text-xs shrink-0">
               {user?.fullName?.charAt(0)?.toUpperCase() ?? 'U'}
             </div>
             <span className="hidden sm:block text-[12px] font-medium text-gray-700 dark:text-slate-300 max-w-[100px] truncate">
               {user?.fullName}
             </span>
+            {!!alerts?.items.length && <span className="grid h-4 min-w-4 place-items-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">{alerts.items.length}</span>}
+          </button>
+          {alertsOpen && <div className="absolute right-0 top-8 z-50 w-80 overflow-hidden rounded border border-gray-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
+            <div className="flex items-center gap-2 border-b px-3 py-2 text-sm font-bold"><BellRing size={14} className="text-[#D2691E]" /> 최근 알림</div>
+            <div className="max-h-80 overflow-auto">{!alerts?.items.length && <p className="p-5 text-center text-xs text-gray-400">새 알림이 없습니다.</p>}{alerts?.items.map((alert) => <div key={alert.id} className="border-b px-3 py-2 last:border-0"><p className="text-xs font-semibold">{alert.targetType} · {alert.action}</p><p className="mt-0.5 truncate text-[11px] text-gray-500">{alert.summary}</p><p className="mt-1 text-[10px] text-gray-400">{formatDateTime(alert.createdAt)}</p></div>)}</div>
+          </div>}
           </div>
         </div>
       </div>

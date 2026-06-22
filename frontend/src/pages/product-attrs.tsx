@@ -3,7 +3,7 @@ import { useState, useCallback, useMemo } from 'react'
 import { useColumnResize } from '@/hooks/useColumnResize'
 import { useRouter } from 'next/router'
 import { useQuery, useMutation, useQueryClient, useQueries } from '@tanstack/react-query'
-import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, Building2, FileText, MapPin, Package, Search, Plus, Trash2, X } from 'lucide-react'
+import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, Building2, FileText, ClipboardList, MapPin, Package, Search, Plus, Trash2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { productApi, unitApi } from '@/api/product.api'
 import { clientApi } from '@/api/client.api'
@@ -265,7 +265,7 @@ const getMasterSortValue = (
   }
 }
 
-const MASTER_TH = 'text-center px-2 py-3 font-semibold bg-[#2D4033] text-white'
+const MASTER_TH = 'text-center px-2 py-1.5 font-semibold bg-[#2D4033] text-white'
 
 function SortHeader({
   label,
@@ -658,11 +658,12 @@ export default function ProductMasterPage() {
     }
     router.push(`/quotes?productIds=${encodeURIComponent(ids.join(','))}`)
   }
+  const openPurchaseOrder = () => router.push('/quotes?tab=PURCHASE')
 
   const inputCls = 'w-full border border-gray-200 dark:border-gray-700 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#2D4033]/30 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400'
 
   return (
-    <div className="space-y-4">
+    <div className="flex h-[calc(100vh-150px)] min-h-0 flex-col gap-4 overflow-hidden">
       {/* Header */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
@@ -736,7 +737,10 @@ export default function ProductMasterPage() {
             className="flex items-center gap-1.5 px-3 py-2 text-sm border border-emerald-200 text-emerald-700 dark:border-emerald-800 dark:text-emerald-400 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-900/20 disabled:opacity-40 disabled:hover:bg-transparent transition-colors font-medium"
           >
             <FileText size={14} />
-            <span className="hidden sm:inline">거래명세서/견적서</span>
+            <span>거래명세서/견적서</span>
+          </button>
+          <button onClick={openPurchaseOrder} className="flex items-center gap-1.5 px-3 py-2 text-sm border border-[#D2691E] text-[#9a4d16] rounded hover:bg-orange-50 transition-colors font-medium">
+            <ClipboardList size={14} /><span>발주서 생성</span>
           </button>
         </div>
       </div>
@@ -813,8 +817,8 @@ export default function ProductMasterPage() {
       )}
 
       {/* Table */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
-        <div className="overflow-auto max-h-[calc(100vh-260px)]">
+      <div className="flex min-h-0 flex-1 flex-col bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800 overflow-hidden">
+        <div className="min-h-0 flex-1 overflow-auto">
           <table
             className="mobile-unpin-grid wms-no-resize wms-resizable-table text-sm border-separate border-spacing-0 [&_td]:border-r [&_td]:border-gray-100 [&_th]:border-r [&_th]:border-gray-200 dark:[&_td]:border-gray-800 dark:[&_th]:border-gray-700"
             style={{ width: totalWidth, minWidth: totalWidth, maxWidth: totalWidth }}
@@ -826,7 +830,7 @@ export default function ProductMasterPage() {
             </colgroup>
             <thead className="sticky top-0 z-40">
               <tr className="bg-[#2D4033]">
-                <th className="sticky-col sticky z-30 px-4 py-3 bg-[#2D4033] wms-resizable-th overflow-hidden"
+                <th className="sticky-col sticky z-30 px-4 py-1.5 bg-[#2D4033] wms-resizable-th overflow-hidden"
                     style={{ width: cw.chk, minWidth: cw.chk, maxWidth: cw.chk, left: stickyLeftOf('chk') }}>
                   <input
                     type="checkbox"

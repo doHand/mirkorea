@@ -124,11 +124,11 @@
   }
 
   .responsive-icon-action {
-    @apply flex h-7 w-7 items-center justify-center gap-1.5 rounded text-sm font-medium transition-colors sm:h-auto sm:w-auto sm:px-3 sm:py-1.5;
+    @apply flex h-7 w-7 items-center justify-center rounded text-sm font-medium transition-colors;
   }
 
   .responsive-action-label {
-    @apply hidden whitespace-nowrap sm:inline;
+    @apply hidden;
   }
 
   /* 테이블 헤더 셀 */
@@ -253,6 +253,13 @@
   border-color: #d2c09e !important;
 }
 
+/* Keep column names in view while a dense data grid scrolls. */
+.wms-workspace table thead {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
 .wms-workspace table thead th[class*="bg-indigo-"],
 .wms-workspace table thead th[class*="bg-gray-50"] {
   background-color: var(--wms-oatmeal) !important;
@@ -291,6 +298,17 @@
 
 .wms-workspace button {
   word-break: keep-all;
+}
+
+/* Dense desktop grids: keep management screens readable without wasting vertical space. */
+.wms-workspace table > thead > tr > th {
+  padding-top: 0.375rem !important;
+  padding-bottom: 0.375rem !important;
+}
+
+.wms-workspace table > tbody > tr > td {
+  padding-top: 0.375rem !important;
+  padding-bottom: 0.375rem !important;
 }
 
 .wms-workspace .accent-indigo-600 {

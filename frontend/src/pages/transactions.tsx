@@ -33,7 +33,7 @@ export default function TransactionsPage() {
   })
 
   return (
-    <div className="space-y-4">
+    <div className="flex h-[calc(100vh-150px)] min-h-0 flex-col gap-4 overflow-hidden">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-lg font-bold text-gray-900 dark:text-white">재고 변경 이력</h2>
         <div className="self-start sm:self-auto">
@@ -86,8 +86,8 @@ export default function TransactionsPage() {
       </div>
 
       {/* 테이블 */}
-      <div className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
+      <div className="flex min-h-0 flex-1 flex-col bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
+        <div className="min-h-0 flex-1 overflow-auto">
         <table className="w-full min-w-[700px] text-sm">
           <thead>
             <tr className={ui.thead}>

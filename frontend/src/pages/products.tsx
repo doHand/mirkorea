@@ -2,7 +2,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useColumnResize } from '@/hooks/useColumnResize'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, Plus, Search, Package, Pencil, Trash2, X, FileText, Building2, QrCode, Star, MapPin } from 'lucide-react'
+import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, Plus, Search, Package, Pencil, Trash2, X, FileText, ClipboardList, Building2, QrCode, Star, MapPin } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { productApi, unitApi } from '@/api/product.api'
 import { clientApi } from '@/api/client.api'
@@ -151,7 +151,7 @@ async function adjustBoxStockQty({
 }
 
 /* 공통 셀 border 클래스 */
-const TH = 'px-3 py-3 font-semibold border-r border-white/20 last:border-r-0 whitespace-nowrap bg-[#2D4033] text-white'
+const TH = 'px-3 py-1.5 font-semibold border-r border-white/20 last:border-r-0 whitespace-nowrap bg-[#2D4033] text-white'
 const TD_BASE = 'px-2 py-1.5 border-r border-gray-200 dark:border-gray-700 last:border-r-0 whitespace-nowrap'
 const TD_TEXT = cn(TD_BASE, 'text-left text-gray-700 dark:text-gray-300')
 const TD_NUM  = cn(TD_BASE, 'text-right tabular-nums text-gray-900 dark:text-gray-100')
@@ -833,9 +833,10 @@ export default function ProductsPage() {
     }
     router.push(`/quotes?productIds=${encodeURIComponent(ids.join(','))}`)
   }
+  const openPurchaseOrder = () => router.push('/quotes?tab=PURCHASE')
 
   return (
-    <div className="space-y-4">
+    <div className="flex h-[calc(100vh-150px)] min-h-0 flex-col gap-4 overflow-hidden">
       {/* 타이틀 + 액션 */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-[120px] flex-1">
@@ -897,9 +898,12 @@ export default function ProductsPage() {
             className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-emerald-200 text-emerald-700 dark:border-emerald-800 dark:text-emerald-400 rounded hover:bg-emerald-50 dark:hover:bg-emerald-900/20 disabled:opacity-40 disabled:hover:bg-transparent transition-colors font-medium"
           >
             <FileText size={14} />
-            <span className="hidden sm:inline">거래명세서/견적서</span>
+            <span>거래명세서/견적서</span>
           </button>
           )}
+          <button onClick={openPurchaseOrder} className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-[#D2691E] text-[#9a4d16] rounded hover:bg-orange-50 transition-colors font-medium">
+            <ClipboardList size={14} /><span>발주서 생성</span>
+          </button>
         </div>
       </div>
 
@@ -979,8 +983,8 @@ export default function ProductsPage() {
       )}
 
       {/* 테이블 */}
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="flex min-h-0 flex-1 flex-col bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 overflow-hidden">
+        <div className="min-h-0 flex-1 overflow-auto">
           <table
             className="mobile-unpin-grid wms-no-resize wms-resizable-table text-sm border-collapse"
             style={{ width: totalWidth, minWidth: totalWidth, maxWidth: totalWidth }}
@@ -992,7 +996,7 @@ export default function ProductsPage() {
             </colgroup>
             <thead>
               <tr className="bg-[#2D4033]">
-                <th className="sticky-col sticky z-30 px-3 py-3 border-r border-white/20 bg-[#2D4033] overflow-hidden wms-resizable-th"
+                <th className="sticky-col sticky z-30 px-3 py-1.5 border-r border-white/20 bg-[#2D4033] overflow-hidden wms-resizable-th"
                     style={{ width: cw.chk, minWidth: cw.chk, maxWidth: cw.chk, left: stickyLeftOf('chk') }}>
                   <input
                     type="checkbox"
@@ -1025,7 +1029,7 @@ export default function ProductsPage() {
                 <SortHeader label="안전재고" sortKey="safetyStock" sort={sort} onSort={toggleSort} align="right" style={{ width: cw.safetyStock }} onResizeStart={(e) => startResize('safetyStock', e)} />
                 <SortHeader label="상태" sortKey="saleStatus" sort={sort} onSort={toggleSort} align="center" style={{ width: cw.saleStatus }} onResizeStart={(e) => startResize('saleStatus', e)} />
                 <SortHeader label="등록일" sortKey="createdAt" sort={sort} onSort={toggleSort} style={{ width: cw.createdAt }} onResizeStart={(e) => startResize('createdAt', e)} />
-                <th className="px-3 py-3" style={{ width: cw.actions }} />
+                <th className="px-3 py-1.5" style={{ width: cw.actions }} />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">

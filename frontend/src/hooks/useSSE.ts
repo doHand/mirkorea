@@ -9,6 +9,7 @@ const EVENT_QUERY_MAP: Record<string, string[]> = {
   inventory: ['inventory', 'transactions'],
   inbound:   ['inbound', 'inventory', 'transactions'],
   outbound:  ['outbound-orders', 'inventory', 'transactions'],
+  audit:     ['audit-logs', 'alerts'],
 }
 
 export function useSSE() {

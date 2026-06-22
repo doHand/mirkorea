@@ -106,7 +106,15 @@ public class ClientService {
 
     @Transactional
     public void delete(UUID id) {
-        if (!repo.existsById(id)) throw new BusinessException(ErrorCode.CLIENT_NOT_FOUND);
-        repo.deleteById(id);
+        Client client = findById(id);
+        client.setActive(false);
+        repo.save(client);
+    }
+
+    @Transactional
+    public void restore(UUID id) {
+        Client client = findById(id);
+        client.setActive(true);
+        repo.save(client);
     }
 }

@@ -32,6 +32,8 @@ export const DEFAULT_MENUS: MenuDef[] = [
   { menuId: 'permissions',      href: '/permissions',      label: '권한 관리',         section: '시스템 관리', roles: ['ADMIN', 'MANAGER'] },
   { menuId: 'supplier-settings', href: '/supplier-settings', label: '공급자 정보',    section: '시스템 관리', roles: ADMIN_ONLY },
   { menuId: 'menu-permissions', href: '/menu-permissions', label: '메뉴 권한',         section: '시스템 관리', roles: ADMIN_ONLY },
+  { menuId: 'audit-logs',       href: '/audit-logs',       label: '수정·삭제 로그',     section: '시스템 관리', roles: ADMIN_ONLY },
+  { menuId: 'alerts',           href: '/alerts',           label: '알림',               section: '시스템 관리', roles: ADMIN_ONLY },
   { menuId: 'profile',          href: '/profile',          label: '내 계정',           section: '계정', roles: ALL },
 ]
 
@@ -143,7 +145,7 @@ export const useMenuPermissionStore = create<MenuPermissionState>()(
     }),
     {
       name: 'wms-menu-permissions',
-      version: 15,
+      version: 17,
       migrate: (stored: unknown) => {
         const s = stored as Partial<MenuPermissionState>
         // Remove obsolete menus: product-codes/box-qty/lot merged into product-attrs,

@@ -46,6 +46,7 @@ export default function InboundPage() {
   const [statusFilter, setStatusFilter] = useState<InboundStatus | ''>('')
   const [createOpen,   setCreateOpen]   = useState(false)
   const [selectedOrder, setSelectedOrder] = useState<import('@/types/api.types').InboundOrder | null>(null)
+  const [detailOrderId, setDetailOrderId] = useState<string | null>(null)
 
   const { data: page, isLoading } = useQuery({
     queryKey: QUERY_KEYS.inboundOrders({ warehouseId: warehouse?.id, status: statusFilter || undefined }),
@@ -91,7 +92,7 @@ export default function InboundPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex h-[calc(100vh-150px)] min-h-0 flex-col gap-4 overflow-hidden">
       {/* 헤더 */}
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
@@ -202,8 +203,8 @@ export default function InboundPage() {
       </div>
 
       {/* 목록 */}
-      <div className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="flex min-h-0 flex-1 flex-col bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 overflow-hidden">
+        <div className="min-h-0 flex-1 overflow-auto">
           <table className="w-full min-w-[1080px] table-fixed text-sm">
             <thead>
               <tr className={ui.thead}>
@@ -221,7 +222,7 @@ export default function InboundPage() {
                 <tr
                   key={item.id}
                   onClick={() => setSelectedOrder(order)}
-                  onDoubleClick={() => window.open(`/inbound/${order.id}`, '_blank')}
+                  onDoubleClick={() => setDetailOrderId(order.id)}
                   className={cn('group cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors', activeOrder?.id === order.id && 'bg-indigo-50/60 dark:bg-indigo-950/20')}
                 >
                   <td className="px-4 py-3 text-center text-gray-400">{rowIndex + 1}</td>
@@ -260,6 +261,12 @@ export default function InboundPage() {
           }}
         />
       )}
+      {detailOrderId && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-5" onClick={() => setDetailOrderId(null)}>
+        <div className="flex h-[88vh] w-full max-w-6xl flex-col overflow-hidden rounded border bg-white shadow-2xl dark:bg-gray-900" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-between border-b px-4 py-2"><b className="text-sm">입고 상세</b><button onClick={() => setDetailOrderId(null)} className="rounded p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800" title="닫기"><X size={17} /></button></div>
+          <iframe src={`/inbound/${detailOrderId}?embed=1`} title="입고 상세" className="h-full w-full border-0" />
+        </div>
+      </div>}
     </div>
   )
 }
@@ -267,6 +274,7 @@ export default function InboundPage() {
 function InboundInfo({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return <div><p className="text-xs font-medium text-gray-500">{label}</p><p className={cn('mt-1 min-h-5 border-b border-gray-200 pb-1 text-sm font-semibold text-gray-900 dark:border-gray-700 dark:text-white', mono && 'font-mono text-xs')}>{value}</p></div>
 }
+
 
 // ── 입고 예정 등록 모달 ────────────────────────────────────────────
 function CreateModal({
