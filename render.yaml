@@ -1,0 +1,59 @@
+services:
+  # ─── 백엔드 (Spring Boot) ───────────────────────────────────────
+  - type: web
+    name: mirkorea-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /api/docs
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: DB_HOST
+        fromDatabase:
+          name: mirkorea-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: mirkorea-db
+          property: port
+      - key: DB_USER
+        fromDatabase:
+          name: mirkorea-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: mirkorea-db
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: mirkorea-db
+          property: database
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRATION
+        value: "86400"
+      - key: JWT_REFRESH_EXPIRATION
+        value: "2592000"
+      - key: CORS_ORIGINS
+        value: https://mirkorea-frontend.onrender.com
+
+  # ─── 프론트엔드 (Next.js) ───────────────────────────────────────
+  - type: web
+    name: mirkorea-frontend
+    runtime: docker
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://mirkorea-backend.onrender.com
+
+# ─── PostgreSQL DB ─────────────────────────────────────────────
+databases:
+  - name: mirkorea-db
+    databaseName: wms_pro
+    user: wms_user
+    plan: free
