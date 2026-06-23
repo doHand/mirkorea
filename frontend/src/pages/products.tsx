@@ -1,6 +1,6 @@
 ﻿'use client'
 import { useEffect, useState, useMemo } from 'react'
-import { useColumnResize } from '@/hooks/useColumnResize'
+import { FileText, ShoppingCart } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { productApi, unitApi } from '@/api/product.api'
@@ -9,7 +9,7 @@ import { warehouseApi } from '@/api/warehouse.api'
 import { stockApi } from '@/api/stock.api'
 import { QUERY_KEYS } from '@/constants/query-keys'
 import { SALE_STATUS_LABEL } from '@/constants/stock.constants'
-import { formatNumber, formatDateTime } from '@/utils/format'
+import { formatNumber, formatDecimal, formatDateTime } from '@/utils/format'
 import { cn } from '@/utils/cn'
 import { ExportButton } from '@/components/ExportButton'
 import { useRouter } from 'next/router'
@@ -19,35 +19,12 @@ import { useMenuPermissionStore } from '@/stores/menu-permission.store'
 import { useSupplierInfoStore } from '@/stores/supplier-info.store'
 import { useWarehouseStore } from '@/stores/warehouse.store'
 import { printQuoteDocument } from '@/utils/printDocument'
-import type { Product, SaleStatus, Barcode, ProductUnit, Client, Location, BarcodeUnitType, Inventory } from '@/types/api.types'
+import type { Product, SaleStatus, Barcode, ProductUnit, Client, Location, BarcodeUnitType, Inventory, UnitType } from '@/types/api.types'
 import { ProductBarcodeModal } from '@/components/ProductBarcodeModal'
 import { CategorySelect } from '@/components/CategorySelect'
-
-const EMPTY_PRODUCT_FORM = {
-  code: '',
-  name: '',
-  category: '',
-  clientId:   '',
-  locationId: '',
-  unit: 'EA',
-  baseUnit: 'EA' as const,
-  pUnitQty: 0,
-  boxUnitQty: 1,
-  plUnitQty: 0,
-  spec: '',
-  materialNo: '',
-  boxQty: 1,
-  safetyStock: 0,
-  reorderPoint: 0,
-  costPrice: 0,
-  sellPrice: 0,
-  priceA: 0,
-  priceB: 0,
-  priceC: 0,
-  retailPrice: 0,
-  memo: '',
-  saleStatus: 'ACTIVE' as SaleStatus,
-}
+import { EMPTY_PRODUCT_FORM } from '@/components/ProductFormModal'
+import { getPackageUnitQty } from '@/utils/unit-spec'
+import { ProductInventoryGrid } from '@/components/ProductInventoryGrid'
 
 const PAGE_SIZE = 10
 
@@ -55,8 +32,8 @@ type ClientOption = Pick<Client, 'id' | 'name' | 'phone' | 'email'>
 type SortDirection = 'asc' | 'desc'
 type ProductSortKey =
   | 'client' | 'code' | 'materialNo' | 'name' | 'location' | 'unit'
-  | 'boxQty' | 'boxStock' | 'eachStock' | 'category'
-  | 'costPrice' | 'sellPrice' | 'retailPrice' | 'priceA' | 'priceB' | 'priceC'
+  | 'boxQty' | 'inboxStock' | 'outboxStock' | 'eaStock' | 'plStock' | 'category'
+  | 'costPrice' | 'sellPrice' | 'retailPrice' | 'priceB' | 'priceA' | 'priceC'
   | 'barcode' | 'memo' | 'currentStock' | 'reserved' | 'available' | 'safetyStock'
   | 'saleStatus' | 'createdAt'
 type ProductSortState = { key: ProductSortKey; direction: SortDirection } | null
@@ -64,7 +41,8 @@ type EditField =
   | 'code' | 'name' | 'category' | 'materialNo'
   | 'unit' | 'boxQty' | 'boxStock' | 'safetyStock' | 'reorderPoint'
   | 'costPrice' | 'sellPrice' | 'retailPrice'
-  | 'priceA' | 'priceB' | 'priceC' | 'memo'
+  | 'priceB' | 'priceA' | 'priceC' | 'memo'
+  | 'spec' | 'pUnitQty' | 'boxUnitQty' | 'plUnitQty' | 'eaStock' | 'inboxStock' | 'outboxStock'
 type EditCell = { id: string; field: EditField; value: string }
 
 const STATUS_STYLE: Record<SaleStatus, string> = {
@@ -73,13 +51,29 @@ const STATUS_STYLE: Record<SaleStatus, string> = {
   DISCONTINUED: 'bg-gray-100 text-gray-500 ring-1 ring-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700',
 }
 
-const getBoxStockQty = (product: Product) => {
-  return product.stockQty ?? 0
+const getTotalEA = (product: Product) => {
+  // Inventory.quantity is the canonical EA quantity. Package stock is derived from it.
+  return Number(product.stockQty ?? 0)
 }
 
-const getEachStockQty = (product: Product) => {
-  const qtyPerBox = product.boxQty > 0 ? product.boxQty : 1
-  return qtyPerBox * getBoxStockQty(product)
+const roundToTwo = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100
+
+const getInboxStock = (product: Product) => {
+  const ea = getTotalEA(product)
+  const pQty = getPackageUnitQty(product, 'P') ?? 0
+  return pQty > 0 ? roundToTwo(ea / pQty) : 0
+}
+
+const getOutboxStock = (product: Product) => {
+  const ea = getTotalEA(product)
+  const boxQty = getPackageUnitQty(product, 'BOX') ?? 0
+  return boxQty > 0 ? roundToTwo(ea / boxQty) : 0
+}
+
+const getPlStock = (product: Product) => {
+  const ea = getTotalEA(product)
+  const plQty = getPackageUnitQty(product, 'PL') ?? 0
+  return plQty > 0 ? roundToTwo(ea / plQty) : 0
 }
 
 const getPrimaryBarcode = (barcodes?: Barcode[]) => {
@@ -155,20 +149,22 @@ async function adjustBoxStockQty({
 
 /* 공통 셀 border 클래스 */
 const TH = 'px-3 py-1.5 font-semibold border-r border-white/20 last:border-r-0 whitespace-nowrap bg-[#2D4033] text-white'
-const TD_BASE = 'px-2 py-1.5 border-r border-gray-200 dark:border-gray-700 last:border-r-0 whitespace-nowrap'
+const TD_BASE = 'px-2 py-1 border-r border-gray-200 dark:border-gray-700 last:border-r-0 whitespace-nowrap leading-5'
 const TD_TEXT = cn(TD_BASE, 'text-left text-gray-700 dark:text-gray-300')
 const TD_NUM  = cn(TD_BASE, 'text-right tabular-nums text-gray-900 dark:text-gray-100')
 const TD_CTR  = cn(TD_BASE, 'text-center text-gray-700 dark:text-gray-300')
 
 const EDIT_NUMERIC_FIELDS: EditField[] = [
-  'boxQty', 'boxStock', 'safetyStock', 'reorderPoint',
+  'boxQty', 'boxStock', 'eaStock', 'outboxStock', 'safetyStock', 'reorderPoint',
   'costPrice', 'sellPrice', 'retailPrice',
-  'priceA', 'priceB', 'priceC',
+  'priceB', 'priceA', 'priceC',
+  'pUnitQty', 'boxUnitQty', 'plUnitQty',
 ]
 const EDIT_OPTIONAL_FIELDS: EditField[] = [
   'category', 'materialNo', 'memo',
   'costPrice', 'sellPrice', 'retailPrice',
-  'priceA', 'priceB', 'priceC',
+  'priceB', 'priceA', 'priceC',
+  'spec', 'pUnitQty', 'boxUnitQty', 'plUnitQty',
 ]
 
 const compareSortValue = (a: string | number | undefined | null, b: string | number | undefined | null, direction: SortDirection) => {
@@ -193,180 +189,32 @@ const getProductSortValue = (product: Product, key: ProductSortKey) => {
     case 'location': return product.defaultLocation?.code
     case 'unit': return product.unit
     case 'boxQty': return product.boxQty
-    case 'boxStock': return getBoxStockQty(product)
-    case 'eachStock': return getEachStockQty(product)
+    case 'inboxStock': return getInboxStock(product)
+    case 'outboxStock': return getOutboxStock(product)
+    case 'eaStock': return getTotalEA(product)
+    case 'plStock': {
+      const ea = getTotalEA(product)
+      const eaPerPl = product.plUnitQty ?? 0
+      return eaPerPl > 0 ? ea / eaPerPl : 0
+    }
     case 'category': return product.category
     case 'costPrice': return product.costPrice
     case 'sellPrice': return product.sellPrice
     case 'retailPrice': return product.retailPrice
-    case 'priceA': return product.priceA
     case 'priceB': return product.priceB
+    case 'priceA': return product.priceA
     case 'priceC': return product.priceC
     case 'barcode': return getPrimaryBarcode(product.barcodes)
     case 'memo': return product.memo
-    case 'currentStock': return getEachStockQty(product)
+    case 'currentStock': return getTotalEA(product)
     case 'reserved': return 0
-    case 'available': return getEachStockQty(product)
+    case 'available': return getTotalEA(product)
     case 'safetyStock': return product.safetyStock
     case 'saleStatus': return SALE_STATUS_LABEL[product.saleStatus]
     case 'createdAt': return product.createdAt
     default: return ''
   }
 }
-
-function SortHeader({
-  label,
-  sortKey,
-  sort,
-  onSort,
-  align = 'left',
-  className,
-  style,
-  onResizeStart,
-}: {
-  label: string
-  sortKey: ProductSortKey
-  sort: ProductSortState
-  onSort: (key: ProductSortKey) => void
-  align?: 'left' | 'center' | 'right'
-  className?: string
-  style?: React.CSSProperties
-  onResizeStart?: (e: React.MouseEvent) => void
-}) {
-  const active = sort?.key === sortKey
-  const sortIndicator = active ? (sort.direction === 'asc' ? '↑' : '↓') : '↕'
-  return (
-    <th className={cn(TH, 'wms-resizable-th', align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left', className)} style={style}>
-      <button
-        type="button"
-        onClick={() => onSort(sortKey)}
-        className={cn(
-          'flex w-full items-center gap-1.5 rounded-md px-1 py-0.5 transition-colors hover:bg-indigo-100/70 dark:hover:bg-indigo-900/50',
-          align === 'right' ? 'justify-end' : align === 'center' ? 'justify-center' : 'justify-start',
-          active && 'text-indigo-700 dark:text-indigo-300',
-        )}
-        title={`${label} 정렬`}
-      >
-        <span>{label}</span>
-        <span className={active ? 'opacity-100' : 'opacity-45'}>{sortIndicator}</span>
-      </button>
-      {onResizeStart && (
-        <div className="wms-column-resizer" onMouseDown={onResizeStart} />
-      )}
-    </th>
-  )
-}
-
-function EditableCell({
-  id,
-  field,
-  value,
-  editCell,
-  setEditCell,
-  onSave,
-  unitOptions,
-  align = 'left',
-  className,
-}: {
-  id: string
-  field: EditField
-  value?: string | number | null
-  editCell: EditCell | null
-  setEditCell: (cell: EditCell | null) => void
-  onSave: (cell: EditCell) => void
-  unitOptions?: ProductUnit[]
-  align?: 'left' | 'center' | 'right'
-  className?: string
-}) {
-  const isEditing = editCell?.id === id && editCell.field === field
-  const isNumeric = EDIT_NUMERIC_FIELDS.includes(field)
-
-  if (isEditing) {
-    if (field === 'unit' && unitOptions) {
-      return (
-        <select
-          autoFocus
-          value={editCell.value}
-          onClick={(e) => e.stopPropagation()}
-          onChange={(e) => setEditCell({ ...editCell, value: e.target.value })}
-          onBlur={() => onSave(editCell)}
-          className="h-7 w-full min-w-20 rounded-lg border border-indigo-400 bg-white px-2 text-sm outline-none dark:bg-gray-800"
-        >
-          {unitOptions.map((u) => (
-            <option key={u.id} value={u.code}>{u.code}</option>
-          ))}
-        </select>
-      )
-    }
-
-    return (
-      <input
-        autoFocus
-        type={isNumeric ? 'number' : 'text'}
-        value={editCell.value}
-        onClick={(e) => e.stopPropagation()}
-        onChange={(e) => setEditCell({ ...editCell, value: e.target.value })}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') onSave(editCell)
-          if (e.key === 'Escape') setEditCell(null)
-        }}
-        onBlur={() => onSave(editCell)}
-        className={cn(
-        'h-7 w-full min-w-20 rounded-lg border border-indigo-400 bg-white px-2 text-sm outline-none dark:bg-gray-800',
-          align === 'center' && 'text-center',
-          align === 'right' && 'text-right tabular-nums',
-        )}
-      />
-    )
-  }
-
-  const display = value !== undefined && value !== null && value !== '' ? String(value) : ''
-  const displayValue = isNumeric && display ? formatNumber(Number(value)) : display
-
-  return (
-    <button
-      type="button"
-      onClick={(e) => {
-        e.stopPropagation()
-        setEditCell({ id, field, value: String(value ?? '') })
-      }}
-      className={cn(
-        'block h-7 w-full min-w-0 rounded-lg px-2 text-sm leading-7 transition-colors hover:bg-indigo-50 dark:hover:bg-indigo-900/20',
-        align === 'center' ? 'text-center' : align === 'right' ? 'text-right tabular-nums' : 'text-left',
-        className,
-      )}
-      title={display || undefined}
-    >
-      <span className={cn('block truncate', display ? '' : 'text-gray-300 dark:text-gray-700')}>{displayValue || '—'}</span>
-    </button>
-  )
-}
-
-function StatusEditableCell({
-  product,
-  onSave,
-}: {
-  product: Product
-  onSave: (id: string, saleStatus: SaleStatus) => void
-}) {
-  return (
-    <select
-      value={product.saleStatus}
-      onClick={(e) => e.stopPropagation()}
-      onChange={(e) => onSave(product.id, e.target.value as SaleStatus)}
-      className={cn(
-        'h-7 rounded-full border-0 px-2.5 text-xs font-medium outline-none ring-1 transition-colors',
-        STATUS_STYLE[product.saleStatus],
-      )}
-      title="상태 수정"
-    >
-      {Object.entries(SALE_STATUS_LABEL).map(([value, label]) => (
-        <option key={value} value={value}>{label}</option>
-      ))}
-    </select>
-  )
-}
-
 
 export default function ProductsPage() {
   const qc = useQueryClient()
@@ -405,35 +253,6 @@ export default function ProductsPage() {
   const [showAddBc, setShowAddBc]     = useState(false)
   const [barcodeModal, setBarcodeModal] = useState<Product | null>(null)
   const [pendingBarcodes, setPendingBarcodes] = useState<Array<{ barcode: string; type: BarcodeUnitType; unitQty: number; isPrimary: boolean }>>([])
-
-  const PRODUCT_COLS = useMemo(() => ({
-    chk:         { width: 40,  minWidth: 40,  sticky: true },
-    client:      { width: 144, minWidth: 40,  sticky: true },
-    code:        { width: 144, minWidth: 40,  sticky: true },
-    materialNo:  { width: 144, minWidth: 40,  sticky: true },
-    barcode:     { width: 160, minWidth: 40,  sticky: true },
-    name:        { width: 192, minWidth: 48,  sticky: true },
-    unit:        { width: 80,  minWidth: 50,  sticky: false },
-    boxQty:      { width: 120, minWidth: 70,  sticky: false },
-    boxStock:    { width: 120, minWidth: 70,  sticky: false },
-    eachStock:   { width: 120, minWidth: 70,  sticky: false },
-    category:    { width: 120, minWidth: 60,  sticky: false },
-    location:    { width: 120, minWidth: 60,  sticky: false },
-    sellPrice:   { width: 100, minWidth: 60,  sticky: false },
-    priceB:      { width: 110, minWidth: 60,  sticky: false },
-    retailPrice: { width: 100, minWidth: 60,  sticky: false },
-    priceA:      { width: 100, minWidth: 60,  sticky: false },
-    memo:        { width: 160, minWidth: 60,  sticky: false },
-    currentStock:{ width: 100, minWidth: 60,  sticky: false },
-    reserved:    { width: 90,  minWidth: 60,  sticky: false },
-    available:   { width: 90,  minWidth: 60,  sticky: false },
-    safetyStock: { width: 90,  minWidth: 60,  sticky: false },
-    saleStatus:  { width: 110,  minWidth: 60,  sticky: false },
-    createdAt:   { width: 150, minWidth: 60,  sticky: false },
-    actions:     { width: 72,  minWidth: 72,  sticky: false },
-  }), [])
-
-  const { widths: cw, startResize, stickyLeftOf, totalWidth, resetWidths } = useColumnResize('products', PRODUCT_COLS)
 
   const productLimit = showSafetyOnly ? 1000 : PAGE_SIZE
   const productPage = showSafetyOnly ? 1 : page
@@ -539,7 +358,7 @@ export default function ProductsPage() {
       ...product,
       stockQty: inventorySummary.get(product.id)?.stockQty ?? product.stockQty ?? 0,
     }))
-    const filteredRows = showSafetyOnly ? rows.filter((p) => getBoxStockQty(p) < p.safetyStock) : rows
+    const filteredRows = showSafetyOnly ? rows.filter((p) => getTotalEA(p) < p.safetyStock) : rows
     if (!sort) return filteredRows
     return [...filteredRows].sort((a, b) => compareSortValue(getProductSortValue(a, sort.key), getProductSortValue(b, sort.key), sort.direction))
   }, [data?.items, inventorySummary, showSafetyOnly, sort])
@@ -560,15 +379,23 @@ export default function ProductsPage() {
         locationId: form.locationId || undefined,
         unit: form.unit, baseUnit: form.baseUnit, pUnitQty: form.pUnitQty || undefined,
         boxUnitQty: form.boxUnitQty || undefined, plUnitQty: form.plUnitQty || undefined,
-        boxQty: form.boxUnitQty || form.boxQty, safetyStock: form.safetyStock, reorderPoint: form.reorderPoint,
+        boxQty: form.boxQty, safetyStock: form.safetyStock, reorderPoint: form.reorderPoint,
         spec: form.spec || undefined, materialNo: form.materialNo || undefined,
         costPrice: form.costPrice || undefined, sellPrice: form.sellPrice || undefined,
-        priceA: form.priceA || undefined, priceB: form.priceB || undefined,
+        priceB: form.priceB || undefined, priceA: form.priceA || undefined,
         priceC: form.priceC || undefined, retailPrice: form.retailPrice || undefined,
         memo: form.memo || undefined,
       })
       for (const bc of pendingBarcodes) {
         await productApi.addBarcode(product.id, bc)
+      }
+      if (form.initialStockEA > 0) {
+        await adjustBoxStockQty({
+          product,
+          targetQty: form.initialStockEA,
+          warehouseId: warehouse?.id,
+          inventoryItems: [],
+        })
       }
       return product
     },
@@ -589,10 +416,10 @@ export default function ProductsPage() {
       clearLocation: !form.locationId,
       unit: form.unit, baseUnit: form.baseUnit, pUnitQty: form.pUnitQty || undefined,
       boxUnitQty: form.boxUnitQty || undefined, plUnitQty: form.plUnitQty || undefined,
-      boxQty: form.boxUnitQty || form.boxQty, safetyStock: form.safetyStock,
+      boxQty: form.boxQty, safetyStock: form.safetyStock,
       reorderPoint: form.reorderPoint, spec: form.spec, materialNo: form.materialNo,
       costPrice: form.costPrice || undefined, sellPrice: form.sellPrice || undefined,
-      priceA: form.priceA || undefined, priceB: form.priceB || undefined,
+      priceB: form.priceB || undefined, priceA: form.priceA || undefined,
       priceC: form.priceC || undefined, retailPrice: form.retailPrice || undefined,
       memo: form.memo, saleStatus: form.saleStatus,
     }),
@@ -621,12 +448,117 @@ export default function ProductsPage() {
     onError: () => toast.error('저장 실패'),
   })
 
+  const buildSpecFromQtys = (pQty: number, boxQty: number, plQty: number) => {
+    const parts: string[] = []
+    if (pQty > 0) parts.push(`${pQty}P`)
+    if (boxQty > 0) parts.push(`${boxQty}BOX`)
+    if (plQty > 0) parts.push(`${plQty}PL`)
+    return parts.join('/')
+  }
+
   const saveEdit = (cell: EditCell) => {
     const trimmed = cell.value.trim()
     if (!trimmed && !EDIT_OPTIONAL_FIELDS.includes(cell.field)) {
       setEditCell(null)
       return
     }
+
+    // 규격 텍스트 → P/BOX/PL 파싱
+    if (cell.field === 'spec') {
+      const val = trimmed
+      const pMatch = val.match(/(\d+)\s*P\b/i)
+      const boxMatch = val.match(/(\d+)\s*BOX/i)
+      const plMatch = val.match(/(\d+)\s*PL\b/i)
+      const patch: Record<string, string | number> = { spec: val }
+      if (pMatch) patch.pUnitQty = Number(pMatch[1])
+      if (boxMatch) patch.boxUnitQty = Number(boxMatch[1])
+      if (plMatch) patch.plUnitQty = Number(plMatch[1])
+      gridUpdateMutation.mutate({ id: cell.id, patch })
+      setEditCell(null)
+      return
+    }
+
+    // P / BOX / PL 변경 → spec 자동 업데이트
+    if (cell.field === 'pUnitQty' || cell.field === 'boxUnitQty' || cell.field === 'plUnitQty') {
+      const product = productRows.find((p) => p.id === cell.id)
+      if (!product) { setEditCell(null); return }
+      const newQtys = {
+        pUnitQty:   cell.field === 'pUnitQty'   ? Number(trimmed || 0) : (product.pUnitQty   ?? 0),
+        boxUnitQty: cell.field === 'boxUnitQty' ? Number(trimmed || 0) : (product.boxUnitQty ?? 0),
+        plUnitQty:  cell.field === 'plUnitQty'  ? Number(trimmed || 0) : (product.plUnitQty  ?? 0),
+      }
+      const newSpec = buildSpecFromQtys(newQtys.pUnitQty, newQtys.boxUnitQty, newQtys.plUnitQty)
+      gridUpdateMutation.mutate({ id: cell.id, patch: { ...newQtys, spec: newSpec } })
+      setEditCell(null)
+      return
+    }
+
+    if (cell.field === 'inboxStock') {
+      const product = productRows.find((p) => p.id === cell.id)
+      if (!product) { setEditCell(null); return }
+      const inputInbox = roundToTwo(Number(trimmed || 0))
+      const eaPerInbox = getPackageUnitQty(product, 'P') ?? 0
+      if (eaPerInbox <= 0) { toast.error('P 단위(pUnitQty)가 설정되지 않았습니다'); setEditCell(null); return }
+      const totalEATarget = roundToTwo(inputInbox * eaPerInbox)
+      adjustBoxStockQty({
+        product,
+        targetQty: Math.round(totalEATarget),
+        warehouseId: warehouse?.id,
+        inventoryItems: inventorySummary.get(cell.id)?.items ?? [],
+      })
+        .then(() => {
+          qc.invalidateQueries({ queryKey: ['inventory'] })
+          qc.invalidateQueries({ queryKey: ['products'] })
+          toast.success('재고수량이 조정되었습니다')
+        })
+        .catch((err) => toast.error(err instanceof Error ? err.message : '재고 조정 실패'))
+      setEditCell(null)
+      return
+    }
+
+    if (cell.field === 'eaStock') {
+      const product = productRows.find((p) => p.id === cell.id)
+      if (!product) { setEditCell(null); return }
+      const inputEA = roundToTwo(Number(trimmed || 0))
+      adjustBoxStockQty({
+        product,
+        targetQty: Math.round(inputEA),
+        warehouseId: warehouse?.id,
+        inventoryItems: inventorySummary.get(cell.id)?.items ?? [],
+      })
+        .then(() => {
+          qc.invalidateQueries({ queryKey: ['inventory'] })
+          qc.invalidateQueries({ queryKey: ['products'] })
+          toast.success('재고수량이 조정되었습니다')
+        })
+        .catch((err) => toast.error(err instanceof Error ? err.message : '재고 조정 실패'))
+      setEditCell(null)
+      return
+    }
+
+    if (cell.field === 'outboxStock') {
+      const product = productRows.find((p) => p.id === cell.id)
+      if (!product) { setEditCell(null); return }
+      const inputOutbox = roundToTwo(Number(trimmed || 0))
+      const eaPerOutbox = getPackageUnitQty(product, 'BOX') ?? 0
+      if (eaPerOutbox <= 0) { toast.error('OUTBOX 단위(boxUnitQty)가 설정되지 않았습니다'); setEditCell(null); return }
+      const totalEA = roundToTwo(inputOutbox * eaPerOutbox)
+      adjustBoxStockQty({
+        product,
+        targetQty: Math.round(totalEA),
+        warehouseId: warehouse?.id,
+        inventoryItems: inventorySummary.get(cell.id)?.items ?? [],
+      })
+        .then(() => {
+          qc.invalidateQueries({ queryKey: ['inventory'] })
+          qc.invalidateQueries({ queryKey: ['products'] })
+          toast.success('재고수량이 조정되었습니다')
+        })
+        .catch((err) => toast.error(err instanceof Error ? err.message : '재고 조정 실패'))
+      setEditCell(null)
+      return
+    }
+
     if (cell.field === 'boxStock') {
       const product = productRows.find((p) => p.id === cell.id)
       if (!product) {
@@ -737,12 +669,13 @@ export default function ProductsPage() {
       reorderPoint: product.reorderPoint,
       costPrice:    Number(product.costPrice ?? 0),
       sellPrice:    Number(product.sellPrice ?? 0),
-      priceA:       Number(product.priceA ?? 0),
       priceB:       Number(product.priceB ?? 0),
+      priceA:       Number(product.priceA ?? 0),
       priceC:       Number(product.priceC ?? 0),
       retailPrice:  Number(product.retailPrice ?? 0),
       memo:         product.memo ?? '',
       saleStatus:   product.saleStatus,
+      initialStockEA: 0,
     })
     setSelectedClient(product.client ?? null)
     setSelectedLocation(product.defaultLocation ?? null)
@@ -833,8 +766,6 @@ export default function ProductsPage() {
   const allChecked = currentPageIds.length > 0 && currentPageIds.every((id) => selectedIds.has(id))
   const someChecked = currentPageIds.some((id) => selectedIds.has(id))
 
-  const inputCls = 'w-full border border-gray-200 dark:border-gray-700 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#2D4033]/30 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-colors'
-  const labelCls = 'block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1'
 
   const openQuoteScreen = () => {
     const ids = [...selectedIds]
@@ -847,79 +778,22 @@ export default function ProductsPage() {
   const openPurchaseOrder = () => router.push('/quotes?tab=PURCHASE')
 
   return (
-    <div className="flex h-[calc(100vh-150px)] min-h-0 flex-col gap-4 overflow-hidden">
-      {/* 타이틀 + 액션 */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <div className="flex h-[calc(100vh-118px)] min-h-0 flex-col gap-2 overflow-hidden">
+      {/* 타이틀 */}
+      <div>
         <div className="min-w-[120px] flex-1">
-          <h2 className="whitespace-nowrap text-lg font-bold text-gray-900 dark:text-white tracking-tight">상품 관리</h2>
+          <h2 className="whitespace-nowrap text-base font-bold text-gray-900 dark:text-white tracking-tight">상품 관리</h2>
           {data && (
             <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
               전체 {formatNumber(data.total ?? data.items.length)}개 상품
             </p>
           )}
         </div>
-        <div className="flex w-full items-center gap-2 flex-wrap justify-end sm:w-auto">
-          <ExportButton
-            filename="상품목록"
-            getData={async () => {
-              const all = await productApi.findAll({ search: search || undefined, limit: 9999 })
-              return all.items.map((p: Product) => ({
-                '상품코드': p.code,
-                '자재번호': p.materialNo ?? '',
-                '상품명': p.name,
-                '위치': p.defaultLocation?.code ?? '-',
-                '기준단위': p.unit || 'EA',
-                '1BOX(입수량)': p.boxQty,
-                '재고수량(박스)': getBoxStockQty(p),
-                '재고수량(낱개)': getEachStockQty(p),
-                '카테고리': p.category ?? '',
-                '거래처명': p.client?.name ?? '',
-                '매입가': p.costPrice ?? 0,
-                '판매가': p.sellPrice ?? 0,
-                '소매가': p.retailPrice ?? 0,
-                'A단가': p.priceA ?? 0,
-                'B단가': p.priceB ?? 0,
-                'C단가': p.priceC ?? 0,
-                '바코드': getPrimaryBarcode(p.barcodes),
-                '메모': p.memo ?? '',
-                '현재고': getEachStockQty(p),
-                '예약': 0,
-                '가용': getEachStockQty(p),
-                '안전재고': p.safetyStock,
-                '상태': SALE_STATUS_LABEL[p.saleStatus],
-                '등록일': formatDateTime(p.createdAt),
-              }))
-            }}
-          />
-          <ImportButton
-            onImported={() => qc.invalidateQueries({ queryKey: ['products'] })}
-          />
-          <button
-            onClick={openCreate}
-            title="상품 추가"
-            aria-label="상품 추가"
-            className="responsive-icon-action bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm shadow-indigo-500/20"
-          >
-            <span className="responsive-action-label">상품 추가</span>
-          </button>
-          {canAccessQuotes && (
-           <button
-            onClick={openQuoteScreen}
-            disabled={selectedIds.size === 0}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-emerald-200 text-emerald-700 dark:border-emerald-800 dark:text-emerald-400 rounded hover:bg-emerald-50 dark:hover:bg-emerald-900/20 disabled:opacity-40 disabled:hover:bg-transparent transition-colors font-medium"
-          >
-            <span>거래명세서/견적서</span>
-          </button>
-          )}
-          <button onClick={openPurchaseOrder} className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-[#D2691E] text-[#9a4d16] rounded hover:bg-orange-50 transition-colors font-medium">
-            <span>발주서 생성</span>
-          </button>
-        </div>
       </div>
 
       {/* 검색/필터 */}
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-2">
-        <div className="flex flex-col gap-1.5 md:flex-row">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded p-1.5">
+        <div className="flex flex-col gap-1 md:flex-row">
           <div className="relative flex-1">
             <input
               value={searchInput}
@@ -959,14 +833,6 @@ export default function ProductsPage() {
           >
             초기화
           </button>
-          <button
-            type="button"
-            onClick={resetWidths}
-            className="hidden sm:block px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium whitespace-nowrap"
-            title="컬럼 너비를 기본값으로 초기화"
-          >
-            컬럼 초기화
-          </button>
         </div>
       </div>
 
@@ -991,230 +857,69 @@ export default function ProductsPage() {
       )}
 
       {/* 테이블 */}
-      <div className="flex min-h-0 flex-1 flex-col bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 overflow-hidden">
-        <div className="min-h-0 flex-1 overflow-auto">
-          <table
-            className="mobile-unpin-grid wms-no-resize wms-resizable-table text-sm border-collapse"
-            style={{ width: totalWidth, minWidth: totalWidth, maxWidth: totalWidth }}
-          >
-            <colgroup>
-              {Object.keys(PRODUCT_COLS).map((key) => (
-                <col key={key} style={{ width: cw[key] }} />
-              ))}
-            </colgroup>
-            <thead>
-              <tr className="bg-[#2D4033]">
-                <th className="sticky-col sticky z-30 px-3 py-1.5 border-r border-white/20 bg-[#2D4033] overflow-hidden wms-resizable-th"
-                    style={{ width: cw.chk, minWidth: cw.chk, maxWidth: cw.chk, left: stickyLeftOf('chk') }}>
-                  <input
-                    type="checkbox"
-                    checked={allChecked}
-                    ref={(el) => { if (el) el.indeterminate = someChecked && !allChecked }}
-                    onChange={toggleAll}
-                    className="rounded accent-indigo-600 cursor-pointer"
-                  />
-                  <div className="wms-column-resizer" onMouseDown={(e) => startResize('chk', e)} />
-                </th>
-                <SortHeader label="거래처명" sortKey="client" sort={sort} onSort={toggleSort} className="sticky-col sticky z-30" style={{ width: cw.client, minWidth: cw.client, maxWidth: cw.client, left: stickyLeftOf('client') }} onResizeStart={(e) => startResize('client', e)} />
-                <SortHeader label="상품코드" sortKey="code" sort={sort} onSort={toggleSort} className="sticky-col sticky z-30" style={{ width: cw.code, minWidth: cw.code, maxWidth: cw.code, left: stickyLeftOf('code') }} onResizeStart={(e) => startResize('code', e)} />
-                <SortHeader label="자재번호" sortKey="materialNo" sort={sort} onSort={toggleSort} className="sticky-col sticky" style={{ width: cw.materialNo, minWidth: cw.materialNo, maxWidth: cw.materialNo, left: stickyLeftOf('materialNo') }} onResizeStart={(e) => startResize('materialNo', e)} />
-                <SortHeader label="바코드" sortKey="barcode" sort={sort} onSort={toggleSort} className="sticky-col sticky z-30" style={{ width: cw.barcode, minWidth: cw.barcode, maxWidth: cw.barcode, left: stickyLeftOf('barcode') }} onResizeStart={(e) => startResize('barcode', e)} />
-                <SortHeader label="상품명" sortKey="name" sort={sort} onSort={toggleSort} className="sticky-col sticky z-30 shadow-[3px_0_5px_-3px_rgba(0,0,0,0.35)]" style={{ width: cw.name, minWidth: cw.name, maxWidth: cw.name, left: stickyLeftOf('name') }} onResizeStart={(e) => startResize('name', e)} />
-                <SortHeader label="기준단위" sortKey="unit" sort={sort} onSort={toggleSort} align="center" style={{ width: cw.unit }} onResizeStart={(e) => startResize('unit', e)} />
-                <SortHeader label="1BOX(입수량)" sortKey="boxQty" sort={sort} onSort={toggleSort} align="right" style={{ width: cw.boxQty }} onResizeStart={(e) => startResize('boxQty', e)} />
-                <SortHeader label="재고수량(박스)" sortKey="boxStock" sort={sort} onSort={toggleSort} align="right" style={{ width: cw.boxStock }} onResizeStart={(e) => startResize('boxStock', e)} />
-                <SortHeader label="재고수량(낱개)" sortKey="eachStock" sort={sort} onSort={toggleSort} align="right" style={{ width: cw.eachStock }} onResizeStart={(e) => startResize('eachStock', e)} />
-                <SortHeader label="카테고리" sortKey="category" sort={sort} onSort={toggleSort} style={{ width: cw.category }} onResizeStart={(e) => startResize('category', e)} />
-                <SortHeader label="위치" sortKey="location" sort={sort} onSort={toggleSort} style={{ width: cw.location }} onResizeStart={(e) => startResize('location', e)} />
-                <SortHeader label="판매가" sortKey="sellPrice" sort={sort} onSort={toggleSort} align="right" style={{ width: cw.sellPrice }} onResizeStart={(e) => startResize('sellPrice', e)} />
-                <SortHeader label="해피미르단가" sortKey="priceB" sort={sort} onSort={toggleSort} align="right" style={{ width: cw.priceB }} onResizeStart={(e) => startResize('priceB', e)} />
-                <SortHeader label="네이버단가" sortKey="retailPrice" sort={sort} onSort={toggleSort} align="right" style={{ width: cw.retailPrice }} onResizeStart={(e) => startResize('retailPrice', e)} />
-                <SortHeader label="SSG단가" sortKey="priceA" sort={sort} onSort={toggleSort} align="right" style={{ width: cw.priceA }} onResizeStart={(e) => startResize('priceA', e)} />
-                <SortHeader label="메모" sortKey="memo" sort={sort} onSort={toggleSort} style={{ width: cw.memo }} onResizeStart={(e) => startResize('memo', e)} />
-                <SortHeader label="현재고" sortKey="currentStock" sort={sort} onSort={toggleSort} align="right" style={{ width: cw.currentStock }} onResizeStart={(e) => startResize('currentStock', e)} />
-                <SortHeader label="예약" sortKey="reserved" sort={sort} onSort={toggleSort} align="right" style={{ width: cw.reserved }} onResizeStart={(e) => startResize('reserved', e)} />
-                <SortHeader label="가용" sortKey="available" sort={sort} onSort={toggleSort} align="right" style={{ width: cw.available }} onResizeStart={(e) => startResize('available', e)} />
-                <SortHeader label="안전재고" sortKey="safetyStock" sort={sort} onSort={toggleSort} align="right" style={{ width: cw.safetyStock }} onResizeStart={(e) => startResize('safetyStock', e)} />
-                <SortHeader label="상태" sortKey="saleStatus" sort={sort} onSort={toggleSort} align="center" style={{ width: cw.saleStatus }} onResizeStart={(e) => startResize('saleStatus', e)} />
-                <SortHeader label="등록일" sortKey="createdAt" sort={sort} onSort={toggleSort} style={{ width: cw.createdAt }} onResizeStart={(e) => startResize('createdAt', e)} />
-                <th className="px-3 py-1.5" style={{ width: cw.actions }} />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {isLoading && (
-                <tr><td colSpan={26} className="text-center py-12 text-gray-400 dark:text-gray-500">
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                    로딩 중...
-                  </div>
-                </td></tr>
-              )}
-              {!isLoading && productRows.length === 0 && (
-                <tr><td colSpan={26} className="text-center py-12 text-gray-400 dark:text-gray-500">
-                  <p className="text-sm">{showSafetyOnly ? '안전재고 경고 상품이 없습니다' : '표시할 상품이 없습니다'}</p>
-                </td></tr>
-              )}
-              {productRows.map((p: Product) => {
-                const isSelected = selectedIds.has(p.id)
-                const boxStockQty = getBoxStockQty(p)
-                const eachStockQty = getEachStockQty(p)
-                const isBelowSafety = boxStockQty < p.safetyStock
-                const rowBase = isSelected
-                  ? 'bg-indigo-50 dark:bg-indigo-950'
-                  : isBelowSafety
-                    ? 'bg-red-50 hover:bg-red-100 dark:bg-red-950 dark:hover:bg-red-900'
-                    : 'hover:bg-indigo-50/40 dark:hover:bg-indigo-900/5'
-                const fixedBg = isSelected
-                  ? 'bg-indigo-100 group-hover:bg-indigo-200 dark:bg-indigo-900 dark:group-hover:bg-indigo-800'
-                  : isBelowSafety
-                    ? 'bg-red-100 group-hover:bg-red-100 dark:bg-red-900 dark:group-hover:bg-red-900'
-                    : 'bg-slate-50 group-hover:bg-indigo-50 dark:bg-slate-800 dark:group-hover:bg-indigo-950'
-                return (
-                  <tr
-                    key={p.id}
-                    onDoubleClick={() => openEdit(p)}
-                    className={cn(
-                      'group transition-colors cursor-pointer',
-                      rowBase,
-                      isBelowSafety && '[&>td]:!bg-red-100 [&>td]:hover:!bg-red-100 dark:[&>td]:!bg-red-900 dark:[&>td]:hover:!bg-red-900',
-                    )}
-                  >
-                    <td className={cn('sticky-col sticky z-20 px-2 py-1.5 border-r border-gray-200 text-center dark:border-gray-700 overflow-hidden', fixedBg)} style={{ width: cw.chk, minWidth: cw.chk, maxWidth: cw.chk, left: stickyLeftOf('chk') }} onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleRow(p.id)}
-                        className="rounded accent-indigo-600 cursor-pointer"
-                      />
-                    </td>
-                    {/* 거래처명 - 앞쪽 고정 표시 */}
-                    <td
-                      className={cn(TD_TEXT, fixedBg, 'sticky-col sticky z-20 cursor-pointer hover:!bg-indigo-50 dark:hover:!bg-indigo-900/30 overflow-hidden')}
-                      style={{ width: cw.client, minWidth: cw.client, maxWidth: cw.client, left: stickyLeftOf('client') }}
-                      onClick={(e) => { e.stopPropagation(); openGridClientPicker(p) }}
-                      title="거래처 변경"
-                    >
-                      <span className="block truncate" title={p.client?.name ?? ''}>{p.client?.name || '—'}</span>
-                    </td>
-                    {/* 상품코드 */}
-                    <td className={cn(TD_TEXT, fixedBg, 'sticky-col sticky z-20 font-mono text-xs text-gray-500 dark:text-gray-400 overflow-hidden')} style={{ width: cw.code, minWidth: cw.code, maxWidth: cw.code, left: stickyLeftOf('code') }}>
-                      <EditableCell id={p.id} field="code" value={p.code} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} />
-                    </td>
-                    {/* 자재번호 */}
-                    <td className={cn(TD_TEXT, fixedBg, 'sticky-col sticky z-20 font-mono text-xs text-gray-500 dark:text-gray-400 overflow-hidden')} style={{ width: cw.materialNo, minWidth: cw.materialNo, maxWidth: cw.materialNo, left: stickyLeftOf('materialNo') }}>
-                      <EditableCell id={p.id} field="materialNo" value={p.materialNo ?? ''} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} />
-                    </td>
-                    {/* 바코드 */}
-                    <td className={cn(TD_TEXT, fixedBg, 'sticky-col sticky z-20 overflow-hidden')} style={{ width: cw.barcode, minWidth: cw.barcode, maxWidth: cw.barcode, left: stickyLeftOf('barcode') }} onClick={(e) => e.stopPropagation()}>
-                      <button
-                        type="button"
-                        onClick={() => setBarcodeModal(p)}
-                        className="block h-7 w-full text-left truncate rounded-lg px-2 leading-7 hover:bg-amber-50 dark:hover:bg-amber-900/10 text-[#D2691E] dark:text-amber-400 transition-colors"
-                        title={getPrimaryBarcode(p.barcodes)}
-                      >
-                        {getPrimaryBarcode(p.barcodes)}
-                      </button>
-                    </td>
-                    {/* 상품명 */}
-                    <td className={cn(TD_TEXT, fixedBg, 'sticky-col sticky z-20 font-semibold text-gray-900 shadow-[3px_0_5px_-3px_rgba(0,0,0,0.25)] dark:text-gray-100 overflow-hidden')} style={{ width: cw.name, minWidth: cw.name, maxWidth: cw.name, left: stickyLeftOf('name') }}>
-                      <EditableCell id={p.id} field="name" value={p.name} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} />
-                    </td>
-        
-                    {/* 기준단위 */}
-                    <td className={TD_CTR}>
-                      <EditableCell id={p.id} field="unit" value={p.unit || 'EA'} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} unitOptions={units} align="center" />
-                    </td>
-                    {/* 1BOX */}
-                    <td className={TD_NUM}>
-                      <EditableCell id={p.id} field="boxQty" value={p.boxQty} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} align="right" />
-                    </td>
-                    {/* 재고수량(박스) */}
-                    <td className={TD_NUM}>
-                      <EditableCell id={p.id} field="boxStock" value={boxStockQty} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} align="right" />
-                    </td>
-                    {/* 재고수량(낱개) */}
-                    <td className={TD_NUM}>{formatNumber(eachStockQty)}</td>
-                    {/* 카테고리 */}
-                    <td className={TD_TEXT} onClick={(e) => e.stopPropagation()}>
-                      <CategorySelect
-                        value={p.category ?? ''}
-                        onChange={(val) => gridUpdateMutation.mutate({ id: p.id, patch: { category: val || undefined } })}
-                        variant="cell"
-                      />
-                    </td>
-                                {/* 위치 */}
-                    <td className={TD_TEXT}>
-                      <div className="flex items-center gap-1">
-                        <span className="block min-w-0 flex-1 truncate" title={p.defaultLocation?.code ?? ''}>{p.defaultLocation?.code || '—'}</span>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            openGridLocationPicker(p)
-                          }}
-                          className="shrink-0 rounded-md p-1 text-gray-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-300"
-                          title="위치 수정"
-                        >
-                          검색
-                        </button>
-                      </div>
-                    </td>
-                    {/* 매입가 */}
-                    {/* <td className={TD_NUM}>
-                      <EditableCell id={p.id} field="costPrice" value={p.costPrice ?? 0} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} align="right" />
-                    </td> */}
-                    {/* 판매가 */}
-                    <td className={TD_NUM}>
-                      <EditableCell id={p.id} field="sellPrice" value={p.sellPrice ?? 0} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} align="right" />
-                    </td>
-                    {/* 소매가 */}
-                    {/* <td className={TD_NUM}>
-                      <EditableCell id={p.id} field="retailPrice" value={p.retailPrice ?? 0} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} align="right" />
-                    </td> */}
-                    {/* 해피미르/네이버/SSG 단가 */}
-                    <td className={TD_NUM}><EditableCell id={p.id} field="priceB" value={p.priceB ?? 0} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} align="right" /></td>
-                    <td className={TD_NUM}><EditableCell id={p.id} field="retailPrice" value={p.retailPrice ?? 0} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} align="right" /></td>
-                    <td className={TD_NUM}><EditableCell id={p.id} field="priceA" value={p.priceA ?? 0} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} align="right" /></td>
-             
-                    {/* 메모 */}
-                    <td className={cn(TD_TEXT, 'max-w-48')} title={p.memo || ''}>
-                      <EditableCell id={p.id} field="memo" value={p.memo ?? ''} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} />
-                    </td>
-                    {/* 현재고 */}
-                    <td className={TD_NUM}>{formatNumber(eachStockQty)}</td>
-                    {/* 예약 */}
-                    <td className={cn(TD_NUM, 'text-gray-500 dark:text-gray-400')}>0</td>
-                    {/* 가용 */}
-                    <td className={TD_NUM}>{formatNumber(eachStockQty)}</td>
-                    {/* 안전재고 */}
-                    <td className={cn(TD_NUM, isBelowSafety ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-400 dark:text-gray-500')}>
-                      <EditableCell id={p.id} field="safetyStock" value={p.safetyStock} editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} align="right" />
-                    </td>
-                    {/* 상태 */}
-                    <td className={TD_CTR}>
-                      <StatusEditableCell product={p} onSave={saveStatus} />
-                    </td>
-                    {/* 등록일 */}
-                    <td className={cn(TD_TEXT, 'text-xs text-gray-400 dark:text-gray-500')}>{formatDateTime(p.createdAt)}</td>
-                    {/* 액션 */}
-                    <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => { if (confirm('삭제하시겠습니까?')) deleteMutation.mutate(p.id, { onSuccess: () => toast.success('삭제되었습니다') }) }}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/20 transition-colors"
-                          title="삭제"
-                        >
-                          삭제
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <ProductInventoryGrid
+        products={productRows}
+        onBarcodeClick={setBarcodeModal}
+        onSaved={() => {
+          invalidateAll()
+          setSelectedIds(new Set())
+        }}
+        overflowActions={(
+          <>
+            <ExportButton
+              filename="상품목록"
+              getData={async () => {
+                const all = await productApi.findAll({ search: search || undefined, limit: 9999 })
+                return all.items.map((p: Product) => ({
+                  '상품코드': p.code,
+                  '자재번호': p.materialNo ?? '',
+                  '상품명': p.name,
+                  '위치': p.defaultLocation?.code ?? '-',
+                  '기준단위': p.unit || 'EA',
+                  'EA': getTotalEA(p),
+                  'P': getInboxStock(p),
+                  'BOX': getOutboxStock(p),
+                  'PL': getPlStock(p),
+                  '카테고리': p.category ?? '',
+                  '거래처명': p.client?.name ?? '',
+                  '매입가': p.costPrice ?? 0,
+                  '판매가': p.sellPrice ?? 0,
+                  '소매단가': p.retailPrice ?? 0,
+                  'SSG 단가': p.priceB ?? 0,
+                  '해피미르 단가': p.priceA ?? 0,
+                  'C단가': p.priceC ?? 0,
+                  '바코드': getPrimaryBarcode(p.barcodes),
+                  '메모': p.memo ?? '',
+                  '현재고': getTotalEA(p),
+                  '예약': 0,
+                  '가용': getTotalEA(p),
+                  '안전재고': p.safetyStock,
+                  '상태': SALE_STATUS_LABEL[p.saleStatus],
+                  '등록일': formatDateTime(p.createdAt),
+                }))
+              }}
+            />
+            <ImportButton onImported={() => qc.invalidateQueries({ queryKey: ['products'] })} />
+            {canAccessQuotes && (
+              <button
+                onClick={openQuoteScreen}
+                disabled={selectedIds.size === 0}
+                title="거래명세서/견적서"
+                className="inline-flex h-7 items-center gap-1 rounded border border-emerald-200 bg-white px-2 text-xs font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-40"
+              >
+                <FileText size={14} /> 견적서
+              </button>
+            )}
+            <button
+              onClick={openPurchaseOrder}
+              title="발주서 생성"
+              className="inline-flex h-7 items-center gap-1 rounded border border-orange-200 bg-white px-2 text-xs font-medium text-orange-700 hover:bg-orange-50"
+            >
+              <ShoppingCart size={14} /> 발주서
+            </button>
+          </>
+        )}
+      />
 
       {/* 페이지네이션 */}
       {data && data.totalPages > 1 && (
@@ -1239,415 +944,6 @@ export default function ProductsPage() {
           >
             다음
           </button>
-        </div>
-      )}
-
-      {/* 상품 등록/수정 모달 */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700 w-full max-w-3xl max-h-[92vh] overflow-y-auto">
-            {/* 모달 헤더 */}
-            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 bg-[#2D4033]">
-              <div className="shrink-0 text-white">
-                {editing ? '수정' : '+'}
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-semibold text-white">
-                  {editing ? editing.name : '새 상품 등록'}
-                </h3>
-                {editing && <p className="text-[10px] text-[#E5D3B3]/70 font-mono">{editing.code}</p>}
-              </div>
-            </div>
-
-            <div className="p-4 space-y-4">
-              {/* ── 기본 정보 ── */}
-              <section>
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 pb-1 mb-2">기본 정보</p>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div>
-                    <label className={labelCls}>상품코드 *</label>
-                    <input
-                      type="text"
-                      placeholder="PRD-001"
-                      value={form.code}
-                      disabled={editing !== null}
-                      onChange={(e) => setForm((p) => ({ ...p, code: e.target.value }))}
-                      className={cn(inputCls, 'disabled:bg-gray-50 disabled:text-gray-400 dark:disabled:bg-gray-800 dark:disabled:text-gray-500')}
-                    />
-                  </div>
-                  <div>
-                    <label className={labelCls}>상품명 *</label>
-                    <input
-                      type="text"
-                      placeholder="상품명 입력"
-                      value={form.name}
-                      onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-                      className={inputCls}
-                    />
-                  </div>
-                  <div>
-                    <label className={labelCls}>규격</label>
-                    <input type="text" placeholder="규격" value={form.spec}
-                      onChange={(e) => setForm((p) => ({ ...p, spec: e.target.value }))}
-                      className={inputCls} />
-                  </div>
-                  <div>
-                    <label className={labelCls}>자재번호</label>
-                    <input type="text" placeholder="자재번호" value={form.materialNo}
-                      onChange={(e) => setForm((p) => ({ ...p, materialNo: e.target.value }))}
-                      className={inputCls} />
-                  </div>
-                  <div>
-                    <label className={labelCls}>카테고리(품목분류)</label>
-                    <CategorySelect
-                      value={form.category}
-                      onChange={(val) => setForm((p) => ({ ...p, category: val }))}
-                    />
-                  </div>
-                  <div>
-                    <label className={labelCls}>거래처</label>
-                    <button
-                      type="button"
-                      onClick={() => { setClientPickerSearch(''); setShowClientPicker(true) }}
-                      className={cn(
-                        inputCls,
-                        'w-full flex items-center justify-between gap-2 text-left cursor-pointer',
-                        form.clientId ? '' : 'text-gray-400 dark:text-gray-500',
-                      )}
-                    >
-                      <span className="truncate">
-                        {form.clientId ? (selectedClientLabel || '거래처 선택...') : '거래처 선택...'}
-                      </span>
-                      <span className="shrink-0 text-gray-400 text-xs">검색</span>
-                    </button>
-                    {form.clientId && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedClient(null)
-                          setForm((p) => ({ ...p, clientId: '' }))
-                        }}
-                        className="mt-1 flex items-center gap-1 text-xs text-gray-400 hover:text-rose-500 transition-colors"
-                      >
-                        선택 해제
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </section>
-
-              {/* ── 바코드 관리 ── */}
-              <section className="border-t border-gray-100 dark:border-gray-700 pt-3">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1.5 border-b border-gray-100 dark:border-gray-700 pb-1 w-full">
-                    QR 바코드
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setShowAddBc((v) => !v)}
-                    className="flex items-center gap-1 text-xs text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
-                  >
-                    + 바코드 추가
-                  </button>
-                </div>
-
-                {/* 신규 등록 모드: 임시 바코드 목록 */}
-                {!editing && (
-                  <>
-                    {pendingBarcodes.length > 0 && (
-                      <div className="space-y-1.5 mb-3">
-                        {pendingBarcodes.map((bc, idx) => (
-                          <div key={idx} className="flex items-center gap-2 px-2.5 py-1.5 rounded bg-gray-50 dark:bg-gray-800 group">
-                            <span className="font-mono text-sm text-gray-800 dark:text-gray-200 flex-1 truncate">{bc.barcode}</span>
-                            <span className={cn(
-                              'text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0',
-                              bc.type === 'CXD_BOX' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
-                                : bc.type === 'CXD' ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/20 dark:text-violet-400'
-                                : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400',
-                            )}>
-                              {bc.type === 'CXD_BOX' ? 'CXD BOX' : bc.type === 'CXD' ? 'CXD 낱개' : '낱개'}
-                            </span>
-                            <span className="text-xs text-gray-400 tabular-nums shrink-0">×{bc.unitQty}</span>
-                            {bc.isPrimary && <span className="text-amber-400 shrink-0">★</span>}
-                            <button
-                              type="button"
-                              onClick={() => setPendingBarcodes((prev) => prev.filter((_, i) => i !== idx))}
-                              className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-rose-500 dark:text-gray-600 dark:hover:text-rose-400 transition-all shrink-0"
-                            >
-                              닫기
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {pendingBarcodes.length === 0 && !showAddBc && (
-                      <p className="text-xs text-gray-400 dark:text-gray-500 py-2">바코드를 미리 추가할 수 있습니다 (선택사항)</p>
-                    )}
-                  </>
-                )}
-
-                {/* 수정 모드: 저장된 바코드 목록 */}
-                {editing && (
-                  <>
-                    {barcodes.length === 0 && !showAddBc && (
-                      <p className="text-xs text-gray-400 dark:text-gray-500 py-2">등록된 바코드가 없습니다. 위 버튼으로 추가하세요.</p>
-                    )}
-                    {barcodes.length > 0 && (
-                      <div className="space-y-1.5 mb-3">
-                        {barcodes.map((bc) => (
-                          <div key={bc.id} className="flex items-center gap-2 px-2.5 py-1.5 rounded bg-gray-50 dark:bg-gray-800 group">
-                            <span className="font-mono text-sm text-gray-800 dark:text-gray-200 flex-1 truncate">{bc.barcode}</span>
-                            <span className={cn(
-                              'text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0',
-                              bc.type === 'CXD_BOX' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
-                                : bc.type === 'CXD' ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/20 dark:text-violet-400'
-                                : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400',
-                            )}>
-                              {bc.type === 'CXD_BOX' ? 'CXD BOX' : bc.type === 'CXD' ? 'CXD 낱개' : '낱개'}
-                            </span>
-                            <span className="text-xs text-gray-400 tabular-nums shrink-0">×{bc.unitQty}</span>
-                            {bc.isPrimary && <span className="text-amber-400 shrink-0">★</span>}
-                            <button
-                              type="button"
-                              onClick={() => { if (confirm('이 바코드를 삭제할까요?')) delBarcodeMutation.mutate(bc.id) }}
-                              className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-rose-500 dark:text-gray-600 dark:hover:text-rose-400 transition-all shrink-0"
-                            >
-                              닫기
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {showAddBc && (
-                  <div className="flex flex-wrap items-center gap-2 p-3 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/40 dark:bg-indigo-900/10">
-                    <input
-                      autoFocus
-                      type="text"
-                      placeholder="바코드 값"
-                      value={newBcVal}
-                      onChange={(e) => setNewBcVal(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key !== 'Enter' || !newBcVal.trim()) return
-                        if (editing) { addBarcodeMutation.mutate() }
-                        else { setPendingBarcodes((prev) => [...prev, { barcode: newBcVal.trim(), type: newBcType, unitQty: newBcQty, isPrimary: newBcPrimary }]); setNewBcVal(''); setNewBcType('UNIT'); setNewBcQty(1); setNewBcPrimary(false); setShowAddBc(false) }
-                      }}
-                      className="font-mono text-sm px-2.5 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-400/40 flex-1 min-w-32"
-                    />
-                    <select
-                      value={newBcType}
-                      onChange={(e) => setNewBcType(e.target.value as BarcodeUnitType)}
-                      className="text-xs px-2.5 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none"
-                    >
-                      <option value="UNIT">낱개</option>
-                      <option value="CXD">CXD 낱개</option>
-                      <option value="CXD_BOX">CXD BOX</option>
-                    </select>
-                    <input
-                      type="number" min={1}
-                      value={newBcQty}
-                      onChange={(e) => setNewBcQty(Number(e.target.value))}
-                      className="w-14 text-xs px-2 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-right tabular-nums focus:outline-none"
-                    />
-                    <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer select-none">
-                      <input type="checkbox" checked={newBcPrimary} onChange={(e) => setNewBcPrimary(e.target.checked)} className="rounded accent-indigo-600" />
-                      기본
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!newBcVal.trim()) return
-                        if (editing) { addBarcodeMutation.mutate() }
-                        else { setPendingBarcodes((prev) => [...prev, { barcode: newBcVal.trim(), type: newBcType, unitQty: newBcQty, isPrimary: newBcPrimary }]); setNewBcVal(''); setNewBcType('UNIT'); setNewBcQty(1); setNewBcPrimary(false); setShowAddBc(false) }
-                      }}
-                      disabled={!newBcVal.trim() || (!!editing && addBarcodeMutation.isPending)}
-                      className="px-3 py-1.5 text-xs font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-40 transition-colors"
-                    >
-                      {editing && addBarcodeMutation.isPending ? '저장 중...' : '저장'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowAddBc(false)}
-                      className="px-2.5 py-1.5 text-xs text-gray-500 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      취소
-                    </button>
-                  </div>
-                )}
-              </section>
-
-              {/* ── 수량 / 위치 ── */}
-              <section className="border-t border-gray-100 dark:border-gray-700 pt-3">
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 pb-1 mb-2">수량 / 위치</p>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  <div>
-                    <label className={labelCls}>단위</label>
-                    <select
-                      value={form.unit}
-                      onChange={(e) => setForm((p) => ({ ...p, unit: e.target.value }))}
-                      className={inputCls}
-                    >
-                      {!units.some((u) => u.code === form.unit) && (
-                        <option value={form.unit}>{form.unit || '선택'}</option>
-                      )}
-                      {units.map((u) => (
-                        <option key={u.id} value={u.code}>
-                          {u.code}{u.label ? ` (${u.label})` : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className={labelCls}>1P당 EA 수량</label>
-                    <input type="number" min={0} value={form.pUnitQty}
-                      onChange={(e) => setForm((p) => ({ ...p, pUnitQty: +e.target.value }))}
-                      placeholder="미사용 시 0" className={inputCls} />
-                  </div>
-                  <div>
-                    <label className={labelCls}>1BOX당 EA 수량</label>
-                    <input type="number" min={0} value={form.boxUnitQty}
-                      onChange={(e) => setForm((p) => ({ ...p, boxUnitQty: +e.target.value, boxQty: +e.target.value }))}
-                      placeholder="미사용 시 0" className={inputCls} />
-                  </div>
-                  <div>
-                    <label className={labelCls}>1PL당 EA 수량</label>
-                    <input type="number" min={0} value={form.plUnitQty}
-                      onChange={(e) => setForm((p) => ({ ...p, plUnitQty: +e.target.value }))}
-                      placeholder="미사용 시 0" className={inputCls} />
-                  </div>
-                  <div>
-                    <label className={labelCls}>안전재고</label>
-                    <input type="number" min={0} value={form.safetyStock}
-                      onChange={(e) => setForm((p) => ({ ...p, safetyStock: +e.target.value }))}
-                      className={inputCls} />
-                  </div>
-                  <div>
-                    <label className={labelCls}>재주문점</label>
-                    <input type="number" min={0} value={form.reorderPoint}
-                      onChange={(e) => setForm((p) => ({ ...p, reorderPoint: +e.target.value }))}
-                      className={inputCls} />
-                  </div>
-                  <div className="col-span-2">
-                    <label className={labelCls}>보관위치</label>
-                    <button
-                      type="button"
-                      onClick={() => { setLocationPickerSearch(''); setShowLocationPicker(true) }}
-                      className={cn(
-                        inputCls,
-                        'w-full flex items-center justify-between gap-2 text-left cursor-pointer',
-                        form.locationId ? '' : 'text-gray-400 dark:text-gray-500',
-                      )}
-                    >
-                      <span className="truncate">
-                        {form.locationId ? (selectedLocationLabel || '위치 선택...') : '위치 선택...'}
-                      </span>
-                      <span className="shrink-0 text-gray-400 text-xs">주소</span>
-                    </button>
-                    {form.locationId && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedLocation(null)
-                          setForm((p) => ({ ...p, locationId: '' }))
-                        }}
-                        className="mt-1 flex items-center gap-1 text-xs text-gray-400 hover:text-rose-500 transition-colors"
-                      >
-                        선택 해제
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </section>
-
-              {/* ── 가격 ── */}
-              <section className="border-t border-gray-100 dark:border-gray-700 pt-3">
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 pb-1 mb-2">가격 정보</p>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  <div>
-                    <label className={labelCls}>매입단가 (₩)</label>
-                    <input type="number" min={0} value={form.costPrice}
-                      onChange={(e) => setForm((p) => ({ ...p, costPrice: +e.target.value }))}
-                      className={inputCls} />
-                  </div>
-                  <div>
-                    <label className={labelCls}>매출단가 (₩)</label>
-                    <input type="number" min={0} value={form.sellPrice}
-                      onChange={(e) => setForm((p) => ({ ...p, sellPrice: +e.target.value }))}
-                      className={inputCls} />
-                  </div>
-                  <div>
-                    <label className={labelCls}>소매단가 (₩)</label>
-                    <input type="number" min={0} value={form.retailPrice}
-                      onChange={(e) => setForm((p) => ({ ...p, retailPrice: +e.target.value }))}
-                      className={inputCls} />
-                  </div>
-                  <div>
-                    <label className={labelCls}>해피미르 단가 (₩)</label>
-                    <input type="number" min={0} value={form.priceA}
-                      onChange={(e) => setForm((p) => ({ ...p, priceA: +e.target.value }))}
-                      className={inputCls} />
-                  </div>
-                  <div>
-                    <label className={labelCls}>네이버 단가 (₩)</label>
-                    <input type="number" min={0} value={form.priceB}
-                      onChange={(e) => setForm((p) => ({ ...p, priceB: +e.target.value }))}
-                      className={inputCls} />
-                  </div>
-                  <div>
-                    <label className={labelCls}>SSG 단가 (₩)</label>
-                    <input type="number" min={0} value={form.priceC}
-                      onChange={(e) => setForm((p) => ({ ...p, priceC: +e.target.value }))}
-                      className={inputCls} />
-                  </div>
-                </div>
-              </section>
-
-              {/* ── 상태 & 메모 ── */}
-              <section className="border-t border-gray-100 dark:border-gray-700 pt-3">
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 pb-1 mb-2">상태 & 메모</p>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div>
-                    <label className={labelCls}>판매 상태</label>
-                    <select
-                      value={form.saleStatus}
-                      onChange={(e) => setForm((p) => ({ ...p, saleStatus: e.target.value as SaleStatus }))}
-                      className={inputCls}
-                    >
-                      {Object.entries(SALE_STATUS_LABEL).map(([k, v]) => (
-                        <option key={k} value={k}>{v}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="col-span-2">
-                    <label className={labelCls}>간단메모</label>
-                    <textarea
-                      rows={3}
-                      placeholder="메모 입력..."
-                      value={form.memo}
-                      onChange={(e) => setForm((p) => ({ ...p, memo: e.target.value }))}
-                      className={cn(inputCls, 'resize-none')}
-                    />
-                  </div>
-                </div>
-              </section>
-
-              <div className="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
-                <button onClick={closeModal}
-                  className="flex-1 py-2 border border-gray-200 dark:border-gray-700 rounded text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                  취소
-                </button>
-                <button
-                  onClick={() => editing ? updateMutation.mutate() : createMutation.mutate()}
-                  disabled={!form.code || !form.name || createMutation.isPending || updateMutation.isPending}
-                  className="flex-1 py-2 bg-[#2D4033] text-white rounded text-sm font-semibold hover:bg-[#253628] disabled:opacity-50 transition-colors"
-                >
-                  {(createMutation.isPending || updateMutation.isPending) ? '처리 중...' : (editing ? '수정 완료' : '등록')}
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
       )}
 

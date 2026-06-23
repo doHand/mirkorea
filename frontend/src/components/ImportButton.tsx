@@ -1,5 +1,6 @@
 'use client'
 import { useRef, useState } from 'react'
+import { Upload } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { cn } from '@/utils/cn'
 import { formatNumber } from '@/utils/format'
@@ -151,6 +152,7 @@ export function ImportButton({ onImported }: Props) {
         aria-label="가져오기"
         className="responsive-icon-action bg-accent-500 text-white hover:bg-accent-600"
       >
+        <Upload size={15} aria-hidden="true" />
         <span className="responsive-action-label">가져오기</span>
       </button>
 

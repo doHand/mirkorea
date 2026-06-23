@@ -13,9 +13,10 @@ import { useWarehouseStore } from '@/stores/warehouse.store'
 import { SALE_STATUS_LABEL } from '@/constants/stock.constants'
 import { cn } from '@/utils/cn'
 import { formatNumber } from '@/utils/format'
+import { formatUnitSpec } from '@/utils/unit-spec'
 import { ExportButton } from '@/components/ExportButton'
 import { ImportButton } from '@/components/ImportButton'
-import type { Barcode, BarcodeUnitType, Client, Inventory, Location, Product, SaleStatus, ProductUnit } from '@/types/api.types'
+import type { Barcode, BarcodeUnitType, Client, Inventory, Location, Product, SaleStatus, ProductUnit, UnitType } from '@/types/api.types'
 import { ProductBarcodeModal } from '@/components/ProductBarcodeModal'
 import { CategorySelect } from '@/components/CategorySelect'
 
@@ -102,7 +103,8 @@ function EditableCell({
 const EMPTY_FORM = {
   code: '', name: '', category: '',
   clientId: '', locationId: '',
-  unit: 'EA', boxQty: 1, safetyStock: 0, reorderPoint: 0,
+  unit: 'EA', baseUnit: 'EA' as UnitType, pUnitQty: 0, boxUnitQty: 1, plUnitQty: 0,
+  boxQty: 1, safetyStock: 0, reorderPoint: 0,
   costPrice: 0, sellPrice: 0, retailPrice: 0,
   priceA: 0, priceB: 0, priceC: 0,
   spec: '', materialNo: '', memo: '',
@@ -114,7 +116,7 @@ type SortDirection = 'asc' | 'desc'
 type MasterSortKey =
   | 'client' | 'code' | 'materialNo' | 'name' | 'category' | 'optionName' | 'spec' | 'location'
   | 'costPrice' | 'sellPrice' | 'retailPrice' | 'priceA' | 'priceB' | 'priceC' | 'unit'
-  | 'boxQty' | 'boxStock' | 'boxCost' | 'boxSell' | 'totalAmount'
+  | 'boxQty' | 'boxStock' | 'safetyStock' | 'boxCost' | 'boxSell' | 'totalAmount'
   | 'barcodeType' | 'barcode' | 'saleStatus' | 'inventoryLocations' | 'memo'
 type MasterSortState = { key: MasterSortKey; direction: SortDirection } | null
 
@@ -253,6 +255,7 @@ const getMasterSortValue = (
     case 'unit': return product.unit
     case 'boxQty': return product.boxQty
     case 'boxStock': return getBoxStockQty(product)
+    case 'safetyStock': return product.safetyStock
     case 'boxCost': return getBoxCostPrice(product)
     case 'boxSell': return getBoxSellPrice(product)
     case 'totalAmount': return getTotalAmount(product)
@@ -265,7 +268,7 @@ const getMasterSortValue = (
   }
 }
 
-const MASTER_TH = 'text-center px-2 py-1.5 font-semibold bg-[#2D4033] text-white'
+const MASTER_TH = 'text-center px-2 py-1 font-semibold bg-[#2D4033] text-white'
 
 function SortHeader({
   label,
@@ -292,13 +295,13 @@ function SortHeader({
         type="button"
         onClick={() => onSort(sortKey)}
         className={cn(
-          'mx-auto flex w-full items-center justify-center gap-1.5 rounded-md px-1 py-0.5 transition-colors hover:bg-indigo-100/70 dark:hover:bg-indigo-900/50',
-          active && 'text-indigo-700 dark:text-indigo-300',
+          'group mx-auto flex w-full min-w-0 items-center justify-center gap-1 rounded px-1 py-0.5 transition-colors hover:bg-white/10',
+          active && 'font-bold text-amber-200',
         )}
         title={`${label} 정렬`}
       >
-        <span>{label}</span>
-        <Icon size={12} className={active ? 'opacity-100' : 'opacity-45'} />
+        <span className="min-w-0 truncate">{label}</span>
+        <Icon size={13} strokeWidth={active ? 2.5 : 2} className={cn('shrink-0 transition-colors', active ? 'text-amber-200' : 'text-white/45 group-hover:text-white/80')} aria-hidden="true" />
       </button>
       {onResizeStart && (
         <div className="wms-column-resizer" onMouseDown={onResizeStart} />
@@ -359,11 +362,10 @@ export default function ProductMasterPage() {
   const [newBcPrimary, setNewBcPrimary] = useState(false)
 
   const MASTER_COLS = useMemo(() => ({
-    chk:              { width: 40,  minWidth: 40,  sticky: true },
+    chk:              { width: 30,  minWidth: 30,  sticky: true },
     seq:              { width: 48,  minWidth: 40,  sticky: true },
     client:           { width: 144, minWidth: 40,  sticky: true },
     code:             { width: 144, minWidth: 40,  sticky: true },
-    materialNo:       { width: 144, minWidth: 40,  sticky: true },
     barcode:          { width: 144, minWidth: 40,  sticky: true },
     name:             { width: 192, minWidth: 48,  sticky: true },
     category:         { width: 110, minWidth: 60,  sticky: true },
@@ -377,15 +379,17 @@ export default function ProductMasterPage() {
     priceB:           { width: 90,  minWidth: 60,  sticky: false },
     priceC:           { width: 90,  minWidth: 60,  sticky: false },
     unit:             { width: 80,  minWidth: 50,  sticky: false },
-    boxQty:           { width: 110, minWidth: 60,  sticky: false },
-    boxStock:         { width: 110, minWidth: 60,  sticky: false },
+    boxQty:           { width: 80, minWidth: 60,  sticky: false },
+    boxStock:         { width: 80, minWidth: 60,  sticky: false },
+    safetyStock:      { width: 100,  minWidth: 60,  sticky: false },
+    materialNo:       { width: 144, minWidth: 40,  sticky: false },
+    memo:             { width: 180, minWidth: 60,  sticky: false },
     boxCost:          { width: 110, minWidth: 60,  sticky: false },
     boxSell:          { width: 110, minWidth: 60,  sticky: false },
     totalAmount:      { width: 110, minWidth: 60,  sticky: false },
     barcodeType:      { width: 90,  minWidth: 60,  sticky: false },
     saleStatus:       { width: 80,  minWidth: 60,  sticky: false },
     inventoryLocs:    { width: 120, minWidth: 60,  sticky: false },
-    memo:             { width: 180, minWidth: 60,  sticky: false },
     actions:          { width: 40,  minWidth: 40,  sticky: false },
   }), [])
 
@@ -695,14 +699,14 @@ export default function ProductMasterPage() {
                   '거래처': p.client?.name ?? '',
                   '기본 위치': p.defaultLocation?.code ?? '',
                   '원가': p.costPrice ?? 0,
-                  '판매가': p.sellPrice ?? 0,
-                  '소매단가': p.retailPrice ?? 0,
+                  '도매가': p.sellPrice ?? 0,
+                  '소매가': p.retailPrice ?? 0,
                   '해피미르 단가': p.priceA ?? 0,
                   '네이버 단가': p.priceB ?? 0,
                   'SSG 단가': p.priceC ?? 0,
                   '단위': p.unit,
                   '낱개 갯수(박스당)': p.boxQty,
-                  '재고수량(박스)': getBoxStockQty({ ...p, stockQty: inventorySummary.get(p.id)?.stockQty ?? p.stockQty ?? 0 }),
+                  '박스': getBoxStockQty({ ...p, stockQty: inventorySummary.get(p.id)?.stockQty ?? p.stockQty ?? 0 }),
                   '원가(박스)': getBoxCostPrice(p),
                   '판매가(박스)': getBoxSellPrice(p),
                   '총금액': getTotalAmount({ ...p, stockQty: inventorySummary.get(p.id)?.stockQty ?? p.stockQty ?? 0 }),
@@ -817,7 +821,7 @@ export default function ProductMasterPage() {
       <div className="flex min-h-0 flex-1 flex-col bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800 overflow-hidden">
         <div className="min-h-0 flex-1 overflow-auto">
           <table
-            className="mobile-unpin-grid wms-no-resize wms-resizable-table text-sm border-separate border-spacing-0 [&_td]:border-r [&_td]:border-gray-100 [&_th]:border-r [&_th]:border-gray-200 dark:[&_td]:border-gray-800 dark:[&_th]:border-gray-700"
+            className="mobile-unpin-grid wms-no-resize wms-resizable-table text-sm border-separate border-spacing-0 [&_td]:!py-1 [&_td]:border-r [&_td]:border-gray-100 [&_th]:border-r [&_th]:border-gray-200 dark:[&_td]:border-gray-800 dark:[&_th]:border-gray-700"
             style={{ width: totalWidth, minWidth: totalWidth, maxWidth: totalWidth }}
           >
             <colgroup>
@@ -826,8 +830,20 @@ export default function ProductMasterPage() {
               ))}
             </colgroup>
             <thead className="sticky top-0 z-40">
+              <tr className="bg-[#24352a] text-white/85 text-[10px] font-bold tracking-wide">
+                <th colSpan={7} className="bg-[#24352a] sticky h-5 border-r border-white/15 text-center" style={{ left: stickyLeftOf('chk') }}>
+                  주요 정보
+                </th>
+                <th colSpan={3} className="h-5 border-r border-white/15" aria-hidden="true" />
+                <th colSpan={7} className="h-5 border-r border-white/15 text-center">단가</th>
+                {/* <th colSpan={1} className="h-5 border-r border-white/15" aria-hidden="true" /> */}
+                <th colSpan={3} className="h-5 border-r border-white/15 text-center">BOX 단위</th>
+                <th colSpan={2} className="h-5 border-r border-white/15" aria-hidden="true" />
+                <th colSpan={3} className="h-5 border-r border-white/15 text-center">금액(BOX)</th>
+                <th colSpan={4} className="h-5" aria-hidden="true" />
+              </tr>
               <tr className="bg-[#2D4033]">
-                <th className="sticky-col sticky z-30 px-4 py-1.5 bg-[#2D4033] wms-resizable-th overflow-hidden"
+                <th className="sticky-col sticky z-30 py-1.5 bg-[#2D4033] wms-resizable-th overflow-hidden"
                     style={{ width: cw.chk, minWidth: cw.chk, maxWidth: cw.chk, left: stickyLeftOf('chk') }}>
                   <input
                     type="checkbox"
@@ -847,7 +863,6 @@ export default function ProductMasterPage() {
                 </th>
                 <SortHeader label="거래처" sortKey="client" sort={sort} onSort={toggleSort} className="sticky-col sticky z-30" style={{ width: cw.client, minWidth: cw.client, maxWidth: cw.client, left: stickyLeftOf('client') }} onResizeStart={(e) => startResize('client', e)} />
                 <SortHeader label="상품 코드" sortKey="code" sort={sort} onSort={toggleSort} className="sticky-col sticky z-30" style={{ width: cw.code, minWidth: cw.code, maxWidth: cw.code, left: stickyLeftOf('code') }} onResizeStart={(e) => startResize('code', e)} />
-                <SortHeader label="자재번호" sortKey="materialNo" sort={sort} onSort={toggleSort} className="sticky-col sticky z-30" style={{ width: cw.materialNo, minWidth: cw.materialNo, maxWidth: cw.materialNo, left: stickyLeftOf('materialNo') }} onResizeStart={(e) => startResize('materialNo', e)} />
                 <SortHeader label="바코드" sortKey="barcode" sort={sort} onSort={toggleSort} className="sticky-col sticky z-30" style={{ width: cw.barcode, minWidth: cw.barcode, maxWidth: cw.barcode, left: stickyLeftOf('barcode') }} onResizeStart={(e) => startResize('barcode', e)} />
                 <SortHeader label="상품명" sortKey="name" sort={sort} onSort={toggleSort} className="sticky-col sticky z-30" style={{ width: cw.name, minWidth: cw.name, maxWidth: cw.name, left: stickyLeftOf('name') }} onResizeStart={(e) => startResize('name', e)} />
                 <SortHeader label="카테고리" sortKey="category" sort={sort} onSort={toggleSort} className="sticky-col sticky z-30 shadow-[3px_0_5px_-3px_rgba(0,0,0,0.35)]" style={{ width: cw.category, minWidth: cw.category, maxWidth: cw.category, left: stickyLeftOf('category') }} onResizeStart={(e) => startResize('category', e)} />
@@ -855,21 +870,23 @@ export default function ProductMasterPage() {
                 <SortHeader label="규격" sortKey="spec" sort={sort} onSort={toggleSort} style={{ width: cw.spec }} onResizeStart={(e) => startResize('spec', e)} />
                 <SortHeader label="기본 위치" sortKey="location" sort={sort} onSort={toggleSort} style={{ width: cw.location }} onResizeStart={(e) => startResize('location', e)} />
                 <SortHeader label="원가" sortKey="costPrice" sort={sort} onSort={toggleSort} className="text-amber-700 dark:text-amber-300 bg-amber-50/80 dark:bg-amber-950/30" style={{ width: cw.costPrice }} onResizeStart={(e) => startResize('costPrice', e)} />
-                <SortHeader label="판매가" sortKey="sellPrice" sort={sort} onSort={toggleSort} style={{ width: cw.sellPrice }} onResizeStart={(e) => startResize('sellPrice', e)} />
-                <SortHeader label="소매단가" sortKey="retailPrice" sort={sort} onSort={toggleSort} style={{ width: cw.retailPrice }} onResizeStart={(e) => startResize('retailPrice', e)} />
-                <SortHeader label="해피미르 단가" sortKey="priceA" sort={sort} onSort={toggleSort} style={{ width: cw.priceA }} onResizeStart={(e) => startResize('priceA', e)} />
-                <SortHeader label="네이버 단가" sortKey="priceB" sort={sort} onSort={toggleSort} style={{ width: cw.priceB }} onResizeStart={(e) => startResize('priceB', e)} />
-                <SortHeader label="SSG 단가" sortKey="priceC" sort={sort} onSort={toggleSort} style={{ width: cw.priceC }} onResizeStart={(e) => startResize('priceC', e)} />
+                <SortHeader label="도매가" sortKey="sellPrice" sort={sort} onSort={toggleSort} style={{ width: cw.sellPrice }} onResizeStart={(e) => startResize('sellPrice', e)} />
+                <SortHeader label="소매가" sortKey="retailPrice" sort={sort} onSort={toggleSort} style={{ width: cw.retailPrice }} onResizeStart={(e) => startResize('retailPrice', e)} />
+                <SortHeader label="해피미르" sortKey="priceA" sort={sort} onSort={toggleSort} style={{ width: cw.priceA }} onResizeStart={(e) => startResize('priceA', e)} />
+                <SortHeader label="네이버" sortKey="priceB" sort={sort} onSort={toggleSort} style={{ width: cw.priceB }} onResizeStart={(e) => startResize('priceB', e)} />
+                <SortHeader label="SSG" sortKey="priceC" sort={sort} onSort={toggleSort} style={{ width: cw.priceC }} onResizeStart={(e) => startResize('priceC', e)} />
                 <SortHeader label="단위" sortKey="unit" sort={sort} onSort={toggleSort} style={{ width: cw.unit }} onResizeStart={(e) => startResize('unit', e)} />
-                <SortHeader label="낱개 갯수(박스당)" sortKey="boxQty" sort={sort} onSort={toggleSort} className="text-sky-700 dark:text-sky-300 bg-sky-50/80 dark:bg-sky-950/30" style={{ width: cw.boxQty }} onResizeStart={(e) => startResize('boxQty', e)} />
-                <SortHeader label="박스 재고수량" sortKey="boxStock" sort={sort} onSort={toggleSort} style={{ width: cw.boxStock }} onResizeStart={(e) => startResize('boxStock', e)} />
-                <SortHeader label="원가(박스)" sortKey="boxCost" sort={sort} onSort={toggleSort} style={{ width: cw.boxCost }} onResizeStart={(e) => startResize('boxCost', e)} />
-                <SortHeader label="판매가(박스)" sortKey="boxSell" sort={sort} onSort={toggleSort} style={{ width: cw.boxSell }} onResizeStart={(e) => startResize('boxSell', e)} />
+                <SortHeader label="낱개" sortKey="boxQty" sort={sort} onSort={toggleSort} className="text-sky-700 dark:text-sky-300 bg-sky-50/80 dark:bg-sky-950/30" style={{ width: cw.boxQty }} onResizeStart={(e) => startResize('boxQty', e)} />
+                <SortHeader label="재고" sortKey="boxStock" sort={sort} onSort={toggleSort} style={{ width: cw.boxStock }} onResizeStart={(e) => startResize('boxStock', e)} />
+                <SortHeader label="안전재고" sortKey="safetyStock" sort={sort} onSort={toggleSort} style={{ width: cw.safetyStock }} onResizeStart={(e) => startResize('safetyStock', e)} />
+                <SortHeader label="자재번호" sortKey="materialNo" sort={sort} onSort={toggleSort} style={{ width: cw.materialNo }} onResizeStart={(e) => startResize('materialNo', e)} />
+                <SortHeader label="메모" sortKey="memo" sort={sort} onSort={toggleSort} style={{ width: cw.memo }} onResizeStart={(e) => startResize('memo', e)} />
+                <SortHeader label="원가" sortKey="boxCost" sort={sort} onSort={toggleSort} style={{ width: cw.boxCost }} onResizeStart={(e) => startResize('boxCost', e)} />
+                <SortHeader label="판매가" sortKey="boxSell" sort={sort} onSort={toggleSort} style={{ width: cw.boxSell }} onResizeStart={(e) => startResize('boxSell', e)} />
                 <SortHeader label="총금액" sortKey="totalAmount" sort={sort} onSort={toggleSort} className="text-emerald-700 dark:text-emerald-300 bg-emerald-50/80 dark:bg-emerald-950/30" style={{ width: cw.totalAmount }} onResizeStart={(e) => startResize('totalAmount', e)} />
                 <SortHeader label="바코드 종류" sortKey="barcodeType" sort={sort} onSort={toggleSort} style={{ width: cw.barcodeType }} onResizeStart={(e) => startResize('barcodeType', e)} />
                 <SortHeader label="상태" sortKey="saleStatus" sort={sort} onSort={toggleSort} style={{ width: cw.saleStatus }} onResizeStart={(e) => startResize('saleStatus', e)} />
                 <SortHeader label="위치" sortKey="inventoryLocations" sort={sort} onSort={toggleSort} style={{ width: cw.inventoryLocs }} onResizeStart={(e) => startResize('inventoryLocs', e)} />
-                <SortHeader label="메모" sortKey="memo" sort={sort} onSort={toggleSort} style={{ width: cw.memo }} onResizeStart={(e) => startResize('memo', e)} />
                 <th className="bg-[#2D4033]" style={{ width: cw.actions }} />
               </tr>
             </thead>
@@ -895,8 +912,8 @@ export default function ProductMasterPage() {
                 return (
                   <tr
                     key={p.id}
-                    className={cn(
-                      'border-t border-gray-100 dark:border-gray-800 transition-colors',
+                      className={cn(
+                        'border-t border-gray-100 dark:border-gray-800 leading-5 transition-colors',
                       isSelected
                         ? 'bg-indigo-50 dark:bg-indigo-950'
                         : isBelowSafety
@@ -905,7 +922,7 @@ export default function ProductMasterPage() {
                       isBelowSafety && '[&>td]:!bg-red-100 [&>td]:hover:!bg-red-100 dark:[&>td]:!bg-red-900 dark:[&>td]:hover:!bg-red-900',
                     )}
                   >
-                    <td className={cn('sticky-col sticky z-20 px-3 py-1.5 overflow-hidden', fixedBg)} style={{ width: cw.chk, minWidth: cw.chk, maxWidth: cw.chk, left: stickyLeftOf('chk') }} onClick={(e) => e.stopPropagation()}>
+                    <td className={cn('sticky-col sticky z-20 px-2 py-1.5 overflow-hidden', fixedBg)} style={{ width: cw.chk, minWidth: cw.chk, maxWidth: cw.chk, left: stickyLeftOf('chk') }} onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={selectedIds.has(p.id)}
@@ -928,15 +945,11 @@ export default function ProductMasterPage() {
                       <EditableCell id={p.id} field="code" value={p.code}
                         editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} />
                     </td>
-                    <td className={cn('sticky-col sticky z-20 py-1.5 pr-1 overflow-hidden', fixedBg)} style={{ width: cw.materialNo, minWidth: cw.materialNo, maxWidth: cw.materialNo, left: stickyLeftOf('materialNo') }}>
-                      <EditableCell id={p.id} field="materialNo" value={p.materialNo ?? ''}
-                        editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} />
-                    </td>
                     <td
                       className={cn('sticky-col sticky z-20 cursor-pointer px-2 py-1.5 text-center font-mono text-xs text-gray-600 whitespace-nowrap transition-colors hover:bg-amber-50 dark:text-gray-400 dark:hover:bg-amber-900/10 overflow-hidden', fixedBg)}
                       style={{ width: cw.barcode, minWidth: cw.barcode, maxWidth: cw.barcode, left: stickyLeftOf('barcode') }}
                       onClick={() => setBarcodeModal(p)}
-                      title="바코드 관리"
+                      title="바코드"
                     >
                       {barcode?.barcode ?? '-'}
                     </td>
@@ -959,7 +972,7 @@ export default function ProductMasterPage() {
                       <EditableCell id={p.id} field="optionName" value={p.optionName ?? ''}
                         editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} />
                     </td>
-                    <td className="py-1.5 pr-1">
+                    <td className="py-1.5 pr-1" title={formatUnitSpec(p)}>
                       <EditableCell id={p.id} field="spec" value={p.spec ?? ''}
                         editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} />
                     </td>
@@ -1023,6 +1036,17 @@ export default function ProductMasterPage() {
                       <EditableCell id={p.id} field="boxStock" value={getBoxStockQty(p)}
                         editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} align="right" />
                     </td>
+                    <td className="py-1.5 px-2 text-right tabular-nums">
+                      {formatNumber(p.safetyStock)}
+                    </td>
+                    <td className="py-1.5 pr-1" style={{ width: cw.materialNo }}>
+                      <EditableCell id={p.id} field="materialNo" value={p.materialNo ?? ''}
+                        editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} />
+                    </td>
+                    <td className="py-1.5 pr-1" style={{ width: cw.memo }}>
+                      <EditableCell id={p.id} field="memo" value={p.memo ?? ''}
+                        editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} />
+                    </td>
                     <td className="py-1.5 px-2 text-right tabular-nums text-gray-700 dark:text-gray-300 whitespace-nowrap">
                       {formatNumber(getBoxCostPrice(p))}
                     </td>
@@ -1050,10 +1074,6 @@ export default function ProductMasterPage() {
                     </td>
                     <td className="py-1.5 px-2 text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
                       <span className="block truncate" title={locations}>{locations}</span>
-                    </td>
-                    <td className="py-1.5 pr-1">
-                      <EditableCell id={p.id} field="memo" value={p.memo ?? ''}
-                        editCell={editCell} setEditCell={setEditCell} onSave={saveEdit} />
                     </td>
                     <td className="pr-3 py-1.5">
                       <button
@@ -1109,7 +1129,7 @@ export default function ProductMasterPage() {
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">규격</label>
-                    <input placeholder="규격" value={form.spec}
+                    <input placeholder="예: 4P/10BOX/1PL" value={form.spec}
                       onChange={(e) => setForm((p) => ({ ...p, spec: e.target.value }))}
                       className={inputCls} />
                   </div>
@@ -1228,21 +1248,28 @@ export default function ProductMasterPage() {
               </section>
 
               <section className="border-t border-gray-100 dark:border-gray-700 pt-4">
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 pb-1 mb-2 block w-full">수량 / 위치</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700 pb-1 mb-2 block w-full">단위 환산 (재고는 EA 기준)</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">단위</label>
-                    <select value={form.unit} onChange={(e) => setForm((p) => ({ ...p, unit: e.target.value }))} className={inputCls}>
-                      {unitOptions.length > 0
-                        ? unitOptions.map((u) => <option key={u.id} value={u.code}>{u.code}{u.label ? ` (${u.label})` : ''}</option>)
-                        : ['EA', 'BOX', 'PALLET'].map((u) => <option key={u} value={u}>{u}</option>)
-                      }
-                    </select>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">기본 단위</label>
+                    <input value="EA" readOnly className={inputCls} />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">박스당 낱개 수량</label>
-                    <input type="number" min={1} value={form.boxQty}
-                      onChange={(e) => setForm((p) => ({ ...p, boxQty: +e.target.value }))}
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">1P = EA</label>
+                    <input type="number" min={0} value={form.pUnitQty}
+                      onChange={(e) => setForm((p) => ({ ...p, pUnitQty: +e.target.value }))}
+                      className={inputCls} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">1BOX = EA</label>
+                    <input type="number" min={1} value={form.boxUnitQty}
+                      onChange={(e) => setForm((p) => ({ ...p, boxUnitQty: +e.target.value, boxQty: +e.target.value }))}
+                      className={inputCls} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">1PL = EA</label>
+                    <input type="number" min={0} value={form.plUnitQty}
+                      onChange={(e) => setForm((p) => ({ ...p, plUnitQty: +e.target.value }))}
                       className={inputCls} />
                   </div>
                   <div>

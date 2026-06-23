@@ -39,6 +39,135 @@
 
 .ag-theme-wms .ag-header-cell-text { font-weight: 600; }
 
+/* Product inventory: keep the full grid softly tinted, including pinned cells. */
+.product-inventory-grid .ag-center-cols-container .ag-row,
+.product-inventory-grid .ag-pinned-left-cols-container .ag-row {
+  background-color: #f8fbfd;
+}
+
+.product-inventory-grid .ag-pinned-left-cols-container .ag-row {
+  background-color: #eef6fa;
+}
+
+.product-inventory-grid .ag-center-cols-container .ag-row.ag-row-odd {
+  background-color: #f1f7fb;
+}
+
+.product-inventory-grid .ag-pinned-left-cols-container .ag-row.ag-row-odd {
+  background-color: #e6f1f7;
+}
+
+.product-inventory-grid .ag-row.row-below-safety,
+.product-inventory-grid .ag-pinned-left-cols-container .ag-row.row-below-safety {
+  background-color: #fff0f0 !important;
+}
+
+.product-inventory-grid .ag-row.row-below-safety .ag-cell {
+  background-color: transparent !important;
+}
+
+.product-inventory-grid .ag-center-cols-container .ag-row:hover,
+.product-inventory-grid .ag-pinned-left-cols-container .ag-row:hover {
+  background-color: #d7efff;
+}
+
+.product-inventory-grid .ag-center-cols-container .ag-row.ag-row-selected,
+.product-inventory-grid .ag-pinned-left-cols-container .ag-row.ag-row-selected {
+  background-color: #c8eaff;
+}
+
+.product-inventory-grid .ag-header-cell,
+.product-inventory-grid .ag-cell {
+  border-right: 1px solid #c8e4f2 !important;
+}
+
+.product-inventory-grid .ag-pinned-left-header,
+.product-inventory-grid .ag-pinned-left-cols-viewport {
+  border-right: 1px solid #9bcde5;
+  box-shadow: 2px 0 5px rgba(61, 126, 157, 0.12);
+}
+
+.product-inventory-grid .ag-header,
+.product-inventory-grid .ag-pinned-left-header {
+  background-color: #355b73 !important;
+  color: #f5f9fc !important;
+  border-color: #5f8297 !important;
+}
+
+.product-inventory-grid .ag-header-cell {
+  background-color: #355b73 !important;
+  color: #f5f9fc !important;
+  border-left: 1px solid #5f8297 !important;
+  border-right: 1px solid #5f8297 !important;
+  border-bottom-color: #5f8297 !important;
+}
+
+.product-inventory-grid .ag-header-group-cell {
+  background-color: #4b7288 !important;
+  color: #f5f9fc !important;
+  border-left: 1px solid #6e91a5 !important;
+  border-right: 1px solid #6e91a5 !important;
+  border-bottom-color: #5f8297 !important;
+}
+
+/* Compact header treatment without overriding AG Grid's internal layout. */
+.product-inventory-grid .ag-header-cell-label {
+  width: 100%;
+  justify-content: center;
+  gap: 4px;
+}
+
+.product-inventory-grid .ag-header-cell-text {
+  font-weight: 600;
+  color: #f5f9fc !important;
+}
+
+.product-inventory-grid .ag-header-group-cell-label {
+  width: 100%;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.product-inventory-grid .ag-header-group-text {
+  overflow: visible;
+  text-overflow: clip;
+  color: #f5f9fc !important;
+}
+
+.product-inventory-grid .ag-header-icon,
+.product-inventory-grid .ag-header-icon .ag-icon,
+.product-inventory-grid .ag-header-cell-menu-button,
+.product-inventory-grid .ag-header-cell-menu-button .ag-icon {
+  color: #b9d3e1;
+  margin-left: 4px;
+}
+
+.product-inventory-grid .ag-header-cell:hover .ag-header-icon,
+.product-inventory-grid .ag-header-cell:hover .ag-header-cell-menu-button,
+.product-inventory-grid .ag-header-cell.ag-header-cell-sorted .ag-header-icon {
+  color: #ffffff;
+}
+
+.product-grid-overflow .responsive-icon-action,
+.product-grid-overflow > button {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 6px;
+  border: 0 !important;
+  background: transparent !important;
+  color: #355b73 !important;
+  padding: 0 8px;
+}
+
+.product-grid-overflow .responsive-icon-action:hover,
+.product-grid-overflow > button:hover {
+  background: #eaf5fa !important;
+}
+
+.product-grid-overflow .responsive-action-label {
+  display: inline !important;
+}
+
 /* ───── 재고 부족 행 ───── */
 .row-below-safety { background-color: #fff7f7 !important; }
 .row-cancelled     { opacity: 0.5; text-decoration: line-through; }
@@ -156,6 +285,7 @@
   .wms-resizable-th > button {
     min-width: 0;
     overflow: hidden;
+    min-height: 24px;
   }
 
   .wms-resizable-th > button > span {
@@ -168,7 +298,7 @@
   .wms-column-resizer {
     position: absolute;
     top: 0;
-    right: -3px;
+    right: 0;
     z-index: 10;
     width: 7px;
     height: 100%;
@@ -179,10 +309,10 @@
 
   .wms-column-resizer::after {
     position: absolute;
-    top: 20%;
-    right: 3px;
+    top: 22%;
+    right: 2px;
     width: 1px;
-    height: 60%;
+    height: 56%;
     content: '';
     background: transparent;
     transition: background-color 120ms ease;
@@ -190,7 +320,7 @@
 
   .wms-column-resizer:hover::after,
   .wms-resizing-active .wms-column-resizer::after {
-    background: #D2691E;
+    background: rgb(255 255 255 / 0.72);
   }
 
   .wms-column-resizing {

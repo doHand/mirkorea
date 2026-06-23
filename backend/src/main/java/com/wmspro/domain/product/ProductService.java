@@ -11,11 +11,18 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ProductService {
+
+    private static final Pattern PACKAGE_SPEC_PATTERN = Pattern.compile(
+        "^\\s*(\\d+)\\s*P\\s*/\\s*(\\d+)\\s*BOX\\s*/\\s*(\\d+)\\s*PL\\s*$",
+        Pattern.CASE_INSENSITIVE
+    );
 
     private final ProductRepository productRepo;
     private final BarcodeRepository barcodeRepo;
@@ -41,6 +48,7 @@ public class ProductService {
         if (productRepo.existsByCode(req.code)) {
             throw new BusinessException(ErrorCode.PRODUCT_CODE_DUPLICATE);
         }
+        PackageSpec packageSpec = parsePackageSpec(req.spec);
         Product product = Product.builder()
             .code(req.code)
             .name(req.name)
@@ -49,9 +57,9 @@ public class ProductService {
             .locationId(req.locationId)
             .unit(req.unit != null ? req.unit : "EA")
             .baseUnit(req.baseUnit != null ? req.baseUnit : UnitType.EA)
-            .pUnitQty(normalizeConversion(req.pUnitQty))
-            .boxUnitQty(normalizeConversion(req.boxUnitQty != null ? req.boxUnitQty : req.boxQty))
-            .plUnitQty(normalizeConversion(req.plUnitQty))
+            .pUnitQty(normalizeConversion(packageSpec.pUnitQty() != null ? packageSpec.pUnitQty() : req.pUnitQty))
+            .boxUnitQty(normalizeConversion(packageSpec.boxUnitQty() != null ? packageSpec.boxUnitQty() : (req.boxUnitQty != null ? req.boxUnitQty : req.boxQty)))
+            .plUnitQty(normalizeConversion(packageSpec.plUnitQty() != null ? packageSpec.plUnitQty() : req.plUnitQty))
             .optionName(req.optionName)
             .spec(req.spec)
             .materialNo(req.materialNo)
@@ -96,7 +104,13 @@ public class ProductService {
         if (req.boxUnitQty  != null) product.setBoxUnitQty(normalizeConversion(req.boxUnitQty));
         if (req.plUnitQty   != null) product.setPlUnitQty(normalizeConversion(req.plUnitQty));
         if (req.optionName  != null) product.setOptionName(req.optionName);
-        if (req.spec        != null) product.setSpec(req.spec);
+        if (req.spec        != null) {
+            product.setSpec(req.spec);
+            PackageSpec packageSpec = parsePackageSpec(req.spec);
+            if (packageSpec.pUnitQty() != null) product.setPUnitQty(packageSpec.pUnitQty());
+            if (packageSpec.boxUnitQty() != null) product.setBoxUnitQty(packageSpec.boxUnitQty());
+            if (packageSpec.plUnitQty() != null) product.setPlUnitQty(packageSpec.plUnitQty());
+        }
         if (req.materialNo  != null) product.setMaterialNo(req.materialNo);
         if (req.boxQty      > 0)    product.setBoxQty(req.boxQty);
         if (req.safetyStock >= 0)   product.setSafetyStock(req.safetyStock);
@@ -118,6 +132,19 @@ public class ProductService {
     private Integer normalizeConversion(Integer value) {
         return value != null && value > 0 ? value : null;
     }
+
+    private PackageSpec parsePackageSpec(String spec) {
+        if (spec == null || spec.isBlank()) return new PackageSpec(null, null, null);
+        Matcher matcher = PACKAGE_SPEC_PATTERN.matcher(spec);
+        if (!matcher.matches()) return new PackageSpec(null, null, null);
+        return new PackageSpec(
+            Integer.parseInt(matcher.group(1)),
+            Integer.parseInt(matcher.group(2)),
+            Integer.parseInt(matcher.group(3))
+        );
+    }
+
+    private record PackageSpec(Integer pUnitQty, Integer boxUnitQty, Integer plUnitQty) {}
 
     @Transactional
     public void delete(UUID id) {

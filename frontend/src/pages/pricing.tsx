@@ -212,7 +212,7 @@ export default function PricingPage() {
                 />
               </div>
               <div>
-                <label className={ui.label}>판매가</label>
+                <label className={ui.label}>도매가</label>
                 <input
                   type="number"
                   min={0}

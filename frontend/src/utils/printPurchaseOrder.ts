@@ -19,7 +19,7 @@ const formatNumber = (value?: number | null) => {
   return Number(value).toLocaleString('ko-KR')
 }
 
-export function printPurchaseOrder(order: PurchaseOrder, client?: Client | null) {
+export function printPurchaseOrder(order: PurchaseOrder, client?: Pick<Client, 'name' | 'phone' | 'mobile' | 'fax'> | null) {
   const company = useSupplierInfoStore.getState().info
   const supplierName = client?.name || order.supplier || ''
   const supplierPhone = client?.phone || client?.mobile || order.phone || ''

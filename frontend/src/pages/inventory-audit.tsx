@@ -24,6 +24,7 @@ export default function InventoryAuditPage() {
     queryKey: ['inventory-audits', warehouse?.id],
     queryFn: () => inventoryAuditApi.list(warehouse!.id),
     enabled: !!warehouse?.id,
+    select: (items) => items.map((audit) => ({ ...audit, items: audit.items ?? [] })),
   })
 
   const createMut = useMutation({
@@ -86,7 +87,8 @@ export default function InventoryAuditPage() {
                 <tr><td colSpan={6} className="py-12 text-center text-gray-400">등록된 재고조사가 없습니다</td></tr>
               )}
               {audits.map((audit) => {
-                const diffCount = audit.items.filter((i) => i.countedQty !== null && i.countedQty !== i.systemQty).length
+                const auditItems = audit.items ?? []
+                const diffCount = auditItems.filter((i) => i.countedQty !== null && i.countedQty !== i.systemQty).length
                 return (
                   <tr
                     key={audit.id}
@@ -95,7 +97,7 @@ export default function InventoryAuditPage() {
                   >
                     <td className="px-3 py-3 font-medium text-gray-900 dark:text-gray-100">{audit.auditDate}</td>
                     <td className="px-3 py-3 text-gray-500 dark:text-gray-400">{audit.memo || '-'}</td>
-                    <td className="px-3 py-3 text-center tabular-nums">{formatNumber(audit.items.length)}건</td>
+                    <td className="px-3 py-3 text-center tabular-nums">{formatNumber(auditItems.length)}건</td>
                     <td className="px-3 py-3 text-center">
                       {diffCount > 0
                         ? <span className="text-orange-600 font-semibold">{formatNumber(diffCount)}건</span>
@@ -207,6 +209,7 @@ function AuditDetailPanel({ auditId, onClose, onConfirmed }: {
     queryKey: ['inventory-audit', auditId],
     queryFn: () => inventoryAuditApi.get(auditId),
     staleTime: 0,
+    select: (value) => ({ ...value, items: value.items ?? [] }),
   })
 
   const confirmMut = useMutation({

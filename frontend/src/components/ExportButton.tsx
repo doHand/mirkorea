@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { Download } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 interface Props {
@@ -40,6 +41,7 @@ export function ExportButton({ filename, getData, label = '엑셀' }: Props) {
       aria-label={loading ? '내보내기 준비 중' : label}
       className="responsive-icon-action bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
     >
+      <Download size={15} aria-hidden="true" />
       <span className="responsive-action-label">{loading ? '준비 중...' : label}</span>
     </button>
   )

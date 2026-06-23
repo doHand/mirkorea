@@ -7,6 +7,8 @@ import { ResizableTables } from '@/components/ResizableTables'
 import DashboardLayout from '@/layouts/dashboard-layout'
 import { useSSE } from '@/hooks/useSSE'
 import '../styles/globals.css'
+import 'ag-grid-community/styles/ag-grid.css'
+import 'ag-grid-community/styles/ag-theme-quartz.css'
 
 const AUTH_ROUTES = ['/login', '/register', '/forgot-password']
 
