@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { PackageCheck, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { clientApi } from '@/api/client.api'
 import { outboundOrderApi, type OutboundOrderRequest } from '@/api/outbound-order.api'
@@ -72,7 +71,7 @@ export function CollectOrderModal({ warehouseId, order, onClose, onSaved }: {
     <div className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded bg-white shadow-2xl dark:bg-gray-900">
       <div className="flex items-center justify-between border-b px-5 py-4 dark:border-gray-800">
         <div><h3 className="font-bold">{order ? '출고 주문 수정' : '주문수집'}</h3><p className="text-xs text-gray-400">모든 주문 수량은 BOX 단위입니다</p></div>
-        <button onClick={onClose}><X size={18} /></button>
+        <button onClick={onClose}>닫기</button>
       </div>
       <div className="space-y-4 overflow-y-auto p-5">
         <div className="grid grid-cols-2 divide-x divide-gray-200 rounded border border-gray-200 dark:divide-gray-700 dark:border-gray-700">
@@ -134,7 +133,7 @@ export function CollectOrderModal({ warehouseId, order, onClose, onSaved }: {
                   ? { ...row, boxCount: Math.max(1, Math.floor(Number(e.target.value) || 1)) }
                   : row))}
                 className="w-20 rounded-lg border px-2 py-1 text-right dark:border-gray-700 dark:bg-gray-800" /><b>BOX</b></div></td>
-              <td><button onClick={() => setItems((prev) => prev.filter((row) => row.productId !== item.productId))} className="text-gray-400 hover:text-red-500"><X size={14} /></button></td>
+              <td><button onClick={() => setItems((prev) => prev.filter((row) => row.productId !== item.productId))} className="text-gray-400 hover:text-red-500">닫기</button></td>
             </tr>)}
           </tbody></table>
         </div>
@@ -143,7 +142,7 @@ export function CollectOrderModal({ warehouseId, order, onClose, onSaved }: {
         <b className="text-[#D2691E]">합계 {formatNumber(totalBoxes)} BOX</b>
         <div className="flex gap-2"><button onClick={onClose} className="rounded border px-4 py-2 text-sm">취소</button>
           <button onClick={submit} disabled={save.isPending} className="flex items-center gap-1.5 rounded bg-[#2D4033] px-5 py-2 text-sm font-semibold text-white disabled:opacity-50">
-            <PackageCheck size={15} /> {order ? '수정 저장' : '수집 저장'}
+            {order ? '수정 저장' : '수집 저장'}
           </button></div>
       </div>
     </div>

@@ -4,6 +4,7 @@ import com.wmspro.common.PageResponse;
 import com.wmspro.common.exception.*;
 import com.wmspro.domain.inbound.*;
 import com.wmspro.domain.inbound.dto.CreateInboundOrderRequest;
+import com.wmspro.domain.product.UnitConversionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -21,6 +22,7 @@ public class PurchaseOrderService {
     private final PurchaseOrderRepository repository;
     private final InboundOrderService inboundOrderService;
     private final JdbcTemplate jdbcTemplate;
+    private final UnitConversionService unitConversionService;
 
     public PageResponse<PurchaseOrder> findAll(UUID warehouseId, PurchaseOrderStatus status, String search, int page, int limit) {
         String q = search != null ? search.trim() : "";
@@ -82,6 +84,7 @@ public class PurchaseOrderService {
             CreateInboundOrderRequest.ItemRequest converted = new CreateInboundOrderRequest.ItemRequest();
             converted.productId = item.getProductId();
             converted.expectedQty = item.getQuantity();
+            converted.inputUnit = item.getInputUnit();
             req.items.add(converted);
         }
         InboundOrder inbound = inboundOrderService.create(req, userId);
@@ -112,8 +115,10 @@ public class PurchaseOrderService {
         if (req.items == null) return;
         for (int i = 0; i < req.items.size(); i++) {
             PurchaseOrderRequest.ItemRequest item = req.items.get(i);
+            var conversion = unitConversionService.convert(item.productId, item.quantity, item.inputUnit);
             order.getItems().add(PurchaseOrderItem.builder().order(order).productId(item.productId)
-                .quantity(Math.max(1, item.quantity))
+                .quantity(conversion.inputQty()).inputUnit(conversion.inputUnit())
+                .conversionQty(conversion.conversionQty()).convertedEaQty(conversion.convertedEaQty())
                 .boxCount(Math.max(0, item.boxCount)).capSize(item.capSize)
                 .unitPrice(item.unitPrice != null ? item.unitPrice : BigDecimal.ZERO).sortOrder(i).build());
         }

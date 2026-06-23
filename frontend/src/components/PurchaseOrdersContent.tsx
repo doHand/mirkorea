@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Check, ClipboardList, PackageCheck, PackageSearch, Printer, Search, Send, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { purchaseOrderApi, type PurchaseOrderRequest } from '@/api/purchase-order.api'
 import { productApi } from '@/api/product.api'
@@ -84,12 +83,11 @@ export function PurchaseOrdersContent({ createTrigger }: Props) {
       {/* 필터 */}
       <div className="flex flex-wrap gap-2 border border-[#d8ddd8] bg-white p-3 shadow-sm dark:bg-gray-900 shrink-0">
         <div className="relative min-w-52 flex-1">
-          <Search size={15} className="absolute left-3 top-2.5 text-gray-400" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="발주번호 또는 공급업체 검색"
-            className="w-full border border-gray-200 dark:border-gray-700 py-2 pl-9 pr-3 text-sm outline-none focus:border-[#2D4033] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            className="w-full border border-gray-200 dark:border-gray-700 py-2 pl-3 pr-3 text-sm outline-none focus:border-[#2D4033] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
           />
         </div>
         <select
@@ -148,16 +146,16 @@ export function PurchaseOrdersContent({ createTrigger }: Props) {
                         onClick={(e) => { e.stopPropagation(); printPurchaseOrder(o, clients.find((c) => c.id === o.clientId) ?? clients.find((c) => c.name === o.supplier)) }}
                         className={ui.btnIconPrint}
                       >
-                        <Printer size={14} />
+                        출력
                       </button>
                       {(o.status === 'DRAFT' || o.status === 'ORDERED') && (
                         <button title="수정" onClick={(e) => { e.stopPropagation(); setEditing(o) }} className={ui.btnIconEdit}>
-                          <ClipboardList size={14} />
+                          수정
                         </button>
                       )}
                       {o.status === 'DRAFT' && (
                         <button title="발주 완료" onClick={(e) => { e.stopPropagation(); action.mutate({ kind: 'ordered', id: o.id }) }} className={ui.btnIconEdit}>
-                          <Send size={14} />
+                          발주완료
                         </button>
                       )}
                       {o.status === 'ORDERED' && (
@@ -165,7 +163,7 @@ export function PurchaseOrdersContent({ createTrigger }: Props) {
                           onClick={(e) => { e.stopPropagation(); action.mutate({ kind: 'convert', id: o.id }) }}
                           className="flex items-center gap-1 bg-[#D2691E] px-2 py-1 text-xs font-semibold text-white hover:bg-[#b85b19]"
                         >
-                          <PackageCheck size={13} />입고예정
+                          입고예정
                         </button>
                       )}
                     </div>
@@ -282,7 +280,7 @@ function OrderModal({ warehouseId, order, onClose, onSaved }: {
         <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 px-5 py-4 shrink-0">
           <h3 className="font-bold text-gray-900 dark:text-white">{order ? '발주서 수정' : '발주서 작성'}</h3>
           <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-            <X size={18} />
+            닫기
           </button>
         </div>
 
@@ -338,7 +336,7 @@ function OrderModal({ warehouseId, order, onClose, onSaved }: {
               onClick={() => setProductPickerOpen(true)}
               className="flex items-center gap-2 bg-[#2D4033] px-3 py-2 text-sm font-semibold text-white hover:bg-[#24352a]"
             >
-              <PackageSearch size={16} /> 등록 상품 불러오기
+              등록 상품 불러오기
             </button>
           </div>
 
@@ -393,7 +391,7 @@ function OrderModal({ warehouseId, order, onClose, onSaved }: {
                         onClick={() => setItems(items.filter((_, n) => n !== idx))}
                         className="p-1 text-gray-400 hover:text-red-500"
                       >
-                        <X size={14} />
+                        닫기
                       </button>
                     </td>
                   </tr>
@@ -459,16 +457,15 @@ function ProductPicker({ existingIds, onClose, onAdd }: {
             <p className="mt-0.5 text-xs text-gray-500">추가할 상품을 여러 개 선택할 수 있습니다</p>
           </div>
           <button type="button" onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-            <X size={18} />
+            닫기
           </button>
         </div>
         <div className="border-b border-gray-100 dark:border-gray-700 p-3 shrink-0">
           <div className="relative">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               autoFocus value={search} onChange={(e) => setSearch(e.target.value)}
               placeholder="상품명, 상품코드, 자재번호, 거래처 검색"
-              className="w-full border border-gray-200 dark:border-gray-700 py-2 pl-9 pr-3 text-sm outline-none focus:border-[#2D4033] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              className="w-full border border-gray-200 dark:border-gray-700 py-2 pl-3 pr-3 text-sm outline-none focus:border-[#2D4033] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
             />
           </div>
         </div>
@@ -505,7 +502,7 @@ function ProductPicker({ existingIds, onClose, onAdd }: {
                         'inline-flex h-5 w-5 items-center justify-center border',
                         checked ? 'border-[#2D4033] bg-[#2D4033] text-white' : 'border-gray-300',
                       )}>
-                        {checked && <Check size={13} />}
+                        {checked && <span>✓</span>}
                       </span>
                     </td>
                     <td className="px-3 py-2 font-mono text-xs text-[#2D4033] dark:text-emerald-400">{product.code}</td>

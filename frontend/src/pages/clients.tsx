@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Building2, Mail, MapPin, Pencil, Phone, Plus, Search, Trash2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { clientApi } from '@/api/client.api'
 import { formatBusinessNoInput, formatDateTime, formatNumber, formatPhoneInput } from '@/utils/format'
@@ -220,19 +219,18 @@ export default function ClientsPage() {
           aria-label="거래처 등록"
           className="responsive-icon-action bg-indigo-600 text-white shadow-sm shadow-indigo-500/20 hover:bg-indigo-700"
         >
-          <Plus size={15} /><span className="responsive-action-label">거래처 등록</span>
+          <span className="responsive-action-label">거래처 등록</span>
         </button>
       </div>
 
       <div className="flex gap-2 border border-gray-200 bg-white p-2 dark:border-gray-800 dark:bg-gray-900">
         <div className="relative flex-1">
-          <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && commitSearch()}
             placeholder="거래처명, 사업자번호, 담당자, 연락처 검색"
-            className="w-full rounded border border-gray-200 bg-white py-1.5 pl-8 pr-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#2D4033]/30 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+            className="w-full rounded border border-gray-200 bg-white py-1.5 pl-3 pr-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#2D4033]/30 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
           />
         </div>
         <button onClick={commitSearch} className="rounded bg-[#2D4033] px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[#253628]">검색</button>
@@ -257,7 +255,6 @@ export default function ClientsPage() {
               {!isLoading && data?.items.length === 0 && (
                 <tr>
                   <td colSpan={7} className="py-12 text-center text-gray-400">
-                    <Building2 size={32} className="mx-auto mb-2 opacity-30" />
                     거래처가 없습니다
                   </td>
                 </tr>
@@ -279,9 +276,9 @@ export default function ClientsPage() {
                   <td className="hidden px-4 py-3 text-gray-600 dark:text-gray-400 lg:table-cell">{[client.industry, client.sector].filter(Boolean).join(' / ') || '-'}</td>
                   <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
                     <div className="flex flex-col gap-0.5 text-xs">
-                      {client.phone && <span className="flex items-center gap-1"><Phone size={11} />{client.phone}</span>}
-                      {client.mobile && <span className="flex items-center gap-1"><Phone size={11} />{client.mobile}</span>}
-                      {client.email && <span className="flex items-center gap-1"><Mail size={11} />{client.email}</span>}
+                      {client.phone && <span className="flex items-center gap-1">{client.phone}</span>}
+                      {client.mobile && <span className="flex items-center gap-1">{client.mobile}</span>}
+                      {client.email && <span className="flex items-center gap-1">{client.email}</span>}
                       {!client.phone && !client.mobile && !client.email && '-'}
                     </div>
                   </td>
@@ -289,10 +286,10 @@ export default function ClientsPage() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                       <button onClick={(e) => { e.stopPropagation(); openEdit(client) }} className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/30" title="수정">
-                        <Pencil size={14} />
+                        수정
                       </button>
                       <button onClick={(e) => { e.stopPropagation(); handleDelete(client) }} className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/30" title="삭제">
-                        <Trash2 size={14} />
+                        삭제
                       </button>
                     </div>
                   </td>
@@ -326,14 +323,13 @@ export default function ClientsPage() {
           <div className="w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
             {/* 헤더 */}
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-[#2D4033] z-10">
-              <Building2 size={14} className="text-white shrink-0" />
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-semibold text-white">
                   {editing ? `${editing.name} 수정` : '거래처 등록'}
                 </h3>
               </div>
               <button onClick={closeModal} className="p-1 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors">
-                <X size={14} />
+                닫기
               </button>
             </div>
 
@@ -427,8 +423,7 @@ export default function ClientsPage() {
                         onClick={openAddressSearch}
                         className="flex items-center gap-1.5 px-4 rounded-xl border border-indigo-300 bg-indigo-50 text-indigo-600 text-sm font-medium hover:bg-indigo-100 dark:bg-indigo-900/30 dark:border-indigo-700 dark:text-indigo-400 dark:hover:bg-indigo-900/50 transition-colors"
                       >
-                        <MapPin size={14} />
-                        주소 검색
+                        검색
                       </button>
                     </div>
                   </div>

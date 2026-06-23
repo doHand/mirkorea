@@ -16,6 +16,10 @@ public class ProductUpdateRequest {
     public UUID       locationId;
     public boolean    clearLocation = false;   // true 이면 locationId를 null로 설정
     public String     unit;
+    public UnitType   baseUnit;
+    public Integer    pUnitQty;
+    public Integer    boxUnitQty;
+    public Integer    plUnitQty;
     public String     optionName;
     public String     spec;
     public String     materialNo;

@@ -15,6 +15,10 @@ public class ProductCreateRequest {
     public UUID       clientId;
     public UUID       locationId;
     public String     unit;
+    public UnitType   baseUnit = UnitType.EA;
+    public Integer    pUnitQty;
+    public Integer    boxUnitQty;
+    public Integer    plUnitQty;
     public int        boxQty      = 1;
     public Integer    weightG;
     public String     imageUrl;

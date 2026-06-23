@@ -1,7 +1,6 @@
 ﻿'use client'
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { User, KeyRound, Save, ShieldCheck, Mail, Phone } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { userApi } from '@/api/user.api'
 import { useAuthStore } from '@/stores/auth.store'
@@ -111,7 +110,6 @@ export default function ProfilePage() {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              <User size={13} className="inline mr-1" />
               이름
             </label>
             <input
@@ -122,7 +120,6 @@ export default function ProfilePage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              <Mail size={13} className="inline mr-1" />
               이메일
             </label>
             <input
@@ -134,7 +131,6 @@ export default function ProfilePage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              <Phone size={13} className="inline mr-1" />
               연락처
             </label>
             <input
@@ -148,7 +144,6 @@ export default function ProfilePage() {
 
           <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-1">
-              <KeyRound size={13} />
               비밀번호 변경 (변경 시에만 입력)
             </p>
             <div className="space-y-2">
@@ -182,8 +177,7 @@ export default function ProfilePage() {
             disabled={updateMutation.isPending}
             className="w-full flex items-center justify-center gap-2 py-2.5 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-50 transition-colors"
           >
-            <Save size={15} />
-            {updateMutation.isPending ? '저장 중...' : '변경 사항 저장'}
+              {updateMutation.isPending ? '저장 중...' : '변경 사항 저장'}
           </button>
         </div>
       </div>
@@ -191,7 +185,6 @@ export default function ProfilePage() {
       {/* 권한/보안 정보 */}
       <div className="bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 p-4">
         <div className="flex items-center gap-2 mb-3">
-          <ShieldCheck size={15} className="text-gray-400" />
           <p className="text-sm font-medium text-gray-700 dark:text-gray-300">권한 정보</p>
         </div>
         <p className="text-xs text-gray-500 dark:text-gray-400">

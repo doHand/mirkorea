@@ -2,7 +2,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useColumnResize } from '@/hooks/useColumnResize'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, Plus, Search, Package, Pencil, Trash2, X, FileText, ClipboardList, Building2, QrCode, Star, MapPin } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { productApi, unitApi } from '@/api/product.api'
 import { clientApi } from '@/api/client.api'
@@ -31,6 +30,10 @@ const EMPTY_PRODUCT_FORM = {
   clientId:   '',
   locationId: '',
   unit: 'EA',
+  baseUnit: 'EA' as const,
+  pUnitQty: 0,
+  boxUnitQty: 1,
+  plUnitQty: 0,
   spec: '',
   materialNo: '',
   boxQty: 1,
@@ -231,7 +234,7 @@ function SortHeader({
   onResizeStart?: (e: React.MouseEvent) => void
 }) {
   const active = sort?.key === sortKey
-  const Icon = active ? (sort.direction === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown
+  const sortIndicator = active ? (sort.direction === 'asc' ? '↑' : '↓') : '↕'
   return (
     <th className={cn(TH, 'wms-resizable-th', align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left', className)} style={style}>
       <button
@@ -245,7 +248,7 @@ function SortHeader({
         title={`${label} 정렬`}
       >
         <span>{label}</span>
-        <Icon size={12} className={active ? 'opacity-100' : 'opacity-45'} />
+        <span className={active ? 'opacity-100' : 'opacity-45'}>{sortIndicator}</span>
       </button>
       {onResizeStart && (
         <div className="wms-column-resizer" onMouseDown={onResizeStart} />
@@ -555,7 +558,9 @@ export default function ProductsPage() {
         code: form.code, name: form.name, category: form.category || undefined,
         clientId:   form.clientId   || undefined,
         locationId: form.locationId || undefined,
-        unit: form.unit, boxQty: form.boxQty, safetyStock: form.safetyStock, reorderPoint: form.reorderPoint,
+        unit: form.unit, baseUnit: form.baseUnit, pUnitQty: form.pUnitQty || undefined,
+        boxUnitQty: form.boxUnitQty || undefined, plUnitQty: form.plUnitQty || undefined,
+        boxQty: form.boxUnitQty || form.boxQty, safetyStock: form.safetyStock, reorderPoint: form.reorderPoint,
         spec: form.spec || undefined, materialNo: form.materialNo || undefined,
         costPrice: form.costPrice || undefined, sellPrice: form.sellPrice || undefined,
         priceA: form.priceA || undefined, priceB: form.priceB || undefined,
@@ -582,7 +587,9 @@ export default function ProductsPage() {
       clearClient:  !form.clientId,
       locationId:   form.locationId || undefined,
       clearLocation: !form.locationId,
-      unit: form.unit, boxQty: form.boxQty, safetyStock: form.safetyStock,
+      unit: form.unit, baseUnit: form.baseUnit, pUnitQty: form.pUnitQty || undefined,
+      boxUnitQty: form.boxUnitQty || undefined, plUnitQty: form.plUnitQty || undefined,
+      boxQty: form.boxUnitQty || form.boxQty, safetyStock: form.safetyStock,
       reorderPoint: form.reorderPoint, spec: form.spec, materialNo: form.materialNo,
       costPrice: form.costPrice || undefined, sellPrice: form.sellPrice || undefined,
       priceA: form.priceA || undefined, priceB: form.priceB || undefined,
@@ -719,6 +726,10 @@ export default function ProductsPage() {
       clientId:     product.clientId ?? product.client?.id ?? '',
       locationId:   product.locationId ?? product.defaultLocation?.id ?? '',
       unit:         product.unit ?? 'EA',
+      baseUnit:     product.baseUnit ?? 'EA',
+      pUnitQty:     product.pUnitQty ?? 0,
+      boxUnitQty:   product.boxUnitQty ?? product.boxQty ?? 1,
+      plUnitQty:    product.plUnitQty ?? 0,
       spec:         product.spec ?? '',
       materialNo:   product.materialNo ?? '',
       boxQty:       product.boxQty,
@@ -889,7 +900,7 @@ export default function ProductsPage() {
             aria-label="상품 추가"
             className="responsive-icon-action bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm shadow-indigo-500/20"
           >
-            <Plus size={15} /><span className="responsive-action-label">상품 추가</span>
+            <span className="responsive-action-label">상품 추가</span>
           </button>
           {canAccessQuotes && (
            <button
@@ -897,12 +908,11 @@ export default function ProductsPage() {
             disabled={selectedIds.size === 0}
             className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-emerald-200 text-emerald-700 dark:border-emerald-800 dark:text-emerald-400 rounded hover:bg-emerald-50 dark:hover:bg-emerald-900/20 disabled:opacity-40 disabled:hover:bg-transparent transition-colors font-medium"
           >
-            <FileText size={14} />
             <span>거래명세서/견적서</span>
           </button>
           )}
           <button onClick={openPurchaseOrder} className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-[#D2691E] text-[#9a4d16] rounded hover:bg-orange-50 transition-colors font-medium">
-            <ClipboardList size={14} /><span>발주서 생성</span>
+            <span>발주서 생성</span>
           </button>
         </div>
       </div>
@@ -911,13 +921,12 @@ export default function ProductsPage() {
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-2">
         <div className="flex flex-col gap-1.5 md:flex-row">
           <div className="relative flex-1">
-            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             <input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') { setSearch(searchInput); setPage(1) } }}
               placeholder="거래처, 상품코드, 자재번호, 상품명, 위치, 카테고리, 상태 검색"
-              className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded focus:outline-none focus:ring-1 focus:ring-[#2D4033]/30 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 transition-colors"
+              className="w-full pl-3 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded focus:outline-none focus:ring-1 focus:ring-[#2D4033]/30 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 transition-colors"
             />
           </div>
           <button
@@ -936,8 +945,7 @@ export default function ProductsPage() {
                 : 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800',
             )}
           >
-            <AlertTriangle size={13} />
-            안전재고 경고만
+            ! 안전재고 경고만
           </button>
           <button
             type="button"
@@ -970,14 +978,14 @@ export default function ProductsPage() {
             onClick={handleBulkDelete}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/80 hover:bg-red-600 rounded-lg text-sm font-medium transition-colors"
           >
-            <Trash2 size={13} />삭제
+            삭제
           </button>
           <button
             onClick={() => setSelectedIds(new Set())}
             className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
             title="선택 해제"
           >
-            <X size={14} />
+            닫기
           </button>
         </div>
       )}
@@ -1043,7 +1051,6 @@ export default function ProductsPage() {
               )}
               {!isLoading && productRows.length === 0 && (
                 <tr><td colSpan={26} className="text-center py-12 text-gray-400 dark:text-gray-500">
-                  <Package size={32} className="mx-auto mb-2 opacity-30" />
                   <p className="text-sm">{showSafetyOnly ? '안전재고 경고 상품이 없습니다' : '표시할 상품이 없습니다'}</p>
                 </td></tr>
               )}
@@ -1148,7 +1155,7 @@ export default function ProductsPage() {
                           className="shrink-0 rounded-md p-1 text-gray-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-300"
                           title="위치 수정"
                         >
-                          <Search size={12} />
+                          검색
                         </button>
                       </div>
                     </td>
@@ -1197,7 +1204,7 @@ export default function ProductsPage() {
                           className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/20 transition-colors"
                           title="삭제"
                         >
-                          <Trash2 size={13} />
+                          삭제
                         </button>
                       </div>
                     </td>
@@ -1242,10 +1249,7 @@ export default function ProductsPage() {
             {/* 모달 헤더 */}
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 bg-[#2D4033]">
               <div className="shrink-0 text-white">
-                {editing
-                  ? <Pencil size={14} />
-                  : <Package size={14} />
-                }
+                {editing ? '수정' : '+'}
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-semibold text-white">
@@ -1314,7 +1318,7 @@ export default function ProductsPage() {
                       <span className="truncate">
                         {form.clientId ? (selectedClientLabel || '거래처 선택...') : '거래처 선택...'}
                       </span>
-                      <Search size={13} className="shrink-0 text-gray-400" />
+                      <span className="shrink-0 text-gray-400 text-xs">검색</span>
                     </button>
                     {form.clientId && (
                       <button
@@ -1325,7 +1329,7 @@ export default function ProductsPage() {
                         }}
                         className="mt-1 flex items-center gap-1 text-xs text-gray-400 hover:text-rose-500 transition-colors"
                       >
-                        <X size={11} /> 선택 해제
+                        선택 해제
                       </button>
                     )}
                   </div>
@@ -1336,14 +1340,14 @@ export default function ProductsPage() {
               <section className="border-t border-gray-100 dark:border-gray-700 pt-3">
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1.5 border-b border-gray-100 dark:border-gray-700 pb-1 w-full">
-                    <QrCode size={12} /> 바코드
+                    QR 바코드
                   </p>
                   <button
                     type="button"
                     onClick={() => setShowAddBc((v) => !v)}
                     className="flex items-center gap-1 text-xs text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
                   >
-                    <Plus size={12} /> 바코드 추가
+                    + 바코드 추가
                   </button>
                 </div>
 
@@ -1364,13 +1368,13 @@ export default function ProductsPage() {
                               {bc.type === 'CXD_BOX' ? 'CXD BOX' : bc.type === 'CXD' ? 'CXD 낱개' : '낱개'}
                             </span>
                             <span className="text-xs text-gray-400 tabular-nums shrink-0">×{bc.unitQty}</span>
-                            {bc.isPrimary && <Star size={11} className="text-amber-400 fill-amber-400 shrink-0" />}
+                            {bc.isPrimary && <span className="text-amber-400 shrink-0">★</span>}
                             <button
                               type="button"
                               onClick={() => setPendingBarcodes((prev) => prev.filter((_, i) => i !== idx))}
                               className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-rose-500 dark:text-gray-600 dark:hover:text-rose-400 transition-all shrink-0"
                             >
-                              <X size={13} />
+                              닫기
                             </button>
                           </div>
                         ))}
@@ -1402,13 +1406,13 @@ export default function ProductsPage() {
                               {bc.type === 'CXD_BOX' ? 'CXD BOX' : bc.type === 'CXD' ? 'CXD 낱개' : '낱개'}
                             </span>
                             <span className="text-xs text-gray-400 tabular-nums shrink-0">×{bc.unitQty}</span>
-                            {bc.isPrimary && <Star size={11} className="text-amber-400 fill-amber-400 shrink-0" />}
+                            {bc.isPrimary && <span className="text-amber-400 shrink-0">★</span>}
                             <button
                               type="button"
                               onClick={() => { if (confirm('이 바코드를 삭제할까요?')) delBarcodeMutation.mutate(bc.id) }}
                               className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-rose-500 dark:text-gray-600 dark:hover:text-rose-400 transition-all shrink-0"
                             >
-                              <X size={13} />
+                              닫기
                             </button>
                           </div>
                         ))}
@@ -1496,10 +1500,22 @@ export default function ProductsPage() {
                     </select>
                   </div>
                   <div>
-                    <label className={labelCls}>기준BOX 입수</label>
-                    <input type="number" min={1} value={form.boxQty}
-                      onChange={(e) => setForm((p) => ({ ...p, boxQty: +e.target.value }))}
-                      className={inputCls} />
+                    <label className={labelCls}>1P당 EA 수량</label>
+                    <input type="number" min={0} value={form.pUnitQty}
+                      onChange={(e) => setForm((p) => ({ ...p, pUnitQty: +e.target.value }))}
+                      placeholder="미사용 시 0" className={inputCls} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>1BOX당 EA 수량</label>
+                    <input type="number" min={0} value={form.boxUnitQty}
+                      onChange={(e) => setForm((p) => ({ ...p, boxUnitQty: +e.target.value, boxQty: +e.target.value }))}
+                      placeholder="미사용 시 0" className={inputCls} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>1PL당 EA 수량</label>
+                    <input type="number" min={0} value={form.plUnitQty}
+                      onChange={(e) => setForm((p) => ({ ...p, plUnitQty: +e.target.value }))}
+                      placeholder="미사용 시 0" className={inputCls} />
                   </div>
                   <div>
                     <label className={labelCls}>안전재고</label>
@@ -1527,7 +1543,7 @@ export default function ProductsPage() {
                       <span className="truncate">
                         {form.locationId ? (selectedLocationLabel || '위치 선택...') : '위치 선택...'}
                       </span>
-                      <MapPin size={13} className="shrink-0 text-gray-400" />
+                      <span className="shrink-0 text-gray-400 text-xs">주소</span>
                     </button>
                     {form.locationId && (
                       <button
@@ -1538,7 +1554,7 @@ export default function ProductsPage() {
                         }}
                         className="mt-1 flex items-center gap-1 text-xs text-gray-400 hover:text-rose-500 transition-colors"
                       >
-                        <X size={11} /> 선택 해제
+                        선택 해제
                       </button>
                     )}
                   </div>
@@ -1641,7 +1657,6 @@ export default function ProductsPage() {
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-700 flex flex-col max-h-[80vh]">
             <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 dark:border-gray-700 shrink-0">
               <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-indigo-100 dark:bg-indigo-900/30 shrink-0">
-                <Building2 size={16} className="text-indigo-600 dark:text-indigo-400" />
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold text-gray-900 dark:text-white text-sm">거래처 검색</h3>
@@ -1651,20 +1666,19 @@ export default function ProductsPage() {
                 onClick={closeClientPicker}
                 className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-200 transition-colors"
               >
-                <X size={16} />
+                닫기
               </button>
             </div>
 
             <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 shrink-0">
               <div className="relative">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                 <input
                   autoFocus
                   type="text"
                   placeholder="거래처명 검색..."
                   value={clientPickerSearch}
                   onChange={(e) => setClientPickerSearch(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400"
+                  className="w-full pl-3 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400"
                 />
               </div>
             </div>
@@ -1672,7 +1686,6 @@ export default function ProductsPage() {
             <div className="overflow-y-auto flex-1">
               {filteredClients.length === 0 ? (
                 <div className="py-12 text-center text-gray-400 text-sm">
-                  <Building2 size={28} className="mx-auto mb-2 opacity-30" />
                   {clientPickerSearch ? '검색 결과 없음' : '등록된 거래처가 없습니다'}
                 </div>
               ) : (
@@ -1722,7 +1735,6 @@ export default function ProductsPage() {
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-700 flex flex-col max-h-[80vh]">
             <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 dark:border-gray-700 shrink-0">
               <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-emerald-100 dark:bg-emerald-900/30 shrink-0">
-                <MapPin size={16} className="text-emerald-600 dark:text-emerald-400" />
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold text-gray-900 dark:text-white text-sm">보관위치 선택</h3>
@@ -1732,20 +1744,19 @@ export default function ProductsPage() {
                 onClick={closeLocationPicker}
                 className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-200 transition-colors"
               >
-                <X size={16} />
+                닫기
               </button>
             </div>
 
             <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 shrink-0">
               <div className="relative">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                 <input
                   autoFocus
                   type="text"
                   placeholder="위치 코드 검색 (예: A-01)"
                   value={locationPickerSearch}
                   onChange={(e) => setLocationPickerSearch(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400"
+                  className="w-full pl-3 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400"
                 />
               </div>
             </div>
@@ -1758,7 +1769,6 @@ export default function ProductsPage() {
                 </div>
               ) : filteredLocations.length === 0 ? (
                 <div className="py-12 text-center text-gray-400 text-sm">
-                  <MapPin size={28} className="mx-auto mb-2 opacity-30" />
                   {locationPickerSearch ? '검색 결과 없음' : '등록된 위치가 없습니다'}
                 </div>
               ) : (

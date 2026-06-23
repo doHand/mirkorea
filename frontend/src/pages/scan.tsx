@@ -2,11 +2,6 @@
 import { useRef, useState, useCallback, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import {
-  ScanLine, Trash2, Camera,
-  Barcode, Plus, Minus, Star, X,
-  AlertTriangle, Clock, MapPin, Package, Save,
-} from 'lucide-react'
 import { useScanStore, ScanCartItem } from '@/stores/scan.store'
 import { useWarehouseStore } from '@/stores/warehouse.store'
 import { productApi } from '@/api/product.api'
@@ -332,7 +327,7 @@ export default function ScanPage() {
                 </select>
                 {selectedLocation && (
                   <p className="mt-1.5 text-xs text-[#2D4033] dark:text-emerald-400 flex items-center gap-1">
-                    <MapPin size={11} />선택됨: {selectedLocation.code}
+                    선택됨: {selectedLocation.code}
                   </p>
                 )}
               </div>
@@ -344,7 +339,6 @@ export default function ScanPage() {
               pendingScan ? 'border-gray-200 dark:border-gray-700' : 'border-[#2D4033]',
             )}>
               <div className="flex flex-wrap items-center gap-3 mb-3">
-                <ScanLine size={20} className={pendingScan ? 'text-gray-400' : 'text-[#D2691E]'} />
                 <span className="font-medium text-gray-900 dark:text-gray-100">바코드 스캔</span>
                 {processing && <span className="text-xs text-gray-400 animate-pulse">처리 중...</span>}
                 {pendingScan && <span className="text-xs text-amber-500 font-medium">↓ 아래에서 수량 확인 후 저장하세요</span>}
@@ -354,7 +348,7 @@ export default function ScanPage() {
                   disabled={!!pendingScan}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-[#2D4033] text-white text-xs rounded-lg hover:bg-[#253628] transition-colors disabled:opacity-40"
                 >
-                  <Camera size={14} />카메라
+                  카메라
                 </button>
               </div>
               <input
@@ -382,7 +376,6 @@ export default function ScanPage() {
               {notFoundBarcode && (
                 <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
                   <div className="flex items-start gap-2">
-                    <AlertTriangle size={16} className="text-red-500 shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold text-red-700 dark:text-red-400">미등록 바코드</p>
                       <p className="font-mono text-sm text-red-600 dark:text-red-500 mt-0.5 break-all">{notFoundBarcode}</p>
@@ -391,7 +384,7 @@ export default function ScanPage() {
                       </p>
                     </div>
                     <button onClick={() => setNotFoundBarcode(null)} className="text-red-300 hover:text-red-500 shrink-0">
-                      <X size={14} />
+                      닫기
                     </button>
                   </div>
                 </div>
@@ -403,7 +396,6 @@ export default function ScanPage() {
               <div className="bg-white dark:bg-gray-800 rounded border-2 border-[#D2691E] p-4 shadow-sm">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-7 h-7 rounded-lg bg-[#D2691E] flex items-center justify-center shrink-0">
-                    <Package size={14} className="text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{pendingScan.result.product.name}</p>
@@ -416,7 +408,6 @@ export default function ScanPage() {
 
                 {/* 위치 */}
                 <div className="flex items-center gap-2 mb-3 p-2.5 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                  <MapPin size={13} className="text-gray-400 shrink-0" />
                   <div className="flex-1 min-w-0">
                     {mode === 'INBOUND' ? (
                       <select
@@ -457,7 +448,7 @@ export default function ScanPage() {
                       onClick={() => setPendingScan((prev) => prev ? { ...prev, quantity: Math.max(1, prev.quantity - 1) } : null)}
                       className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-600 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     >
-                      <Minus size={13} />
+                      -
                     </button>
                     <input
                       ref={qtyRef}
@@ -472,7 +463,7 @@ export default function ScanPage() {
                       onClick={() => setPendingScan((prev) => prev ? { ...prev, quantity: prev.quantity + 1 } : null)}
                       className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-600 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     >
-                      <Plus size={13} />
+                      +
                     </button>
                     <span className="text-xs text-gray-400 ml-1">박스</span>
                   </div>
@@ -486,7 +477,6 @@ export default function ScanPage() {
                     disabled={processing || !pendingScan.locationId}
                     className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#D2691E] hover:bg-[#b85c18] text-white rounded-lg text-sm font-semibold disabled:opacity-40 transition-colors shadow-sm"
                   >
-                    <Save size={15} />
                     저장 {instantMode ? '(즉시반영)' : '(카트추가)'}
                   </button>
                   <button
@@ -514,7 +504,7 @@ export default function ScanPage() {
                         <p className="text-xs text-gray-400 dark:text-gray-500">{item.locationCode}</p>
                       </div>
                       <span className="font-bold text-gray-900 dark:text-gray-100 tabular-nums">{formatNumber(item.quantity)}개</span>
-                      <button onClick={() => removeFromCart(i)} className="text-gray-300 hover:text-red-500 dark:text-gray-600 dark:hover:text-red-400"><Trash2 size={14} /></button>
+                      <button onClick={() => removeFromCart(i)} className="text-gray-300 hover:text-red-500 dark:text-gray-600 dark:hover:text-red-400">삭제</button>
                     </div>
                   ))}
                 </div>
@@ -534,7 +524,6 @@ export default function ScanPage() {
             <div className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700">
               <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Clock size={14} className="text-[#D2691E]" />
                   <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">오늘 스캔 이력</span>
                 </div>
                 <span className="text-xs text-gray-400">{historyItems.length}건</span>
@@ -546,8 +535,8 @@ export default function ScanPage() {
                   {historyItems.map((tx) => (
                     <div key={tx.id} className="flex items-center gap-3 px-4 py-2.5">
                       {tx.txType === 'INBOUND'
-                        ? <Plus size={14} className="text-blue-500 shrink-0" />
-                        : <Minus size={14} className="text-amber-500 shrink-0" />}
+                        ? <span className="text-blue-500 shrink-0 text-sm font-bold">+</span>
+                        : <span className="text-amber-500 shrink-0 text-sm font-bold">-</span>}
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">{tx.product?.name ?? tx.productId}</p>
                         {tx.barcodeScanned && <p className="text-[10px] font-mono text-gray-400 truncate">{tx.barcodeScanned}</p>}
@@ -565,7 +554,6 @@ export default function ScanPage() {
           <div className="space-y-3">
             {!lastResult ? (
               <div className="text-center py-20 text-gray-400 dark:text-gray-600">
-                <Barcode size={40} className="mx-auto mb-3 opacity-20" />
                 <p className="text-sm font-medium">바코드를 스캔하면 상품 정보가 표시됩니다</p>
                 <p className="text-xs mt-1 text-gray-300 dark:text-gray-700">입출고·조회 모드 모두 지원</p>
               </div>
@@ -575,7 +563,6 @@ export default function ScanPage() {
                 <div className="bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 p-4">
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded bg-[#2D4033]/10 flex items-center justify-center shrink-0">
-                      <Package size={18} className="text-[#2D4033] dark:text-emerald-400" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-gray-900 dark:text-white text-sm leading-tight">{lastResult.product.name}</p>
@@ -603,7 +590,6 @@ export default function ScanPage() {
                 {/* 등록 바코드 */}
                 <div className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800 overflow-hidden">
                   <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
-                    <Barcode size={13} className="text-[#D2691E]" />
                     <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">등록 바코드</span>
                     <span className="text-[10px] text-gray-400 ml-auto">{inquiryBarcodes.length}개</span>
                   </div>
@@ -622,7 +608,7 @@ export default function ScanPage() {
                             {bc.type === 'CXD' && `현재 재고 :  ${displayBarcodeStock(lastResult.product.stockQty, bc.type, bc.unitQty, inquiryBarcodes)} · 낱개 구성 ${formatNumber(bc.unitQty)}개`}
                             {bc.type === 'CXD_BOX' && `현재 재고 :  ${displayBarcodeStock(lastResult.product.stockQty, bc.type, bc.unitQty, inquiryBarcodes)} · INBOX ${formatNumber(bc.unitQty)}개 포함`}
                           </span>
-                          {bc.isPrimary && <Star size={11} className="text-amber-400 fill-amber-400 shrink-0" />}
+                          {bc.isPrimary && <span className="text-amber-400 shrink-0 text-[11px]">★</span>}
                         </div>
                       ))}
                     </div>
@@ -632,7 +618,6 @@ export default function ScanPage() {
                 {/* 위치별 재고 */}
                 <div className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800 overflow-hidden">
                   <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
-                    <MapPin size={13} className="text-[#2D4033]" />
                     <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">위치별 재고</span>
                   </div>
                   {inquiryInventory.length === 0 ? (

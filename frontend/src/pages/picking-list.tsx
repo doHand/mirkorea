@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Pencil, Plus, Printer, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { clientApi } from '@/api/client.api'
 import { outboundOrderApi } from '@/api/outbound-order.api'
@@ -84,8 +83,8 @@ export default function PickingListPage() {
       <div><h2 className="text-lg font-bold">날짜별 피킹리스트</h2><p className="text-sm text-gray-500">출고지시 주문을 상품별 BOX 수량으로 합산합니다.</p></div>
       <div className="flex items-center gap-1 rounded border bg-white p-1 dark:border-gray-700 dark:bg-gray-900">
         <input type="date" value={pickingDate} onChange={(e) => setPickingDate(e.target.value)} className="bg-transparent px-3 py-1.5 text-sm outline-none" />
-        <button onClick={() => printInternalPickingList(pickingDate, dailyOrders)} disabled={!dailyOrders.length} title="내부 피킹리스트 출력" className="flex items-center gap-1.5 rounded bg-[#2D4033] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40"><Printer size={15} /> 내부 출력</button>
-        <button onClick={() => printExternalPickingList(pickingDate, dailyOrders.filter((order) => order.orderType === 'EXTERNAL'), clients, supplierInfo)} disabled={!dailyOrders.some((order) => order.orderType === 'EXTERNAL')} title="외부 출고확인서 출력" className="flex items-center gap-1.5 rounded bg-[#D2691E] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40"><Printer size={15} /> 외부 출력</button>
+        <button onClick={() => printInternalPickingList(pickingDate, dailyOrders)} disabled={!dailyOrders.length} title="내부 피킹리스트 출력" className="flex items-center gap-1.5 rounded bg-[#2D4033] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40">내부 출력</button>
+        <button onClick={() => printExternalPickingList(pickingDate, dailyOrders.filter((order) => order.orderType === 'EXTERNAL'), clients, supplierInfo)} disabled={!dailyOrders.some((order) => order.orderType === 'EXTERNAL')} title="외부 출고확인서 출력" className="flex items-center gap-1.5 rounded bg-[#D2691E] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40">외부 출력</button>
       </div>
     </div>
 
@@ -110,14 +109,14 @@ export default function PickingListPage() {
                 className={canEdit
                   ? 'rounded p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700'
                   : 'rounded p-1 text-gray-300 cursor-not-allowed dark:text-gray-600'}>
-                <Pencil size={14} />
+                수정
               </button>
               {order.orderType === 'EXTERNAL' && <button onClick={() => printExternalPickingList(pickingDate, dailyOrders.filter(
                 (item) => item.orderType === 'EXTERNAL' && (order.clientId ? item.clientId === order.clientId : item.customer === order.customer),
               ), clients, supplierInfo)}
-                className="rounded border px-2 py-1 text-xs font-semibold text-[#2D4033] dark:border-gray-600 dark:text-gray-200"><Printer size={12} className="mr-1 inline" />출고증 출력</button>}
+                className="rounded border px-2 py-1 text-xs font-semibold text-[#2D4033] dark:border-gray-600 dark:text-gray-200">출고증 출력</button>}
               <button onClick={() => setExcludedOrderIds((prev) => new Set(prev).add(order.id))}
-                title="피킹리스트에서 제외" className="rounded p-1 text-red-500 hover:bg-red-50 dark:hover:bg-gray-700"><X size={15} /></button>
+                title="피킹리스트에서 제외" className="rounded p-1 text-red-500 hover:bg-red-50 dark:hover:bg-gray-700">닫기</button>
             </div>
           </div>
           })}
@@ -127,7 +126,7 @@ export default function PickingListPage() {
         <div className="mb-3 flex items-center justify-between">
           <b>제외된 주문 ({excludedOrders.length})</b>
           {!!excludedOrders.length && <button onClick={() => setExcludedOrderIds(new Set())}
-            className="text-xs font-semibold text-emerald-700 dark:text-emerald-400"><Plus size={13} className="mr-1 inline" />전체 추가</button>}
+            className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">전체 추가</button>}
         </div>
         <div className="max-h-44 space-y-2 overflow-auto">
           {!excludedOrders.length && <p className="py-4 text-center text-sm text-gray-400">제외된 출고 주문이 없습니다.</p>}
@@ -136,7 +135,7 @@ export default function PickingListPage() {
             <button onClick={() => setExcludedOrderIds((prev) => {
               const next = new Set(prev); next.delete(order.id); return next
             })} className="shrink-0 rounded border border-emerald-300 px-2 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-              <Plus size={12} className="mr-1 inline" />추가
+              추가
             </button>
           </div>)}
         </div>
@@ -188,7 +187,7 @@ function OrderDetailModal({ order, onClose }: { order: OutboundOrder; onClose: (
       <div className="flex items-center justify-between border-b px-5 py-4 dark:border-gray-800">
         <div><h3 className="font-bold">{order.orderNo}</h3>
           <p className="text-xs text-gray-400">{order.orderType === 'EXTERNAL' ? '외부' : '내부'} 출고 · {order.requestedShipDate || '-'}</p></div>
-        <button onClick={onClose}><X size={18} /></button>
+        <button onClick={onClose}>닫기</button>
       </div>
       <div className="space-y-3 overflow-y-auto p-5 text-sm">
         <dl className="grid grid-cols-2 gap-y-2">

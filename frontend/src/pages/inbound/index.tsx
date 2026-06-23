@@ -2,9 +2,6 @@
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import {
-  CalendarDays, ClipboardList, FileText, PackageCheck, Plus, Search, X,
-} from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useWarehouseStore } from '@/stores/warehouse.store'
 import { inboundApi } from '@/api/inbound.api'
@@ -110,18 +107,18 @@ export default function InboundPage() {
             </button>
           })}
           <button onClick={() => router.push('/quotes?tab=PURCHASE')} title="발주서 작성·출력" aria-label="발주서 작성·출력" className="responsive-icon-action bg-[#2D4033] text-white">
-            <ClipboardList size={15} /> <span className="responsive-action-label">발주서 작성·출력</span>
+            <span className="responsive-action-label">발주서 작성·출력</span>
           </button>
           <button onClick={() => setCreateOpen(true)} title="직접 입고 예정 등록" aria-label="직접 입고 예정 등록" className="responsive-icon-action bg-[#D2691E] text-white">
-            <Plus size={15} /> <span className="responsive-action-label">직접 입고 예정 등록</span>
+            <span className="responsive-action-label">직접 입고 예정 등록</span>
           </button>
         </div>
       </div>
 
       <section className="overflow-hidden border border-[#b9c7d3] bg-white dark:border-gray-800 dark:bg-gray-900">
         <div className="flex items-center justify-between border-b border-[#cdd8e1] bg-[#eef3f7] px-4 py-2 dark:border-gray-800 dark:bg-gray-900">
-          <div className="flex items-center gap-2"><span className="grid h-8 w-8 place-items-center rounded-lg bg-[#2D4033] text-white"><FileText size={16} /></span><p className="font-bold text-gray-900 dark:text-white">매입(입고) 전표정보</p></div>
-          <span className="inline-flex items-center gap-1 text-xs text-gray-500"><CalendarDays size={14} /> {new Date().toLocaleDateString('ko-KR')}</span>
+          <div className="flex items-center gap-2"><span className="grid h-8 w-8 place-items-center rounded-lg bg-[#2D4033] text-white">전표</span><p className="font-bold text-gray-900 dark:text-white">매입(입고) 전표정보</p></div>
+          <span className="inline-flex items-center gap-1 text-xs text-gray-500">{new Date().toLocaleDateString('ko-KR')}</span>
         </div>
         <div className="grid gap-x-5 gap-y-2 p-4 md:grid-cols-2 xl:grid-cols-4">
           <InboundInfo label="공급업체" value={activeOrder?.supplier || '전표를 선택하세요'} /><InboundInfo label="입고전표번호" value={activeOrder?.orderNo || '-'} mono /><InboundInfo label="입고예정일" value={fmtDate(activeOrder?.expectedDate)} /><InboundInfo label="입고상태" value={activeOrder ? STATUS_LABEL[activeOrder.status] : '-'} /><InboundInfo label="품목 수" value={activeOrder ? `${formatNumber(activeOrder.items.length)}종` : '-'} /><InboundInfo label="등록일" value={fmtDate(activeOrder?.createdAt)} /><InboundInfo label="메모" value={activeOrder?.memo || '-'} /><InboundInfo label="열기" value="행을 더블클릭하면 새 창에서 상세를 엽니다." />
@@ -174,13 +171,12 @@ export default function InboundPage() {
       <div className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 p-3 flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 min-w-48 flex gap-1.5">
           <div className="relative flex-1">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             <input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') setSearch(searchInput) }}
               placeholder="주문번호 또는 공급업체 검색"
-              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 transition-shadow"
+              className="w-full pl-3 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 transition-shadow"
             />
           </div>
           <button
@@ -263,7 +259,7 @@ export default function InboundPage() {
       )}
       {detailOrderId && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-5" onClick={() => setDetailOrderId(null)}>
         <div className="flex h-[88vh] w-full max-w-6xl flex-col overflow-hidden rounded border bg-white shadow-2xl dark:bg-gray-900" onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-center justify-between border-b px-4 py-2"><b className="text-sm">입고 상세</b><button onClick={() => setDetailOrderId(null)} className="rounded p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800" title="닫기"><X size={17} /></button></div>
+          <div className="flex items-center justify-between border-b px-4 py-2"><b className="text-sm">입고 상세</b><button onClick={() => setDetailOrderId(null)} className="rounded p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800" title="닫기">닫기</button></div>
           <iframe src={`/inbound/${detailOrderId}?embed=1`} title="입고 상세" className="h-full w-full border-0" />
         </div>
       </div>}
@@ -339,7 +335,7 @@ function CreateModal({
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 shrink-0">
           <h3 className="text-base font-semibold text-gray-900 dark:text-white">입고 예정 등록</h3>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400">
-            <X size={16} />
+            닫기
           </button>
         </div>
 
@@ -401,7 +397,7 @@ function CreateModal({
                   />
                   <span className="w-10 text-center text-xs text-gray-400">{item.product?.unit}</span>
                   <button onClick={() => removeItem(item.productId)} className="p-1 text-gray-400 hover:text-red-500 transition-colors">
-                    <X size={14} />
+                    닫기
                   </button>
                 </div>
               ))}

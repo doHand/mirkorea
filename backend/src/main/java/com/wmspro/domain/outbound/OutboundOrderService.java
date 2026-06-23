@@ -3,6 +3,7 @@ package com.wmspro.domain.outbound;
 import com.wmspro.common.PageResponse;
 import com.wmspro.common.exception.*;
 import com.wmspro.common.sse.SseService;
+import com.wmspro.domain.product.UnitConversionService;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.Hibernate;
 import org.springframework.data.domain.*;
@@ -21,6 +22,7 @@ public class OutboundOrderService {
     private final OutboundOrderRepository repository;
     private final JdbcTemplate jdbcTemplate;
     private final SseService sseService;
+    private final UnitConversionService unitConversionService;
 
     public PageResponse<OutboundOrder> findAll(UUID warehouseId, OutboundOrderStatus status, String search, int page, int limit) {
         String q = search != null ? search.trim() : "";
@@ -183,9 +185,13 @@ public class OutboundOrderService {
     private void applyItems(OutboundOrder order, OutboundOrderRequest req) {
         for (int i = 0; i < req.items.size(); i++) {
             OutboundOrderRequest.ItemRequest item = req.items.get(i);
-            if (item.productId == null || item.boxCount < 1) throw new BusinessException(ErrorCode.INVALID_REQUEST);
+            int inputQty = item.inputQty > 0 ? item.inputQty : item.boxCount;
+            if (item.productId == null || inputQty < 1) throw new BusinessException(ErrorCode.INVALID_REQUEST);
+            var conversion = unitConversionService.convert(item.productId, inputQty, item.inputUnit);
             order.getItems().add(OutboundOrderItem.builder().order(order).productId(item.productId)
-                .boxCount(item.boxCount).sortOrder(i).build());
+                .boxCount(Math.max(1, item.boxCount)).inputQty(conversion.inputQty())
+                .inputUnit(conversion.inputUnit()).conversionQty(conversion.conversionQty())
+                .convertedEaQty(conversion.convertedEaQty()).sortOrder(i).build());
         }
     }
 

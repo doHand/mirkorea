@@ -3,6 +3,7 @@ package com.wmspro.domain.inbound;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.wmspro.domain.product.Product;
+import com.wmspro.domain.product.UnitType;
 import com.wmspro.domain.warehouse.Location;
 import jakarta.persistence.*;
 import lombok.*;
@@ -30,6 +31,21 @@ public class InboundOrderItem {
 
     @Column(name = "expected_qty", nullable = false)
     private int expectedQty;
+
+    @Column(name = "input_qty", nullable = false)
+    private int inputQty;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "input_unit", nullable = false, length = 10)
+    @Builder.Default
+    private UnitType inputUnit = UnitType.EA;
+
+    @Column(name = "conversion_qty", nullable = false)
+    @Builder.Default
+    private int conversionQty = 1;
+
+    @Column(name = "converted_ea_qty", nullable = false)
+    private int convertedEaQty;
 
     @Column(name = "received_qty", nullable = false)
     private int receivedQty;

@@ -1,5 +1,5 @@
 import { get, post, put, del, patch } from './client'
-import type { Product, Barcode, BarcodeUnitType, PageResponse, SaleStatus, BarcodeResolveResult, ProductPricing, ProductUnit, ProductCategory } from '@/types/api.types'
+import type { Product, Barcode, BarcodeUnitType, PageResponse, SaleStatus, BarcodeResolveResult, ProductPricing, ProductUnit, ProductCategory, UnitType } from '@/types/api.types'
 
 interface ProductFilter {
   search?: string
@@ -19,7 +19,7 @@ export const productApi = {
   create: (data: {
     code: string; name: string; category?: string
     clientId?: string; locationId?: string
-    unit?: string; boxQty?: number; safetyStock?: number; reorderPoint?: number
+    unit?: string; baseUnit?: UnitType; pUnitQty?: number; boxUnitQty?: number; plUnitQty?: number; boxQty?: number; safetyStock?: number; reorderPoint?: number
     costPrice?: number; sellPrice?: number
     spec?: string; materialNo?: string
     priceA?: number; priceB?: number; priceC?: number; retailPrice?: number
@@ -30,7 +30,7 @@ export const productApi = {
     code?: string; name?: string; category?: string
     clientId?: string | null; clearClient?: boolean
     locationId?: string | null; clearLocation?: boolean
-    unit?: string; boxQty?: number; safetyStock?: number; reorderPoint?: number
+    unit?: string; baseUnit?: UnitType; pUnitQty?: number; boxUnitQty?: number; plUnitQty?: number; boxQty?: number; safetyStock?: number; reorderPoint?: number
     costPrice?: number; sellPrice?: number
     spec?: string; materialNo?: string
     priceA?: number; priceB?: number; priceC?: number; retailPrice?: number

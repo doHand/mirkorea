@@ -1,5 +1,5 @@
 import { get, post, patch, del } from './client'
-import type { InboundOrder, InboundOrderItem, InboundStatus, PageResponse } from '@/types/api.types'
+import type { InboundOrder, InboundOrderItem, InboundStatus, PageResponse, UnitType } from '@/types/api.types'
 
 export interface CreateInboundOrderRequest {
   warehouseId: string
@@ -9,6 +9,7 @@ export interface CreateInboundOrderRequest {
   items: {
     productId: string
     expectedQty: number
+    inputUnit?: UnitType
     lotNumber?: string
     expireDate?: string
     locationId?: string

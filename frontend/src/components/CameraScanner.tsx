@@ -1,6 +1,5 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { X, Camera } from 'lucide-react'
 
 interface Props {
   onScan:  (barcode: string) => void
@@ -63,7 +62,6 @@ export function CameraScanner({ onScan, onClose }: Props) {
       {/* 상단 바 */}
       <div className="flex items-center justify-between px-4 py-3 text-white shrink-0">
         <div className="flex items-center gap-2">
-          <Camera size={20} />
           <span className="font-semibold">카메라 스캔</span>
         </div>
         <button
@@ -71,7 +69,7 @@ export function CameraScanner({ onScan, onClose }: Props) {
           className="p-2 rounded-full hover:bg-white/20 transition-colors"
           aria-label="닫기"
         >
-          <X size={22} />
+          닫기
         </button>
       </div>
 
@@ -80,7 +78,6 @@ export function CameraScanner({ onScan, onClose }: Props) {
         {error ? (
           <div className="absolute inset-0 flex items-center justify-center text-white text-center p-8">
             <div>
-              <Camera size={56} className="mx-auto mb-4 opacity-30" />
               <p className="text-lg font-medium">{error}</p>
               <p className="text-sm text-white/60 mt-2">
                 브라우저 설정에서 카메라 권한을 허용한 뒤 다시 시도하세요

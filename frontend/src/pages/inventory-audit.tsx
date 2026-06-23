@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ClipboardCheck, Plus, Trash2, X, ChevronDown, ChevronUp } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { inventoryAuditApi } from '@/api/inventory-audit.api'
 import { useWarehouseStore } from '@/stores/warehouse.store'
@@ -61,7 +60,7 @@ export default function InventoryAuditPage() {
           onClick={() => setShowCreate(true)}
           className="self-start sm:self-auto flex items-center gap-1.5 rounded bg-[#2D4033] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#24352a]"
         >
-          <Plus size={14} /> 새 재고조사
+새 재고조사
         </button>
       </div>
 
@@ -112,7 +111,7 @@ export default function InventoryAuditPage() {
                           onClick={(e) => { e.stopPropagation(); setDetailId(detailId === audit.id ? null : audit.id) }}
                           className={ui.btnIconEdit}
                         >
-                          {detailId === audit.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                          {detailId === audit.id ? '▲' : '▼'}
                         </button>
                         {audit.status === 'DRAFT' && (
                           <button
@@ -120,7 +119,7 @@ export default function InventoryAuditPage() {
                             onClick={(e) => { e.stopPropagation(); if (confirm('삭제하시겠습니까?')) deleteMut.mutate(audit.id) }}
                             className={ui.btnIconDelete}
                           >
-                            <Trash2 size={14} />
+                            삭제
                           </button>
                         )}
                       </div>
@@ -139,7 +138,7 @@ export default function InventoryAuditPage() {
           <div className="bg-white dark:bg-gray-900 w-full max-w-sm border border-gray-200 dark:border-gray-700 shadow-2xl">
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
               <h3 className="font-bold text-gray-900 dark:text-white">새 재고조사 시작</h3>
-              <button onClick={() => setShowCreate(false)} className="p-1.5 text-gray-400 hover:text-gray-600"><X size={18} /></button>
+              <button onClick={() => setShowCreate(false)} className="px-2 py-1 text-xs text-gray-400 hover:text-gray-600">닫기</button>
             </div>
             <div className="p-5 space-y-4">
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">
@@ -277,7 +276,7 @@ function AuditDetailPanel({ auditId, onClose, onConfirmed }: {
         {/* 헤더 */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700 shrink-0">
           <div className="flex items-center gap-3">
-            <ClipboardCheck size={18} className="text-[#2D4033]" />
+            <span className="text-[#2D4033] text-xs font-bold">실사</span>
             <div>
               <h3 className="font-bold text-gray-900 dark:text-white">
                 재고조사 상세 — {audit?.auditDate ?? '...'}
@@ -286,7 +285,7 @@ function AuditDetailPanel({ auditId, onClose, onConfirmed }: {
             </div>
             {audit && <StatusBadge status={audit.status} />}
           </div>
-          <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600"><X size={18} /></button>
+          <button onClick={onClose} className="px-2 py-1 text-xs text-gray-400 hover:text-gray-600">닫기</button>
         </div>
 
         {/* 필터 탭 */}

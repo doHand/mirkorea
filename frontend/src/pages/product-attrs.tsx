@@ -3,7 +3,7 @@ import { useState, useCallback, useMemo } from 'react'
 import { useColumnResize } from '@/hooks/useColumnResize'
 import { useRouter } from 'next/router'
 import { useQuery, useMutation, useQueryClient, useQueries } from '@tanstack/react-query'
-import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, Building2, FileText, ClipboardList, MapPin, Package, Search, Plus, Trash2, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { productApi, unitApi } from '@/api/product.api'
 import { clientApi } from '@/api/client.api'
@@ -668,7 +668,7 @@ export default function ProductMasterPage() {
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h2 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
-            <Package size={18} className="text-indigo-500" />상품 마스터
+            상품 마스터
           </h2>
           <p className="text-xs text-gray-400 mt-0.5">
             코드·상품명·옵션·규격·단위·박스입수·LOT을 통합 관리합니다. 셀을 클릭하면 편집됩니다.
@@ -729,18 +729,17 @@ export default function ProductMasterPage() {
             aria-label="상품 추가"
             className="responsive-icon-action bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm shadow-indigo-500/20"
           >
-            <Plus size={14} /><span className="responsive-action-label">상품 추가</span>
+            <span className="responsive-action-label">상품 추가</span>
           </button>
           <button
             onClick={openQuoteScreen}
             disabled={selectedIds.size === 0}
             className="flex items-center gap-1.5 px-3 py-2 text-sm border border-emerald-200 text-emerald-700 dark:border-emerald-800 dark:text-emerald-400 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-900/20 disabled:opacity-40 disabled:hover:bg-transparent transition-colors font-medium"
           >
-            <FileText size={14} />
             <span>거래명세서/견적서</span>
           </button>
           <button onClick={openPurchaseOrder} className="flex items-center gap-1.5 px-3 py-2 text-sm border border-[#D2691E] text-[#9a4d16] rounded hover:bg-orange-50 transition-colors font-medium">
-            <ClipboardList size={14} /><span>발주서 생성</span>
+            <span>발주서 생성</span>
           </button>
         </div>
       </div>
@@ -749,13 +748,12 @@ export default function ProductMasterPage() {
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-2">
         <div className="flex flex-col gap-1.5 md:flex-row">
           <div className="relative flex-1">
-            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             <input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') setSearch(searchInput) }}
               placeholder="거래처, 상품코드, 자재번호, 상품명, 위치, 카테고리, 상태 검색"
-              className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded focus:outline-none focus:ring-1 focus:ring-[#2D4033]/30 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 transition-colors"
+              className="w-full pl-3 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded focus:outline-none focus:ring-1 focus:ring-[#2D4033]/30 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 transition-colors"
             />
           </div>
           <button
@@ -774,7 +772,6 @@ export default function ProductMasterPage() {
                 : 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800',
             )}
           >
-            <AlertTriangle size={13} />
             안전재고 경고만
           </button>
           <button
@@ -808,10 +805,10 @@ export default function ProductMasterPage() {
             disabled={deleteMutation.isPending}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/80 hover:bg-red-500 rounded-lg text-sm font-medium disabled:opacity-50"
           >
-            <Trash2 size={13} />삭제
+            삭제
           </button>
           <button onClick={() => setSelectedIds(new Set())} className="p-1.5 hover:bg-white/20 rounded-lg">
-            <X size={14} />
+            닫기
           </button>
         </div>
       )}
@@ -985,7 +982,7 @@ export default function ProductMasterPage() {
                           className="shrink-0 rounded-md p-1 text-gray-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-300"
                           title="위치 수정"
                         >
-                          <Search size={12} />
+                          검색
                         </button>
                       </div>
                     </td>
@@ -1066,7 +1063,7 @@ export default function ProductMasterPage() {
                         }}
                         className="p-1.5 rounded-lg text-gray-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
                       >
-                        <Trash2 size={13} />
+                        삭제
                       </button>
                     </td>
                   </tr>
@@ -1082,7 +1079,6 @@ export default function ProductMasterPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700 w-full max-w-3xl max-h-[92vh] overflow-y-auto">
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 bg-[#2D4033]">
-              <Package size={14} className="text-white shrink-0" />
               <h3 className="text-sm font-semibold text-white flex-1">상품 등록</h3>
               <button
                 onClick={() => {
@@ -1092,7 +1088,7 @@ export default function ProductMasterPage() {
                 }}
                 className="p-1 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors"
               >
-                <X size={14} />
+                닫기
               </button>
             </div>
             <div className="p-4 space-y-4">
@@ -1138,7 +1134,6 @@ export default function ProductMasterPage() {
                       className={cn(inputCls, 'w-full flex items-center justify-between gap-2 text-left cursor-pointer', form.clientId ? '' : 'text-gray-400 dark:text-gray-500')}
                     >
                       <span className="truncate">{form.clientId ? (selectedClientLabel || '거래처 선택...') : '거래처 선택...'}</span>
-                      <Search size={13} className="shrink-0 text-gray-400" />
                     </button>
                     {form.clientId && (
                       <button
@@ -1146,7 +1141,7 @@ export default function ProductMasterPage() {
                         onClick={() => { setSelectedClient(null); setForm((p) => ({ ...p, clientId: '' })) }}
                         className="mt-1 flex items-center gap-1 text-xs text-gray-400 hover:text-rose-500 transition-colors"
                       >
-                        <X size={11} /> 선택 해제
+                        선택 해제
                       </button>
                     )}
                   </div>
@@ -1162,7 +1157,7 @@ export default function ProductMasterPage() {
                     onClick={() => setShowAddBc((v) => !v)}
                     className="flex items-center gap-1 text-xs text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
                   >
-                    <Plus size={12} /> 바코드 추가
+                    바코드 추가
                   </button>
                 </div>
                 {pendingBarcodes.length > 0 && (
@@ -1184,7 +1179,7 @@ export default function ProductMasterPage() {
                           onClick={() => setPendingBarcodes((prev) => prev.filter((_, i) => i !== idx))}
                           className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-rose-500 transition-all shrink-0"
                         >
-                          <X size={13} />
+                          닫기
                         </button>
                       </div>
                     ))}
@@ -1270,7 +1265,6 @@ export default function ProductMasterPage() {
                       className={cn(inputCls, 'w-full flex items-center justify-between gap-2 text-left cursor-pointer', form.locationId ? '' : 'text-gray-400 dark:text-gray-500')}
                     >
                       <span className="truncate">{form.locationId ? (selectedLocationLabel || '위치 선택...') : '위치 선택...'}</span>
-                      <MapPin size={13} className="shrink-0 text-gray-400" />
                     </button>
                     {form.locationId && (
                       <button
@@ -1278,7 +1272,7 @@ export default function ProductMasterPage() {
                         onClick={() => { setSelectedLocation(null); setForm((p) => ({ ...p, locationId: '' })) }}
                         className="mt-1 flex items-center gap-1 text-xs text-gray-400 hover:text-rose-500 transition-colors"
                       >
-                        <X size={11} /> 선택 해제
+                        선택 해제
                       </button>
                     )}
                   </div>
@@ -1374,7 +1368,6 @@ export default function ProductMasterPage() {
           <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
             <div className="flex items-center gap-3 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300">
-                <Building2 size={16} />
               </div>
               <div className="flex-1">
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-white">거래처 선택</h4>
@@ -1385,18 +1378,17 @@ export default function ProductMasterPage() {
                 onClick={closeClientPicker}
                 className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200"
               >
-                <X size={16} />
+                닫기
               </button>
             </div>
             <div className="p-4">
               <div className="relative mb-3">
-                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   autoFocus
                   value={clientPickerSearch}
                   onChange={(e) => setClientPickerSearch(e.target.value)}
                   placeholder="거래처명, 담당자, 전화번호 검색"
-                  className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-800 outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:focus:ring-indigo-900/40"
+                  className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-3 pr-3 text-sm text-gray-800 outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:focus:ring-indigo-900/40"
                 />
               </div>
               <div className="max-h-72 overflow-y-auto space-y-1">
@@ -1424,7 +1416,6 @@ export default function ProductMasterPage() {
           <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
             <div className="flex items-center gap-3 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300">
-                <MapPin size={16} />
               </div>
               <div className="flex-1">
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-white">보관위치 선택</h4>
@@ -1435,18 +1426,17 @@ export default function ProductMasterPage() {
                 onClick={closeLocationPicker}
                 className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200"
               >
-                <X size={16} />
+                닫기
               </button>
             </div>
             <div className="p-4">
               <div className="relative mb-3">
-                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   autoFocus
                   value={locationPickerSearch}
                   onChange={(e) => setLocationPickerSearch(e.target.value)}
                   placeholder="위치코드, Aisle, Rack, Shelf 검색"
-                  className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-800 outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:focus:ring-indigo-900/40"
+                  className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-3 pr-3 text-sm text-gray-800 outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:focus:ring-indigo-900/40"
                 />
               </div>
               <div className="max-h-72 overflow-y-auto space-y-1">

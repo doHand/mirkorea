@@ -51,6 +51,20 @@ public class Product {
     @Builder.Default
     private String unit = "EA";       // EA, BOX, KG
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "base_unit", nullable = false, length = 10)
+    @Builder.Default
+    private UnitType baseUnit = UnitType.EA;
+
+    @Column(name = "p_unit_qty")
+    private Integer pUnitQty;
+
+    @Column(name = "box_unit_qty")
+    private Integer boxUnitQty;
+
+    @Column(name = "pl_unit_qty")
+    private Integer plUnitQty;
+
     @Column(name = "box_qty", nullable = false)
     @Builder.Default
     private int boxQty = 1;           // 박스당 낱개 수량

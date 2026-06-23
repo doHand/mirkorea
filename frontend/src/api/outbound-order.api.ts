@@ -1,5 +1,5 @@
 import { del, get, post, put } from './client'
-import type { OutboundOrder, OutboundOrderStatus, OutboundOrderType, PageResponse } from '@/types/api.types'
+import type { OutboundOrder, OutboundOrderStatus, OutboundOrderType, PageResponse, UnitType } from '@/types/api.types'
 
 export interface OutboundOrderRequest {
   warehouseId: string
@@ -14,7 +14,7 @@ export interface OutboundOrderRequest {
   orderDate: string
   requestedShipDate?: string
   memo?: string
-  items: { productId: string; boxCount: number }[]
+  items: { productId: string; boxCount: number; inputQty?: number; inputUnit?: UnitType }[]
 }
 
 export const outboundOrderApi = {

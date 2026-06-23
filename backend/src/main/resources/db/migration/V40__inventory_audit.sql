@@ -21,9 +21,9 @@ CREATE TABLE inventory_audit_items (
     lot_number     VARCHAR(100),
     system_qty     INT         NOT NULL DEFAULT 0,
     counted_qty    INT,
-    txn_id         UUID        REFERENCES stock_transactions(id),
-    UNIQUE (audit_id, product_id, location_id, COALESCE(lot_number, ''))
+    txn_id         UUID        REFERENCES stock_transactions(id)
 );
 
+CREATE UNIQUE INDEX idx_audit_item_unique ON inventory_audit_items(audit_id, product_id, location_id, COALESCE(lot_number, ''));
 CREATE INDEX idx_audit_warehouse ON inventory_audits(warehouse_id, audit_date DESC);
 CREATE INDEX idx_audit_item_audit ON inventory_audit_items(audit_id);

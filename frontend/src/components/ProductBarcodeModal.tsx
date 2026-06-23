@@ -1,7 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Barcode as BarcodeIcon, Check, Pencil, Plus, Star, Trash2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { productApi } from '@/api/product.api'
 import { cn } from '@/utils/cn'
@@ -116,7 +115,7 @@ export function ProductBarcodeModal({ product, onClose }: { product: Product; on
         <button type="button" disabled={!form.barcode.trim() || addMutation.isPending || editMutation.isPending}
           onClick={() => mode === 'add' ? addMutation.mutate() : editMutation.mutate()}
           className="flex flex-1 items-center justify-center gap-1.5 rounded-md bg-[#2D4033] py-2 text-sm font-semibold text-white disabled:opacity-40">
-          <Check size={13} /> {mode === 'add' ? '추가' : '저장'}
+          {mode === 'add' ? '추가' : '저장'}
         </button>
         <button type="button" onClick={() => { setAdding(false); setEditingId(null); setForm(emptyForm()) }}
           className="rounded-md border border-gray-200 px-4 py-2 text-sm text-gray-500 dark:border-gray-700">취소</button>
@@ -128,12 +127,12 @@ export function ProductBarcodeModal({ product, onClose }: { product: Product; on
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
       <div className="w-full max-w-4xl overflow-hidden rounded-md border border-[#D4BF99] bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
         <div className="flex items-center gap-3 border-b border-[#E5D3B3] px-5 py-4 dark:border-gray-700">
-          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#2D4033] text-white"><BarcodeIcon size={16} /></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#2D4033] text-white">QR</div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-bold">{product.name}</p>
             <p className="font-mono text-[11px] text-gray-400">{product.code}</p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100"><X size={15} /></button>
+          <button type="button" onClick={onClose} className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100">닫기</button>
         </div>
         <div className="max-h-[78vh] space-y-2 overflow-y-auto p-5">
           {isLoading && <p className="py-8 text-center text-sm text-gray-400">불러오는 중...</p>}
@@ -158,16 +157,16 @@ export function ProductBarcodeModal({ product, onClose }: { product: Product; on
                   )}
                 </div>
               </div>
-              {barcode.isPrimary && <Star size={12} className="fill-[#D2691E] text-[#D2691E]" />}
-              <button type="button" onClick={() => startEdit(barcode)} className="rounded-md p-1.5 text-gray-400 hover:bg-[#F9F7F2] hover:text-[#2D4033]"><Pencil size={13} /></button>
+              {barcode.isPrimary && <span className="fill-[#D2691E] text-[#D2691E]">★</span>}
+              <button type="button" onClick={() => startEdit(barcode)} className="rounded-md p-1.5 text-gray-400 hover:bg-[#F9F7F2] hover:text-[#2D4033]">수정</button>
               <button type="button" onClick={() => { if (confirm('바코드를 삭제하시겠습니까?')) deleteMutation.mutate(barcode.id) }}
-                className="rounded-md p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500"><Trash2 size={13} /></button>
+                className="rounded-md p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500">삭제</button>
             </div>
           ))}
           {adding ? editor('add') : (
             <button type="button" onClick={() => { setAdding(true); setEditingId(null); setForm(emptyForm()) }}
               className={cn('mt-2 flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium text-[#D2691E] hover:bg-[#D2691E]/5')}>
-              <Plus size={14} /> 바코드 추가
+              + 바코드 추가
             </button>
           )}
         </div>

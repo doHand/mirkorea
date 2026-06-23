@@ -2,6 +2,7 @@ package com.wmspro.domain.audit;
 
 import com.wmspro.domain.product.Product;
 import com.wmspro.domain.warehouse.Location;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -16,14 +17,15 @@ public class InventoryAuditItem {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "audit_id", nullable = false)
     private InventoryAudit audit;
 
-    @Column(nullable = false)
+    @Column(name = "product_id", nullable = false)
     private UUID productId;
 
-    @Column(nullable = false)
+    @Column(name = "location_id", nullable = false)
     private UUID locationId;
 
     private String lotNumber;

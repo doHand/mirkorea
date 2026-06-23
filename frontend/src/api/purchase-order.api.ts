@@ -1,5 +1,5 @@
 import { get, post, put } from './client'
-import type { PageResponse, PurchaseOrder, PurchaseOrderStatus } from '@/types/api.types'
+import type { PageResponse, PurchaseOrder, PurchaseOrderStatus, UnitType } from '@/types/api.types'
 
 export interface PurchaseOrderRequest {
   warehouseId: string
@@ -11,7 +11,7 @@ export interface PurchaseOrderRequest {
   phone?: string
   fax?: string
   memo?: string
-  items: { productId: string; quantity: number; boxCount: number; capSize?: string; unitPrice: number }[]
+  items: { productId: string; quantity: number; inputUnit?: UnitType; boxCount: number; capSize?: string; unitPrice: number }[]
 }
 
 export const purchaseOrderApi = {

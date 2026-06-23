@@ -1,7 +1,6 @@
 ﻿'use client'
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowRightLeft, Layers3, Plus, MapPin, Settings2, Trash2, FolderOpen, X, Warehouse } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { warehouseApi } from '@/api/warehouse.api'
 import { stockApi } from '@/api/stock.api'
@@ -174,7 +173,6 @@ export default function WarehousePage() {
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-start gap-3 min-w-0">
             <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded bg-indigo-600 text-white shadow-sm shadow-indigo-500/20 sm:flex">
-              <Warehouse size={18} />
             </div>
             <div className="min-w-0">
               <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-300">창고 위치 및 재고 관리</p>
@@ -202,7 +200,7 @@ export default function WarehousePage() {
               aria-label="구역 추가"
               className={cn(ui.btnSecondary, 'responsive-icon-action px-0 sm:px-3')}
             >
-              <Plus size={14} /><span className="responsive-action-label">구역 추가</span>
+              <span className="responsive-action-label">구역 추가</span>
             </button>
             <button
               onClick={() => {
@@ -213,7 +211,7 @@ export default function WarehousePage() {
               aria-label="위치 추가"
               className={cn(ui.btnPrimary, 'responsive-icon-action px-0 sm:px-3')}
             >
-              <Plus size={15} /><span className="responsive-action-label">위치 추가</span>
+              <span className="responsive-action-label">위치 추가</span>
             </button>
           </div>
         </div>
@@ -224,7 +222,7 @@ export default function WarehousePage() {
         <div className="rounded border border-gray-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
           <div className="mb-3 flex items-center justify-between gap-2">
             <h3 className="flex items-center gap-2 text-sm font-bold text-gray-950 dark:text-white">
-              <FolderOpen size={15} className="text-indigo-500" />구역
+              구역
             </h3>
             <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-gray-500 dark:bg-slate-800 dark:text-slate-200">
               {formatNumber((zones as Zone[]).length)}
@@ -272,7 +270,7 @@ export default function WarehousePage() {
                   className="p-1.5 text-gray-400 hover:text-rose-500 sm:opacity-0 sm:group-hover/zone:opacity-100 transition-all mr-1 shrink-0"
                   title="구역 삭제"
                 >
-                  <Trash2 size={12} />
+                  삭제
                 </button>
               </div>
             ))}
@@ -297,7 +295,6 @@ export default function WarehousePage() {
               const utilization = loc.capacityUnit > 0 ? Math.min(100, Math.round((occupancy / loc.capacityUnit) * 100)) : 0
               return <div key={loc.id} className="p-3 hover:bg-gray-50/60 dark:hover:bg-slate-800/60 group/loc">
                 <div className="flex flex-wrap items-center gap-3">
-                <MapPin size={14} className="text-gray-400 dark:text-gray-500 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-mono font-semibold text-gray-950 dark:text-white break-all">{loc.code}</p>
                   <p className="text-xs text-gray-500 dark:text-slate-300">
@@ -322,26 +319,25 @@ export default function WarehousePage() {
                 </span>
                 <button onClick={() => setStrategyLocation({ ...loc })}
                   className="p-1.5 text-gray-400 hover:text-indigo-600" title="적치 전략 설정">
-                  <Settings2 size={13} />
+                  설정
                 </button>
                 <button
                   onClick={() => { if (confirm(`"${loc.code}" 위치를 삭제할까요?`)) deleteLocationMutation.mutate(loc.id) }}
                   className="p-1.5 text-gray-400 hover:text-rose-500 sm:opacity-0 sm:group-hover/loc:opacity-100 transition-all shrink-0"
                   title="위치 삭제"
                 >
-                  <Trash2 size={13} />
+                  삭제
                 </button>
                 </div>
                 {locationInventory.length > 0 && <div className="mt-2 ml-7 grid gap-1 sm:grid-cols-2">
                   {locationInventory.map((item) => <div key={item.id} className="flex items-center gap-2 rounded-lg bg-gray-50 px-2.5 py-1.5 text-xs dark:bg-slate-800">
-                    <Layers3 size={12} className="text-indigo-500" />
                     <span className="min-w-0 flex-1 truncate">{item.product?.name ?? item.productId}</span>
                     <b>{formatNumber(item.availableQty)}</b>
                     <button onClick={() => {
                       setMoveInventory(item)
                       setMoveForm({ toLocationId: '', quantity: Math.max(1, item.availableQty), reason: '선반 위치 이동' })
                     }} className="rounded-md border border-indigo-200 p-1 text-indigo-600 hover:bg-indigo-50" title="위치 이동">
-                      <ArrowRightLeft size={12} />
+                      이동
                     </button>
                   </div>)}
                 </div>}
@@ -360,7 +356,7 @@ export default function WarehousePage() {
           <div className={ui.modalBox}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-bold text-gray-900 dark:text-white">구역 추가</h3>
-              <button onClick={() => setShowZoneModal(false)} className={ui.btnIcon}><X size={16} /></button>
+              <button onClick={() => setShowZoneModal(false)} className={ui.btnIcon}>닫기</button>
             </div>
             <div className="space-y-3">
               <div>
@@ -415,7 +411,7 @@ export default function WarehousePage() {
           <div className={ui.modalBoxMd}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-bold text-gray-900 dark:text-white">위치 추가</h3>
-              <button onClick={() => setShowLocationModal(false)} className={ui.btnIcon}><X size={16} /></button>
+              <button onClick={() => setShowLocationModal(false)} className={ui.btnIcon}>닫기</button>
             </div>
             <div className="space-y-3">
               <div>
@@ -474,7 +470,7 @@ export default function WarehousePage() {
           <div className={ui.modalBox}>
             <div className="mb-4 flex items-center justify-between">
               <div><h3 className="font-bold">적치 전략 설정</h3><p className="text-xs text-gray-400">{strategyLocation.code}</p></div>
-              <button onClick={() => setStrategyLocation(null)} className={ui.btnIcon}><X size={16} /></button>
+              <button onClick={() => setStrategyLocation(null)} className={ui.btnIcon}>닫기</button>
             </div>
             <div className="space-y-3">
               <div><label className={ui.label}>최대 적재 수량</label><input type="number" min={1} value={strategyLocation.capacityUnit}
@@ -508,7 +504,7 @@ export default function WarehousePage() {
           <div className={ui.modalBoxMd}>
             <div className="mb-4 flex items-center justify-between">
               <div><h3 className="font-bold">재고 위치 이동</h3><p className="text-xs text-gray-400">{moveInventory.product?.name}</p></div>
-              <button onClick={() => setMoveInventory(null)} className={ui.btnIcon}><X size={16} /></button>
+              <button onClick={() => setMoveInventory(null)} className={ui.btnIcon}>닫기</button>
             </div>
             <div className="space-y-3">
               <div className="rounded bg-gray-50 p-3 text-sm dark:bg-slate-800">

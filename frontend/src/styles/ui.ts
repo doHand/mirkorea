@@ -56,10 +56,10 @@ export const selectCls = [
 export const btnPrimary   = 'px-3 py-1.5 text-sm bg-brand-600 text-white rounded hover:bg-brand-700 transition-colors font-medium'
 export const btnSecondary = 'px-3 py-1.5 text-sm border border-warm-300/70 dark:border-gray-700 text-gray-600 dark:text-gray-400 rounded hover:bg-warm-50 dark:hover:bg-gray-800 transition-colors'
 export const btnDanger    = 'px-3 py-1.5 text-sm bg-rose-600 text-white rounded hover:bg-rose-700 transition-colors font-medium'
-export const btnIcon       = 'p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
-export const btnIconEdit   = 'p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors'
-export const btnIconDelete = 'p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors'
-export const btnIconPrint  = 'p-1 rounded hover:bg-[#f7f8f5] dark:hover:bg-gray-800 text-gray-400 hover:text-[#2D4033] dark:hover:text-emerald-400 transition-colors'
+export const btnIcon       = 'px-1.5 py-0.5 text-[11px] font-medium rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors'
+export const btnIconEdit   = 'px-1.5 py-0.5 text-[11px] font-medium rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors'
+export const btnIconDelete = 'px-1.5 py-0.5 text-[11px] font-medium rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors'
+export const btnIconPrint  = 'px-1.5 py-0.5 text-[11px] font-medium rounded hover:bg-[#f7f8f5] dark:hover:bg-gray-800 text-gray-500 hover:text-[#2D4033] dark:hover:text-emerald-400 transition-colors'
 
 // ── Modal ────────────────────────────────────────────────────────────────────
 export const modalOverlay = 'fixed inset-0 bg-black/40 dark:bg-black/60 flex items-center justify-center z-50'

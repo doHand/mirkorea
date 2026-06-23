@@ -1,6 +1,6 @@
 'use client'
 import { useState, type ReactNode } from 'react'
-import { BellRing, Menu, Sun, Moon, Warehouse } from 'lucide-react'
+import { Menu, Warehouse } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth.store'
 import { useWarehouseStore } from '@/stores/warehouse.store'
@@ -61,10 +61,10 @@ export function HeaderBar({ onMenuClick, children }: Props) {
 
           <button
             onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-            className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors"
+            className="px-1.5 py-0.5 text-[10px] font-medium rounded hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors"
             aria-label="테마 전환"
           >
-            {resolvedTheme === 'dark' ? <Sun size={13} /> : <Moon size={13} />}
+            {resolvedTheme === 'dark' ? '라이트' : '다크'}
           </button>
 
           <div className="relative">
@@ -78,7 +78,7 @@ export function HeaderBar({ onMenuClick, children }: Props) {
             {!!alerts?.items.length && <span className="grid h-4 min-w-4 place-items-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">{alerts.items.length}</span>}
           </button>
           {alertsOpen && <div className="absolute right-0 top-8 z-50 w-80 overflow-hidden rounded border border-gray-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
-            <div className="flex items-center gap-2 border-b px-3 py-2 text-sm font-bold"><BellRing size={14} className="text-[#D2691E]" /> 최근 알림</div>
+            <div className="flex items-center gap-2 border-b px-3 py-2 text-sm font-bold"><span className="text-[#D2691E] text-xs font-bold">알림</span> 최근 알림</div>
             <div className="max-h-80 overflow-auto">{!alerts?.items.length && <p className="p-5 text-center text-xs text-gray-400">새 알림이 없습니다.</p>}{alerts?.items.map((alert) => <div key={alert.id} className="border-b px-3 py-2 last:border-0"><p className="text-xs font-semibold">{alert.targetType} · {alert.action}</p><p className="mt-0.5 truncate text-[11px] text-gray-500">{alert.summary}</p><p className="mt-1 text-[10px] text-gray-400">{formatDateTime(alert.createdAt)}</p></div>)}</div>
           </div>}
           </div>

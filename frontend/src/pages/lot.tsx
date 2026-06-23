@@ -1,7 +1,6 @@
 ﻿'use client'
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { FlaskConical, Search } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { productApi } from '@/api/product.api'
 import { cn } from '@/utils/cn'
@@ -35,16 +34,15 @@ export default function LotPage() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
-            <FlaskConical size={18} className="text-[#D2691E]" />LOT 관리
+            LOT 관리
           </h2>
           <p className="text-xs text-gray-400 mt-0.5">LOT 추적이 필요한 상품을 활성화합니다. (유통기간 관리 없음)</p>
         </div>
         <div className="flex items-center gap-3">
           <span className="text-xs text-gray-400 hidden sm:block">LOT 활성: <strong className="text-[#D2691E] tabular-nums">{formatNumber(lotCount)}</strong>개</span>
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="코드 / 상품명"
-              className="pl-8 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900 outline-none focus:border-[#D2691E] w-48" />
+              className="pl-3 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900 outline-none focus:border-[#D2691E] w-48" />
           </div>
         </div>
       </div>

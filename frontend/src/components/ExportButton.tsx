@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import { Upload } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 interface Props {
@@ -41,7 +40,6 @@ export function ExportButton({ filename, getData, label = '엑셀' }: Props) {
       aria-label={loading ? '내보내기 준비 중' : label}
       className="responsive-icon-action bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
     >
-      <Upload size={14} />
       <span className="responsive-action-label">{loading ? '준비 중...' : label}</span>
     </button>
   )

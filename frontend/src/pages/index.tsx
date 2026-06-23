@@ -3,10 +3,10 @@ import { useMemo, useState, type ElementType } from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import {
-  Package, TrendingDown, Warehouse, Activity,
+  Package, TrendingDown, Activity,
   ArrowUpCircle, ArrowDownCircle, Boxes, ClipboardCheck,
   ScanLine, Users, ShieldCheck, PackageCheck,
-  Building2, Receipt, Ruler, FileText, ChevronDown,
+  Building2, Receipt, Ruler, FileText,
 } from 'lucide-react'
 import { useWarehouseStore } from '@/stores/warehouse.store'
 import { useAuthStore } from '@/stores/auth.store'
@@ -165,7 +165,6 @@ function LowStockByClientCard({
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded bg-rose-50 dark:bg-rose-950/60 border border-rose-100 dark:border-rose-700/60 flex items-center justify-center">
-            <TrendingDown size={16} className="text-rose-600 dark:text-rose-100" />
           </div>
           <div>
             <h3 className="text-sm font-bold text-gray-950 dark:text-white">거래처별 안전재고 미달</h3>
@@ -357,7 +356,6 @@ export default function DashboardPage() {
     return (
       <div className="flex items-center justify-center h-64 text-gray-400 dark:text-gray-500">
         <div className="text-center">
-          <Warehouse size={40} className="mx-auto mb-2 opacity-30" />
           <p className="text-sm">상단에서 창고를 선택해주세요</p>
         </div>
       </div>
@@ -443,7 +441,7 @@ export default function DashboardPage() {
                 aria-expanded={quickLinksOpen}
               >
                 업무 바로가기
-                <ChevronDown size={14} className={`transition-transform ${quickLinksOpen ? 'rotate-180' : ''}`} />
+                <span className={`transition-transform inline-block text-xs ${quickLinksOpen ? 'rotate-180' : ''}`}>▼</span>
               </button>
             )}
           </div>

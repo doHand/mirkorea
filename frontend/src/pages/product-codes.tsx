@@ -1,7 +1,6 @@
 ﻿'use client'
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Hash, Search, Pencil, Check, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { productApi } from '@/api/product.api'
 import { cn } from '@/utils/cn'
@@ -49,14 +48,13 @@ export default function ProductCodesPage() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
-            <Hash size={18} className="text-indigo-500" />상품코드 관리
+            상품코드 관리
           </h2>
           <p className="text-xs text-gray-400 mt-0.5">코드 셀을 클릭하면 인라인 편집됩니다.</p>
         </div>
         <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="코드 / 상품명 검색"
-            className="pl-8 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 outline-none focus:border-indigo-400 w-52" />
+            className="pl-3 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 outline-none focus:border-indigo-400 w-52" />
         </div>
       </div>
 
@@ -84,14 +82,14 @@ export default function ProductCodesPage() {
                         onKeyDown={(e) => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') setEditId(null) }}
                         className="w-32 px-2 py-1 text-sm border border-indigo-400 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none font-mono"
                       />
-                      <button onClick={saveEdit} className="text-indigo-500 hover:text-indigo-600 p-0.5"><Check size={14} /></button>
-                      <button onClick={() => setEditId(null)} className="text-gray-400 hover:text-gray-600 p-0.5"><X size={14} /></button>
+                      <button onClick={saveEdit} className="text-indigo-500 hover:text-indigo-600 p-0.5">확인</button>
+                      <button onClick={() => setEditId(null)} className="text-gray-400 hover:text-gray-600 p-0.5">닫기</button>
                     </div>
                   ) : (
                     <button onClick={() => startEdit(p)}
                       className="flex items-center gap-1.5 group/code px-2 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors">
                       <span className="font-mono text-sm text-gray-800 dark:text-gray-200">{p.code}</span>
-                      <Pencil size={11} className="text-gray-300 opacity-0 group-hover/code:opacity-100 transition-opacity" />
+                      수정
                     </button>
                   )}
                 </td>

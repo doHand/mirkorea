@@ -1,7 +1,6 @@
 ﻿'use client'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { KeyRound, Search, Shield } from 'lucide-react'
 import { userApi } from '@/api/user.api'
 import { warehouseApi } from '@/api/warehouse.api'
 import { useAuthStore } from '@/stores/auth.store'
@@ -34,7 +33,6 @@ export default function PermissionsPage() {
   if (me?.role !== 'ADMIN' && me?.role !== 'MANAGER') {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-3 text-gray-400 dark:text-gray-500">
-        <Shield size={40} className="opacity-40" />
         <p>접근 권한이 없습니다</p>
       </div>
     )
@@ -84,12 +82,11 @@ export default function PermissionsPage() {
       {/* 검색 */}
       <div className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800 p-3 flex gap-2.5 shadow-sm">
         <div className="relative flex-1">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="이름, 아이디, 이메일 검색"
-            className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 transition-shadow"
+            className="w-full pl-3 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 transition-shadow"
           />
         </div>
       </div>
@@ -161,7 +158,6 @@ export default function PermissionsPage() {
 
       {me?.role !== 'ADMIN' && (
         <p className="text-xs text-gray-400 flex items-center gap-1.5">
-          <KeyRound size={12} />
           사용자 추가·수정·삭제는 관리자(ADMIN)만 가능합니다
         </p>
       )}

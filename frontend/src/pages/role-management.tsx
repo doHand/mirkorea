@@ -1,6 +1,5 @@
 ﻿'use client'
 import { useState } from 'react'
-import { Shield, Plus, Pencil, Trash2, X, Lock } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth.store'
 import { useRoleStore, COLOR_OPTIONS } from '@/stores/role.store'
 import type { RoleDef } from '@/stores/role.store'
@@ -25,7 +24,6 @@ export default function RoleManagementPage() {
   if (me?.role !== 'ADMIN') {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-3 text-gray-400 dark:text-gray-500">
-        <Shield size={40} className="opacity-40" />
         <p>관리자만 접근할 수 있습니다</p>
       </div>
     )
@@ -67,7 +65,7 @@ export default function RoleManagementPage() {
           <p className={ui.subText}>시스템 역할을 추가·수정·삭제합니다 · 전체 {formatNumber(roles.length)}개</p>
         </div>
         <button onClick={openAdd} title="역할 추가" aria-label="역할 추가" className={cn(ui.btnPrimary, 'responsive-icon-action self-start px-0 sm:self-auto sm:px-3')}>
-          <Plus size={14} /><span className="responsive-action-label">역할 추가</span>
+          <span className="responsive-action-label">역할 추가</span>
         </button>
       </div>
 
@@ -77,12 +75,11 @@ export default function RoleManagementPage() {
           <div key={r.id} className={cn(ui.cardFlat, 'p-4')}>
             <div className="flex items-start justify-between gap-2 mb-2">
               <div className="flex items-center gap-2">
-                <Shield size={15} className={r.color} />
                 <span className={cn('text-xs font-semibold px-2 py-0.5 rounded-full', r.badgeCls)}>{r.name}</span>
               </div>
               {r.builtIn && (
                 <span className="flex items-center gap-0.5 text-[10px] text-gray-300 dark:text-gray-600">
-                  <Lock size={9} />기본
+                  기본
                 </span>
               )}
             </div>
@@ -110,7 +107,6 @@ export default function RoleManagementPage() {
                 <tr key={r.id} {...editableHandlers} className={cn(ui.tr, editableClass)}>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <Shield size={14} className={r.color} />
                       <span className={cn('text-xs font-semibold px-2 py-0.5 rounded-full', r.badgeCls)}>{r.name}</span>
                     </div>
                   </td>
@@ -120,7 +116,7 @@ export default function RoleManagementPage() {
                   <td className="px-4 py-3 text-center">
                     {r.builtIn ? (
                       <span className="inline-flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
-                        <Lock size={10} />기본
+                        기본
                       </span>
                     ) : (
                       <span className="text-xs text-indigo-500 dark:text-indigo-400">커스텀</span>
@@ -133,7 +129,7 @@ export default function RoleManagementPage() {
                         className={ui.btnIconEdit}
                         title="수정"
                       >
-                        <Pencil size={13} />
+                        수정
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); !r.builtIn && setDeleting(r) }}
@@ -146,7 +142,7 @@ export default function RoleManagementPage() {
                         )}
                         title={r.builtIn ? '기본 역할은 삭제할 수 없습니다' : '삭제'}
                       >
-                        <Trash2 size={13} />
+                        삭제
                       </button>
                     </div>
                   </td>
@@ -225,7 +221,7 @@ function RoleFormModal({
       <div className={ui.modalBox}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-base font-bold text-gray-900 dark:text-white">{title}</h3>
-          <button onClick={onClose} className={ui.btnIcon}><X size={16} /></button>
+          <button onClick={onClose} className={ui.btnIcon}>닫기</button>
         </div>
         <div className="space-y-3">
           <div>

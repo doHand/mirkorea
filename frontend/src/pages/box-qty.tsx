@@ -1,7 +1,6 @@
 ﻿'use client'
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { BoxSelect, Search, Pencil, Check, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { productApi, unitApi } from '@/api/product.api'
 import { formatNumber } from '@/utils/format'
@@ -48,14 +47,13 @@ export default function BoxQtyPage() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
-            <BoxSelect size={18} className="text-indigo-500" />박스입수량
+            박스입수량
           </h2>
           <p className="text-xs text-gray-400 mt-0.5">단위와 박스당 낱개 수량을 클릭해 편집합니다.</p>
         </div>
         <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="코드 / 상품명"
-            className="pl-8 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900 outline-none focus:border-indigo-400 w-48" />
+            className="pl-3 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900 outline-none focus:border-indigo-400 w-48" />
         </div>
       </div>
 
@@ -91,14 +89,14 @@ export default function BoxQtyPage() {
                           ? unitOptions.map((u) => <option key={u.id} value={u.code}>{u.code} — {u.label}</option>)
                           : ['EA', 'BOX', 'PALLET'].map((u) => <option key={u} value={u}>{u}</option>)}
                       </select>
-                      <button onMouseDown={(e) => { e.preventDefault(); saveEdit(editCell) }} className="text-indigo-500 p-0.5"><Check size={13} /></button>
-                      <button onMouseDown={(e) => { e.preventDefault(); setEditCell(null) }} className="text-gray-400 p-0.5"><X size={13} /></button>
+                      <button onMouseDown={(e) => { e.preventDefault(); saveEdit(editCell) }} className="text-indigo-500 p-0.5">확인</button>
+                      <button onMouseDown={(e) => { e.preventDefault(); setEditCell(null) }} className="text-gray-400 p-0.5">닫기</button>
                     </div>
                   ) : (
                     <button onClick={() => startEdit(p.id, 'unit', p.unit)}
                       className="mx-auto flex items-center justify-center gap-1.5 group/u px-2 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors">
                       <span className="text-sm font-mono font-medium text-gray-800 dark:text-gray-200">{p.unit}</span>
-                      <Pencil size={10} className="text-gray-300 opacity-0 group-hover/u:opacity-100 transition-opacity" />
+                      수정
                     </button>
                   )}
                 </td>
@@ -112,13 +110,13 @@ export default function BoxQtyPage() {
                         onKeyDown={(e) => { if (e.key === 'Enter') saveEdit(editCell); if (e.key === 'Escape') setEditCell(null) }}
                         onBlur={() => saveEdit(editCell)}
                         className="w-16 px-2 py-1 text-sm border border-indigo-400 rounded-lg bg-white dark:bg-gray-800 text-right tabular-nums outline-none" />
-                      <button onMouseDown={(e) => { e.preventDefault(); saveEdit(editCell) }} className="text-indigo-500 p-0.5"><Check size={13} /></button>
+                      <button onMouseDown={(e) => { e.preventDefault(); saveEdit(editCell) }} className="text-indigo-500 p-0.5">확인</button>
                     </div>
                   ) : (
                     <button onClick={() => startEdit(p.id, 'boxQty', String(p.boxQty))}
                       className="ml-auto flex items-center justify-end gap-1.5 group/b px-3 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors">
                       <span className="text-sm font-semibold tabular-nums text-gray-800 dark:text-gray-200">{formatNumber(p.boxQty)}</span>
-                      <Pencil size={10} className="text-gray-300 opacity-0 group-hover/b:opacity-100 transition-opacity" />
+                      수정
                     </button>
                   )}
                 </td>

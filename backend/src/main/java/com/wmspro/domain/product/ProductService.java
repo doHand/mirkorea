@@ -48,6 +48,10 @@ public class ProductService {
             .clientId(req.clientId)
             .locationId(req.locationId)
             .unit(req.unit != null ? req.unit : "EA")
+            .baseUnit(req.baseUnit != null ? req.baseUnit : UnitType.EA)
+            .pUnitQty(normalizeConversion(req.pUnitQty))
+            .boxUnitQty(normalizeConversion(req.boxUnitQty != null ? req.boxUnitQty : req.boxQty))
+            .plUnitQty(normalizeConversion(req.plUnitQty))
             .optionName(req.optionName)
             .spec(req.spec)
             .materialNo(req.materialNo)
@@ -87,6 +91,10 @@ public class ProductService {
         if (req.clearLocation)           product.setLocationId(null);
         else if (req.locationId != null) product.setLocationId(req.locationId);
         if (req.unit        != null) product.setUnit(req.unit);
+        if (req.baseUnit    != null) product.setBaseUnit(req.baseUnit);
+        if (req.pUnitQty    != null) product.setPUnitQty(normalizeConversion(req.pUnitQty));
+        if (req.boxUnitQty  != null) product.setBoxUnitQty(normalizeConversion(req.boxUnitQty));
+        if (req.plUnitQty   != null) product.setPlUnitQty(normalizeConversion(req.plUnitQty));
         if (req.optionName  != null) product.setOptionName(req.optionName);
         if (req.spec        != null) product.setSpec(req.spec);
         if (req.materialNo  != null) product.setMaterialNo(req.materialNo);
@@ -105,6 +113,10 @@ public class ProductService {
         if (req.isLotManaged    != null) product.setLotManaged(req.isLotManaged);
         if (req.isExpiryManaged != null) product.setExpiryManaged(req.isExpiryManaged);
         return productRepo.save(product);
+    }
+
+    private Integer normalizeConversion(Integer value) {
+        return value != null && value > 0 ? value : null;
     }
 
     @Transactional

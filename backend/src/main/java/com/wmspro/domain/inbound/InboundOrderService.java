@@ -9,6 +9,7 @@ import com.wmspro.domain.inbound.dto.InspectItemRequest;
 import com.wmspro.domain.inbound.dto.ReceiveItemRequest;
 import com.wmspro.domain.stock.StockService;
 import com.wmspro.domain.stock.dto.InboundRequest;
+import com.wmspro.domain.product.UnitConversionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -32,6 +33,7 @@ public class InboundOrderService {
     private final StockService               stockService;
     private final JdbcTemplate               jdbcTemplate;
     private final SseService                 sseService;
+    private final UnitConversionService      unitConversionService;
 
     // ── 목록 조회 ────────────────────────────────────────────────
     public PageResponse<InboundOrder> findAll(UUID warehouseId, InboundStatus status, int page, int limit) {
@@ -62,10 +64,15 @@ public class InboundOrderService {
 
         if (req.items != null) {
             for (CreateInboundOrderRequest.ItemRequest ir : req.items) {
+                var conversion = unitConversionService.convert(ir.productId, ir.expectedQty, ir.inputUnit);
                 InboundOrderItem item = InboundOrderItem.builder()
                     .order(order)
                     .productId(ir.productId)
                     .expectedQty(ir.expectedQty)
+                    .inputQty(conversion.inputQty())
+                    .inputUnit(conversion.inputUnit())
+                    .conversionQty(conversion.conversionQty())
+                    .convertedEaQty(conversion.convertedEaQty())
                     .lotNumber(ir.lotNumber)
                     .expireDate(ir.expireDate)
                     .locationId(ir.locationId)
@@ -142,14 +149,15 @@ public class InboundOrderService {
 
         for (InboundOrderItem item : order.getItems()) {
             int passedQty = item.getPassedQty() > 0 ? item.getPassedQty() : item.getReceivedQty();
+            int convertedPassedQty = Math.multiplyExact(passedQty, Math.max(1, item.getConversionQty()));
 
             // 합격 수량 → 정상 입고
-            if (passedQty > 0 && item.getLocationId() != null) {
+            if (convertedPassedQty > 0 && item.getLocationId() != null) {
                 InboundRequest req = new InboundRequest();
                 req.productId   = item.getProductId();
                 req.locationId  = item.getLocationId();
                 req.warehouseId = order.getWarehouseId();
-                req.quantity    = passedQty;
+                req.quantity    = convertedPassedQty;
                 req.lotNumber   = item.getLotNumber();
                 req.expireDate  = item.getExpireDate();
                 req.reason      = "입고 완료 - " + order.getOrderNo();
@@ -163,7 +171,7 @@ public class InboundOrderService {
                 defReq.productId   = item.getProductId();
                 defReq.locationId  = item.getDefectLocationId();
                 defReq.warehouseId = order.getWarehouseId();
-                defReq.quantity    = item.getDefectQty();
+                defReq.quantity    = Math.multiplyExact(item.getDefectQty(), Math.max(1, item.getConversionQty()));
                 defReq.lotNumber   = item.getLotNumber();
                 defReq.reason      = "불량 처리 - " + order.getOrderNo();
                 stockService.inbound(defReq, userId);

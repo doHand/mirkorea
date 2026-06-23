@@ -79,6 +79,7 @@ export interface Location {
 }
 
 export type SaleStatus = 'ACTIVE' | 'INACTIVE' | 'DISCONTINUED'
+export type UnitType = 'EA' | 'P' | 'BOX' | 'PL'
 export type BarcodeUnitType = 'UNIT' | 'CXD' | 'CXD_BOX'
 
 export interface Product {
@@ -91,6 +92,10 @@ export interface Product {
   locationId?: string
   defaultLocation?: Location
   unit: string
+  baseUnit: UnitType
+  pUnitQty?: number
+  boxUnitQty?: number
+  plUnitQty?: number
   optionName?: string
   spec?: string
   materialNo?: string
@@ -202,6 +207,10 @@ export interface InboundOrderItem {
   orderId?: string
   productId: string
   expectedQty: number
+  inputQty: number
+  inputUnit: UnitType
+  conversionQty: number
+  convertedEaQty: number
   receivedQty: number
   passedQty: number
   defectQty: number
@@ -235,6 +244,9 @@ export interface PurchaseOrderItem {
   id: string
   productId: string
   quantity: number
+  inputUnit: UnitType
+  conversionQty: number
+  convertedEaQty: number
   boxCount: number
   capSize?: string
   unitPrice: number
@@ -267,6 +279,10 @@ export interface OutboundOrderItem {
   id: string
   productId: string
   boxCount: number
+  inputQty: number
+  inputUnit: UnitType
+  conversionQty: number
+  convertedEaQty: number
   pickedBoxCount: number
   sortOrder: number
   product?: Product

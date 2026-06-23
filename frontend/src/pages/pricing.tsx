@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Pencil, Search, Shield } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { productApi } from '@/api/product.api'
 import { ExportButton } from '@/components/ExportButton'
@@ -65,7 +64,6 @@ export default function PricingPage() {
   if (me?.role !== 'ADMIN') {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-3 text-gray-400 dark:text-gray-500">
-        <Shield size={40} className="opacity-40" />
         <p>관리자만 접근할 수 있습니다</p>
       </div>
     )
@@ -115,7 +113,6 @@ export default function PricingPage() {
       {/* 검색 */}
       <div className={ui.filterCard}>
         <div className="relative flex-1">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           <input
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
@@ -186,7 +183,7 @@ export default function PricingPage() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <button onClick={(e) => { e.stopPropagation(); openEdit(p) }} className={ui.btnIconEdit} title="가격 수정">
-                        <Pencil size={13} />
+                        수정
                       </button>
                     </td>
                   </tr>

@@ -1,6 +1,5 @@
 'use client'
 import { useRef, useState } from 'react'
-import { Download, X, AlertCircle, Loader2, FileSpreadsheet } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { cn } from '@/utils/cn'
 import { formatNumber } from '@/utils/format'
@@ -152,7 +151,6 @@ export function ImportButton({ onImported }: Props) {
         aria-label="가져오기"
         className="responsive-icon-action bg-accent-500 text-white hover:bg-accent-600"
       >
-        <Download size={14} />
         <span className="responsive-action-label">가져오기</span>
       </button>
 
@@ -164,7 +162,6 @@ export function ImportButton({ onImported }: Props) {
             <div className="flex items-start justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-accent-100 dark:bg-accent-900/30 rounded-md flex items-center justify-center shrink-0">
-                  <FileSpreadsheet size={18} className="text-accent-600 dark:text-accent-400" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 dark:text-white">엑셀 가져오기</h3>
@@ -180,14 +177,13 @@ export function ImportButton({ onImported }: Props) {
                   onClick={downloadTemplate}
                   className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 >
-                  <Download size={12} />
                   템플릿
                 </button>
                 <button
                   onClick={() => { setPreview(null) }}
                   className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 transition-colors"
                 >
-                  <X size={16} />
+                  닫기
                 </button>
               </div>
             </div>
@@ -235,7 +231,7 @@ export function ImportButton({ onImported }: Props) {
                       <td className="px-4 py-2 text-center">
                         {row._error ? (
                           <span className="inline-flex items-center gap-1 text-red-500">
-                            <AlertCircle size={11} />{row._error}
+                            ! {row._error}
                           </span>
                         ) : (
                           <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
@@ -276,7 +272,7 @@ export function ImportButton({ onImported }: Props) {
                 className="flex-1 py-2.5 bg-accent-500 text-white rounded-md text-sm font-semibold hover:bg-accent-600 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
               >
                 {importing
-                  ? <><Loader2 size={14} className="animate-spin" />가져오는 중...</>
+                  ? <>가져오는 중...</>
                   : `${formatNumber(validCount)}개 등록`
                 }
               </button>

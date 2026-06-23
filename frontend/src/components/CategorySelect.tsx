@@ -1,7 +1,6 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { Tag, Check, X, ChevronDown } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { categoryApi } from '@/api/product.api'
 import { cn } from '@/utils/cn'
@@ -96,13 +95,10 @@ export function CategorySelect({ value, onChange, placeholder = '카테고리 �
             onClick={(e) => { e.stopPropagation(); onChange('') }}
             className="shrink-0 text-gray-400 hover:text-rose-500 cursor-pointer"
           >
-            <X size={12} />
+            닫기
           </span>
         ) : (
-          <ChevronDown
-            size={isCell ? 10 : 13}
-            className={cn('shrink-0 text-gray-400 transition-transform duration-150', open && 'rotate-180')}
-          />
+          <span className={cn('shrink-0 text-gray-400 transition-transform duration-150 text-xs', open && 'rotate-180 inline-block')}>▾</span>
         )}
       </button>
 
@@ -132,7 +128,7 @@ export function CategorySelect({ value, onChange, placeholder = '카테고리 �
                 onClick={() => select('')}
                 className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
-                <X size={11} />없음 (지우기)
+                없음 (지우기)
               </button>
             )}
             {filtered.length === 0 && (
@@ -150,9 +146,8 @@ export function CategorySelect({ value, onChange, placeholder = '카테고리 �
                     : 'text-gray-800 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800',
                 )}
               >
-                <Tag size={11} className={cn('shrink-0', c.name === value ? 'text-indigo-500' : 'text-gray-400')} />
                 <span className="flex-1 text-left">{c.name}</span>
-                {c.name === value && <Check size={12} className="shrink-0 text-indigo-500" />}
+                {c.name === value && <span className="shrink-0 text-indigo-500 text-xs">✓</span>}
               </button>
             ))}
           </div>

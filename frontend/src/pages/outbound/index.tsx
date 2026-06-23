@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { CalendarDays, ClipboardPlus, FileText, Pencil, Printer, Search, Send, Trash2, Truck } from 'lucide-react'
+import { CalendarDays, ClipboardPlus } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { outboundOrderApi } from '@/api/outbound-order.api'
 import { clientApi } from '@/api/client.api'
@@ -61,7 +61,7 @@ export default function OutboundPage() {
 
       <section className="overflow-hidden border border-[#d4c2b1] bg-white dark:border-gray-800 dark:bg-gray-900">
         <div className="flex items-center justify-between border-b border-[#e4d7cb] bg-[#f7f1eb] px-4 py-2 dark:border-gray-800 dark:bg-gray-900">
-          <div className="flex items-center gap-2"><span className="grid h-8 w-8 place-items-center rounded-lg bg-[#D2691E] text-white"><FileText size={16} /></span><p className="font-bold text-gray-900 dark:text-white">판매(출고) 전표정보</p></div>
+          <div className="flex items-center gap-2"><span className="grid h-8 w-8 place-items-center rounded-lg bg-[#D2691E] text-white text-[11px] font-bold">전표</span><p className="font-bold text-gray-900 dark:text-white">판매(출고) 전표정보</p></div>
           <span className="inline-flex items-center gap-1 text-xs text-gray-500"><CalendarDays size={14} /> {new Date().toLocaleDateString('ko-KR')}</span>
         </div>
         <div className="grid gap-x-5 gap-y-2 p-4 md:grid-cols-2 xl:grid-cols-4">
@@ -80,7 +80,7 @@ export default function OutboundPage() {
         <div className="flex flex-col gap-3 border-b border-gray-200 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-gray-800">
           <div><h3 className="text-sm font-bold text-gray-900 dark:text-white">판매(출고) 세부내역</h3><p className="text-xs text-gray-500">전표를 선택하면 상단 거래처 정보가 바뀝니다.</p></div>
           <div className="flex flex-wrap gap-2">
-            <div className="relative min-w-56"><Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="전표번호, 거래처, 품목 검색" className="w-full rounded-lg border border-gray-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-[#D2691E] dark:border-gray-700 dark:bg-gray-800" /></div>
+            <div className="relative min-w-56"><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="전표번호, 거래처, 품목 검색" className="w-full rounded-lg border border-gray-200 py-2 px-3 text-sm outline-none focus:border-[#D2691E] dark:border-gray-700 dark:bg-gray-800" /></div>
             <select value={status} onChange={(e) => setStatus(e.target.value as OutboundOrderStatus | '')} className="rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800"><option value="">전체 상태</option>{Object.entries(STATUS_LABEL).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select>
           </div>
         </div>
@@ -96,13 +96,13 @@ export default function OutboundPage() {
                 const editable = canEdit(order)
                 return <tr key={item.id} onClick={() => setSelectedOrder(order)} className={cn(ui.tr, 'cursor-pointer', activeOrder?.id === order.id && 'bg-orange-50/70 dark:bg-orange-950/20')}>
                   <td className={cn(ui.td, 'text-center text-gray-400')}>{rowIndex + 1}</td><td className={cn(ui.td, 'whitespace-nowrap')}>{order.requestedShipDate || order.orderDate}</td><td className={cn(ui.td, 'truncate font-mono text-xs font-semibold text-[#9a4d16]')}>{order.orderNo}</td><td className={cn(ui.td, 'truncate')}>{order.customer}</td><td className={cn(ui.td, 'truncate font-medium')}>{item.product?.name || '-'}</td><td className={cn(ui.td, 'truncate')}>{item.product?.spec || item.product?.optionName || '-'}</td><td className={cn(ui.td, 'text-right font-semibold')}>{formatNumber(item.boxCount)}</td><td className={cn(ui.td, 'text-center')}>{item.product?.unit || 'BOX'}</td><td className={cn(ui.td, 'text-right')}>{price ? formatNumber(price) : '-'}</td><td className={cn(ui.td, 'text-right font-semibold')}>{amount ? formatNumber(amount) : '-'}</td><td className={cn(ui.td, 'truncate font-mono text-xs')}>{item.product?.materialNo || item.product?.code || '-'}</td><td className={cn(ui.td, 'text-center')}><span className={cn('rounded-full px-2 py-1 text-xs font-semibold', STATUS_STYLE[order.status])}>{STATUS_LABEL[order.status]}</span></td>
-                  <td className={ui.td}><div className="flex justify-center gap-1">{order.orderType === 'EXTERNAL' && <button title="출고증 출력" onClick={(e) => { e.stopPropagation(); printExternalPickingList(order.requestedShipDate || order.orderDate, [order], clients, supplierInfo) }} className={ui.btnIconPrint}><Printer size={15} /></button>}{editable && <button title="전표 수정" onClick={(e) => { e.stopPropagation(); setEditOrder(order) }} className={ui.btnIconEdit}><Pencil size={15} /></button>}{editable && <button title="전표 삭제" onClick={(e) => { e.stopPropagation(); if (window.confirm(`${order.orderNo} 전표를 삭제할까요?`)) deleteOrder.mutate(order.id) }} className={ui.btnIconDelete}><Trash2 size={15} /></button>}{order.status === 'COLLECTED' && <button title="출고지시 생성" onClick={(e) => { e.stopPropagation(); instruct.mutate(order.id) }} className={ui.btnIconPrint}><Send size={15} /></button>}</div></td>
+                  <td className={ui.td}><div className="flex justify-center gap-1">{order.orderType === 'EXTERNAL' && <button title="출고증 출력" onClick={(e) => { e.stopPropagation(); printExternalPickingList(order.requestedShipDate || order.orderDate, [order], clients, supplierInfo) }} className={ui.btnIconPrint}>출력</button>}{editable && <button title="전표 수정" onClick={(e) => { e.stopPropagation(); setEditOrder(order) }} className={ui.btnIconEdit}>수정</button>}{editable && <button title="전표 삭제" onClick={(e) => { e.stopPropagation(); if (window.confirm(`${order.orderNo} 전표를 삭제할까요?`)) deleteOrder.mutate(order.id) }} className={ui.btnIconDelete}>삭제</button>}{order.status === 'COLLECTED' && <button title="출고지시 생성" onClick={(e) => { e.stopPropagation(); instruct.mutate(order.id) }} className={ui.btnIconPrint}>지시</button>}</div></td>
                 </tr>
               })}
             </tbody>
           </table>
         </div>
-        <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3 text-xs text-gray-500 dark:border-gray-800"><span>품목 {formatNumber(lines.length)}건 · 전표 {formatNumber(orders.length)}건</span><span className="inline-flex items-center gap-1"><Truck size={14} /> 피킹 완료 {formatNumber(orders.filter((order) => order.status === 'PICKED').length)}건</span></div>
+        <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3 text-xs text-gray-500 dark:border-gray-800"><span>품목 {formatNumber(lines.length)}건 · 전표 {formatNumber(orders.length)}건</span><span>피킹 완료 {formatNumber(orders.filter((order) => order.status === 'PICKED').length)}건</span></div>
       </section>
 
       {createOpen && <CollectOrderModal warehouseId={warehouse.id} onClose={() => setCreateOpen(false)} onSaved={() => { setCreateOpen(false); refresh() }} />}

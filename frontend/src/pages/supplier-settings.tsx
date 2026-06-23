@@ -1,6 +1,5 @@
 ﻿'use client'
 
-import { Building2, RotateCcw, Save } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { DEFAULT_SUPPLIER_INFO, useSupplierInfoStore } from '@/stores/supplier-info.store'
 import type { SupplierInfo } from '@/stores/supplier-info.store'
@@ -31,7 +30,6 @@ export default function SupplierSettingsPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="flex items-center gap-2 text-lg font-bold tracking-tight text-gray-900 dark:text-white">
-            <Building2 size={18} className="text-indigo-500" />
             공급자 정보 관리
           </h2>
           <p className="mt-0.5 text-xs text-gray-400">거래명세서/견적서 출력에 들어가는 공급자 사업번호와 기본 정보를 관리합니다.</p>
@@ -42,7 +40,7 @@ export default function SupplierSettingsPage() {
           aria-label="기본값 복원"
           className="responsive-icon-action self-start border border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 sm:self-auto"
         >
-          <RotateCcw size={14} /><span className="responsive-action-label">기본값</span>
+          <span className="responsive-action-label">기본값</span>
         </button>
       </div>
 
@@ -76,7 +74,7 @@ export default function SupplierSettingsPage() {
             onClick={() => toast.success('공급자 정보가 저장되어 있습니다')}
             className="flex items-center gap-1.5 rounded bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
           >
-            <Save size={14} />저장 확인
+            저장 확인
           </button>
         </div>
       </div>

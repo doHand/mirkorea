@@ -2,46 +2,41 @@
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
-import {
-  Package, BarChart3, Warehouse, ScanLine, ClipboardList,
-  LayoutDashboard, LogOut, X, ShieldCheck, UserCog, Tags, LayoutGrid,
-  Hash, Barcode, FileText, BoxSelect, FlaskConical, Ruler, ChevronDown,
-  PackageCheck, Building2, Receipt, FileCog, Users, Shield, Tag, Truck, History, BellRing, ClipboardCheck,
-} from 'lucide-react'
+import { LogOut, ChevronDown, Warehouse, X } from 'lucide-react'
 import { cn } from '@/utils/cn'
 import { useAuthStore } from '@/stores/auth.store'
 import { useMenuPermissionStore } from '@/stores/menu-permission.store'
 import type { UserRole } from '@/types/api.types'
 
-const ICON_MAP: Record<string, React.ElementType> = {
-  dashboard:          LayoutDashboard,
-  products:           Package,
-  inventory:          BarChart3,
-  scan:               ScanLine,
-  'product-codes':    Hash,
-  barcodes:           Barcode,
-  'product-attrs':    FileText,
-  'box-qty':          BoxSelect,
-  lot:                FlaskConical,
-  units:              Ruler,
-  categories:         Tag,
-  inbound:            PackageCheck,
-  outbound:           Truck,
-  'picking-list':     ClipboardList,
-  pricing:            Tags,
-  warehouse:          Warehouse,
-  transactions:       ClipboardList,
-  users:              ShieldCheck,
-  'menu-permissions': LayoutGrid,
-  profile:            UserCog,
-  clients:            Building2,
-  quotes:             Receipt,
-  'supplier-settings': FileCog,
-  'role-management':   Shield,
-  'audit-logs':        History,
-  alerts:              BellRing,
-  'permissions':       Users,
-  'inventory-audit':   ClipboardCheck,
+const TEXT_MAP: Record<string, string> = {
+  dashboard:           '홈',
+  products:            '상품',
+  inventory:           '재고',
+  scan:                '스캔',
+  'product-codes':     '코드',
+  barcodes:            '바코',
+  'product-attrs':     '속성',
+  'box-qty':           '박스',
+  lot:                 'LOT',
+  units:               '단위',
+  categories:          '분류',
+  inbound:             '입고',
+  outbound:            '출고',
+  'picking-list':      '피킹',
+  pricing:             '가격',
+  warehouse:           '창고',
+  transactions:        '거래',
+  users:               '유저',
+  'menu-permissions':  '메뉴',
+  profile:             '내정보',
+  clients:             '거래처',
+  quotes:              '견적',
+  'supplier-settings': '공급',
+  'role-management':   '역할',
+  'audit-logs':        '로그',
+  alerts:              '알림',
+  permissions:         '권한',
+  'inventory-audit':   '실사',
 }
 
 interface Props {
@@ -91,9 +86,9 @@ export function SidebarNav({ onClose }: Props) {
         </Link>
         <button
           onClick={onClose}
-          className="lg:hidden p-1 rounded hover:bg-white/10 text-slate-400 transition-colors"
+          className="lg:hidden px-1.5 py-0.5 text-[11px] rounded hover:bg-white/10 text-slate-400 transition-colors"
         >
-          <X size={14} />
+          닫기
         </button>
       </div>
 
@@ -129,7 +124,7 @@ export function SidebarNav({ onClose }: Props) {
               >
                 <div className="px-1.5 pb-0.5 space-y-0">
                   {items.map(({ href, label: itemLabel, menuId }) => {
-                    const Icon   = ICON_MAP[menuId] ?? LayoutDashboard
+                    const badge  = TEXT_MAP[menuId] ?? menuId.slice(0, 2)
                     const active = pathname === href || (href !== '/' && pathname.startsWith(href))
                     return (
                       <Link
@@ -146,15 +141,16 @@ export function SidebarNav({ onClose }: Props) {
                         {active && (
                           <span className="absolute left-0 inset-y-[6px] w-[3px] bg-[#D2691E] rounded-r-full" />
                         )}
-                        <Icon
-                          size={15}
+                        <span
                           className={cn(
-                            'shrink-0 transition-colors',
+                            'w-[22px] shrink-0 text-center text-[9px] font-bold leading-none',
                             active
                               ? 'text-[#D2691E]'
-                              : 'text-[#E5D3B3]/45 group-hover:text-[#E5D3B3]',
+                              : 'text-[#E5D3B3]/50 group-hover:text-[#E5D3B3]',
                           )}
-                        />
+                        >
+                          {badge}
+                        </span>
                         <span className="flex-1 truncate">{itemLabel}</span>
                       </Link>
                     )

@@ -2,6 +2,7 @@ package com.wmspro.domain.outbound;
 
 import java.time.LocalDate;
 import java.util.*;
+import com.wmspro.domain.product.UnitType;
 
 public class OutboundOrderRequest {
     public UUID warehouseId;
@@ -21,5 +22,7 @@ public class OutboundOrderRequest {
     public static class ItemRequest {
         public UUID productId;
         public int boxCount;
+        public int inputQty;
+        public UnitType inputUnit = UnitType.EA;
     }
 }

@@ -10,10 +10,7 @@ import {
   verticalListSortingStrategy, arrayMove,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import {
-  Shield, RotateCcw, Info, Check, GripVertical,
-  FolderPlus, Pencil, Trash2, X, Folder,
-} from 'lucide-react'
+import { GripVertical } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '@/stores/auth.store'
 import { useMenuPermissionStore } from '@/stores/menu-permission.store'
@@ -74,7 +71,6 @@ function SortableSectionHeader({
       </td>
       <td colSpan={ROLES.length + 2} className="py-2 pr-4">
         <div className="flex items-center gap-2">
-          <Folder size={11} className="text-gray-400 dark:text-gray-600 shrink-0" />
           {editing ? (
             <>
               <input
@@ -89,10 +85,10 @@ function SortableSectionHeader({
                 className="text-[10px] font-bold uppercase tracking-widest text-gray-600 dark:text-gray-400 bg-transparent border-b border-indigo-400 outline-none w-28"
               />
               <button onMouseDown={(e) => { e.preventDefault(); commit() }} className="text-indigo-500 hover:text-indigo-600 p-0.5">
-                <Check size={11} />
+                확인
               </button>
               <button onMouseDown={(e) => { e.preventDefault(); setEditing(false) }} className="text-gray-400 hover:text-gray-600 p-0.5">
-                <X size={11} />
+                닫기
               </button>
             </>
           ) : (
@@ -103,13 +99,12 @@ function SortableSectionHeader({
               >
                 {label}
               </button>
-              <Pencil size={9} className="text-gray-300 dark:text-gray-700 opacity-0 group-hover/sec:opacity-100 transition-opacity" />
               <span className="text-[10px] tabular-nums text-gray-300 dark:text-gray-700">({formatNumber(itemCount)})</span>
               <button
                 onClick={() => onDelete(label)}
                 className="ml-auto text-gray-300 dark:text-gray-700 hover:text-rose-500 dark:hover:text-rose-400 transition-colors opacity-0 group-hover/sec:opacity-100 p-0.5 rounded"
               >
-                <Trash2 size={11} />
+                삭제
               </button>
             </>
           )}
@@ -173,10 +168,10 @@ function SortableMenuRow({
               className="font-medium text-gray-800 dark:text-gray-200 bg-transparent border-b border-indigo-400 outline-none w-36"
             />
             <button onMouseDown={(e) => { e.preventDefault(); commit() }} className="text-indigo-500 hover:text-indigo-600 p-0.5">
-              <Check size={11} />
+              확인
             </button>
             <button onMouseDown={(e) => { e.preventDefault(); setEditing(false) }} className="text-gray-400 hover:text-gray-600 p-0.5">
-              <X size={11} />
+              닫기
             </button>
           </div>
         ) : (
@@ -187,7 +182,6 @@ function SortableMenuRow({
             >
               {menu.label}
             </button>
-            <Pencil size={10} className="text-gray-300 dark:text-gray-700 opacity-0 group-hover/row:opacity-100 transition-opacity" />
           </div>
         )}
       </td>
@@ -207,10 +201,7 @@ function SortableMenuRow({
               )}
             >
               {checked && (
-                <Check
-                  size={13}
-                  className={cn('stroke-[3]', isAdmin ? 'text-purple-600 dark:text-purple-400' : 'text-white')}
-                />
+                <span className={cn('text-xs font-bold', isAdmin ? 'text-purple-600 dark:text-purple-400' : 'text-white')}>확인</span>
               )}
             </button>
           </td>
@@ -235,7 +226,6 @@ function DragGhost({ id, menus }: { id: string; menus: MenuDef[] }) {
     return (
       <div className="flex items-center gap-2 bg-white dark:bg-gray-900 border border-indigo-200 dark:border-indigo-700 rounded px-4 py-2 shadow-xl opacity-95">
         <GripVertical size={13} className="text-indigo-400" />
-        <Folder size={13} className="text-indigo-400" />
         <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
           {id.slice(8)}
         </span>
@@ -382,7 +372,6 @@ export default function MenuPermissionsPage() {
   if (me?.role !== 'ADMIN') {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-3 text-gray-400 dark:text-gray-500">
-        <Shield size={40} className="opacity-40" />
         <p className="text-sm">관리자만 접근할 수 있습니다</p>
       </div>
     )
@@ -403,14 +392,12 @@ export default function MenuPermissionsPage() {
             onClick={handleAddSection}
             className="flex items-center gap-1.5 px-3 py-2 text-sm bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/40 rounded hover:bg-indigo-100 dark:hover:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 transition-colors"
           >
-            <FolderPlus size={14} />
             <span className="hidden sm:inline">새 폴더</span>
           </button>
           <button
             onClick={handleReset}
             className="flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-colors"
           >
-            <RotateCcw size={14} />
             <span className="hidden sm:inline">초기화</span>
           </button>
         </div>
@@ -418,9 +405,8 @@ export default function MenuPermissionsPage() {
 
       {/* 안내 배너 */}
       <div className="flex items-start gap-2.5 bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-800/30 rounded px-4 py-3">
-        <Info size={15} className="text-indigo-500 dark:text-indigo-400 mt-0.5 shrink-0" />
         <p className="text-xs text-indigo-700 dark:text-indigo-300 leading-relaxed">
-          <strong>관리자(ADMIN)</strong>는 모든 메뉴에 항상 접근 가능합니다. 폴더 이름을 클릭하면 이름을 변경할 수 있으며, 드래그 핸들(<GripVertical size={11} className="inline" />)로 순서를 조정합니다.
+          <strong>관리자(ADMIN)</strong>는 모든 메뉴에 항상 접근 가능합니다. 폴더 이름을 클릭하면 이름을 변경할 수 있으며, 드래그 핸들로 순서를 조정합니다.
           사이드바 표시만 제어하며 URL 직접 접근은 차단되지 않습니다.
         </p>
       </div>
@@ -491,13 +477,12 @@ export default function MenuPermissionsPage() {
         {sections.map(({ label, items }) => (
           <div key={label} className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
             <div className="px-4 py-2.5 bg-gray-50/80 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
-              <Folder size={11} className="text-gray-400 dark:text-gray-500 shrink-0" />
               <p className="text-[10px] font-bold text-gray-400 dark:text-gray-600 uppercase tracking-widest flex-1">{label}</p>
               <button
                 onClick={() => handleDeleteSection(label)}
                 className="text-gray-300 dark:text-gray-700 hover:text-rose-500 transition-colors p-0.5"
               >
-                <Trash2 size={12} />
+                삭제
               </button>
             </div>
             <div className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -537,7 +522,7 @@ export default function MenuPermissionsPage() {
                             'w-5 h-5 rounded flex items-center justify-center shrink-0',
                             isAdmin ? checkCls : checked ? checkCls : 'border-2 border-gray-300 dark:border-gray-600',
                           )}>
-                            {checked && <Check size={11} className={cn('stroke-[3]', isAdmin ? 'text-purple-600 dark:text-purple-400' : 'text-white')} />}
+                            {checked && <span className={cn('text-[10px] font-bold', isAdmin ? 'text-purple-600 dark:text-purple-400' : 'text-white')}>확인</span>}
                           </div>
                           <span className={cn('text-xs font-medium', headerCls)}>{roleLabel}</span>
                         </button>
@@ -554,7 +539,6 @@ export default function MenuPermissionsPage() {
           onClick={handleAddSection}
           className="w-full flex items-center justify-center gap-2 py-3.5 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded text-sm text-gray-400 dark:text-gray-600 hover:border-indigo-300 hover:text-indigo-500 dark:hover:border-indigo-700 dark:hover:text-indigo-400 transition-colors"
         >
-          <FolderPlus size={15} />
           새 폴더 추가
         </button>
       </div>
