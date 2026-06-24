@@ -256,7 +256,7 @@ export default function ProductsPage() {
 
   const productLimit = showSafetyOnly ? 1000 : PAGE_SIZE
   const productPage = showSafetyOnly ? 1 : page
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch: refetchProducts } = useQuery({
     queryKey: QUERY_KEYS.products({ search, page: productPage, limit: productLimit }),
     queryFn:  () => productApi.findAll({ search: search || undefined, page: productPage, limit: productLimit }),
     placeholderData: (prev) => prev,
@@ -305,7 +305,7 @@ export default function ProductsPage() {
     staleTime: 60_000,
   })
 
-  const { data: inventory = [] } = useQuery<Inventory[]>({
+  const { data: inventory = [], refetch: refetchInventory } = useQuery<Inventory[]>({
     queryKey: ['inventory', 'products-grid', warehouse?.id ?? ''],
     queryFn:  () => stockApi.getInventory(warehouse!.id),
     enabled:  !!warehouse?.id,
@@ -861,10 +861,13 @@ export default function ProductsPage() {
         products={productRows}
         onBarcodeClick={setBarcodeModal}
         onRefresh={async () => {
-          await Promise.all([
-            qc.refetchQueries({ queryKey: ['products'] }),
-            qc.refetchQueries({ queryKey: ['inventory'] }),
+          const [productsResult, inventoryResult] = await Promise.all([
+            refetchProducts(),
+            warehouse?.id ? refetchInventory() : Promise.resolve(undefined),
           ])
+          if (productsResult?.error || inventoryResult?.error) {
+            throw productsResult?.error ?? inventoryResult?.error
+          }
         }}
         onSaved={() => {
           invalidateAll()
