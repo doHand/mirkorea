@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { AgGridReact } from 'ag-grid-react'
 import { ClientSideRowModelModule, ModuleRegistry, type ColDef, type ColGroupDef } from 'ag-grid-community'
-import { Menu, Minus, Plus, Save } from 'lucide-react'
+import { Menu, Minus, Plus, RefreshCw, Save } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { productApi } from '@/api/product.api'
 import { formatDecimal } from '@/utils/format'
@@ -37,17 +37,20 @@ const primaryBarcode = (row: DraftProduct) => {
 export function ProductInventoryGrid({
   products,
   onSaved,
+  onRefresh,
   overflowActions,
   onBarcodeClick,
 }: {
   products: Product[]
   onSaved: () => void
+  onRefresh?: () => void | Promise<void>
   overflowActions?: ReactNode
   onBarcodeClick?: (product: Product) => void
 }) {
   const gridRef = useRef<AgGridReact<DraftProduct>>(null)
   const [rows, setRows] = useState<DraftProduct[]>([])
   const [saving, setSaving] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => setRows(products.map((product) => ({ ...product }))), [products])
@@ -163,6 +166,18 @@ export function ProductInventoryGrid({
     if (!selected.size) return toast.error('삭제할 행을 선택해주세요')
     setRows((current) => current.filter((row) => !selected.has(row.id)))
   }
+  const refreshRows = async () => {
+    if (!onRefresh || refreshing) return
+    setRefreshing(true)
+    try {
+      // The parent keeps the previous query result while refetching; this never clears rows first.
+      await onRefresh()
+    } catch {
+      toast.error('새로고침에 실패했습니다. 현재 표시된 데이터는 유지됩니다.')
+    } finally {
+      setRefreshing(false)
+    }
+  }
   const saveRows = async () => {
     const invalid = rows.find((row) => !row.code.trim() || !row.name.trim())
     if (invalid) return toast.error('상품코드와 상품명은 필수입니다')
@@ -196,7 +211,18 @@ export function ProductInventoryGrid({
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
       <div className="flex items-center justify-end gap-1.5 border-b border-sky-200 bg-sky-50 px-2 py-1.5 dark:border-gray-800 dark:bg-gray-900">
-      
+        {onRefresh && (
+          <button
+            type="button"
+            onClick={refreshRows}
+            disabled={refreshing || saving}
+            title="목록 새로고침"
+            aria-label="목록 새로고침"
+            className="inline-flex h-7 w-7 items-center justify-center rounded border border-[#5f8297] bg-white text-[#355b73] transition-colors hover:bg-sky-100 disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
+          </button>
+        )}
         <button
           onClick={addRow}
           title="행 추가"

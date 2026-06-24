@@ -860,6 +860,12 @@ export default function ProductsPage() {
       <ProductInventoryGrid
         products={productRows}
         onBarcodeClick={setBarcodeModal}
+        onRefresh={async () => {
+          await Promise.all([
+            qc.refetchQueries({ queryKey: ['products'] }),
+            qc.refetchQueries({ queryKey: ['inventory'] }),
+          ])
+        }}
         onSaved={() => {
           invalidateAll()
           setSelectedIds(new Set())
