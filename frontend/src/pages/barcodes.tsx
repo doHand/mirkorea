@@ -37,7 +37,7 @@ function BarcodeRows({ productId }: { productId: string }) {
           key={b.id}
           className="flex items-center gap-1.5 rounded border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800 px-2.5 py-1.5 shadow-sm"
         >
-          {b.isPrimary && <span className="fill-[#D2691E] text-[#D2691E] shrink-0 text-[10px]">★</span>}
+          {b.isPrimary && <span className="wms-star shrink-0 text-[10px]">★</span>}
           <span className="font-mono text-xs text-gray-800 dark:text-gray-200">{b.barcode}</span>
           <span className={cn('rounded-full px-1.5 py-0.5 text-[10px] font-semibold', TYPE_COLOR[b.type])}>
             {TYPE_LABEL[b.type]}
@@ -88,12 +88,12 @@ export default function BarcodesPage() {
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') setSearch(searchInput) }}
             placeholder="상품코드 / 상품명"
-            className="w-full pl-3 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-[#2D4033]/25 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400"
+            className="wms-input w-full dark:border-gray-700 dark:bg-gray-800"
           />
         </div>
         <button
           onClick={() => setSearch(searchInput)}
-          className="px-3.5 py-2 text-sm bg-[#2D4033] hover:bg-[#253628] text-white rounded transition-colors font-medium"
+          className="wms-primary-button px-3.5 py-2 text-sm transition-colors font-medium"
         >
           검색
         </button>
@@ -121,14 +121,14 @@ export default function BarcodesPage() {
                       'shrink-0 text-gray-300 dark:text-gray-600 transition-transform duration-200 inline-block text-xs',
                       isOpen && 'rotate-180',
                     )}>▼</span>
-                  <span className="font-mono text-xs text-[#2D4033] dark:text-emerald-400 w-28 shrink-0">{p.code}</span>
+                  <span className="font-mono text-xs text-[var(--color-text)] dark:text-emerald-400 w-28 shrink-0">{p.code}</span>
                   <span className="text-sm font-medium text-gray-800 dark:text-gray-200 flex-1 truncate">{p.name}</span>
                   <span className="tabular-nums text-xs text-gray-400 mr-1">{formatNumber(p.stockQty ?? 0)}개 재고</span>
                 </button>
                 {/* 편집 버튼 */}
                 <button
                   onClick={() => setManageModal(p)}
-                  className="shrink-0 p-1.5 rounded text-gray-300 hover:text-[#D2691E] hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-colors"
+                  className="wms-icon-button shrink-0 p-1.5 rounded text-gray-300 dark:hover:bg-amber-900/10 transition-colors"
                   title="바코드 편집"
                 >
                   수정

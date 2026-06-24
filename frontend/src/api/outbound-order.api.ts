@@ -29,5 +29,8 @@ export const outboundOrderApi = {
     items: { productId: string; boxCount: number }[]
   }) =>
     post<OutboundOrder[]>('/outbound-orders/complete-picking', data),
+  ship: (id: string) => post<OutboundOrder>(`/outbound-orders/${id}/ship`),
+  hold: (id: string) => post<OutboundOrder>(`/outbound-orders/${id}/hold`),
+  unhold: (id: string) => post<OutboundOrder>(`/outbound-orders/${id}/unhold`),
   cancel: (id: string) => post<OutboundOrder>(`/outbound-orders/${id}/cancel`),
 }

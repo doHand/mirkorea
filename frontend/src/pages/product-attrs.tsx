@@ -268,7 +268,7 @@ const getMasterSortValue = (
   }
 }
 
-const MASTER_TH = 'text-center px-2 py-1 font-semibold bg-[#2D4033] text-white'
+const MASTER_TH = 'wms-table-header text-center px-2 py-1 font-semibold'
 
 function SortHeader({
   label,
@@ -664,7 +664,7 @@ export default function ProductMasterPage() {
   }
   const openPurchaseOrder = () => router.push('/quotes?tab=PURCHASE')
 
-  const inputCls = 'w-full border border-gray-200 dark:border-gray-700 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#2D4033]/30 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400'
+  const inputCls = 'wms-input w-full dark:border-gray-700 dark:bg-gray-800'
 
   return (
     <div className="flex h-[calc(100vh-150px)] min-h-0 flex-col gap-4 overflow-hidden">
@@ -742,7 +742,7 @@ export default function ProductMasterPage() {
           >
             <span>거래명세서/견적서</span>
           </button>
-          <button onClick={openPurchaseOrder} className="flex items-center gap-1.5 px-3 py-2 text-sm border border-[#D2691E] text-[#9a4d16] rounded hover:bg-orange-50 transition-colors font-medium">
+          <button onClick={openPurchaseOrder} className="wms-icon-button flex items-center gap-1.5 px-3 py-2 text-sm rounded transition-colors font-medium">
             <span>발주서 생성</span>
           </button>
         </div>
@@ -757,12 +757,12 @@ export default function ProductMasterPage() {
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') setSearch(searchInput) }}
               placeholder="거래처, 상품코드, 자재번호, 상품명, 위치, 카테고리, 상태 검색"
-              className="w-full pl-3 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded focus:outline-none focus:ring-1 focus:ring-[#2D4033]/30 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 transition-colors"
+              className="wms-input w-full py-1.5 dark:border-gray-700 dark:bg-gray-800 transition-colors"
             />
           </div>
           <button
             onClick={() => setSearch(searchInput)}
-            className="px-3 py-1.5 text-sm bg-[#2D4033] text-white rounded hover:bg-[#253628] transition-colors font-medium"
+            className="wms-primary-button px-3 py-1.5 text-sm rounded transition-colors font-medium"
           >
             검색
           </button>
@@ -802,7 +802,7 @@ export default function ProductMasterPage() {
 
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
-        <div className="flex items-center gap-3 bg-[#2D4033] text-white px-3 py-2 rounded">
+        <div className="wms-selected-bar flex items-center gap-3 px-3 py-2 rounded">
           <span className="text-sm font-semibold flex-1">{formatNumber(selectedIds.size)}개 선택됨</span>
           <button
             onClick={handleBulkDelete}
@@ -830,8 +830,8 @@ export default function ProductMasterPage() {
               ))}
             </colgroup>
             <thead className="sticky top-0 z-40">
-              <tr className="bg-[#24352a] text-white/85 text-[10px] font-bold tracking-wide">
-                <th colSpan={7} className="bg-[#24352a] sticky h-5 border-r border-white/15 text-center" style={{ left: stickyLeftOf('chk') }}>
+              <tr className="wms-table-header text-white/85 text-[10px] font-bold tracking-wide">
+                <th colSpan={7} className="wms-table-header sticky h-5 border-r border-white/15 text-center" style={{ left: stickyLeftOf('chk') }}>
                   주요 정보
                 </th>
                 <th colSpan={3} className="h-5 border-r border-white/15" aria-hidden="true" />
@@ -842,8 +842,8 @@ export default function ProductMasterPage() {
                 <th colSpan={3} className="h-5 border-r border-white/15 text-center">금액(BOX)</th>
                 <th colSpan={4} className="h-5" aria-hidden="true" />
               </tr>
-              <tr className="bg-[#2D4033]">
-                <th className="sticky-col sticky z-30 py-1.5 bg-[#2D4033] wms-resizable-th overflow-hidden"
+              <tr className="wms-table-header">
+                <th className="wms-table-header sticky-col sticky z-30 py-1.5 wms-resizable-th overflow-hidden"
                     style={{ width: cw.chk, minWidth: cw.chk, maxWidth: cw.chk, left: stickyLeftOf('chk') }}>
                   <input
                     type="checkbox"
@@ -887,7 +887,7 @@ export default function ProductMasterPage() {
                 <SortHeader label="바코드 종류" sortKey="barcodeType" sort={sort} onSort={toggleSort} style={{ width: cw.barcodeType }} onResizeStart={(e) => startResize('barcodeType', e)} />
                 <SortHeader label="상태" sortKey="saleStatus" sort={sort} onSort={toggleSort} style={{ width: cw.saleStatus }} onResizeStart={(e) => startResize('saleStatus', e)} />
                 <SortHeader label="위치" sortKey="inventoryLocations" sort={sort} onSort={toggleSort} style={{ width: cw.inventoryLocs }} onResizeStart={(e) => startResize('inventoryLocs', e)} />
-                <th className="bg-[#2D4033]" style={{ width: cw.actions }} />
+                <th className="wms-table-header" style={{ width: cw.actions }} />
               </tr>
             </thead>
             <tbody>
@@ -1098,7 +1098,7 @@ export default function ProductMasterPage() {
       {showAdd && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700 w-full max-w-3xl max-h-[92vh] overflow-y-auto">
-            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 bg-[#2D4033]">
+            <div className="wms-table-header flex items-center gap-2 px-4 py-2.5 border-b border-gray-200 dark:border-gray-700">
               <h3 className="text-sm font-semibold text-white flex-1">상품 등록</h3>
               <button
                 onClick={() => {
@@ -1374,7 +1374,7 @@ export default function ProductMasterPage() {
               <button
                 onClick={() => createMutation.mutate()}
                 disabled={!form.code.trim() || !form.name.trim() || createMutation.isPending}
-                className="flex-1 py-2 bg-[#2D4033] text-white rounded text-sm font-semibold hover:bg-[#253628] disabled:opacity-50"
+                className="wms-primary-button flex-1 py-2 rounded text-sm font-semibold disabled:opacity-50"
               >
                 {createMutation.isPending ? '등록 중...' : '등록'}
               </button>

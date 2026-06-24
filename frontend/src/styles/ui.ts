@@ -2,66 +2,49 @@
 // Usage: import { card, tableWrap, btnPrimary } from '@/styles/ui'
 
 // ── Container / Card ────────────────────────────────────────────────────────
-export const card     = 'bg-white dark:bg-gray-900 rounded-md border border-warm-300/70 dark:border-gray-800'
-export const cardFlat = 'bg-white dark:bg-gray-900 rounded-md border border-warm-300/70 dark:border-gray-800'
+export const card     = 'wms-card'
+export const cardFlat = 'wms-card-flat'
 
 /** Card with overflow-hidden for tables */
-export const tableWrap = 'bg-white dark:bg-gray-900 rounded-md border border-warm-300/70 dark:border-gray-800 overflow-hidden'
+export const tableWrap = 'wms-table-wrap'
 
 /** Horizontal filter bar card */
-export const filterCard = 'bg-white dark:bg-gray-900 rounded-md border border-warm-300/70 dark:border-gray-800 p-3 flex gap-2.5'
+export const filterCard = 'wms-filter-card'
 
 // ── Table internals ─────────────────────────────────────────────────────────
-export const thead = 'bg-[#2D4033] text-white'
+export const thead = 'wms-table-header'
 export const th    = 'text-center px-3 py-2 text-xs font-semibold'
 export const thC   = 'text-center px-3 py-2 text-xs font-semibold'
 export const thR   = 'text-right px-3 py-2 text-xs font-semibold'
-export const tbody = 'divide-y divide-gray-100 dark:divide-gray-800'
-export const tr    = 'hover:bg-[#f7f8f5] dark:hover:bg-gray-800/10 transition-colors'
-export const td    = 'px-3 py-2 text-sm text-gray-600 dark:text-gray-400'
+export const tbody = 'wms-table-body'
+export const tr    = 'wms-table-row'
+export const td    = 'wms-table-cell'
 
 // ── Typography ───────────────────────────────────────────────────────────────
-export const h2Cls   = 'text-lg font-bold text-gray-900 dark:text-white'
-export const subText = 'text-xs text-gray-400 mt-0.5'
-export const label   = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
+export const h2Cls   = 'wms-heading'
+export const subText = 'wms-subtext'
+export const label   = 'wms-label'
 
 // ── Form elements ────────────────────────────────────────────────────────────
 /** Search input (has left icon → pl-9) */
-export const searchInput = [
-  'w-full pl-9 pr-3 py-2 text-sm',
-  'border border-warm-300/70 dark:border-gray-700',
-  'outline-none focus:border-[#2D4033]',
-  'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100',
-  'placeholder-gray-400',
-].join(' ')
+export const searchInput = 'wms-input wms-search-input'
 
 /** Generic form input (modal / inline edit) */
-export const formInput = [
-  'w-full px-3 py-2 text-sm',
-  'border border-warm-300/70 dark:border-gray-700',
-  'outline-none focus:border-[#2D4033]',
-  'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100',
-  'placeholder-gray-400',
-].join(' ')
+export const formInput = 'wms-input'
 
 /** Select element */
-export const selectCls = [
-  'px-3 py-2 text-sm',
-  'border border-warm-300/70 dark:border-gray-700',
-  'outline-none focus:border-[#2D4033]',
-  'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100',
-].join(' ')
+export const selectCls = 'wms-input'
 
 // ── Buttons ──────────────────────────────────────────────────────────────────
-export const btnPrimary   = 'px-3 py-1.5 text-sm bg-brand-600 text-white rounded hover:bg-brand-700 transition-colors font-medium'
-export const btnSecondary = 'px-3 py-1.5 text-sm border border-warm-300/70 dark:border-gray-700 text-gray-600 dark:text-gray-400 rounded hover:bg-warm-50 dark:hover:bg-gray-800 transition-colors'
-export const btnDanger    = 'px-3 py-1.5 text-sm bg-rose-600 text-white rounded hover:bg-rose-700 transition-colors font-medium'
-export const btnIcon       = 'px-1.5 py-0.5 text-[11px] font-medium rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors'
-export const btnIconEdit   = 'px-1.5 py-0.5 text-[11px] font-medium rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors'
-export const btnIconDelete = 'px-1.5 py-0.5 text-[11px] font-medium rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors'
-export const btnIconPrint  = 'px-1.5 py-0.5 text-[11px] font-medium rounded hover:bg-[#f7f8f5] dark:hover:bg-gray-800 text-gray-500 hover:text-[#2D4033] dark:hover:text-emerald-400 transition-colors'
+export const btnPrimary   = 'wms-primary-button'
+export const btnSecondary = 'wms-secondary-button'
+export const btnDanger    = 'wms-danger-button'
+export const btnIcon       = 'wms-icon-button'
+export const btnIconEdit   = 'wms-icon-button'
+export const btnIconDelete = 'wms-icon-button wms-icon-button-danger'
+export const btnIconPrint  = 'wms-icon-button'
 
 // ── Modal ────────────────────────────────────────────────────────────────────
-export const modalOverlay = 'fixed inset-0 bg-black/40 dark:bg-black/60 flex items-center justify-center z-50'
-export const modalBox     = 'bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700 w-full max-w-sm p-4'
-export const modalBoxMd   = 'bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700 w-full max-w-md p-4'
+export const modalOverlay = 'wms-modal-overlay'
+export const modalBox     = 'wms-modal-box w-full max-w-sm'
+export const modalBoxMd   = 'wms-modal-box w-full max-w-md'

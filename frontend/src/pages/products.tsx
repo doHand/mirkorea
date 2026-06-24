@@ -148,7 +148,7 @@ async function adjustBoxStockQty({
 }
 
 /* 공통 셀 border 클래스 */
-const TH = 'px-3 py-1.5 font-semibold border-r border-white/20 last:border-r-0 whitespace-nowrap bg-[#2D4033] text-white'
+const TH = 'wms-table-header px-3 py-1.5 font-semibold border-r border-white/20 last:border-r-0 whitespace-nowrap'
 const TD_BASE = 'px-2 py-1 border-r border-gray-200 dark:border-gray-700 last:border-r-0 whitespace-nowrap leading-5'
 const TD_TEXT = cn(TD_BASE, 'text-left text-gray-700 dark:text-gray-300')
 const TD_NUM  = cn(TD_BASE, 'text-right tabular-nums text-gray-900 dark:text-gray-100')
@@ -800,12 +800,12 @@ export default function ProductsPage() {
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') { setSearch(searchInput); setPage(1) } }}
               placeholder="거래처, 상품코드, 자재번호, 상품명, 위치, 카테고리, 상태 검색"
-              className="w-full pl-3 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded focus:outline-none focus:ring-1 focus:ring-[#2D4033]/30 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 transition-colors"
+              className="wms-input w-full py-1.5 dark:border-gray-700 dark:bg-gray-800 transition-colors"
             />
           </div>
           <button
             onClick={() => { setSearch(searchInput); setPage(1) }}
-            className="px-3 py-1.5 text-sm bg-[#2D4033] text-white rounded hover:bg-[#253628] transition-colors font-medium whitespace-nowrap"
+            className="wms-primary-button px-3 py-1.5 text-sm rounded transition-colors font-medium whitespace-nowrap"
           >
             검색
           </button>
@@ -838,7 +838,7 @@ export default function ProductsPage() {
 
       {/* 선택 액션 바 */}
       {selectedIds.size > 0 && (
-        <div className="flex flex-wrap items-center gap-3 bg-[#2D4033] text-white px-3 py-2 rounded">
+        <div className="wms-selected-bar flex flex-wrap items-center gap-3 px-3 py-2 rounded-xl">
           <span className="text-sm font-semibold flex-1">{formatNumber(selectedIds.size)}개 선택됨</span>
           <button
             onClick={handleBulkDelete}
@@ -860,6 +860,13 @@ export default function ProductsPage() {
       <ProductInventoryGrid
         products={productRows}
         onBarcodeClick={setBarcodeModal}
+        locations={allLocations}
+        onStockQtySave={(product, targetQty) => adjustBoxStockQty({
+          product,
+          targetQty,
+          warehouseId: warehouse?.id,
+          inventoryItems: inventorySummary.get(product.id)?.items ?? [],
+        })}
         onRefresh={async () => {
           const [productsResult, inventoryResult] = await Promise.all([
             refetchProducts(),

@@ -105,6 +105,8 @@ public class StockService {
             .warehouseId(req.warehouseId)
             .barcodeScanned(req.barcodeUsed)
             .lotNumber(req.lotNumber)
+            .referenceType(req.referenceType)
+            .referenceId(req.referenceId)
             .reason(req.reason)
             .memo(req.memo)
             .createdBy(userId)

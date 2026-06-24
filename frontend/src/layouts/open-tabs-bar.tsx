@@ -70,9 +70,9 @@ export function OpenTabsBar() {
               className={cn(
                 'group relative h-[34px] -mb-px min-w-0 max-w-56 flex items-center rounded-t-lg text-[12px] font-medium transition-all shrink-0 cursor-grab active:cursor-grabbing select-none',
                 active
-                  ? 'bg-[#F8F6F1] dark:bg-slate-950 text-gray-900 dark:text-white border-t border-l border-r border-gray-200 dark:border-slate-700 z-10'
+                  ? 'app-tab-active dark:bg-slate-950 dark:text-white border-t border-l border-r dark:border-slate-700 z-10'
                   : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 hover:bg-gray-100/80 dark:hover:bg-slate-800/50',
-                splitTabs.some((item) => item.href === tab.href) ? 'ring-1 ring-[#D2691E]/50 ring-inset' : '',
+                splitTabs.some((item) => item.href === tab.href) ? 'app-tab-split' : '',
               )}
             >
               <button
@@ -111,7 +111,7 @@ export function OpenTabsBar() {
               ? 'opacity-100 pointer-events-auto'
               : 'opacity-0 pointer-events-none w-0 overflow-hidden px-0',
             dropActive
-              ? 'bg-amber-50 dark:bg-amber-900/20 border-[#D2691E] text-[#D2691E]'
+              ? 'app-tab-drop-active dark:bg-amber-900/20'
               : 'bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-400',
           )}
         >
@@ -123,7 +123,7 @@ export function OpenTabsBar() {
           <button
             onClick={clearSplitTabs}
             title="분리 닫기"
-            className="shrink-0 p-1.5 mb-1 self-center rounded-lg text-[#D2691E]/60 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+            className="app-header-accent shrink-0 p-1.5 mb-1 self-center rounded-lg hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
           >
             <PanelRight size={13} />
           </button>

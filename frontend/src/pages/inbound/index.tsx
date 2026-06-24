@@ -149,7 +149,7 @@ export default function InboundPage() {
             <button
               onClick={() => setCreateOpen(true)}
               title="직접 입고 예정 등록"
-              className="px-4 py-2 text-sm font-medium rounded bg-[#D2691E] text-white hover:bg-[#b8581a] transition-colors whitespace-nowrap"
+              className="wms-primary-button px-4 py-2 text-sm font-medium rounded transition-colors whitespace-nowrap"
             >
               직접 입고 예정 등록
             </button>
@@ -168,7 +168,7 @@ export default function InboundPage() {
                 className={cn(
                   'rounded-lg border px-2.5 py-2 text-xs font-semibold transition-colors',
                   statusFilter === value
-                    ? 'border-[#2D4033] bg-[#2D4033] text-white'
+                    ? 'wms-table-header border-[var(--color-grid-header)]'
                     : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200',
                 )}
               >
@@ -180,10 +180,10 @@ export default function InboundPage() {
       </div>
 
       {/* ── 전표 정보 패널 ── */}
-      <section className="overflow-hidden border border-[#b9c7d3] bg-white dark:border-gray-800 dark:bg-gray-900">
-        <div className="flex items-center justify-between border-b border-[#cdd8e1] bg-[#eef3f7] px-4 py-2 dark:border-gray-800 dark:bg-gray-900">
+      <section className="wms-panel overflow-hidden border dark:border-gray-800 dark:bg-gray-900">
+        <div className="wms-panel-header flex items-center justify-between border-b px-4 py-2 dark:border-gray-800 dark:bg-gray-900">
           <div className="flex items-center gap-2">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#2D4033] text-white">전표</span>
+            <span className="wms-modal-mark grid h-8 w-8 place-items-center rounded-lg">전표</span>
             <p className="font-bold text-gray-900 dark:text-white">매입(입고) 전표정보</p>
           </div>
           <span className="inline-flex items-center gap-1 text-xs text-gray-500">
@@ -289,7 +289,7 @@ export default function InboundPage() {
         <div className="flex gap-1.5">
           <button
             onClick={() => setSearch(searchInput)}
-            className="px-4 py-1.5 text-sm font-medium rounded bg-[#2D4033] text-white hover:bg-[#23312a] transition-colors whitespace-nowrap"
+            className="wms-primary-button px-4 py-1.5 text-sm font-medium rounded transition-colors whitespace-nowrap"
           >
             검색
           </button>
@@ -657,7 +657,7 @@ function CreateModal({
                                 )
                               )
                             }
-                            className="w-20 px-2 py-1 text-sm text-right tabular-nums border border-gray-200 dark:border-gray-600 rounded focus:outline-none focus:border-[#2D4033] bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            className="wms-input w-20 px-2 py-1 text-right tabular-nums dark:border-gray-600 dark:bg-gray-700"
                             placeholder="수량"
                           />
                           <span className="w-8 text-center text-xs text-gray-400">
@@ -700,7 +700,7 @@ function CreateModal({
           <button
             onClick={handleSubmit}
             disabled={createMutation.isPending}
-            className="flex-1 py-2 bg-[#2D4033] hover:bg-[#23312a] text-white rounded text-sm font-medium disabled:opacity-50 transition-colors"
+            className="wms-primary-button flex-1 py-2 rounded text-sm font-medium disabled:opacity-50 transition-colors"
           >
             {createMutation.isPending ? '등록 중...' : '등록'}
           </button>

@@ -16,23 +16,23 @@ export default function StockAreaChart({ data }: { data: DataPoint[] }) {
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
 
-  const gridColor     = isDark ? '#1f2937' : '#e5e7eb'
-  const tickColor     = isDark ? '#94a3b8' : '#64748b'
-  const tooltipBg     = isDark ? '#0f172a' : '#ffffff'
-  const tooltipBorder = isDark ? '#334155' : '#e5e7eb'
-  const tooltipText   = isDark ? '#e5e7eb' : '#111827'
+  const gridColor     = isDark ? 'var(--color-line)' : 'var(--color-line)'
+  const tickColor     = isDark ? 'var(--color-text-muted)' : 'var(--color-text-muted)'
+  const tooltipBg     = 'var(--color-surface)'
+  const tooltipBorder = 'var(--color-line)'
+  const tooltipText   = 'var(--color-text)'
 
   return (
     <ResponsiveContainer width="100%" height="100%">
       <AreaChart data={data} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
         <defs>
           <linearGradient id="gradIn" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%"  stopColor="#10b981" stopOpacity={0.28} />
-            <stop offset="95%" stopColor="#10b981" stopOpacity={0}    />
+            <stop offset="5%"  stopColor="var(--color-success)" stopOpacity={0.28} />
+            <stop offset="95%" stopColor="var(--color-success)" stopOpacity={0}    />
           </linearGradient>
           <linearGradient id="gradOut" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%"  stopColor="#f43f5e" stopOpacity={0.25} />
-            <stop offset="95%" stopColor="#f43f5e" stopOpacity={0}    />
+            <stop offset="5%"  stopColor="var(--color-danger)" stopOpacity={0.25} />
+            <stop offset="95%" stopColor="var(--color-danger)" stopOpacity={0}    />
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
@@ -50,9 +50,9 @@ export default function StockAreaChart({ data }: { data: DataPoint[] }) {
         />
         <Tooltip
           contentStyle={{
-            borderRadius: '12px',
+            borderRadius: 'var(--radius-md)',
             border: `1px solid ${tooltipBorder}`,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
+            boxShadow: 'var(--shadow-card)',
             fontSize: '12px',
             backgroundColor: tooltipBg,
             color: tooltipText,
@@ -67,19 +67,19 @@ export default function StockAreaChart({ data }: { data: DataPoint[] }) {
         <Area
           type="monotone"
           dataKey="입고"
-          stroke="#10b981"
+          stroke="var(--color-success)"
           strokeWidth={2}
           fill="url(#gradIn)"
-          dot={{ r: 3, fill: '#10b981' }}
+          dot={{ r: 3, fill: 'var(--color-success)' }}
           activeDot={{ r: 5 }}
         />
         <Area
           type="monotone"
           dataKey="출고"
-          stroke="#f43f5e"
+          stroke="var(--color-danger)"
           strokeWidth={2}
           fill="url(#gradOut)"
-          dot={{ r: 3, fill: '#f43f5e' }}
+          dot={{ r: 3, fill: 'var(--color-danger)' }}
           activeDot={{ r: 5 }}
         />
       </AreaChart>

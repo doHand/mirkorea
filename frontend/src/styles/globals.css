@@ -1,3 +1,5 @@
+@import './tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -11,6 +13,7 @@
 .dark ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
 
 /* ───── AG Grid 테마 오버라이드 ───── */
+.wms-ag-grid,
 .ag-theme-wms {
   --ag-font-family: 'Pretendard', sans-serif;
   --ag-font-size: 13px;
@@ -39,24 +42,100 @@
 
 .ag-theme-wms .ag-header-cell-text { font-weight: 600; }
 
-/* Product inventory: keep the full grid softly tinted, including pinned cells. */
-.product-inventory-grid .ag-center-cols-container .ag-row,
-.product-inventory-grid .ag-pinned-left-cols-container .ag-row {
-  background-color: #f8fbfd;
+/*
+ * Single operational-grid theme. Apply `ag-theme-quartz ag-theme-wms` to every
+ * screen grid so colors, density, focus, edit state, and dark mode stay aligned.
+ */
+.ag-theme-wms {
+  --ag-background-color: #ffffff;
+  --ag-foreground-color: #1f2937;
+  --ag-header-background-color: #2d4033;
+  --ag-header-foreground-color: #ffffff;
+  --ag-odd-row-background-color: #f8faf8;
+  --ag-row-hover-color: #eef5ef;
+  --ag-selected-row-background-color: #dcecdf;
+  --ag-border-color: #d8ddd8;
+  --ag-row-border-color: #e7ece7;
+  --ag-cell-horizontal-border: solid #e7ece7;
+  --ag-header-column-separator-color: rgba(255, 255, 255, 0.2);
+  --ag-header-column-separator-height: 55%;
+  /* 작업 중인 셀과 선택 영역은 WMS 메인 포인트색(주황)으로 표시한다. */
+  --ag-active-color: #d2691e;
+  --ag-checkbox-checked-color: #2d4033;
+  --ag-input-focus-border-color: #d2691e;
+  --ag-range-selection-border-color: #d2691e;
+  --ag-font-size: 13px;
+  --ag-header-font-size: 12px;
+  --ag-row-height: 38px;
+  --ag-header-height: 40px;
+  border: 0;
 }
 
-.product-inventory-grid .ag-pinned-left-cols-container .ag-row {
-  background-color: #eef6fa;
+.wms-ag-grid .ag-header,
+.wms-ag-grid .ag-header-cell,
+.wms-ag-grid .ag-header-group-cell,
+.ag-theme-wms .ag-header,
+.ag-theme-wms .ag-header-cell,
+.ag-theme-wms .ag-header-group-cell {
+  background-color: #2d4033 !important;
+  color: #ffffff !important;
 }
 
-.product-inventory-grid .ag-center-cols-container .ag-row.ag-row-odd {
-  background-color: #f1f7fb;
+.ag-theme-wms .ag-header-group-cell {
+  background-color: #3a5540 !important;
 }
 
-.product-inventory-grid .ag-pinned-left-cols-container .ag-row.ag-row-odd {
-  background-color: #e6f1f7;
+.ag-theme-wms .ag-header-cell-label,
+.ag-theme-wms .ag-header-group-cell-label {
+  justify-content: center;
 }
 
+.ag-theme-wms .ag-header-cell-text,
+.ag-theme-wms .ag-header-group-text,
+.ag-theme-wms .ag-header-icon,
+.ag-theme-wms .ag-header-cell-menu-button {
+  color: #ffffff !important;
+}
+
+.ag-theme-wms .ag-cell {
+  display: flex;
+  align-items: center;
+  border-right-color: #e7ece7;
+}
+
+.ag-theme-wms .ag-cell-focus {
+  border: 2px solid #d2691e !important;
+}
+
+.ag-theme-wms .ag-cell-inline-editing {
+  box-shadow: inset 0 0 0 1px #d2691e;
+}
+
+.ag-theme-wms .ag-paging-panel,
+.ag-theme-wms .ag-overlay {
+  color: #6b7280;
+}
+
+.dark .ag-theme-wms {
+  --ag-background-color: #111827;
+  --ag-foreground-color: #e5e7eb;
+  --ag-header-background-color: #1f3a28;
+  --ag-header-foreground-color: #f9fafb;
+  --ag-odd-row-background-color: #162018;
+  --ag-row-hover-color: #253b2a;
+  --ag-selected-row-background-color: #314b37;
+  --ag-border-color: #374151;
+  --ag-row-border-color: #26312a;
+  --ag-cell-horizontal-border: solid #26312a;
+}
+
+.dark .ag-theme-wms .ag-header,
+.dark .ag-theme-wms .ag-header-cell,
+.dark .ag-theme-wms .ag-header-group-cell {
+  background-color: #1f3a28 !important;
+}
+
+/* Product grid keeps only workflow-state colors; its base appearance comes from ag-theme-wms. */
 .product-inventory-grid .ag-row.row-below-safety,
 .product-inventory-grid .ag-pinned-left-cols-container .ag-row.row-below-safety {
   background-color: #fff0f0 !important;
@@ -84,90 +163,13 @@
   background-color: #fff1f2 !important;
 }
 
+.barcode-pending-delete {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
 .product-inventory-grid .ag-row.row-below-safety .ag-cell {
   background-color: transparent !important;
-}
-
-.product-inventory-grid .ag-center-cols-container .ag-row:hover,
-.product-inventory-grid .ag-pinned-left-cols-container .ag-row:hover {
-  background-color: #d7efff;
-}
-
-.product-inventory-grid .ag-center-cols-container .ag-row.ag-row-selected,
-.product-inventory-grid .ag-pinned-left-cols-container .ag-row.ag-row-selected {
-  background-color: #c8eaff;
-}
-
-.product-inventory-grid .ag-header-cell,
-.product-inventory-grid .ag-cell {
-  border-right: 1px solid #c8e4f2 !important;
-}
-
-.product-inventory-grid .ag-pinned-left-header,
-.product-inventory-grid .ag-pinned-left-cols-viewport {
-  border-right: 1px solid #9bcde5;
-  box-shadow: 2px 0 5px rgba(61, 126, 157, 0.12);
-}
-
-.product-inventory-grid .ag-header,
-.product-inventory-grid .ag-pinned-left-header {
-  background-color: #355b73 !important;
-  color: #f5f9fc !important;
-  border-color: #5f8297 !important;
-}
-
-.product-inventory-grid .ag-header-cell {
-  background-color: #355b73 !important;
-  color: #f5f9fc !important;
-  border-left: 1px solid #5f8297 !important;
-  border-right: 1px solid #5f8297 !important;
-  border-bottom-color: #5f8297 !important;
-}
-
-.product-inventory-grid .ag-header-group-cell {
-  background-color: #4b7288 !important;
-  color: #f5f9fc !important;
-  border-left: 1px solid #6e91a5 !important;
-  border-right: 1px solid #6e91a5 !important;
-  border-bottom-color: #5f8297 !important;
-}
-
-/* Compact header treatment without overriding AG Grid's internal layout. */
-.product-inventory-grid .ag-header-cell-label {
-  width: 100%;
-  justify-content: center;
-  gap: 4px;
-}
-
-.product-inventory-grid .ag-header-cell-text {
-  font-weight: 600;
-  color: #f5f9fc !important;
-}
-
-.product-inventory-grid .ag-header-group-cell-label {
-  width: 100%;
-  justify-content: center;
-  white-space: nowrap;
-}
-
-.product-inventory-grid .ag-header-group-text {
-  overflow: visible;
-  text-overflow: clip;
-  color: #f5f9fc !important;
-}
-
-.product-inventory-grid .ag-header-icon,
-.product-inventory-grid .ag-header-icon .ag-icon,
-.product-inventory-grid .ag-header-cell-menu-button,
-.product-inventory-grid .ag-header-cell-menu-button .ag-icon {
-  color: #b9d3e1;
-  margin-left: 4px;
-}
-
-.product-inventory-grid .ag-header-cell:hover .ag-header-icon,
-.product-inventory-grid .ag-header-cell:hover .ag-header-cell-menu-button,
-.product-inventory-grid .ag-header-cell.ag-header-cell-sorted .ag-header-icon {
-  color: #ffffff;
 }
 
 .product-grid-overflow .responsive-icon-action,
@@ -177,13 +179,13 @@
   gap: 6px;
   border: 0 !important;
   background: transparent !important;
-  color: #355b73 !important;
+  color: #2d4033 !important;
   padding: 0 8px;
 }
 
 .product-grid-overflow .responsive-icon-action:hover,
 .product-grid-overflow > button:hover {
-  background: #eaf5fa !important;
+  background: #fef9c3 !important;
 }
 
 .product-grid-overflow .responsive-action-label {
@@ -559,4 +561,256 @@
     cursor: row-resize;
     pointer-events: none;
   }
+}
+
+/*
+ * Shared soft-dashboard design system.
+ * Pages must use these semantic classes instead of declaring their own background colors.
+ * Change the variables here to recolor every layout, card, button, and AG Grid at once.
+ */
+.app-shell,
+.app-workspace,
+.app-embed {
+  background: var(--color-page);
+}
+
+.app-surface,
+.data-card {
+  background: var(--color-surface);
+  border: var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.app-toolbar {
+  background: var(--color-surface);
+  border-color: var(--color-line);
+}
+
+.app-header {
+  background: var(--color-surface);
+  border-color: var(--color-line);
+}
+
+.app-tabs {
+  background: var(--color-surface-muted);
+  border-color: var(--color-line);
+}
+
+.app-brand-accent {
+  background: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.app-loader { background: var(--color-page); }
+.app-loader-mark,
+.app-loader-dot,
+.app-user-avatar { background: var(--color-primary); }
+.app-loader-dot-muted { background: var(--color-primary-soft); }
+.app-header-title { color: var(--color-text); }
+.app-header-icon,
+.app-header-accent { color: var(--color-primary); }
+.app-notification-title { color: var(--color-primary); }
+
+.app-tab-active {
+  background: var(--color-surface-muted);
+  color: var(--color-text-strong);
+  border-color: var(--color-line);
+}
+.app-tab-split { box-shadow: inset 0 0 0 1px var(--color-primary); }
+.app-tab-drop-active { background: var(--color-primary-soft); border-color: var(--color-primary); color: var(--color-primary); }
+
+/* Sidebar uses semantic classes so its palette never needs to be edited in JSX. */
+.app-sidebar {
+  width: 216px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-right: var(--border-default);
+  user-select: none;
+}
+
+.app-sidebar-brand { height: 64px; padding: 0 1rem; }
+.app-sidebar-logo,
+.app-sidebar-avatar {
+  display: grid;
+  place-items: center;
+  background: var(--color-primary);
+  color: #fff;
+  box-shadow: 0 4px 12px rgb(255 107 74 / 22%);
+}
+.app-sidebar-logo { width: 2rem; height: 2rem; border-radius: 0.75rem; }
+.app-sidebar-avatar { width: 1.75rem; height: 1.75rem; border-radius: 0.5rem; }
+.app-sidebar-title { color: #263238; }
+.app-sidebar-caption,
+.app-sidebar-section-label { color: var(--color-primary); }
+.app-sidebar-close { color: var(--color-text-muted); }
+.app-sidebar-close:hover,
+.app-sidebar-section:hover,
+.app-sidebar-link:hover,
+.app-sidebar-logout:hover { background: var(--color-surface-muted); color: var(--color-primary); }
+.app-sidebar-section { border-radius: 0.5rem; }
+.app-sidebar-section-label { color: #a47767; }
+.app-sidebar-section-icon { color: #b9a49b; }
+.app-sidebar-section:hover .app-sidebar-section-label,
+.app-sidebar-section:hover .app-sidebar-section-icon { color: var(--color-primary); }
+.app-sidebar-link { color: #667085; border-radius: 0.75rem; }
+.app-sidebar-link-active { background: var(--color-primary); color: #fff; box-shadow: var(--shadow-primary); }
+.app-sidebar-link-active:hover { background: var(--color-primary-hover); color: #fff; }
+.app-sidebar-link-icon { color: #98a2b3; }
+.app-sidebar-link:hover .app-sidebar-link-icon { color: var(--color-primary); }
+.app-sidebar-link-active .app-sidebar-link-icon { color: #fff; }
+.app-sidebar-active-marker { background: #fff; border-radius: 0 999px 999px 0; }
+.app-sidebar-divider,
+.app-sidebar-footer { border-color: var(--color-line); }
+.app-sidebar-user { background: #fff6f2; border-radius: 0.75rem; }
+.app-sidebar-user-name { color: var(--color-text); }
+.app-sidebar-role,
+.app-sidebar-logout { color: var(--ui-muted); }
+
+.btn-primary,
+.wms-primary-button {
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: #fff !important;
+  box-shadow: var(--shadow-primary);
+}
+
+.btn-primary:hover,
+.wms-primary-button:hover {
+  background: var(--color-primary-hover) !important;
+}
+
+.wms-icon-button {
+  border: 1px solid var(--color-primary-soft);
+  background: var(--color-surface);
+  color: var(--color-primary);
+}
+
+.wms-icon-button:hover {
+  background: var(--color-primary-soft);
+}
+
+.wms-grid-toolbar {
+  background: var(--color-primary);
+  border-color: var(--color-primary-hover);
+}
+
+.wms-toolbar-action {
+  border: 1px solid rgb(255 255 255 / 28%);
+  background: rgb(255 255 255 / 12%);
+  color: #fff;
+}
+
+.wms-toolbar-action:hover {
+  background: rgb(255 255 255 / 24%);
+}
+
+.wms-detail-header {
+  background: var(--color-surface-muted);
+  border-color: var(--color-primary-soft);
+}
+
+.wms-inline-input {
+  border-color: var(--color-line);
+  background: var(--color-surface);
+}
+.wms-inline-input:focus { border-color: var(--color-primary); }
+.wms-inline-link,
+.wms-detail-label { color: var(--color-primary); }
+.wms-checkbox { accent-color: var(--color-primary); }
+.wms-list-option:hover { background: var(--color-surface-muted); }
+.wms-editor-panel { background: var(--color-surface-muted); border: var(--border-default); border-radius: var(--radius-sm); }
+.wms-modal-header { border-color: var(--color-line); }
+.wms-modal-mark { background: var(--color-grid-header); color: #fff; border-radius: var(--radius-sm); }
+.wms-tag { background: var(--color-primary-soft); color: var(--color-text); border-radius: 999px; }
+.wms-tag-muted { background: var(--color-surface-muted); color: var(--color-text); border-radius: 999px; }
+.wms-star { color: var(--color-primary); fill: var(--color-primary); }
+.wms-panel { background: var(--color-surface); border: var(--border-default); }
+.wms-panel-header { background: var(--color-surface-muted); border-color: var(--color-line); }
+.wms-tab-active { background: var(--color-primary-soft); border-color: var(--color-primary); color: var(--color-primary); }
+.wms-code { color: var(--color-text); }
+.wms-ag-grid .ag-row.wms-ag-grid-row-new .ag-cell {
+  background: var(--color-surface-muted);
+  box-shadow: inset 0 0 0 1px var(--color-primary);
+}
+
+.wms-table-header,
+.wms-selected-bar {
+  background: #344b3e;
+  color: #fff;
+}
+
+/* Reusable page primitives consumed through src/styles/ui.ts. */
+.wms-card,
+.wms-card-flat,
+.wms-table-wrap,
+.wms-filter-card {
+  background: var(--color-surface);
+  border: var(--border-default);
+  border-radius: var(--radius-sm);
+}
+.wms-table-wrap { overflow: hidden; }
+.wms-filter-card { display: flex; gap: 0.625rem; padding: 0.75rem; }
+.wms-table-body { border-color: var(--color-line); }
+.wms-table-row { transition: background-color 150ms ease; }
+.wms-table-row:hover { background: var(--color-surface-muted); }
+.wms-table-cell { padding: 0.5rem 0.75rem; color: var(--color-text); font-size: 0.875rem; }
+.wms-heading { color: var(--color-text-strong); font-size: 1.125rem; font-weight: 700; }
+.wms-subtext { color: var(--color-text-muted); margin-top: 0.125rem; font-size: 0.75rem; }
+.wms-label { display: block; margin-bottom: 0.25rem; color: var(--color-text); font-size: 0.875rem; font-weight: 500; }
+.wms-input {
+  width: 100%; padding: 0.5rem 0.75rem; border: var(--border-default); border-radius: var(--radius-sm);
+  background: var(--color-surface); color: var(--color-text); font-size: 0.875rem; outline: none;
+}
+.wms-input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgb(255 107 74 / 15%); }
+.wms-search-input { padding-left: 2.25rem; }
+.wms-primary-button,
+.wms-secondary-button,
+.wms-danger-button,
+.wms-icon-button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem;
+  border-radius: var(--radius-sm); font-size: 0.875rem; font-weight: 500; transition: 150ms ease;
+}
+.wms-primary-button { padding: 0.375rem 0.75rem; }
+.wms-secondary-button { padding: 0.375rem 0.75rem; border: var(--border-default); background: var(--color-surface); color: var(--color-text); }
+.wms-secondary-button:hover { background: var(--color-surface-muted); }
+.wms-danger-button { padding: 0.375rem 0.75rem; background: var(--color-danger); color: #fff; }
+.wms-icon-button { padding: 0.375rem; }
+.wms-icon-button-danger { color: var(--color-danger); }
+.wms-modal-overlay { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; background: rgb(17 24 39 / 45%); }
+.wms-modal-box { padding: var(--space-panel); background: var(--color-surface); border: var(--border-default); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); }
+
+.wms-splitter {
+  background: #f8fafc;
+  border-color: var(--ui-line);
+}
+
+.wms-splitter:hover,
+.wms-splitter:active {
+  background: var(--ui-primary-soft);
+}
+
+/* The grid has the same palette and can be rethemed by editing these variables only. */
+.ag-theme-wms {
+  --ag-background-color: var(--color-surface);
+  --ag-header-background-color: var(--color-grid-header);
+  --ag-odd-row-background-color: #fffaf8;
+  --ag-row-hover-color: var(--color-surface-muted);
+  --ag-selected-row-background-color: var(--color-primary-soft);
+  --ag-border-color: var(--color-line);
+  --ag-row-border-color: var(--color-line);
+  --ag-active-color: var(--color-primary);
+  --ag-input-focus-border-color: var(--color-primary);
+  --ag-range-selection-border-color: var(--color-primary);
+}
+
+.wms-workspace {
+  --wms-ivory: var(--color-page);
+  --wms-oatmeal: var(--color-surface-muted);
+  --wms-terracotta: var(--color-primary);
+  --wms-forest: var(--color-text);
+  --wms-line: var(--color-line);
 }

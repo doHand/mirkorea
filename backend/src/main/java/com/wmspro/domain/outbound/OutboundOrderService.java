@@ -3,7 +3,13 @@ package com.wmspro.domain.outbound;
 import com.wmspro.common.PageResponse;
 import com.wmspro.common.exception.*;
 import com.wmspro.common.sse.SseService;
+import com.wmspro.domain.inventory.Inventory;
+import com.wmspro.domain.inventory.InventoryRepository;
 import com.wmspro.domain.product.UnitConversionService;
+import com.wmspro.domain.stock.StockService;
+import com.wmspro.domain.stock.StockTransaction;
+import com.wmspro.domain.stock.StockTransactionRepository;
+import com.wmspro.domain.stock.dto.OutboundRequest;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.Hibernate;
 import org.springframework.data.domain.*;
@@ -23,6 +29,9 @@ public class OutboundOrderService {
     private final JdbcTemplate jdbcTemplate;
     private final SseService sseService;
     private final UnitConversionService unitConversionService;
+    private final StockService stockService;
+    private final InventoryRepository inventoryRepo;
+    private final StockTransactionRepository txnRepo;
 
     public PageResponse<OutboundOrder> findAll(UUID warehouseId, OutboundOrderStatus status, String search, int page, int limit) {
         String q = search != null ? search.trim() : "";
@@ -86,7 +95,7 @@ public class OutboundOrderService {
     }
 
     @Transactional
-    public List<OutboundOrder> completePicking(PickingCompletionRequest req) {
+    public List<OutboundOrder> completePicking(PickingCompletionRequest req, UUID userId) {
         if (req == null || req.orderIds == null || req.orderIds.isEmpty() || req.items == null || req.items.isEmpty()) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
@@ -126,22 +135,96 @@ public class OutboundOrderService {
         });
 
         Instant pickedAt = Instant.now();
-        orders.stream()
+        List<OutboundOrder> fullyPicked = orders.stream()
             .filter(order -> order.getItems().stream()
                 .allMatch(item -> item.getPickedBoxCount() >= item.getBoxCount()))
-            .forEach(order -> {
-                order.setStatus(OutboundOrderStatus.PICKED);
-                order.setPickedAt(pickedAt);
-            });
+            .toList();
+
+        fullyPicked.forEach(order -> {
+            order.setStatus(OutboundOrderStatus.PICKED);
+            order.setPickedAt(pickedAt);
+            deductStockForOrder(order, userId);
+        });
+
         List<OutboundOrder> result = repository.saveAll(orders);
         sseService.broadcast("outbound");
         return result;
     }
 
+    private void deductStockForOrder(OutboundOrder order, UUID userId) {
+        for (OutboundOrderItem item : order.getItems()) {
+            int remaining = item.getConvertedEaQty();
+            List<Inventory> available = inventoryRepo.findAvailableByProduct(item.getProductId(), order.getWarehouseId());
+
+            for (Inventory inv : available) {
+                if (remaining <= 0) break;
+                int deduct = Math.min(remaining, inv.getAvailableQty());
+                if (deduct <= 0) continue;
+
+                OutboundRequest outReq = new OutboundRequest();
+                outReq.productId = item.getProductId();
+                outReq.locationId = inv.getLocationId();
+                outReq.warehouseId = order.getWarehouseId();
+                outReq.quantity = deduct;
+                outReq.reason = "출고 완료 - " + order.getOrderNo();
+                outReq.memo = order.getCustomer();
+                outReq.referenceType = "OUTBOUND_ORDER";
+                outReq.referenceId = order.getId();
+                stockService.outbound(outReq, userId);
+                remaining -= deduct;
+            }
+
+            if (remaining > 0) {
+                throw new BusinessException(ErrorCode.INSUFFICIENT_STOCK);
+            }
+        }
+    }
+
     @Transactional
-    public OutboundOrder cancel(UUID id) {
+    public OutboundOrder ship(UUID id) {
+        OutboundOrder order = findById(id);
+        if (order.getStatus() != OutboundOrderStatus.PICKED) throw invalidStatus();
+        order.setStatus(OutboundOrderStatus.SHIPPED);
+        order.setShippedAt(Instant.now());
+        OutboundOrder saved = repository.save(order);
+        sseService.broadcast("outbound");
+        return saved;
+    }
+
+    @Transactional
+    public OutboundOrder hold(UUID id) {
+        OutboundOrder order = findById(id);
+        if (order.getStatus() == OutboundOrderStatus.SHIPPED
+            || order.getStatus() == OutboundOrderStatus.CANCELLED
+            || order.getStatus() == OutboundOrderStatus.ON_HOLD) throw invalidStatus();
+        order.setStatus(OutboundOrderStatus.ON_HOLD);
+        OutboundOrder saved = repository.save(order);
+        sseService.broadcast("outbound");
+        return saved;
+    }
+
+    @Transactional
+    public OutboundOrder unhold(UUID id) {
+        OutboundOrder order = findById(id);
+        if (order.getStatus() != OutboundOrderStatus.ON_HOLD) throw invalidStatus();
+        order.setStatus(OutboundOrderStatus.COLLECTED);
+        OutboundOrder saved = repository.save(order);
+        sseService.broadcast("outbound");
+        return saved;
+    }
+
+    @Transactional
+    public OutboundOrder cancel(UUID id, UUID userId) {
         OutboundOrder order = findById(id);
         if (order.getStatus() == OutboundOrderStatus.CANCELLED) throw invalidStatus();
+
+        if (order.getStatus() == OutboundOrderStatus.PICKED) {
+            List<StockTransaction> txns = txnRepo.findActiveOutboundByReference(order.getId(), "OUTBOUND_ORDER");
+            for (StockTransaction txn : txns) {
+                stockService.cancelOutbound(txn.getId(), "출고 취소 - " + order.getOrderNo(), userId);
+            }
+        }
+
         order.setStatus(OutboundOrderStatus.CANCELLED);
         OutboundOrder saved = repository.save(order);
         sseService.broadcast("outbound");

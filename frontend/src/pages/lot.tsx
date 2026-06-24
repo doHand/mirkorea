@@ -1,100 +1,40 @@
-﻿'use client'
-import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+'use client'
+
+import { useMemo, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import type { ColDef } from 'ag-grid-community'
 import toast from 'react-hot-toast'
 import { productApi } from '@/api/product.api'
-import { cn } from '@/utils/cn'
+import { AppAgGrid } from '@/components/AppAgGrid'
+import { GridActionButton } from '@/components/grid/GridActionButton'
+import { GridPageLayout } from '@/components/grid/GridPageLayout'
 import { formatNumber } from '@/utils/format'
 import type { Product } from '@/types/api.types'
 
 export default function LotPage() {
-  const qc = useQueryClient()
+  const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
-
-  const { data, isLoading } = useQuery({
-    queryKey: ['products', search],
-    queryFn: () => productApi.findAll({ search, limit: 200 }),
-  })
-
-  const updateMutation = useMutation({
-    mutationFn: ({ id, isLotManaged }: { id: string; isLotManaged: boolean }) =>
-      productApi.update(id, { isLotManaged }),
-    onSuccess: (_, { isLotManaged }) => {
-      qc.invalidateQueries({ queryKey: ['products'] })
-      toast.success(`LOT 관리 ${isLotManaged ? '활성화' : '비활성화'}`)
+  const { data, isLoading } = useQuery({ queryKey: ['products', search], queryFn: () => productApi.findAll({ search, limit: 200 }) })
+  const updateLot = useMutation({
+    mutationFn: ({ id, isLotManaged }: { id: string; isLotManaged: boolean }) => productApi.update(id, { isLotManaged }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      toast.success(`LOT 관리 ${variables.isLotManaged ? '활성화' : '비활성화'}`)
     },
-    onError: () => toast.error('변경 실패'),
+    onError: () => toast.error('변경에 실패했습니다.'),
   })
+  const products = data?.items ?? []
+  const columns = useMemo<ColDef<Product>[]>(() => [
+    { headerName: '코드', field: 'code', width: 130 },
+    { headerName: '상품명', field: 'name', minWidth: 180, flex: 1 },
+    { headerName: '카테고리', width: 140, valueGetter: (p) => p.data?.category ?? '-' },
+    {
+      headerName: 'LOT 관리', width: 120, sortable: false, filter: false,
+      cellRenderer: (p: { data?: Product }) => p.data ? <GridActionButton onClick={() => updateLot.mutate({ id: p.data!.id, isLotManaged: !p.data!.isLotManaged })} disabled={updateLot.isPending} className={p.data.isLotManaged ? 'border-orange-300 bg-orange-50 text-orange-700' : 'border-gray-300 text-gray-600'}>{p.data.isLotManaged ? '활성' : '비활성'}</GridActionButton> : '-',
+    },
+  ], [updateLot])
 
-  const products: Product[] = data?.items ?? []
-  const lotCount = products.filter((p) => p.isLotManaged).length
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
-            LOT 관리
-          </h2>
-          <p className="text-xs text-gray-400 mt-0.5">LOT 추적이 필요한 상품을 활성화합니다. (유통기간 관리 없음)</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-gray-400 hidden sm:block">LOT 활성: <strong className="text-[#D2691E] tabular-nums">{formatNumber(lotCount)}</strong>개</span>
-          <div className="relative">
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="코드 / 상품명"
-              className="pl-3 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-900 outline-none focus:border-[#D2691E] w-48" />
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-        <table className="w-full min-w-[480px] text-sm">
-          <thead>
-            <tr className="bg-[#2D4033] text-white">
-              <th className="text-center px-5 py-3 font-semibold w-32">코드</th>
-              <th className="text-center px-4 py-3 font-semibold">상품명</th>
-              <th className="text-center px-4 py-3 font-semibold w-28">카테고리</th>
-              <th className="text-center px-4 py-3 font-semibold w-28">LOT 관리</th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading && <tr><td colSpan={4} className="text-center py-10 text-gray-400 text-sm">불러오는 중...</td></tr>}
-            {!isLoading && products.length === 0 && <tr><td colSpan={4} className="text-center py-10 text-gray-300 text-sm">검색 결과 없음</td></tr>}
-            {products.map((p: Product) => (
-              <tr key={p.id} className={cn('border-t border-gray-100 dark:border-gray-800 transition-colors',
-                p.isLotManaged ? 'bg-[#F9F7F2] dark:bg-[#2D4033]/5' : 'hover:bg-gray-50/30 dark:hover:bg-gray-800/10')}>
-                <td className="px-5 py-3">
-                  <span className="font-mono text-xs text-[#2D4033] dark:text-[#E5D3B3]">{p.code}</span>
-                </td>
-                <td className="px-4 py-3 text-gray-800 dark:text-gray-200 font-medium">{p.name}</td>
-                <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{p.category ?? '—'}</td>
-                <td className="px-4 py-3">
-                  <div className="flex justify-center">
-                    <button
-                      disabled={updateMutation.isPending}
-                      onClick={() => updateMutation.mutate({ id: p.id, isLotManaged: !p.isLotManaged })}
-                      className={cn(
-                        'relative rounded-full transition-colors duration-200 focus:outline-none disabled:opacity-60',
-                        'w-10 h-[22px]',
-                        p.isLotManaged ? 'bg-[#D2691E]' : 'bg-gray-200 dark:bg-gray-700',
-                      )}
-                      aria-label={p.isLotManaged ? 'LOT 관리 비활성화' : 'LOT 관리 활성화'}
-                    >
-                      <span className={cn(
-                        'absolute top-0.5 left-0.5 bg-white rounded-full shadow transition-transform duration-200',
-                        'w-[18px] h-[18px]',
-                        p.isLotManaged ? 'translate-x-[18px]' : 'translate-x-0',
-                      )} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        </div>
-      </div>
-    </div>
-  )
+  return <GridPageLayout title="LOT 관리" description="LOT 추적이 필요한 상품을 활성화합니다." toolbar={<div className="flex items-center gap-3"><span className="text-xs text-gray-400">LOT 활성 <strong className="text-[#D2691E]">{formatNumber(products.filter((product) => product.isLotManaged).length)}</strong>개</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="코드 / 상품명" className="w-48 rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900" /></div>}>
+    <div className="min-h-0 flex-1 overflow-hidden rounded border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900"><AppAgGrid rows={products} columns={columns} loading={isLoading} /></div>
+  </GridPageLayout>
 }

@@ -172,6 +172,7 @@ public class ProductService {
         }
         return barcodeRepo.save(Barcode.builder()
             .productId(productId)
+            .productCode(product.getCode())
             .barcode(barcodeValue)
             .type(type)
             .unitQty(normalizeBarcodeQty(type, unitQty))
@@ -233,6 +234,6 @@ public class ProductService {
     }
 
     private boolean isSingleUnitBarcode(BarcodeUnitType type) {
-        return type == BarcodeUnitType.UNIT || type == BarcodeUnitType.BOX;
+        return type == BarcodeUnitType.UNIT;
     }
 }

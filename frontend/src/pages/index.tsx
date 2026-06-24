@@ -13,8 +13,8 @@ import { useAuthStore } from '@/stores/auth.store'
 import { stockApi } from '@/api/stock.api'
 import { QUERY_KEYS } from '@/constants/query-keys'
 import { formatNumber } from '@/utils/format'
-import { format, subDays } from 'date-fns'
-import { ko } from 'date-fns/locale'
+import dayjs from 'dayjs'
+import 'dayjs/locale/ko'
 import type { StockTransaction, UserRole } from '@/types/api.types'
 
 const ROLE_DASHBOARD: Record<UserRole, {
@@ -287,9 +287,8 @@ export default function DashboardPage() {
   const transactions: StockTransaction[] = txPage?.items ?? []
 
   const totalTransactions7 = useMemo(() => {
-    const start = subDays(new Date(), 6)
-    start.setHours(0, 0, 0, 0)
-    return transactions.filter((txn) => new Date(txn.createdAt) >= start).length
+    const start = dayjs().subtract(6, 'day').startOf('day')
+    return transactions.filter((txn) => dayjs(txn.createdAt).isAfter(start) || dayjs(txn.createdAt).isSame(start)).length
   }, [transactions])
 
   const productRanks = useMemo(() => {
@@ -412,7 +411,7 @@ export default function DashboardPage() {
                 {warehouse.name}
               </span>
               <span className="text-xs text-gray-400 dark:text-slate-400">
-                {format(new Date(), 'M월 d일 EEEE', { locale: ko })}
+                {dayjs().locale('ko').format('M월 D일 dddd')}
               </span>
             </div>
           </div>

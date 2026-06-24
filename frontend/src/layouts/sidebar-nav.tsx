@@ -2,7 +2,11 @@
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
-import { LogOut, ChevronDown, Warehouse, X } from 'lucide-react'
+import {
+  LogOut, ChevronDown, Warehouse, LayoutDashboard, Package, Barcode, Ruler, Tags,
+  ArrowDownToLine, ArrowUpFromLine, ScanLine, History, ClipboardCheck, Building2,
+  FileText, Users, ShieldCheck, Settings, Bell, UserCircle, type LucideIcon,
+} from 'lucide-react'
 import { cn } from '@/utils/cn'
 import { useAuthStore } from '@/stores/auth.store'
 import { useMenuPermissionStore } from '@/stores/menu-permission.store'
@@ -22,7 +26,6 @@ const TEXT_MAP: Record<string, string> = {
   categories:          '분류',
   inbound:             '입고',
   outbound:            '출고',
-  'picking-list':      '피킹',
   pricing:             '가격',
   warehouse:           '창고',
   transactions:        '거래',
@@ -37,6 +40,17 @@ const TEXT_MAP: Record<string, string> = {
   alerts:              '알림',
   permissions:         '권한',
   'inventory-audit':   '실사',
+}
+
+// Menu IDs are stable even when administrators rename menu labels, so icons remain consistent.
+const MENU_ICONS: Record<string, LucideIcon> = {
+  dashboard: LayoutDashboard, products: Package, inventory: ClipboardCheck, scan: ScanLine,
+  'product-codes': Tags, barcodes: Barcode, 'product-attrs': Package, 'box-qty': Package,
+  lot: ClipboardCheck, units: Ruler, categories: Tags, inbound: ArrowDownToLine,
+  outbound: ArrowUpFromLine, pricing: Tags, warehouse: Warehouse, transactions: History,
+  'inventory-audit': ClipboardCheck, clients: Building2, quotes: FileText, users: Users,
+  permissions: ShieldCheck, 'menu-permissions': Settings, 'supplier-settings': Settings,
+  'role-management': ShieldCheck, 'audit-logs': History, alerts: Bell, profile: UserCircle,
 }
 
 interface Props {
@@ -67,33 +81,33 @@ export function SidebarNav({ onClose }: Props) {
     setCollapsed((prev) => ({ ...prev, [label]: !prev[label] }))
 
   return (
-    <aside className="w-[216px] bg-[#2D4033] text-[#F9F7F2] flex flex-col h-full select-none">
+    <aside className="app-sidebar">
 
       {/* 로고 영역 */}
-      <div className="px-3 h-[48px] flex items-center justify-between shrink-0 border-b border-[#E5D3B3]/20">
+      <div className="app-sidebar-brand flex items-center justify-between shrink-0">
         <Link
           href="/"
           onClick={onClose}
           className="flex items-center gap-2 hover:opacity-90 transition-opacity"
         >
-          <div className="w-7 h-7 bg-[#F9F7F2] border border-[#E5D3B3]/70 rounded flex items-center justify-center shrink-0">
-            <Warehouse size={14} className="text-[#2D4033]" />
+          <div className="app-sidebar-logo shrink-0">
+            <Warehouse size={15} className="text-white" />
           </div>
           <div>
-            <h1 className="text-[13px] font-bold text-white leading-none">MK WMS</h1>
-            <p className="text-[9px] text-slate-500 mt-0.5">창고 물류 관리 시스템</p>
+            <h1 className="app-sidebar-title text-[13px] font-bold leading-none">MK WMS</h1>
+            <p className="app-sidebar-caption text-[9px] mt-1 font-medium">창고 물류 관리 시스템</p>
           </div>
         </Link>
         <button
           onClick={onClose}
-          className="lg:hidden px-1.5 py-0.5 text-[11px] rounded hover:bg-white/10 text-slate-400 transition-colors"
+          className="app-sidebar-close lg:hidden px-1.5 py-0.5 text-[11px] rounded-lg transition-colors"
         >
           닫기
         </button>
       </div>
 
       {/* 네비게이션 */}
-      <nav className="flex-1 overflow-y-auto py-2 space-y-0">
+      <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-1">
         {sections.map(({ label, items }, sectionIndex) => {
           const isOpen = !collapsed[label]
           return (
@@ -101,15 +115,15 @@ export function SidebarNav({ onClose }: Props) {
               {/* 섹션 헤더 */}
               <button
                 onClick={() => toggle(label)}
-                className="w-full flex items-center gap-2 px-3 py-1 hover:bg-black/10 transition-colors group"
+                className="app-sidebar-section w-full flex items-center gap-2 px-2.5 py-2 transition-colors group"
               >
-                <span className="text-[10px] font-bold tracking-[0.08em] text-[#E5D3B3]/55 group-hover:text-[#E5D3B3]/85 transition-colors flex-1 text-left truncate">
+                <span className="app-sidebar-section-label text-[10px] font-bold tracking-[0.08em] transition-colors flex-1 text-left truncate">
                   {label}
                 </span>
                 <ChevronDown
                   size={11}
                   className={cn(
-                    'text-[#E5D3B3]/40 group-hover:text-[#E5D3B3]/75 transition-transform duration-200 shrink-0',
+                    'app-sidebar-section-icon transition-transform duration-200 shrink-0',
                     isOpen ? 'rotate-0' : '-rotate-90',
                   )}
                 />
@@ -122,9 +136,9 @@ export function SidebarNav({ onClose }: Props) {
                   isOpen ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0',
                 )}
               >
-                <div className="px-1.5 pb-0.5 space-y-0">
+                <div className="px-0.5 pb-1 space-y-0.5">
                   {items.map(({ href, label: itemLabel, menuId }) => {
-                    const badge  = TEXT_MAP[menuId] ?? menuId.slice(0, 2)
+                    const Icon = MENU_ICONS[menuId] ?? Settings
                     const active = pathname === href || (href !== '/' && pathname.startsWith(href))
                     return (
                       <Link
@@ -132,25 +146,20 @@ export function SidebarNav({ onClose }: Props) {
                         href={href}
                         onClick={onClose}
                         className={cn(
-                          'group relative flex items-center gap-2 px-2.5 py-1.5 rounded text-[12px] transition-all duration-150',
+                          'app-sidebar-link group relative flex items-center gap-2 px-2.5 py-2 text-[12px] transition-all duration-150',
                           active
-                            ? 'bg-[#F9F7F2] text-[#2D4033] font-semibold shadow-sm'
-                            : 'text-[#F9F7F2]/65 font-medium hover:bg-black/10 hover:text-white',
+                            ? 'app-sidebar-link-active font-semibold'
+                            : 'font-medium',
                         )}
                       >
                         {active && (
-                          <span className="absolute left-0 inset-y-[6px] w-[3px] bg-[#D2691E] rounded-r-full" />
+                          <span className="app-sidebar-active-marker absolute left-0 inset-y-[8px] w-[3px]" />
                         )}
-                        <span
-                          className={cn(
-                            'w-[22px] shrink-0 text-center text-[9px] font-bold leading-none',
-                            active
-                              ? 'text-[#D2691E]'
-                              : 'text-[#E5D3B3]/50 group-hover:text-[#E5D3B3]',
-                          )}
-                        >
-                          {badge}
-                        </span>
+                        <Icon
+                          size={15}
+                          aria-hidden="true"
+                          className="app-sidebar-link-icon shrink-0"
+                        />
                         <span className="flex-1 truncate">{itemLabel}</span>
                       </Link>
                     )
@@ -160,7 +169,7 @@ export function SidebarNav({ onClose }: Props) {
 
               {/* 섹션 구분선 (마지막 제외) */}
               {sectionIndex < sections.length - 1 && (
-                <div className="mx-4 mt-1 border-b border-[#E5D3B3]/10" />
+                <div className="app-sidebar-divider mx-3 mt-2 border-b" />
               )}
             </div>
           )
@@ -168,19 +177,19 @@ export function SidebarNav({ onClose }: Props) {
       </nav>
 
       {/* 사용자 + 로그아웃 */}
-      <div className="px-2.5 py-2 border-t border-[#E5D3B3]/20 space-y-0.5 shrink-0">
-        <div className="flex items-center gap-2 px-2 py-1.5 rounded bg-black/10 border border-[#E5D3B3]/10">
-          <div className="w-6 h-6 rounded bg-[#D2691E] flex items-center justify-center text-white font-bold text-xs shrink-0">
+      <div className="app-sidebar-footer px-3 py-3 border-t space-y-1 shrink-0">
+        <div className="app-sidebar-user flex items-center gap-2 px-2.5 py-2">
+          <div className="app-sidebar-avatar font-bold text-xs shrink-0">
             {user?.fullName?.charAt(0)?.toUpperCase() ?? 'U'}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold text-white truncate leading-tight">{user?.fullName}</p>
-            <span className="text-[10px] text-[#E5D3B3]/60 font-medium">{user?.role}</span>
+            <p className="app-sidebar-user-name text-[11px] font-semibold truncate leading-tight">{user?.fullName}</p>
+            <span className="app-sidebar-role text-[10px] font-medium">{user?.role}</span>
           </div>
         </div>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-[12px] text-[#E5D3B3]/55 hover:bg-black/10 hover:text-white transition-all duration-150"
+          className="app-sidebar-logout w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-[12px] transition-all duration-150"
         >
           <LogOut size={13} className="shrink-0" />
           로그아웃

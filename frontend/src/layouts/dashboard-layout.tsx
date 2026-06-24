@@ -141,17 +141,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [setWarehouse, user?.warehouseId, warehouse, warehouses])
 
   if (!hasHydrated) return (
-    <div className="h-screen w-full flex flex-col items-center justify-center bg-[#142318] dark:bg-[#0a0f0b] gap-4">
-      <div className="w-8 h-8 rounded bg-[#D2691E] flex items-center justify-center">
+    <div className="app-shell app-loader h-screen w-full flex flex-col items-center justify-center gap-4">
+      <div className="app-loader-mark w-8 h-8 rounded flex items-center justify-center">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
           <path d="m3.3 7 8.7 5 8.7-5" /><path d="M12 22V12" />
         </svg>
       </div>
       <div className="flex items-center gap-1.5">
-        <div className="w-1.5 h-1.5 bg-[#D2691E] rounded-full animate-bounce [animation-delay:0ms]" />
-        <div className="w-1.5 h-1.5 bg-[#D2691E]/70 rounded-full animate-bounce [animation-delay:150ms]" />
-        <div className="w-1.5 h-1.5 bg-[#D2691E]/40 rounded-full animate-bounce [animation-delay:300ms]" />
+        <div className="app-loader-dot w-1.5 h-1.5 rounded-full animate-bounce [animation-delay:0ms]" />
+        <div className="app-loader-dot w-1.5 h-1.5 rounded-full animate-bounce [animation-delay:150ms]" />
+        <div className="app-loader-dot-muted w-1.5 h-1.5 rounded-full animate-bounce [animation-delay:300ms]" />
       </div>
     </div>
   )
@@ -167,7 +167,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F9F7F2] dark:bg-[#0a0f0b]">
+    <div className="app-shell flex h-screen overflow-hidden">
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50 lg:hidden"
@@ -184,7 +184,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <SidebarNav onClose={() => setSidebarOpen(false)} />
       </div>
 
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white dark:bg-slate-950 border-l border-[#203127] dark:border-white/5">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden app-surface border-0 rounded-none dark:bg-slate-950">
         <HeaderBar onMenuClick={() => setSidebarOpen(true)}>
           <div className="wms-tabs-layout flex w-full min-w-0 items-end">
             <div
@@ -209,12 +209,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         <div
           ref={containerRef}
-          className="wms-workspace flex-1 flex min-w-0 overflow-hidden bg-[#F9F7F2] dark:bg-slate-950"
+          className="app-workspace wms-workspace flex-1 flex min-w-0 overflow-hidden dark:bg-slate-950"
           style={{ cursor: isResizing ? 'col-resize' : undefined }}
         >
           <div
             ref={mainPanelRef}
-            className="wms-main-panel overflow-auto p-2 lg:p-3"
+            className="wms-main-panel overflow-auto p-4 lg:p-5"
             style={{ width: splitHref ? `${splitRatio}%` : '100%' }}
           >
             {children}
@@ -224,7 +224,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <>
               <div
                 onMouseDown={startResize}
-                className="wms-split-divider w-1 shrink-0 cursor-col-resize bg-gray-200 dark:bg-slate-700 hover:bg-[#D2691E] dark:hover:bg-[#c05c18] transition-colors active:bg-[#D2691E]"
+                className="wms-split-divider w-1 shrink-0 cursor-col-resize wms-splitter transition-colors"
               />
 
               <div
@@ -296,7 +296,7 @@ function EmbedLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="h-screen overflow-auto bg-[#F9F7F2] p-2 dark:bg-slate-950 lg:p-3">
+    <div className="app-embed h-screen overflow-auto p-4 dark:bg-slate-950 lg:p-5">
       <div className="min-h-full">
         {children}
       </div>

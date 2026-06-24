@@ -1,151 +1,65 @@
-﻿'use client'
-import { useState } from 'react'
+'use client'
+
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import type { ColDef } from 'ag-grid-community'
 import { stockApi } from '@/api/stock.api'
 import { useWarehouseStore } from '@/stores/warehouse.store'
 import { QUERY_KEYS } from '@/constants/query-keys'
-import { TX_TYPE_LABEL, TX_TYPE_COLOR } from '@/constants/stock.constants'
-import { formatDateTime, formatQtyDelta, formatNumber } from '@/utils/format'
-import { cn } from '@/utils/cn'
-import * as ui from '@/styles/ui'
+import { TX_TYPE_LABEL } from '@/constants/stock.constants'
+import { formatDateTime, formatNumber, formatQtyDelta } from '@/utils/format'
 import { ExportButton } from '@/components/ExportButton'
-import type { TxType } from '@/types/api.types'
+import { AppAgGrid } from '@/components/AppAgGrid'
+import { GridPageLayout } from '@/components/grid/GridPageLayout'
+import type { StockTransaction, TxType } from '@/types/api.types'
 
 export default function TransactionsPage() {
-  const warehouse = useWarehouseStore((s) => s.selectedWarehouse)
-  const [page, setPage]     = useState(1)
-  const [search, setSearch] = useState('')
+  const warehouse = useWarehouseStore((state) => state.selectedWarehouse)
+  const [page, setPage] = useState(1)
   const [txType, setTxType] = useState<TxType | ''>('')
-  const [from,   setFrom]   = useState('')
-  const [to,     setTo]     = useState('')
+  const [from, setFrom] = useState('')
+  const [to, setTo] = useState('')
 
   const { data, isLoading } = useQuery({
     queryKey: QUERY_KEYS.transactions({ warehouseId: warehouse?.id, txType: txType || undefined, from, to, page }),
-    queryFn:  () => stockApi.getTransactions({
-      warehouseId: warehouse?.id,
-      txType: txType as TxType || undefined,
-      from: from || undefined,
-      to:   to   || undefined,
-      page,
-      limit: 100,
-    }),
-    enabled: !!warehouse?.id,
+    queryFn: () => stockApi.getTransactions({ warehouseId: warehouse!.id, txType: txType || undefined, from: from || undefined, to: to || undefined, page, limit: 100 }),
+    enabled: Boolean(warehouse?.id),
   })
 
-  return (
-    <div className="flex h-[calc(100vh-150px)] min-h-0 flex-col gap-4 overflow-hidden">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white">재고 변경 이력</h2>
-        <div className="self-start sm:self-auto">
-          <ExportButton
-            filename="재고 변경 이력"
-            getData={async () => {
-            const all = await stockApi.getTransactions({
-              warehouseId: warehouse?.id,
-              txType: txType as TxType || undefined,
-              from: from || undefined,
-              to:   to   || undefined,
-              limit: 9999,
-            })
-            return all.items.map((t) => ({
-              '거래번호': t.txnNo,
-              '유형':     TX_TYPE_LABEL[t.txType],
-              '상품명':   t.product?.name ?? '',
-              '상품코드': t.product?.code ?? '',
-              '위치':     t.location?.code ?? '',
-              '변동수량': t.qty,
-              '이전재고': t.qtyBefore,
-              '이후재고': t.qtyAfter,
-              '취소여부': t.isCancelled ? 'Y' : 'N',
-              '작업자':   t.createdByUser?.fullName ?? t.createdByUser?.username ?? '',
-              '일시':     formatDateTime(t.createdAt),
-            }))
-            }}
-          />
-        </div>
-      </div>
+  // Display-only transaction columns stay local; the shared grid owns generic behavior.
+  const columns = useMemo<ColDef<StockTransaction>[]>(() => [
+    { headerName: '거래번호', field: 'txnNo', width: 150 },
+    { headerName: '유형', width: 120, valueGetter: (p) => p.data ? TX_TYPE_LABEL[p.data.txType] : '-' },
+    { headerName: '상품명', minWidth: 180, flex: 1, valueGetter: (p) => p.data?.product?.name ?? '-' },
+    { headerName: '상품코드', width: 120, valueGetter: (p) => p.data?.product?.code ?? '-' },
+    { headerName: '위치', width: 110, valueGetter: (p) => p.data?.location?.code ?? '-' },
+    { headerName: '변동', width: 100, type: 'numericColumn', valueGetter: (p) => p.data?.qty ?? 0, valueFormatter: (p) => formatQtyDelta(Number(p.value ?? 0)), cellClass: (p) => Number(p.value) > 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold' },
+    { headerName: '이전', width: 100, type: 'numericColumn', valueGetter: (p) => p.data?.qtyBefore ?? 0, valueFormatter: (p) => formatNumber(Number(p.value ?? 0)) },
+    { headerName: '이후', width: 100, type: 'numericColumn', valueGetter: (p) => p.data?.qtyAfter ?? 0, valueFormatter: (p) => formatNumber(Number(p.value ?? 0)) },
+    { headerName: '작업자', width: 120, valueGetter: (p) => p.data?.createdByUser?.fullName ?? p.data?.createdByUser?.username ?? '-' },
+    { headerName: '일시', width: 165, valueGetter: (p) => p.data?.createdAt ? formatDateTime(p.data.createdAt) : '-' },
+  ], [])
 
-      {/* 필터 */}
-      <div className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800 p-3 flex flex-wrap gap-3 shadow-sm">
-        <select
-          value={txType}
-          onChange={(e) => { setTxType(e.target.value as TxType | ''); setPage(1) }}
-          className="text-sm border border-gray-200 dark:border-gray-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-        >
-          <option value="">전체 유형</option>
-          {Object.entries(TX_TYPE_LABEL).map(([k, v]) => (
-            <option key={k} value={k}>{v}</option>
-          ))}
-        </select>
-        <input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1) }}
-          className="text-sm border border-gray-200 dark:border-gray-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
-        <span className="text-gray-400 dark:text-gray-500 self-center">~</span>
-        <input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1) }}
-          className="text-sm border border-gray-200 dark:border-gray-700 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
-        <span className="text-xs text-gray-400 dark:text-gray-500 self-center">총 {formatNumber(data?.total)}건</span>
-      </div>
+  if (!warehouse) return <div className="grid h-64 place-items-center text-gray-400">창고를 먼저 선택해주세요.</div>
 
-      {/* 테이블 */}
-      <div className="flex min-h-0 flex-1 flex-col bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
-        <div className="min-h-0 flex-1 overflow-auto">
-        <table className="w-full min-w-[700px] text-sm">
-          <thead>
-            <tr className={ui.thead}>
-              <th className={cn(ui.th, 'w-36')}>거래번호</th>
-              <th className={cn(ui.th, 'w-29')}>유형</th>
-              <th className={ui.th}>상품</th>
-              <th className={cn(ui.th, 'w-28')}>위치</th>
-              <th className={cn(ui.th, 'w-20')}>변동</th>
-              <th className={cn(ui.th, 'w-20')}>이전</th>
-              <th className={cn(ui.th, 'w-20')}>이후</th>
-              <th className={cn(ui.th, 'w-28')}>작업자</th>
-              <th className={cn(ui.th, 'w-36')}>일시</th>
-            </tr>
-          </thead>
-          <tbody className={ui.tbody}>
-            {isLoading && (
-              <tr><td colSpan={9} className="text-center py-10 text-gray-400 dark:text-gray-500">로딩 중...</td></tr>
-            )}
-            {data?.items.map((txn) => (
-              <tr key={txn.id} className={cn(ui.tr, txn.isCancelled && 'opacity-50 line-through')}>
-                <td className="px-4 py-3 font-mono text-xs text-gray-500 dark:text-gray-400">{txn.txnNo}</td>
-                <td className="px-4 py-3">
-                  <span className={cn('text-xs px-2 py-0.5 rounded-full', TX_TYPE_COLOR[txn.txType])}>
-                    {TX_TYPE_LABEL[txn.txType]}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <p className="font-medium truncate max-w-40 text-gray-900 dark:text-gray-100">{txn.product?.name}</p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">{txn.product?.code}</p>
-                </td>
-                <td className="px-4 py-3 font-mono text-xs text-gray-700 dark:text-gray-300">{txn.location?.code}</td>
-                <td className={cn('px-4 py-3 text-right font-bold tabular-nums',
-                  txn.qty > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400')}>
-                  {formatQtyDelta(txn.qty)}
-                </td>
-                <td className="px-4 py-3 text-right tabular-nums text-gray-500 dark:text-gray-400">{formatNumber(txn.qtyBefore)}</td>
-                <td className="px-4 py-3 text-right tabular-nums font-medium text-gray-900 dark:text-gray-100">{formatNumber(txn.qtyAfter)}</td>
-                <td className="px-4 py-3 text-center text-sm text-gray-700 dark:text-gray-300">
-                  {txn.createdByUser?.fullName ?? txn.createdByUser?.username ?? '—'}
-                </td>
-                <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">{formatDateTime(txn.createdAt)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        </div>
-      </div>
-
-      {/* 페이지네이션 */}
-      {data && data.totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
-          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
-            className="px-3 py-1 text-sm border border-gray-200 dark:border-gray-600 rounded disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">이전</button>
-          <span className="text-sm text-gray-600 dark:text-gray-400">{formatNumber(page)} / {formatNumber(data.totalPages)}</span>
-          <button onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))} disabled={page === data.totalPages}
-            className="px-3 py-1 text-sm border border-gray-200 dark:border-gray-600 rounded disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">다음</button>
-        </div>
-      )}
+  return <GridPageLayout title="재고 변경 이력" toolbar={<ExportButton filename="재고 변경 이력" getData={async () => {
+        const all = await stockApi.getTransactions({ warehouseId: warehouse.id, txType: txType || undefined, from: from || undefined, to: to || undefined, limit: 9999 })
+        return all.items.map((txn) => ({
+          '거래번호': txn.txnNo, '유형': TX_TYPE_LABEL[txn.txType], '상품명': txn.product?.name ?? '', '상품코드': txn.product?.code ?? '',
+          '위치': txn.location?.code ?? '', '변동수량': txn.qty, '이전재고': txn.qtyBefore, '이후재고': txn.qtyAfter,
+          '취소여부': txn.isCancelled ? 'Y' : 'N', '작업자': txn.createdByUser?.fullName ?? txn.createdByUser?.username ?? '', '일시': formatDateTime(txn.createdAt),
+        }))
+      }} />}>
+    <div className="flex flex-wrap gap-3 rounded border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <select value={txType} onChange={(event) => { setTxType(event.target.value as TxType | ''); setPage(1) }} className="rounded border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800">
+        <option value="">전체 유형</option>{Object.entries(TX_TYPE_LABEL).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+      </select>
+      <input type="date" value={from} onChange={(event) => { setFrom(event.target.value); setPage(1) }} className="rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800" />
+      <span className="self-center text-gray-400">~</span>
+      <input type="date" value={to} onChange={(event) => { setTo(event.target.value); setPage(1) }} className="rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800" />
+      <span className="self-center text-xs text-gray-400">총 {formatNumber(data?.total)}건</span>
     </div>
-  )
+    <div className="min-h-0 flex-1 overflow-hidden rounded border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900"><AppAgGrid rows={data?.items ?? []} columns={columns} loading={isLoading} /></div>
+    {data && data.totalPages > 1 && <div className="flex items-center justify-center gap-2"><button onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page === 1} className="rounded border px-3 py-1 text-sm disabled:opacity-40">이전</button><span className="text-sm text-gray-500">{page} / {data.totalPages}</span><button onClick={() => setPage((current) => Math.min(data.totalPages, current + 1))} disabled={page === data.totalPages} className="rounded border px-3 py-1 text-sm disabled:opacity-40">다음</button></div>}
+  </GridPageLayout>
 }

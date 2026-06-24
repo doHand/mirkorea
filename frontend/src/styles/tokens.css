@@ -1,0 +1,43 @@
+/*
+ * Design tokens
+ *
+ * This is the only place literal design values are declared. Components and
+ * pages consume semantic CSS classes from globals.css instead of hardcoding
+ * colours, borders, radii, shadows, or spacing.
+ */
+:root {
+  --color-page: #fff8f5;
+  --color-surface: #ffffff;
+  --color-surface-muted: #fff3ee;
+  --color-primary: #ff6b4a;
+  --color-primary-hover: #ef5738;
+  --color-primary-soft: #ffe2d7;
+  --color-text: #344054;
+  --color-text-strong: #263238;
+  --color-text-muted: #98a2b3;
+  --color-line: #f2e7e2;
+  --color-grid-header: #344b3e;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+
+  --border-default: 1px solid var(--color-line);
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --shadow-card: 0 12px 28px rgb(77 41 27 / 7%);
+  --shadow-primary: 0 6px 14px rgb(255 107 74 / 20%);
+  --space-page: 1.25rem;
+  --space-panel: 1rem;
+}
+
+.dark {
+  --color-page: #111827;
+  --color-surface: #1f2937;
+  --color-surface-muted: #273449;
+  --color-text: #e5e7eb;
+  --color-text-strong: #f9fafb;
+  --color-text-muted: #9ca3af;
+  --color-line: #374151;
+  --color-grid-header: #1f3a28;
+}

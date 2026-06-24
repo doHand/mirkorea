@@ -1,166 +1,46 @@
-﻿'use client'
-import { useState } from 'react'
+'use client'
+
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import type { ColDef } from 'ag-grid-community'
 import { userApi } from '@/api/user.api'
 import { warehouseApi } from '@/api/warehouse.api'
 import { useAuthStore } from '@/stores/auth.store'
+import { AppAgGrid } from '@/components/AppAgGrid'
 import { formatDateTime, formatNumber } from '@/utils/format'
-import { cn } from '@/utils/cn'
-import * as ui from '@/styles/ui'
-import type { UserRole } from '@/types/api.types'
+import type { UserDetail, UserRole } from '@/types/api.types'
 
 const ROLE_META: Record<UserRole, { label: string; cls: string }> = {
-  ADMIN:   { label: '관리자',      cls: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' },
-  MANAGER: { label: '창고 관리자', cls: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' },
-  WORKER:  { label: '작업자',      cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' },
-  VIEWER:  { label: '조회 전용',   cls: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400' },
+  ADMIN: { label: '관리자', cls: 'bg-purple-100 text-purple-700' },
+  MANAGER: { label: '창고 관리자', cls: 'bg-blue-100 text-blue-700' },
+  WORKER: { label: '작업자', cls: 'bg-emerald-100 text-emerald-700' },
+  VIEWER: { label: '조회 전용', cls: 'bg-gray-100 text-gray-600' },
 }
 
 export default function PermissionsPage() {
-  const me = useAuthStore((s) => s.user)
+  const me = useAuthStore((state) => state.user)
   const [search, setSearch] = useState('')
+  const { data: users = [], isLoading } = useQuery({ queryKey: ['users'], queryFn: userApi.findAll })
+  const { data: warehouses = [] } = useQuery({ queryKey: ['warehouses'], queryFn: warehouseApi.findAll })
+  const filteredUsers = useMemo(() => {
+    const keyword = search.trim().toLowerCase()
+    return keyword ? users.filter((user) => [user.fullName, user.username, user.email].some((value) => value.toLowerCase().includes(keyword))) : users
+  }, [search, users])
+  const columns = useMemo<ColDef<UserDetail>[]>(() => [
+    { headerName: '사용자', minWidth: 180, flex: 1, valueGetter: (p) => p.data ? `${p.data.fullName} (@${p.data.username})` : '-' },
+    { headerName: '이메일', field: 'email', minWidth: 200 },
+    { headerName: '역할', width: 130, valueGetter: (p) => p.data ? ROLE_META[p.data.role].label : '-' },
+    { headerName: '담당 창고', width: 160, valueGetter: (p) => warehouses.find((warehouse) => warehouse.id === p.data?.warehouseId)?.name ?? '-' },
+    { headerName: '상태', width: 100, valueGetter: (p) => p.data?.isActive ? '활성' : '비활성' },
+    { headerName: '마지막 로그인', width: 165, valueGetter: (p) => p.data?.lastLoginAt ? formatDateTime(p.data.lastLoginAt) : '-' },
+  ], [warehouses])
+  const roleCounts = (Object.keys(ROLE_META) as UserRole[]).map((role) => ({ role, count: users.filter((user) => user.role === role).length }))
 
-  const { data: users = [], isLoading } = useQuery({
-    queryKey: ['users'],
-    queryFn:  userApi.findAll,
-  })
-
-  const { data: warehouses = [] } = useQuery({
-    queryKey: ['warehouses'],
-    queryFn:  warehouseApi.findAll,
-  })
-
-  if (me?.role !== 'ADMIN' && me?.role !== 'MANAGER') {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 gap-3 text-gray-400 dark:text-gray-500">
-        <p>접근 권한이 없습니다</p>
-      </div>
-    )
-  }
-
-  const filtered = users.filter((u) => {
-    if (!search) return true
-    const s = search.toLowerCase()
-    return (
-      u.fullName.toLowerCase().includes(s) ||
-      u.username.toLowerCase().includes(s) ||
-      u.email.toLowerCase().includes(s)
-    )
-  })
-
-  const roleCounts = (Object.keys(ROLE_META) as UserRole[]).map((role) => ({
-    role,
-    count: users.filter((u) => u.role === role).length,
-  }))
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">권한 관리</h2>
-          <p className="text-xs text-gray-400 mt-0.5">사용자별 역할 및 접근 권한을 확인합니다 · 전체 {formatNumber(users.length)}명</p>
-        </div>
-      </div>
-
-      {/* 역할별 요약 */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {roleCounts.map(({ role, count }) => (
-          <div
-            key={role}
-            className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800 p-3 shadow-sm"
-          >
-            <p className="text-2xl font-bold text-gray-900 dark:text-white tabular-nums">{formatNumber(count)}</p>
-            <div className="flex items-center gap-1.5 mt-1">
-              <span className={cn('text-xs font-medium px-1.5 py-0.5 rounded-full', ROLE_META[role].cls)}>
-                {ROLE_META[role].label}
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* 검색 */}
-      <div className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800 p-3 flex gap-2.5 shadow-sm">
-        <div className="relative flex-1">
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="이름, 아이디, 이메일 검색"
-            className="w-full pl-3 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 transition-shadow"
-          />
-        </div>
-      </div>
-
-      {/* 사용자 목록 */}
-      <div className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] text-sm">
-            <thead>
-              <tr className={ui.thead}>
-                <th className={ui.th}>사용자</th>
-                <th className={ui.th}>이메일</th>
-                <th className={cn(ui.th, 'w-28')}>역할</th>
-                <th className={cn(ui.th, 'w-32')}>담당 창고</th>
-                <th className={cn(ui.th, 'w-20')}>상태</th>
-                <th className={cn(ui.th, 'w-36')}>마지막 로그인</th>
-              </tr>
-            </thead>
-            <tbody className={ui.tbody}>
-              {isLoading && (
-                <tr><td colSpan={6} className="text-center py-10 text-gray-400 dark:text-gray-500">로딩 중...</td></tr>
-              )}
-              {!isLoading && filtered.length === 0 && (
-                <tr><td colSpan={6} className="text-center py-10 text-gray-400 dark:text-gray-500">사용자가 없습니다</td></tr>
-              )}
-              {filtered.map((u) => {
-                const warehouseName = warehouses.find((w: any) => w.id === u.warehouseId)?.name
-                return (
-                  <tr key={u.id} className={cn(ui.tr, !u.isActive && 'opacity-50')}>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-sm shrink-0">
-                          {u.fullName.charAt(0)}
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-gray-100">{u.fullName}</p>
-                          <p className="text-xs text-gray-400 dark:text-gray-500">@{u.username}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{u.email}</td>
-                    <td className="px-4 py-3 text-center">
-                      <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium', ROLE_META[u.role].cls)}>
-                        {ROLE_META[u.role].label}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                      {warehouseName ?? <span className="text-gray-300 dark:text-gray-600">-</span>}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className={cn('text-xs px-2 py-0.5 rounded-full',
-                        u.isActive
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                          : 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500'
-                      )}>
-                        {u.isActive ? '활성' : '비활성'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-gray-400 dark:text-gray-500">
-                      {u.lastLoginAt ? formatDateTime(u.lastLoginAt) : '-'}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {me?.role !== 'ADMIN' && (
-        <p className="text-xs text-gray-400 flex items-center gap-1.5">
-          사용자 추가·수정·삭제는 관리자(ADMIN)만 가능합니다
-        </p>
-      )}
-    </div>
-  )
+  if (me?.role !== 'ADMIN' && me?.role !== 'MANAGER') return <div className="grid h-64 place-items-center text-gray-400">접근 권한이 없습니다.</div>
+  return <div className="flex h-[calc(100vh-150px)] min-h-0 flex-col gap-4 overflow-hidden">
+    <div><h2 className="text-lg font-bold text-gray-900 dark:text-white">권한 관리</h2><p className="mt-0.5 text-xs text-gray-400">사용자별 역할 및 접근 권한을 확인합니다 · 전체 {formatNumber(users.length)}명</p></div>
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{roleCounts.map(({ role, count }) => <div key={role} className="rounded border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-900"><p className="text-2xl font-bold tabular-nums text-gray-900 dark:text-white">{formatNumber(count)}</p><p className={`mt-1 inline-flex rounded-full px-1.5 py-0.5 text-xs font-medium ${ROLE_META[role].cls}`}>{ROLE_META[role].label}</p></div>)}</div>
+    <div className="rounded border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-900"><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="이름, 아이디, 이메일 검색" className="w-full rounded border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800" /></div>
+    <div className="min-h-0 flex-1 overflow-hidden rounded border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900"><AppAgGrid rows={filteredUsers} columns={columns} loading={isLoading} /></div>
+  </div>
 }

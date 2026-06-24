@@ -46,12 +46,29 @@ public class OutboundOrderController {
     }
 
     @PostMapping("/complete-picking") @PreAuthorize("hasAnyRole('ADMIN','MANAGER','WORKER')")
-    public ApiResponse<java.util.List<OutboundOrder>> completePicking(@RequestBody PickingCompletionRequest req) {
-        return ApiResponse.ok(service.completePicking(req), "선택한 피킹을 완료했습니다");
+    public ApiResponse<java.util.List<OutboundOrder>> completePicking(@RequestBody PickingCompletionRequest req,
+        @AuthenticationPrincipal WmsPrincipal principal) {
+        return ApiResponse.ok(service.completePicking(req, principal.getUuid()), "선택한 피킹을 완료했습니다");
+    }
+
+    @PostMapping("/{id}/ship") @PreAuthorize("hasAnyRole('ADMIN','MANAGER','WORKER')")
+    public ApiResponse<OutboundOrder> ship(@PathVariable UUID id) {
+        return ApiResponse.ok(service.ship(id), "출고를 확정했습니다");
+    }
+
+    @PostMapping("/{id}/hold") @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    public ApiResponse<OutboundOrder> hold(@PathVariable UUID id) {
+        return ApiResponse.ok(service.hold(id), "보류 처리했습니다");
+    }
+
+    @PostMapping("/{id}/unhold") @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    public ApiResponse<OutboundOrder> unhold(@PathVariable UUID id) {
+        return ApiResponse.ok(service.unhold(id), "보류를 해제했습니다");
     }
 
     @PostMapping("/{id}/cancel") @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
-    public ApiResponse<OutboundOrder> cancel(@PathVariable UUID id) {
-        return ApiResponse.ok(service.cancel(id), "주문을 취소했습니다");
+    public ApiResponse<OutboundOrder> cancel(@PathVariable UUID id,
+        @AuthenticationPrincipal WmsPrincipal principal) {
+        return ApiResponse.ok(service.cancel(id, principal.getUuid()), "주문을 취소했습니다");
     }
 }

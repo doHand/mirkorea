@@ -21,8 +21,7 @@ export const DEFAULT_MENUS: MenuDef[] = [
   { menuId: 'units',            href: '/units',            label: '단위 관리',         section: '상품 관리', roles: ALL },
   { menuId: 'categories',       href: '/categories',       label: '카테고리 관리',      section: '상품 관리', roles: ALL },
   { menuId: 'inbound',          href: '/inbound',          label: '입고 관리',         section: '입출고 관리', roles: ['ADMIN', 'MANAGER', 'WORKER'] },
-  { menuId: 'outbound',         href: '/outbound',         label: '출고 예정 등록',         section: '입출고 관리', roles: ['ADMIN', 'MANAGER', 'WORKER'] },
-  { menuId: 'picking-list',     href: '/picking-list',     label: '날짜별 피킹리스트', section: '입출고 관리', roles: ['ADMIN', 'MANAGER', 'WORKER'] },
+  { menuId: 'outbound',         href: '/outbound',         label: '출고 관리',         section: '입출고 관리', roles: ['ADMIN', 'MANAGER', 'WORKER'] },
   { menuId: 'scan',             href: '/scan',             label: '스캔',              section: '입출고 관리', roles: ALL },
   { menuId: 'transactions',     href: '/transactions',     label: '이력 조회',         section: '입출고 관리', roles: ALL },
   { menuId: 'inventory-audit',  href: '/inventory-audit',  label: '재고조사',           section: '입출고 관리', roles: ['ADMIN', 'MANAGER'] },
@@ -146,14 +145,14 @@ export const useMenuPermissionStore = create<MenuPermissionState>()(
     }),
     {
       name: 'wms-menu-permissions',
-      version: 18,
+      version: 19,
       migrate: (stored: unknown) => {
         const s = stored as Partial<MenuPermissionState>
         // Remove obsolete menus: product-codes/box-qty/lot merged into product-attrs,
         // pricing merged into inventory, role-management merged into users
         // Note: barcodes is now a standalone page — removed from obsolete list
         const purchaseOrderRoles = s.menus?.find((m) => m.menuId === 'purchase-orders')?.roles ?? []
-        const obsolete = new Set(['product-codes', 'box-qty', 'lot', 'pricing', 'role-management', 'inventory', 'purchase-orders'])
+        const obsolete = new Set(['product-codes', 'box-qty', 'lot', 'pricing', 'role-management', 'inventory', 'purchase-orders', 'picking-list'])
         let menus = (s.menus ?? []).filter((m) => !obsolete.has(m.menuId))
         // Rename product-attrs label to "상품 마스터"
         menus = menus.map((m) =>
@@ -167,6 +166,7 @@ export const useMenuPermissionStore = create<MenuPermissionState>()(
           if (m.menuId === 'inventory' && m.label === '재고 조회') return { ...m, label: '재고/가격 현황' }
           if (m.menuId === 'scan' && m.label === '바코드 스캔') return { ...m, label: '스캔 조회/입출고' }
           if (m.menuId === 'users' && m.label === '사용자 관리') return { ...m, label: '사용자 & 역할 관리' }
+          if (m.menuId === 'outbound') return { ...m, label: '출고 관리' }
           return m
         })
         // Add any new menus not yet in stored state

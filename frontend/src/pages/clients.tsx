@@ -60,8 +60,7 @@ function toNumber(value: unknown) {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
-const inputCls =
-  'w-full border border-gray-200 dark:border-gray-700 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#2D4033]/30 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-colors'
+const inputCls = 'wms-input w-full dark:border-gray-700 dark:bg-gray-800 transition-colors'
 const labelCls = 'block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1'
 
 function Field({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
@@ -230,10 +229,10 @@ export default function ClientsPage() {
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && commitSearch()}
             placeholder="거래처명, 사업자번호, 담당자, 연락처 검색"
-            className="w-full rounded border border-gray-200 bg-white py-1.5 pl-3 pr-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#2D4033]/30 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+            className="wms-input w-full rounded dark:border-gray-700 dark:bg-gray-800"
           />
         </div>
-        <button onClick={commitSearch} className="rounded bg-[#2D4033] px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[#253628]">검색</button>
+        <button onClick={commitSearch} className="wms-primary-button rounded px-3 py-1.5 text-sm font-medium transition-colors">검색</button>
       </div>
 
       <div className="overflow-hidden border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
@@ -322,7 +321,7 @@ export default function ClientsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
             {/* 헤더 */}
-            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-[#2D4033] z-10">
+            <div className="wms-table-header flex items-center gap-2 px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-semibold text-white">
                   {editing ? `${editing.name} 수정` : '거래처 등록'}
@@ -551,7 +550,7 @@ export default function ClientsPage() {
                 <button
                   type="submit"
                   disabled={createMutation.isPending || updateMutation.isPending}
-                  className="px-5 py-2 rounded bg-[#2D4033] text-sm font-semibold text-white hover:bg-[#253628] disabled:opacity-50 transition-colors"
+                  className="wms-primary-button px-5 py-2 rounded text-sm font-semibold disabled:opacity-50 transition-colors"
                 >
                   {createMutation.isPending || updateMutation.isPending
                     ? '저장 중...'

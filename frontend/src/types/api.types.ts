@@ -141,6 +141,7 @@ export interface ProductCategory {
 export interface Barcode {
   id: string
   productId: string
+  productCode: string
   barcode: string
   type: BarcodeUnitType
   unitQty: number
@@ -272,7 +273,7 @@ export interface PurchaseOrder {
   items: PurchaseOrderItem[]
 }
 
-export type OutboundOrderStatus = 'COLLECTED' | 'INSTRUCTED' | 'PICKED' | 'CANCELLED'
+export type OutboundOrderStatus = 'COLLECTED' | 'INSTRUCTED' | 'PICKED' | 'SHIPPED' | 'ON_HOLD' | 'CANCELLED'
 export type OutboundOrderType = 'INTERNAL' | 'EXTERNAL'
 
 export interface OutboundOrderItem {

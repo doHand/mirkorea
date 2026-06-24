@@ -34,4 +34,8 @@ public interface StockTransactionRepository
     @Query("SELECT t FROM StockTransaction t JOIN FETCH t.product p JOIN FETCH t.location l " +
            "WHERE t.locationId = :locationId ORDER BY t.createdAt DESC")
     Page<StockTransaction> findByLocation(@Param("locationId") UUID locationId, Pageable pageable);
+
+    @Query("SELECT t FROM StockTransaction t WHERE t.referenceId = :referenceId AND t.referenceType = :referenceType AND t.isCancelled = false AND t.txType = com.wmspro.domain.stock.TxType.OUTBOUND")
+    java.util.List<StockTransaction> findActiveOutboundByReference(@Param("referenceId") UUID referenceId,
+                                                                    @Param("referenceType") String referenceType);
 }

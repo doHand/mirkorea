@@ -35,7 +35,7 @@ export type ProductForm = typeof EMPTY_PRODUCT_FORM
 
 export type PendingBarcode = { barcode: string; type: BarcodeUnitType; unitQty: number; isPrimary: boolean }
 
-const inputCls = 'w-full border border-gray-200 dark:border-gray-700 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#2D4033]/30 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-colors'
+const inputCls = 'wms-input w-full dark:border-gray-700 dark:bg-gray-800 transition-colors'
 const labelCls = 'block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1'
 
 interface Props {
@@ -89,7 +89,7 @@ export function ProductFormModal({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700 w-full max-w-3xl max-h-[92vh] overflow-y-auto">
         {/* 모달 헤더 */}
-        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-200 dark:border-gray-700 bg-[#2D4033]">
+        <div className="wms-table-header flex items-center gap-2 px-4 py-2.5 border-b border-gray-200 dark:border-gray-700">
           <div className="shrink-0 text-white">
             {editing ? '수정' : '+'}
           </div>
@@ -97,7 +97,7 @@ export function ProductFormModal({
             <h3 className="text-sm font-semibold text-white">
               {editing ? editing.name : '새 상품 등록'}
             </h3>
-            {editing && <p className="text-[10px] text-[#E5D3B3]/70 font-mono">{editing.code}</p>}
+            {editing && <p className="text-[10px] text-white/70 font-mono">{editing.code}</p>}
           </div>
         </div>
 
@@ -500,7 +500,7 @@ export function ProductFormModal({
             <button
               onClick={() => editing ? onUpdate() : onCreate()}
               disabled={!form.code || !form.name || isCreating || isUpdating}
-              className="flex-1 py-2 bg-[#2D4033] text-white rounded text-sm font-semibold hover:bg-[#253628] disabled:opacity-50 transition-colors"
+              className="wms-primary-button flex-1 py-2 text-sm font-semibold disabled:opacity-50 transition-colors"
             >
               {(isCreating || isUpdating) ? '처리 중...' : (editing ? '수정 완료' : '등록')}
             </button>

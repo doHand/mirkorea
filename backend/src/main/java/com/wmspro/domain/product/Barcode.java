@@ -22,6 +22,9 @@ public class Barcode {
     @Column(name = "product_id", nullable = false)
     private UUID productId;
 
+    @Column(name = "product_code", nullable = false, length = 50)
+    private String productCode;
+
     @Column(unique = true, nullable = false, length = 100)
     private String barcode;
 

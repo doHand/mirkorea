@@ -4,5 +4,7 @@ public enum OutboundOrderStatus {
     COLLECTED,
     INSTRUCTED,
     PICKED,
+    SHIPPED,
+    ON_HOLD,
     CANCELLED
 }

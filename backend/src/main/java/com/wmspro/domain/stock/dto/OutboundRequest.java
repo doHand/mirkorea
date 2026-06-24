@@ -18,4 +18,6 @@ public class OutboundRequest {
     public String reason;
     public String memo;
     public UUID   slipId;
+    public String referenceType;
+    public UUID   referenceId;
 }
