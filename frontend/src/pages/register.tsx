@@ -47,7 +47,7 @@ export default function RegisterPage() {
     }
   }
 
-  const inputCls = 'w-full px-3 py-2 border border-[#ede5d8] dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c9b99e] bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-sm'
+  const inputCls = 'w-full px-3 py-2 border border-[#ede5d8] dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-sm'
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f5efe6] via-[#faf7f2] to-[#ede5d8] flex items-center justify-center p-4">
@@ -129,7 +129,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 mt-1 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors"
+            className="w-full py-2.5 mt-1 bg-[var(--color-primary)] text-white font-semibold rounded-lg hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-colors"
           >
             {loading ? '가입 중...' : '회원가입'}
           </button>
@@ -137,7 +137,7 @@ export default function RegisterPage() {
 
         <p className="mt-5 text-center text-sm text-gray-500 dark:text-gray-400">
           이미 계정이 있으신가요?{' '}
-          <Link href="/login" className="text-brand-600 hover:underline font-medium">
+          <Link href="/login" className="text-[var(--color-primary)] hover:underline font-medium">
             로그인
           </Link>
         </p>

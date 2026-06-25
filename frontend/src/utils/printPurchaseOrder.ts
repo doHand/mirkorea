@@ -224,7 +224,7 @@ export function printPurchaseOrder(order: PurchaseOrder, client?: Pick<Client, '
           <tr>
             <th>번호</th>
             <th>제품명</th>
-            <th>박스수량</th>
+            <th>OUT수량</th>
             <th>수량(ea)</th>
             <th>캡사이즈</th>
           </tr>

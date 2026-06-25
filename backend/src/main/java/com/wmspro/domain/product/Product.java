@@ -47,27 +47,24 @@ public class Product {
         "createdAt","updatedAt"})
     private Client client;
 
-    @Column(nullable = false, length = 20)
+    @jakarta.persistence.Transient
     @Builder.Default
-    private String unit = "EA";       // EA, BOX, KG
+    private String unit = "EA";       // EA, IN,OUT
 
     @Enumerated(EnumType.STRING)
     @Column(name = "base_unit", nullable = false, length = 10)
     @Builder.Default
     private UnitType baseUnit = UnitType.EA;
 
-    @Column(name = "p_unit_qty")
-    private Integer pUnitQty;
+    @Column(name = "in_unit_qty")
+    private Integer inUnitQty;
 
-    @Column(name = "box_unit_qty")
-    private Integer boxUnitQty;
+    @Column(name = "out_unit_qty")
+    private Integer outUnitQty;
 
-    @Column(name = "pl_unit_qty")
-    private Integer plUnitQty;
-
-    @Column(name = "box_qty", nullable = false)
+    @Column(name = "out_qty", nullable = false)
     @Builder.Default
-    private int boxQty = 1;           // 박스당 낱개 수량
+    private int outQty = 1;
 
     @Column(name = "weight_g")
     private Integer weightG;
@@ -150,4 +147,14 @@ public class Product {
 
     @jakarta.persistence.Transient
     private Long stockQty;
+
+    public int getBoxQty() {
+        return outQty > 0 ? outQty : 1;
+    }
+
+    public void setBoxQty(int boxQty) {
+        if (boxQty > 0) {
+            this.outQty = boxQty;
+        }
+    }
 }

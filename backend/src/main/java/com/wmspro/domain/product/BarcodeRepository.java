@@ -16,4 +16,7 @@ public interface BarcodeRepository extends JpaRepository<Barcode, UUID> {
     Optional<Barcode> findActiveByBarcode(@Param("barcode") String barcode);
 
     List<Barcode> findByProductIdOrderByIsPrimaryDesc(UUID productId);
+
+    @Query("SELECT b FROM Barcode b JOIN FETCH b.product p ORDER BY p.code ASC, b.type ASC")
+    List<Barcode> findAllWithProductOrderByCode();
 }

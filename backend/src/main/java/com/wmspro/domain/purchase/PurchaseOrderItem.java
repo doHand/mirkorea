@@ -21,7 +21,7 @@ public class PurchaseOrderItem {
     @Builder.Default private UnitType inputUnit = UnitType.EA;
     @Column(name = "conversion_qty", nullable = false) @Builder.Default private int conversionQty = 1;
     @Column(name = "converted_ea_qty", nullable = false) private int convertedEaQty;
-    @Column(name = "box_count", nullable = false) private int boxCount;
+    @Column(name = "out_count", nullable = false) private int boxCount;
     @Column(name = "cap_size", length = 100) private String capSize;
     @Column(name = "unit_price", precision = 15, scale = 2, nullable = false) @Builder.Default
     private BigDecimal unitPrice = BigDecimal.ZERO;

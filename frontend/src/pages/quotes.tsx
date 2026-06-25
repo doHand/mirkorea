@@ -8,6 +8,8 @@ import { clientApi } from '@/api/client.api'
 import { productApi } from '@/api/product.api'
 import { quoteApi } from '@/api/quote.api'
 import { PurchaseOrdersContent } from '@/components/PurchaseOrdersContent'
+import { ClientPickerModal } from '@/components/ClientPickerModal'
+import { ProductPickerModal } from '@/components/ProductPickerModal'
 import { useSupplierInfoStore } from '@/stores/supplier-info.store'
 import { formatNumber } from '@/utils/format'
 import { cn } from '@/utils/cn'
@@ -228,7 +230,8 @@ export default function QuotesPage() {
     amount: Number(product.sellPrice ?? 0) * (form.items[idx]?.qty ?? 1),
   })
 
-  const onSelectClient = (client: Client) => {
+  const onSelectClient = (client: Client | null) => {
+    if (!client) return
     setForm((p) => ({ ...p, clientId: client.id, clientName: client.name }))
     setShowClientPicker(false)
   }
@@ -268,8 +271,8 @@ export default function QuotesPage() {
   }
 
   const totalAmount = form.items.reduce((sum, item) => sum + item.amount, 0)
-  const inputCls = 'w-full border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm outline-none focus:border-[#2D4033] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400'
-  const tdInput = 'w-full border border-gray-200 dark:border-gray-700 px-2 py-1.5 text-sm outline-none focus:border-[#2D4033] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+  const inputCls = 'w-full border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm outline-none focus:border-[var(--color-primary)] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400'
+  const tdInput = 'w-full border border-gray-200 dark:border-gray-700 px-2 py-1.5 text-sm outline-none focus:border-[var(--color-primary)] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
 
   const DOC_TABS = [
     { value: 'STATEMENT', label: '거래명세서', href: null },
@@ -294,7 +297,7 @@ export default function QuotesPage() {
           <button onClick={openCreate} className="flex items-center gap-1.5 rounded border border-emerald-200 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400">
             거래명세서/견적서 작성
           </button>
-          <button onClick={() => { setDocTypeFilter('PURCHASE'); setPurchaseCreateTrigger((n) => n + 1) }} className="flex items-center gap-1.5 rounded bg-[#2D4033] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#24352a]">
+          <button onClick={() => { setDocTypeFilter('PURCHASE'); setPurchaseCreateTrigger((n) => n + 1) }} className="flex items-center gap-1.5 rounded bg-[var(--color-primary)] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[var(--color-primary-hover)]">
             발주서 작성
           </button>
         </div>
@@ -306,7 +309,7 @@ export default function QuotesPage() {
           <button key={tab.value} onClick={() => { setDocTypeFilter(tab.value); setPage(1) }}
             className={['px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors',
               docTypeFilter === tab.value
-                ? 'border-[#2D4033] text-[#2D4033] dark:text-[#7ba885] dark:border-[#7ba885]'
+                ? 'border-[var(--color-primary)] text-[var(--color-primary)] dark:text-[var(--color-primary)] dark:border-[#7ba885]'
                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200',
             ].join(' ')}>{tab.label}</button>
         ))}
@@ -322,9 +325,9 @@ export default function QuotesPage() {
       <div className="flex flex-wrap gap-2 border border-[#d8ddd8] bg-white p-3 shadow-sm dark:bg-gray-900 shrink-0">
         <div className="relative min-w-60 flex-1 flex gap-1.5">
           <div className="relative flex-1">
-            <input value={searchInput} onChange={(e) => setSearchInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && commitSearch()} placeholder="문서번호, 거래처명 검색" className="w-full border border-gray-200 dark:border-gray-700 py-2 pl-3 pr-3 text-sm outline-none focus:border-[#2D4033] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400" />
+            <input value={searchInput} onChange={(e) => setSearchInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && commitSearch()} placeholder="문서번호, 거래처명 검색" className="w-full border border-gray-200 dark:border-gray-700 py-2 pl-3 pr-3 text-sm outline-none focus:border-[var(--color-primary)] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400" />
           </div>
-          <button onClick={commitSearch} className="px-3 py-2 text-sm bg-[#2D4033] text-white hover:bg-[#24352a] transition-colors font-medium">검색</button>
+          <button onClick={commitSearch} className="px-3 py-2 text-sm bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] transition-colors font-medium">검색</button>
         </div>
       </div>
 
@@ -350,7 +353,7 @@ export default function QuotesPage() {
                 return (
                 <tr key={quote.id} {...editableHandlers} className={cn(ui.tr, editableClass)}>
                   <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{quote.clientName ?? '-'}</td>
-                  <td className="px-3 py-3 font-mono text-xs text-[#2D4033] dark:text-gray-300 font-semibold">{quote.docNo}</td>
+                  <td className="px-3 py-3 font-mono text-xs text-[var(--color-primary)] dark:text-gray-300 font-semibold">{quote.docNo}</td>
                   <td className="px-3 py-3 text-center"><span className={`px-2 py-0.5 text-xs font-medium ${quote.docType === 'STATEMENT' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400' : 'bg-violet-50 text-violet-700 dark:bg-violet-900/20 dark:text-violet-400'}`}>{DOC_TYPE_LABEL[quote.docType]}</span></td>
                   <td className="px-3 py-3 text-center text-gray-500">{quote.docDate}</td>
                   <td className="px-3 py-3 text-right font-semibold tabular-nums">￦{formatNumber(quote.totalAmount)}</td>
@@ -390,7 +393,7 @@ export default function QuotesPage() {
             <div className="flex flex-wrap gap-1.5 mb-4">
               {QUOTE_PRINT_TITLES.map((t) => (
                 <button key={t} type="button" onClick={() => setListPrint({ ...listPrint, title: t })}
-                  className={`px-3 py-1.5 text-sm border transition-colors font-medium ${listPrint.title === t ? 'bg-[#2D4033] text-white border-[#2D4033]' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-[#2D4033]'}`}>
+                  className={`px-3 py-1.5 text-sm border transition-colors font-medium ${listPrint.title === t ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-[var(--color-primary)]'}`}>
                   {t}
                 </button>
               ))}
@@ -398,7 +401,7 @@ export default function QuotesPage() {
             <div className="flex gap-2">
               <button onClick={() => setListPrint(null)} className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800">취소</button>
               <button onClick={() => { printQuoteDocument(listPrint.quote, null, findClientForQuote(listPrint.quote), supplierInfo, listPrint.title); setListPrint(null) }}
-                className="flex-1 px-3 py-2 text-sm bg-[#2D4033] text-white hover:bg-[#24352a] font-medium flex items-center justify-center gap-1.5">
+                className="flex-1 px-3 py-2 text-sm bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] font-medium flex items-center justify-center gap-1.5">
                 인쇄
               </button>
             </div>
@@ -410,17 +413,27 @@ export default function QuotesPage() {
         <ClientPickerModal clients={clients ?? []} onSelect={onSelectClient} onClose={() => setShowClientPicker(false)} />
       )}
       {productPickerIdx !== null && (
-        <ProductPickerModal products={products?.items ?? []} onSelect={onSelectProductFromPicker} onClose={() => setProductPickerIdx(null)} />
+        <ProductPickerModal
+          products={products?.items ?? []}
+          title="상품 교체"
+          onConfirm={([p]) => onSelectProductFromPicker(p)}
+          onClose={() => setProductPickerIdx(null)}
+        />
       )}
       {showProductAdder && (
-        <ProductMultiPickerModal products={products?.items ?? []} onConfirm={onAddProductsFromPicker} onClose={() => setShowProductAdder(false)} />
+        <ProductPickerModal
+          products={products?.items ?? []}
+          multiSelect
+          onConfirm={onAddProductsFromPicker}
+          onClose={() => setShowProductAdder(false)}
+        />
       )}
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-none flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-900 rounded shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700 flex flex-col">
             <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 dark:border-gray-700">
-              <div className="w-9 h-9 flex items-center justify-center shrink-0 bg-[#edf0ec]"><span className="text-[#2D4033] text-xs font-bold">전표</span></div>
+              <div className="w-9 h-9 flex items-center justify-center shrink-0 bg-[#edf0ec]"><span className="text-[var(--color-primary)] text-xs font-bold">전표</span></div>
               <div className="flex-1"><h3 className="font-semibold text-gray-900 dark:text-white">{editing ? '문서 수정' : '문서 작성'}</h3>{editing && <p className="text-xs text-gray-400 font-mono mt-0.5">{editing.docNo}</p>}</div>
               <button onClick={closeModal} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400">닫기</button>
             </div>
@@ -447,16 +460,16 @@ export default function QuotesPage() {
                 <div className="col-span-2">
                   <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">거래처</label>
                   {form.clientId ? (
-                    <div className="flex items-center gap-2 border border-[#2D4033] bg-[#edf0ec] dark:bg-gray-800/60 px-3 py-2">
+                    <div className="flex items-center gap-2 border border-[var(--color-primary)] bg-[#edf0ec] dark:bg-gray-800/60 px-3 py-2">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-[#2D4033] dark:text-[#7ba885] truncate">{form.clientName}</p>
+                        <p className="text-sm font-semibold text-[var(--color-primary)] dark:text-[var(--color-primary)] truncate">{form.clientName}</p>
                         {(selectedClient?.businessNo || selectedClient?.phone) && (
                           <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
                             {[selectedClient.businessNo, selectedClient.phone].filter(Boolean).join(' · ')}
                           </p>
                         )}
                       </div>
-                      <button type="button" onClick={() => setShowClientPicker(true)} className="shrink-0 p-1 text-[#2D4033] dark:text-[#7ba885] hover:bg-[#d8ddd8] dark:hover:bg-gray-700" title="변경">
+                      <button type="button" onClick={() => setShowClientPicker(true)} className="shrink-0 p-1 text-[var(--color-primary)] dark:text-[var(--color-primary)] hover:bg-[#d8ddd8] dark:hover:bg-gray-700" title="변경">
                         수정
                       </button>
                       <button type="button" onClick={() => setForm((p) => ({ ...p, clientId: '', clientName: '' }))} className="shrink-0 p-1 text-gray-400 hover:text-red-500" title="삭제">
@@ -474,7 +487,7 @@ export default function QuotesPage() {
                       <button
                         type="button"
                         onClick={() => setShowClientPicker(true)}
-                        className="shrink-0 px-3 border border-gray-200 dark:border-gray-700 text-gray-500 hover:border-[#2D4033] hover:text-[#2D4033] bg-white dark:bg-gray-800"
+                        className="shrink-0 px-3 border border-gray-200 dark:border-gray-700 text-gray-500 hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] bg-white dark:bg-gray-800"
                         title="거래처 검색"
                       >
                         검색
@@ -491,7 +504,7 @@ export default function QuotesPage() {
                     품목
                     {form.items.length > 0 && <span className="ml-1.5 text-xs font-normal text-gray-400">{form.items.length}개</span>}
                   </span>
-                  <button type="button" onClick={() => setShowProductAdder(true)} className="flex items-center gap-1 px-2.5 py-1.5 text-xs bg-[#2D4033] text-white hover:bg-[#24352a]">
+                  <button type="button" onClick={() => setShowProductAdder(true)} className="flex items-center gap-1 px-2.5 py-1.5 text-xs bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]">
                     상품 추가
                   </button>
                 </div>
@@ -499,7 +512,7 @@ export default function QuotesPage() {
                 {form.items.length === 0 ? (
                   <div className="py-10 text-center">
                     <p className="text-sm text-gray-400 mb-2">추가된 상품이 없습니다</p>
-                    <button type="button" onClick={() => setShowProductAdder(true)} className="text-xs text-[#2D4033] dark:text-[#7ba885] hover:underline">
+                    <button type="button" onClick={() => setShowProductAdder(true)} className="text-xs text-[var(--color-primary)] dark:text-[var(--color-primary)] hover:underline">
                       상품 추가하기
                     </button>
                   </div>
@@ -507,7 +520,7 @@ export default function QuotesPage() {
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-[640px] text-sm">
                       <thead>
-                        <tr className="bg-[#2D4033] text-white text-xs">
+                        <tr className={cn(ui.thead, 'text-xs')}>
                           <th className="text-left px-3 py-2 font-semibold">상품</th>
                           <th className="text-center px-2 py-2 w-20 font-semibold">단위</th>
                           <th className="text-center px-2 py-2 w-20 font-semibold">수량</th>
@@ -540,8 +553,8 @@ export default function QuotesPage() {
 
               <div className="flex justify-end gap-2 pt-2">
                 <button type="button" onClick={closeModal} className="px-4 py-2 border border-gray-200 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800">취소</button>
-                <button type="button" onClick={() => submitForm(true)} disabled={createMutation.isPending || updateMutation.isPending} className="px-4 py-2 border border-[#2D4033]/30 text-[#2D4033] dark:text-[#7ba885] dark:border-[#7ba885]/30 text-sm hover:bg-[#edf0ec] dark:hover:bg-gray-800/60 disabled:opacity-50">저장 후 인쇄</button>
-                <button type="submit" disabled={createMutation.isPending || updateMutation.isPending} className="px-5 py-2 bg-[#2D4033] text-white text-sm font-semibold hover:bg-[#24352a] disabled:opacity-50">{createMutation.isPending || updateMutation.isPending ? '저장 중...' : '저장'}</button>
+                <button type="button" onClick={() => submitForm(true)} disabled={createMutation.isPending || updateMutation.isPending} className="px-4 py-2 border border-[var(--color-primary)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)] dark:border-[#7ba885]/30 text-sm hover:bg-[#edf0ec] dark:hover:bg-gray-800/60 disabled:opacity-50">저장 후 인쇄</button>
+                <button type="submit" disabled={createMutation.isPending || updateMutation.isPending} className="px-5 py-2 bg-[var(--color-primary)] text-white text-sm font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50">{createMutation.isPending || updateMutation.isPending ? '저장 중...' : '저장'}</button>
               </div>
             </form>
           </div>
@@ -572,7 +585,7 @@ function QuoteItemRow({ item, tdInput, onChange, onReplacePicker, onRemove }: {
               <p className="text-sm text-gray-400 italic">상품 미선택</p>
             )}
           </div>
-          <button type="button" onClick={onReplacePicker} className="shrink-0 p-1 text-gray-400 hover:text-[#2D4033] border border-gray-200 dark:border-gray-700 hover:border-[#2D4033]" title="상품 교체">
+          <button type="button" onClick={onReplacePicker} className="shrink-0 p-1 text-gray-400 hover:text-[var(--color-primary)] border border-gray-200 dark:border-gray-700 hover:border-[var(--color-primary)]" title="상품 교체">
             수정
           </button>
         </div>
@@ -583,222 +596,5 @@ function QuoteItemRow({ item, tdInput, onChange, onReplacePicker, onRemove }: {
       <td className="px-2 py-2 text-right tabular-nums font-medium">￦{formatNumber(item.amount)}</td>
       <td className="px-2 py-2 text-center"><button type="button" onClick={onRemove} className="p-1 rounded text-gray-400 hover:text-red-500">삭제</button></td>
     </tr>
-  )
-}
-
-function ClientPickerModal({ clients, onSelect, onClose }: {
-  clients: Client[]
-  onSelect: (client: Client) => void
-  onClose: () => void
-}) {
-  const [search, setSearch] = useState('')
-  const q = search.toLowerCase()
-  const filtered = q
-    ? clients.filter((c) => c.name.toLowerCase().includes(q) || (c.phone ?? '').includes(q) || (c.businessNo ?? '').includes(q))
-    : clients
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
-      <div className="bg-white dark:bg-gray-900 w-full max-w-2xl max-h-[80vh] flex flex-col border border-gray-200 dark:border-gray-700 shadow-2xl">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 shrink-0">
-          <h3 className="font-semibold text-gray-900 dark:text-white text-sm">거래처 선택</h3>
-          <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">닫기</button>
-        </div>
-        <div className="px-4 py-1.5 border-b border-gray-200 dark:border-gray-700 shrink-0">
-          <div className="relative">
-            <input autoFocus value={search} onChange={(e) => setSearch(e.target.value)} placeholder="거래처명, 전화번호, 사업자번호 검색" className="w-full border border-gray-200 dark:border-gray-700 pl-3 pr-3 py-2 text-sm outline-none focus:border-[#2D4033] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
-          </div>
-        </div>
-        <div className="overflow-y-auto flex-1">
-          <table className="w-full text-sm">
-            <thead className="sticky top-0">
-              <tr className="bg-[#2D4033] text-white">
-                <th className="px-4 py-1.5 text-left font-semibold">거래처명</th>
-                <th className="px-4 py-1.5 text-left font-semibold">전화번호</th>
-                <th className="px-4 py-1.5 text-left font-semibold">사업자번호</th>
-                <th className="px-4 py-1.5 text-left font-semibold">주소</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {filtered.length === 0 && <tr><td colSpan={4} className="text-center py-8 text-gray-400">검색 결과가 없습니다</td></tr>}
-              {filtered.map((client) => (
-                <tr key={client.id} onClick={() => onSelect(client)} className="cursor-pointer hover:bg-[#f7f8f5] dark:hover:bg-gray-800/40">
-                  <td className="px-4 py-1.5 font-medium text-gray-900 dark:text-gray-100">{client.name}</td>
-                  <td className="px-4 py-1.5 text-gray-500 dark:text-gray-400">{client.phone ?? '-'}</td>
-                  <td className="px-4 py-1.5 text-gray-500 dark:text-gray-400 font-mono text-xs">{client.businessNo ?? '-'}</td>
-                  <td className="px-4 py-1.5 text-gray-500 dark:text-gray-400 truncate max-w-[180px]">{client.address ?? '-'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-400 text-right shrink-0">
-          전체 {clients.length}개 · 검색 {filtered.length}개
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function ProductPickerModal({ products, onSelect, onClose }: {
-  products: Product[]
-  onSelect: (product: Product) => void
-  onClose: () => void
-}) {
-  const [search, setSearch] = useState('')
-  const q = search.toLowerCase()
-  const filtered = q
-    ? products.filter((p) => p.name.toLowerCase().includes(q) || (p.code ?? '').toLowerCase().includes(q) || (p.spec ?? '').toLowerCase().includes(q))
-    : products
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
-      <div className="bg-white dark:bg-gray-900 w-full max-w-3xl max-h-[80vh] flex flex-col border border-gray-200 dark:border-gray-700 shadow-2xl">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 shrink-0">
-          <h3 className="font-semibold text-gray-900 dark:text-white text-sm">상품 교체</h3>
-          <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">닫기</button>
-        </div>
-        <div className="px-4 py-1.5 border-b border-gray-200 dark:border-gray-700 shrink-0">
-          <div className="relative">
-            <input autoFocus value={search} onChange={(e) => setSearch(e.target.value)} placeholder="상품명, 상품코드, 규격 검색" className="w-full border border-gray-200 dark:border-gray-700 pl-3 pr-3 py-2 text-sm outline-none focus:border-[#2D4033] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
-          </div>
-        </div>
-        <div className="overflow-y-auto flex-1">
-          <table className="w-full text-sm">
-            <thead className="sticky top-0">
-              <tr className="bg-[#2D4033] text-white">
-                <th className="px-4 py-1.5 text-left font-semibold">코드</th>
-                <th className="px-4 py-1.5 text-left font-semibold">상품명</th>
-                <th className="px-4 py-1.5 text-left font-semibold">규격</th>
-                <th className="px-4 py-1.5 text-center font-semibold">단위</th>
-                <th className="px-4 py-1.5 text-right font-semibold">판매단가</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {filtered.length === 0 && <tr><td colSpan={5} className="text-center py-8 text-gray-400">검색 결과가 없습니다</td></tr>}
-              {filtered.map((product) => (
-                <tr key={product.id} onClick={() => onSelect(product)} className="cursor-pointer hover:bg-[#f7f8f5] dark:hover:bg-gray-800/40">
-                  <td className="px-4 py-1.5 font-mono text-xs text-[#2D4033] dark:text-[#7ba885]">{product.code}</td>
-                  <td className="px-4 py-1.5 font-medium text-gray-900 dark:text-gray-100">{product.name}</td>
-                  <td className="px-4 py-1.5 text-gray-500 dark:text-gray-400 text-xs">{product.spec ?? '-'}</td>
-                  <td className="px-4 py-1.5 text-center text-gray-600 dark:text-gray-400">{product.unit}</td>
-                  <td className="px-4 py-1.5 text-right tabular-nums text-gray-900 dark:text-gray-100">￦{formatNumber(product.sellPrice ?? 0)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-400 text-right shrink-0">
-          전체 {products.length}개 · 검색 {filtered.length}개
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function ProductMultiPickerModal({ products, onConfirm, onClose }: {
-  products: Product[]
-  onConfirm: (selected: Product[]) => void
-  onClose: () => void
-}) {
-  const [search, setSearch] = useState('')
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const q = search.toLowerCase()
-  const filtered = q
-    ? products.filter((p) => p.name.toLowerCase().includes(q) || (p.code ?? '').toLowerCase().includes(q) || (p.spec ?? '').toLowerCase().includes(q))
-    : products
-
-  const toggle = (id: string) =>
-    setSelectedIds((prev) => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next })
-
-  const allFilteredSelected = filtered.length > 0 && filtered.every((p) => selectedIds.has(p.id))
-
-  const toggleAll = () => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev)
-      if (allFilteredSelected) filtered.forEach((p) => next.delete(p.id))
-      else filtered.forEach((p) => next.add(p.id))
-      return next
-    })
-  }
-
-  const selectedCount = selectedIds.size
-  const selectedProducts = products.filter((p) => selectedIds.has(p.id))
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
-      <div className="bg-white dark:bg-gray-900 w-full max-w-3xl max-h-[80vh] flex flex-col border border-gray-200 dark:border-gray-700 shadow-2xl">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 shrink-0">
-          <h3 className="font-semibold text-gray-900 dark:text-white text-sm">상품 추가</h3>
-          <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">닫기</button>
-        </div>
-        <div className="px-4 py-1.5 border-b border-gray-200 dark:border-gray-700 shrink-0">
-          <div className="relative">
-            <input autoFocus value={search} onChange={(e) => setSearch(e.target.value)} placeholder="상품명, 상품코드, 규격 검색" className="w-full border border-gray-200 dark:border-gray-700 pl-3 pr-3 py-2 text-sm outline-none focus:border-[#2D4033] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
-          </div>
-        </div>
-        <div className="overflow-y-auto flex-1">
-          <table className="w-full text-sm">
-            <thead className="sticky top-0">
-              <tr className="bg-[#2D4033] text-white">
-                <th className="px-3 py-1.5 w-10 text-center">
-                  <input
-                    type="checkbox"
-                    checked={allFilteredSelected}
-                    onChange={toggleAll}
-                    className="w-3.5 h-3.5 accent-white cursor-pointer"
-                  />
-                </th>
-                <th className="px-4 py-1.5 text-left font-semibold">코드</th>
-                <th className="px-4 py-1.5 text-left font-semibold">상품명</th>
-                <th className="px-4 py-1.5 text-left font-semibold">규격</th>
-                <th className="px-4 py-1.5 text-center font-semibold">단위</th>
-                <th className="px-4 py-1.5 text-right font-semibold">판매단가</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {filtered.length === 0 && <tr><td colSpan={6} className="text-center py-8 text-gray-400">검색 결과가 없습니다</td></tr>}
-              {filtered.map((product) => {
-                const checked = selectedIds.has(product.id)
-                return (
-                  <tr
-                    key={product.id}
-                    onClick={() => toggle(product.id)}
-                    className={`cursor-pointer transition-colors ${checked ? 'bg-[#edf0ec] dark:bg-[#2D4033]/20' : 'hover:bg-[#f7f8f5] dark:hover:bg-gray-800/40'}`}
-                  >
-                    <td className="px-3 py-1.5 text-center">
-                      <input type="checkbox" checked={checked} onChange={() => toggle(product.id)} onClick={(e) => e.stopPropagation()} className="w-3.5 h-3.5 accent-[#2D4033] cursor-pointer" />
-                    </td>
-                    <td className="px-4 py-1.5 font-mono text-xs text-[#2D4033] dark:text-[#7ba885]">{product.code}</td>
-                    <td className="px-4 py-1.5 font-medium text-gray-900 dark:text-gray-100">{product.name}</td>
-                    <td className="px-4 py-1.5 text-gray-500 dark:text-gray-400 text-xs">{product.spec ?? '-'}</td>
-                    <td className="px-4 py-1.5 text-center text-gray-600 dark:text-gray-400">{product.unit}</td>
-                    <td className="px-4 py-1.5 text-right tabular-nums text-gray-900 dark:text-gray-100">￦{formatNumber(product.sellPrice ?? 0)}</td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-        <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between shrink-0">
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            {selectedCount > 0
-              ? <span className="text-[#2D4033] dark:text-[#7ba885] font-medium">{selectedCount}개 선택됨</span>
-              : `전체 ${products.length}개 · 검색 ${filtered.length}개`}
-          </span>
-          <div className="flex gap-2">
-            <button type="button" onClick={onClose} className="px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800">취소</button>
-            <button
-              type="button"
-              onClick={() => selectedCount > 0 && onConfirm(selectedProducts)}
-              disabled={selectedCount === 0}
-              className="px-4 py-1.5 text-sm bg-[#2D4033] text-white hover:bg-[#24352a] disabled:opacity-40 font-medium min-w-[80px]"
-            >
-              추가 {selectedCount > 0 ? `(${selectedCount})` : ''}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
   )
 }

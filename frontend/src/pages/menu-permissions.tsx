@@ -15,6 +15,7 @@ import toast from 'react-hot-toast'
 import { useAuthStore } from '@/stores/auth.store'
 import { useMenuPermissionStore } from '@/stores/menu-permission.store'
 import { cn } from '@/utils/cn'
+import * as ui from '@/styles/ui'
 import { formatNumber } from '@/utils/format'
 import type { UserRole } from '@/types/api.types'
 import type { MenuDef } from '@/stores/menu-permission.store'
@@ -422,7 +423,7 @@ export default function MenuPermissionsPage() {
           <SortableContext items={flatIds} strategy={verticalListSortingStrategy}>
             <table className="w-full text-sm border-collapse">
               <thead>
-                <tr className="bg-[#2D4033] text-white">
+                <tr className={ui.thead}>
                   <th className="w-8 border-r border-white/20" />
                   <th className="text-center px-4 py-3 font-semibold border-r border-white/20">메뉴</th>
                   {ROLES.map(({ role, label }) => (

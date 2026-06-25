@@ -1,14 +1,15 @@
-﻿'use client'
+'use client'
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { productApi, unitApi } from '@/api/product.api'
 import { formatNumber } from '@/utils/format'
+import * as ui from '@/styles/ui'
 import type { Product, ProductUnit } from '@/types/api.types'
 
 type EditCell = { id: string; field: 'unit' | 'boxQty'; value: string }
 
-export default function BoxQtyPage() {
+export default function OUTQtyPage() {
   const qc = useQueryClient()
   const [search, setSearch] = useState('')
   const [editCell, setEditCell] = useState<EditCell | null>(null)
@@ -47,9 +48,9 @@ export default function BoxQtyPage() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
-            박스입수량
+            OUT입수량
           </h2>
-          <p className="text-xs text-gray-400 mt-0.5">단위와 박스당 낱개 수량을 클릭해 편집합니다.</p>
+          <p className="text-xs text-gray-400 mt-0.5">단위와 OUT당 낱개 수량을 클릭해 편집합니다.</p>
         </div>
         <div className="relative">
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="코드 / 상품명"
@@ -61,11 +62,11 @@ export default function BoxQtyPage() {
         <div className="overflow-x-auto">
         <table className="w-full min-w-[480px] text-sm">
           <thead>
-            <tr className="bg-[#2D4033] text-white">
+            <tr className={ui.thead}>
               <th className="text-center px-5 py-3 font-semibold w-32">코드</th>
               <th className="text-center px-4 py-3 font-semibold">상품명</th>
               <th className="text-center px-4 py-3 font-semibold w-32">단위</th>
-              <th className="text-center px-4 py-3 font-semibold w-28">박스 입수</th>
+              <th className="text-center px-4 py-3 font-semibold w-28">OUT 입수</th>
             </tr>
           </thead>
           <tbody>
@@ -87,7 +88,7 @@ export default function BoxQtyPage() {
                         className="px-2 py-1 text-sm border border-indigo-400 rounded-lg bg-white dark:bg-gray-800 outline-none">
                         {unitOptions.length > 0
                           ? unitOptions.map((u) => <option key={u.id} value={u.code}>{u.code} — {u.label}</option>)
-                          : ['EA', 'BOX', 'PALLET'].map((u) => <option key={u} value={u}>{u}</option>)}
+                          : ['EA', 'OUT', 'PALLET'].map((u) => <option key={u} value={u}>{u}</option>)}
                       </select>
                       <button onMouseDown={(e) => { e.preventDefault(); saveEdit(editCell) }} className="text-indigo-500 p-0.5">확인</button>
                       <button onMouseDown={(e) => { e.preventDefault(); setEditCell(null) }} className="text-gray-400 p-0.5">닫기</button>
@@ -101,7 +102,7 @@ export default function BoxQtyPage() {
                   )}
                 </td>
 
-                {/* 박스 입수 */}
+                {/* OUT 입수 */}
                 <td className="px-3 py-2 text-right">
                   {editCell?.id === p.id && editCell.field === 'boxQty' ? (
                     <div className="flex items-center justify-end gap-1">

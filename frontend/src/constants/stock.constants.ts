@@ -43,7 +43,7 @@ export const SALE_STATUS_LABEL = {
 
 export const BARCODE_UNIT_LABEL = {
   UNIT:   '낱개',
-  BOX:    '박스',
-  INNER:  '이너박스',
+  OUT:    'OUT',
+  INNER:  '이너OUT',
   PALLET: '팔레트',
 }

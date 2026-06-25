@@ -8,6 +8,7 @@ import { useAuthStore } from '@/stores/auth.store'
 import { useRoleStore, COLOR_OPTIONS } from '@/stores/role.store'
 import { formatDate, formatDateTime, formatNumber, formatPhoneInput } from '@/utils/format'
 import { cn } from '@/utils/cn'
+import * as ui from '@/styles/ui'
 import { ExportButton } from '@/components/ExportButton'
 import { useMenuLabel } from '@/hooks/use-menu-label'
 import type { UserDetail, UserRole } from '@/types/api.types'
@@ -154,7 +155,7 @@ export default function UsersPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-[#2D4033] text-white">
+                  <tr className={ui.thead}>
                     <th className="text-center px-4 py-3 font-semibold">사용자</th>
                     <th className="text-center px-3 py-3 font-semibold w-24">역할</th>
                     <th className="text-center px-3 py-3 font-semibold w-16">상태</th>

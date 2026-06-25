@@ -4,7 +4,10 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ───── 스크롤바 ───── */
+/* ═══════════════════════════════════════════════════════════
+ * 스크롤바 스타일
+ * 모든 페이지의 얇은 커스텀 스크롤바 (라이트/다크 공통)
+ * ═══════════════════════════════════════════════════════════ */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 999px; }
@@ -12,7 +15,11 @@
 .dark ::-webkit-scrollbar-thumb { background: #374151; }
 .dark ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
 
-/* ───── AG Grid 테마 오버라이드 ───── */
+/* ═══════════════════════════════════════════════════════════
+ * AG Grid 테마 — 레거시 wms-ag-grid / ag-theme-wms (구형)
+ * 아이보리·테라코타·포레스트그린 팔레트 초기 버전
+ * 현재는 아래 ag-theme-wms 블록으로 통합됨
+ * ═══════════════════════════════════════════════════════════ */
 .wms-ag-grid,
 .ag-theme-wms {
   --ag-font-family: 'Pretendard', sans-serif;
@@ -28,6 +35,7 @@
   --ag-cell-horizontal-border: solid #E5D3B3;
 }
 
+/* 다크 모드 — 레거시 */
 .dark .ag-theme-wms {
   --ag-background-color: #111827;
   --ag-header-background-color: #0f172a;
@@ -42,14 +50,15 @@
 
 .ag-theme-wms .ag-header-cell-text { font-weight: 600; }
 
-/*
- * Single operational-grid theme. Apply `ag-theme-quartz ag-theme-wms` to every
- * screen grid so colors, density, focus, edit state, and dark mode stay aligned.
- */
+/* ═══════════════════════════════════════════════════════════
+ * AG Grid 운영 테마 (ag-theme-quartz + ag-theme-wms)
+ * 모든 화면 그리드에 "ag-theme-quartz ag-theme-wms" 함께 적용.
+ * 색상·밀도·포커스·편집상태·다크모드가 이 블록에서 일괄 제어됨.
+ * ═══════════════════════════════════════════════════════════ */
 .ag-theme-wms {
   --ag-background-color: #ffffff;
   --ag-foreground-color: #1f2937;
-  --ag-header-background-color: #2d4033;
+  --ag-header-background-color: #f97316;   /* 포레스트그린 헤더 */
   --ag-header-foreground-color: #ffffff;
   --ag-odd-row-background-color: #f8faf8;
   --ag-row-hover-color: #eef5ef;
@@ -59,9 +68,9 @@
   --ag-cell-horizontal-border: solid #e7ece7;
   --ag-header-column-separator-color: rgba(255, 255, 255, 0.2);
   --ag-header-column-separator-height: 55%;
-  /* 작업 중인 셀과 선택 영역은 WMS 메인 포인트색(주황)으로 표시한다. */
+  /* 작업 중인 셀과 선택 영역은 WMS 포인트색(주황)으로 표시 */
   --ag-active-color: #d2691e;
-  --ag-checkbox-checked-color: #2d4033;
+  --ag-checkbox-checked-color: #dfb08a;
   --ag-input-focus-border-color: #d2691e;
   --ag-range-selection-border-color: #d2691e;
   --ag-font-size: 13px;
@@ -71,25 +80,29 @@
   border: 0;
 }
 
+/* 헤더 셀 배경색 강제 적용 (Quartz 테마 오버라이드) */
 .wms-ag-grid .ag-header,
 .wms-ag-grid .ag-header-cell,
 .wms-ag-grid .ag-header-group-cell,
 .ag-theme-wms .ag-header,
 .ag-theme-wms .ag-header-cell,
 .ag-theme-wms .ag-header-group-cell {
-  background-color: #2d4033 !important;
+  background-color: var(--color-grid-header) !important;
   color: #ffffff !important;
 }
 
+/* 헤더 그룹 셀은 한 단계 어둡게 */
 .ag-theme-wms .ag-header-group-cell {
-  background-color: #3a5540 !important;
+  background-color: var(--color-primary-hover) !important;
 }
 
+/* 헤더 텍스트 정렬 — 가운데 정렬 */
 .ag-theme-wms .ag-header-cell-label,
 .ag-theme-wms .ag-header-group-cell-label {
   justify-content: center;
 }
 
+/* 헤더 내 텍스트·아이콘 색상 흰색 강제 */
 .ag-theme-wms .ag-header-cell-text,
 .ag-theme-wms .ag-header-group-text,
 .ag-theme-wms .ag-header-icon,
@@ -97,25 +110,30 @@
   color: #ffffff !important;
 }
 
+/* 데이터 셀 — flexbox 세로 가운데 정렬 */
 .ag-theme-wms .ag-cell {
   display: flex;
   align-items: center;
   border-right-color: #e7ece7;
 }
 
+/* 포커스 셀 강조 테두리 */
 .ag-theme-wms .ag-cell-focus {
   border: 2px solid #d2691e !important;
 }
 
+/* 인라인 편집 중인 셀 */
 .ag-theme-wms .ag-cell-inline-editing {
   box-shadow: inset 0 0 0 1px #d2691e;
 }
 
+/* 페이지네이션·오버레이 텍스트 */
 .ag-theme-wms .ag-paging-panel,
 .ag-theme-wms .ag-overlay {
   color: #6b7280;
 }
 
+/* AG Grid 다크 모드 */
 .dark .ag-theme-wms {
   --ag-background-color: #111827;
   --ag-foreground-color: #e5e7eb;
@@ -132,13 +150,39 @@
 .dark .ag-theme-wms .ag-header,
 .dark .ag-theme-wms .ag-header-cell,
 .dark .ag-theme-wms .ag-header-group-cell {
-  background-color: #1f3a28 !important;
+  background-color: var(--color-grid-header) !important;
 }
 
-/* Product grid keeps only workflow-state colors; its base appearance comes from ag-theme-wms. */
+/* ═══════════════════════════════════════════════════════════
+ * 상품·재고 그리드 (ProductInventoryGrid) 행 상태 색상
+ * 기본 외관은 ag-theme-wms에서 상속하며, 업무 상태별 색만 여기서 선언.
+ * ─────────────────────────────────────────────────────────
+ * cell-below-safety : 재고 부족 셀 (빨간 계열 옅은 배경)
+ * row-pending-delete: 삭제 예정 행 (회색·취소선)
+ * row-new           : 신규 입력 행 (초록 계열 옅은 배경)
+ * row-modified      : 수정된 행 (노란 계열 옅은 배경)
+ * cell-required-input: 필수 입력 누락 셀 (빨간 경고)
+ * ═══════════════════════════════════════════════════════════ */
+.product-inventory-grid .ag-row.row-status-active,
+.product-inventory-grid .ag-pinned-left-cols-container .ag-row.row-status-active {
+  background-color: #f0fdf4 !important;
+}
+
+.product-inventory-grid .ag-row.row-status-inactive,
+.product-inventory-grid .ag-pinned-left-cols-container .ag-row.row-status-inactive {
+  background-color: #f9fafb !important;
+  color: #9ca3af !important;
+}
+
+.product-inventory-grid .ag-cell.cell-below-safety {
+  background-color: #fff0f0 !important;
+  color: #b91c1c !important;
+  font-weight: 700;
+}
+
 .product-inventory-grid .ag-row.row-below-safety,
 .product-inventory-grid .ag-pinned-left-cols-container .ag-row.row-below-safety {
-  background-color: #fff0f0 !important;
+  background-color: #fff8f8 !important;
 }
 
 .product-inventory-grid .ag-row.row-pending-delete,
@@ -158,20 +202,33 @@
   background-color: #fffbeb !important;
 }
 
-.product-inventory-grid .ag-row.row-required-input,
-.product-inventory-grid .ag-pinned-left-cols-container .ag-row.row-required-input {
+.product-inventory-grid .ag-cell.cell-required-input {
   background-color: #fff1f2 !important;
+  color: #be123c !important;
+  font-weight: 700;
 }
 
+/* 바코드 관리 그리드 — 상품코드별 3색 순환 구분 */
+.wms-ag-grid .ag-row.barcode-group-0 { background-color: #eff6ff !important; } /* blue-50 */
+.wms-ag-grid .ag-row.barcode-group-1 { background-color: #f0fdf4 !important; } /* green-50 */
+.wms-ag-grid .ag-row.barcode-group-2 { background-color: #fdf4ff !important; } /* purple-50 */
+.dark .wms-ag-grid .ag-row.barcode-group-0 { background-color: #0d1e3a !important; }
+.dark .wms-ag-grid .ag-row.barcode-group-1 { background-color: #052e16 !important; }
+.dark .wms-ag-grid .ag-row.barcode-group-2 { background-color: #2e1065 !important; }
+/* row-new / row-modified는 그룹 색보다 우선 */
+.wms-ag-grid .ag-row.row-new { background-color: #dcfce7 !important; }
+.wms-ag-grid .ag-row.row-modified { background-color: #fef9c3 !important; }
+
+/* 바코드 그리드 — 삭제 예정 행 (반투명 + 취소선) */
 .barcode-pending-delete {
   opacity: 0.5;
   text-decoration: line-through;
 }
 
-.product-inventory-grid .ag-row.row-below-safety .ag-cell {
-  background-color: transparent !important;
-}
-
+/* ═══════════════════════════════════════════════════════════
+ * 상품 그리드 오버플로우 드롭다운 메뉴
+ * 툴바 더보기(...) 버튼 클릭 시 나타나는 팝오버 내 버튼 스타일
+ * ═══════════════════════════════════════════════════════════ */
 .product-grid-overflow .responsive-icon-action,
 .product-grid-overflow > button {
   width: 100%;
@@ -179,7 +236,7 @@
   gap: 6px;
   border: 0 !important;
   background: transparent !important;
-  color: #2d4033 !important;
+  color: #f79650 !important;
   padding: 0 8px;
 }
 
@@ -192,48 +249,70 @@
   display: inline !important;
 }
 
-/* ───── 재고 부족 행 ───── */
-.row-below-safety { background-color: #fff7f7 !important; }
+/* ═══════════════════════════════════════════════════════════
+ * 전역 행 상태 유틸리티 클래스
+ * ProductInventoryGrid 외의 테이블에서도 재사용 가능
+ * ═══════════════════════════════════════════════════════════ */
+/* 취소·삭제 행 (취소선 + 반투명) */
 .row-cancelled     { opacity: 0.5; text-decoration: line-through; }
 
-/* ───── 스캔 모드 풀스크린 ───── */
+/* ═══════════════════════════════════════════════════════════
+ * 스캔 페이지 — 풀스크린 레이아웃
+ * 바코드 스캔 화면에서 전체 화면을 차지하는 레이아웃 컨테이너
+ * ═══════════════════════════════════════════════════════════ */
 .scan-layout {
   @apply fixed inset-0 bg-gray-900 text-white flex flex-col;
 }
 
+/* ═══════════════════════════════════════════════════════════
+ * Tailwind 기본 레이어 설정
+ * ═══════════════════════════════════════════════════════════ */
 @layer base {
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
     @apply text-gray-900 antialiased dark:bg-gray-950 dark:text-gray-100;
-    background-color: #F9F7F2;
+    background-color: #F9F7F2;   /* 아이보리 크림 배경 */
     font-feature-settings: "kern" 1, "liga" 1;
   }
   .dark body {
     background-color: #030712;
   }
+  /* 텍스트 선택 하이라이트 — 아이보리/포레스트그린 */
   ::selection {
     background-color: #E5D3B3;
     color: #2D4033;
   }
 }
 
+/* ═══════════════════════════════════════════════════════════
+ * 유틸리티 레이어
+ * ═══════════════════════════════════════════════════════════ */
 @layer utilities {
+  /* 포커스 링 — 주황 포인트색 기반 */
   .ring-focus {
     @apply focus:outline-none focus:ring-2 focus:ring-[#D2691E]/40;
   }
 }
 
+/* ═══════════════════════════════════════════════════════════
+ * 컴포넌트 레이어 — 공통 UI 클래스
+ * ═══════════════════════════════════════════════════════════ */
 @layer components {
-  /* ───── 페이지 공통 구조 ───── */
+
+  /* ── 페이지 공통 구조 ── */
+
+  /* 페이지 상단 툴바 (제목 + 액션 버튼 영역) */
   .page-toolbar {
     @apply flex items-center justify-between gap-3 mb-4;
   }
 
+  /* 페이지 제목 */
   .page-title {
     @apply text-[15px] font-bold text-gray-900 dark:text-white tracking-tight;
   }
 
+  /* 페이지 부제 (설명 텍스트) */
   .page-subtitle {
     @apply text-[11px] text-gray-400 mt-0.5 leading-tight;
   }
@@ -248,7 +327,8 @@
     @apply bg-white dark:bg-gray-900 rounded border border-gray-200/80 dark:border-gray-800 overflow-hidden;
   }
 
-  /* 검색 인풋 공통 */
+  /* ── 검색 입력 ── */
+  /* 아이콘 왼쪽 여백 포함 */
   .search-input {
     @apply pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded
            bg-white dark:bg-gray-900 outline-none focus:border-[#2D4033] dark:focus:border-[#5f9e78]
@@ -257,50 +337,57 @@
            transition-colors w-44;
   }
 
-  /* 프라이머리 버튼 */
+  /* ── 버튼 공통 ── */
+
+  /* 기본 강조 버튼 (포레스트그린) */
   .btn-primary {
     @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium
            bg-[#2D4033] hover:bg-[#253628] text-white transition-colors;
   }
 
-  /* 아웃라인 버튼 */
+  /* 아웃라인 보조 버튼 */
   .btn-outline {
     @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium
            border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300
            hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors;
   }
 
-  /* 위험 버튼 */
+  /* 위험 삭제 버튼 */
   .btn-danger {
     @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium
            bg-rose-500 hover:bg-rose-600 text-white transition-colors;
   }
 
+  /* 반응형 아이콘+라벨 버튼 — 좁은 화면에서는 아이콘만 표시 */
   .responsive-icon-action {
     @apply flex h-7 w-7 items-center justify-center rounded text-sm font-medium transition-colors;
   }
 
+  /* 라벨은 기본적으로 숨김 — 넓은 화면이나 드롭다운에서 표시 */
   .responsive-action-label {
     @apply hidden;
   }
 
-  /* 테이블 헤더 셀 */
+  /* ── 테이블 헤더 셀 ── */
   .th {
     @apply px-3 py-2 text-[11px] font-semibold text-gray-500 dark:text-gray-400
            bg-gray-50 dark:bg-gray-800/60
            border-b border-gray-200 dark:border-gray-700 whitespace-nowrap text-left;
   }
 
-  /* 테이블 데이터 셀 기본 */
+  /* ── 테이블 데이터 셀 기본 ── */
   .td {
     @apply px-3 py-2 text-[13px] border-b border-gray-100 dark:border-gray-800
            text-gray-700 dark:text-gray-300;
   }
 
+  /* ── 열 리사이즈 가능한 테이블 ── */
+  /* 고정 레이아웃 테이블 (각 열 너비 고정) */
   .wms-resizable-table {
     table-layout: fixed;
   }
 
+  /* 리사이즈 핸들이 있는 헤더 셀 */
   .wms-resizable-th {
     position: relative;
     overflow: hidden;
@@ -319,6 +406,7 @@
     white-space: nowrap;
   }
 
+  /* 열 너비 조절 드래그 핸들 */
   .wms-column-resizer {
     position: absolute;
     top: 0;
@@ -331,6 +419,7 @@
     user-select: none;
   }
 
+  /* 핸들 시각적 구분선 (호버/드래그 중에만 표시) */
   .wms-column-resizer::after {
     position: absolute;
     top: 22%;
@@ -347,13 +436,18 @@
     background: rgb(255 255 255 / 0.72);
   }
 
+  /* 열 리사이즈 드래그 중 커서 고정 */
   .wms-column-resizing {
     cursor: col-resize;
     user-select: none;
   }
 }
 
-/* Brand WMS workspace: dense, flat and operational. */
+/* ═══════════════════════════════════════════════════════════
+ * WMS 워크스페이스 (밀도 높은 업무화면 스타일)
+ * 운영 데이터 화면에 .wms-workspace 클래스를 적용하면
+ * 둥근 모서리 축소, 그림자 제거, 컴팩트 입력 등이 일괄 적용됨.
+ * ═══════════════════════════════════════════════════════════ */
 .wms-workspace {
   --wms-ivory: #F9F7F2;
   --wms-oatmeal: #E5D3B3;
@@ -363,6 +457,7 @@
   color: #26332b;
 }
 
+/* 과도한 둥근 모서리 축소 (운영화면 밀도 확보) */
 .wms-workspace [class*="rounded-2xl"],
 .wms-workspace [class*="rounded-xl"],
 .wms-workspace [class*="rounded-[18px]"],
@@ -370,6 +465,7 @@
   border-radius: 4px;
 }
 
+/* 그림자 제거 (플랫 운영 UI) */
 .wms-workspace [class*="shadow-sm"],
 .wms-workspace [class*="shadow-lg"],
 .wms-workspace [class*="shadow-xl"],
@@ -377,11 +473,12 @@
   box-shadow: none;
 }
 
+/* 블러 효과 제거 (퍼포먼스 및 밀도 확보) */
 .wms-workspace [class*="backdrop-blur"] {
   backdrop-filter: none;
 }
 
-/* Compact inputs/selects — override py-2, py-2.5, py-3 */
+/* 입력·셀렉트 높이 압축 (py-2 이상을 5px로 축소) */
 .wms-workspace input:not([type="checkbox"]):not([type="radio"]) {
   padding-top: 5px;
   padding-bottom: 5px;
@@ -391,7 +488,7 @@
   padding-bottom: 5px;
 }
 
-/* Remove decorative uppercase/letter-spacing from labels and section headings */
+/* 레이블·섹션 제목의 대문자·자간 초기화 */
 .wms-workspace label,
 .wms-workspace [class*="tracking-wide"],
 .wms-workspace [class*="tracking-\\["] {
@@ -399,35 +496,41 @@
   letter-spacing: normal !important;
 }
 
+/* 흰 배경 border 색을 워크스페이스 라인 색으로 통일 */
 .wms-workspace [class*="bg-white"][class*="border"] {
   border-color: var(--wms-line);
 }
 
+/* 테이블 헤더 border 색 통일 */
 .wms-workspace table thead th {
   border-color: #d2c09e !important;
 }
 
-/* Keep column names in view while a dense data grid scrolls. */
+/* 테이블 헤더를 스크롤 시 상단에 고정 */
 .wms-workspace table thead {
   position: sticky;
   top: 0;
   z-index: 20;
 }
 
+/* indigo/gray-50 헤더를 워크스페이스 오트밀 색으로 교체 */
 .wms-workspace table thead th[class*="bg-indigo-"],
 .wms-workspace table thead th[class*="bg-gray-50"] {
   background-color: var(--wms-oatmeal) !important;
   color: var(--wms-forest) !important;
 }
 
+/* 데이터 행 배경 */
 .wms-workspace table tbody tr {
   background-color: rgba(255, 255, 255, 0.94);
 }
 
+/* 행 호버 */
 .wms-workspace table tbody tr:hover {
   background-color: #f4eee3;
 }
 
+/* 포커스 상태 — 주황 테두리 + 글로우 */
 .wms-workspace input:focus,
 .wms-workspace select:focus,
 .wms-workspace textarea:focus {
@@ -435,6 +538,7 @@
   box-shadow: 0 0 0 2px rgba(210, 105, 30, 0.14) !important;
 }
 
+/* indigo 버튼/링크를 포레스트그린으로 교체 */
 .wms-workspace button[class*="bg-indigo-600"],
 .wms-workspace a[class*="bg-indigo-600"] {
   background-color: var(--wms-forest) !important;
@@ -445,16 +549,18 @@
   background-color: #253628 !important;
 }
 
+/* indigo 텍스트를 포레스트그린으로 */
 .wms-workspace button[class*="text-indigo-"],
 .wms-workspace a[class*="text-indigo-"] {
   color: var(--wms-forest);
 }
 
+/* 버튼 텍스트 줄바꿈 방지 */
 .wms-workspace button {
   word-break: keep-all;
 }
 
-/* Dense desktop grids: keep management screens readable without wasting vertical space. */
+/* 데스크톱 데이터 그리드 — 헤더·셀 패딩 압축 */
 .wms-workspace table > thead > tr > th {
   padding-top: 0.375rem !important;
   padding-bottom: 0.375rem !important;
@@ -465,10 +571,12 @@
   padding-bottom: 0.375rem !important;
 }
 
+/* 체크박스 accent 색 */
 .wms-workspace .accent-indigo-600 {
   accent-color: var(--wms-terracotta);
 }
 
+/* 워크스페이스 다크 모드 */
 .dark .wms-workspace {
   --wms-line: #33443a;
   color: #f4f0e8;
@@ -488,21 +596,28 @@
   background-color: #1d3025;
 }
 
+/* ═══════════════════════════════════════════════════════════
+ * 반응형 — 모바일 (767px 이하)
+ * ═══════════════════════════════════════════════════════════ */
 @media (max-width: 767px) {
+  /* 툴바 세로 정렬 */
   .page-toolbar {
     align-items: stretch;
     flex-direction: column;
   }
 
+  /* 액션 버튼 전체 너비로 줄바꿈 */
   .page-actions {
     flex-wrap: wrap;
     width: 100%;
   }
 
+  /* 검색창 전체 너비 */
   .search-input {
     width: 100%;
   }
 
+  /* 모바일에서 고정 열(sticky) 해제 — 가로 스크롤 불편 방지 */
   .mobile-unpin-grid th[class*="sticky"][class*="left-"],
   .mobile-unpin-grid td[class*="sticky"][class*="left-"],
   .mobile-unpin-grid th.sticky-col,
@@ -517,11 +632,12 @@
     z-index: auto !important;
   }
 
-
+  /* 열 리사이즈 핸들 숨김 (터치에서 불필요) */
   .wms-column-resizer {
     display: none;
   }
 
+  /* 탭 레이아웃 세로 스택 */
   .wms-tabs-layout {
     align-items: stretch;
     flex-direction: column;
@@ -538,6 +654,7 @@
     padding-left: 0;
   }
 
+  /* 분할 레이아웃 세로 스택 */
   .wms-workspace {
     flex-direction: column;
   }
@@ -555,6 +672,7 @@
     min-height: 50%;
   }
 
+  /* 분할 구분선 — 모바일에서 가로 방향 */
   .wms-split-divider {
     width: 100%;
     height: 4px;
@@ -563,17 +681,20 @@
   }
 }
 
-/*
- * Shared soft-dashboard design system.
- * Pages must use these semantic classes instead of declaring their own background colors.
- * Change the variables here to recolor every layout, card, button, and AG Grid at once.
- */
+/* ═══════════════════════════════════════════════════════════
+ * 앱 셸 시맨틱 클래스 (디자인 시스템)
+ * 페이지는 직접 배경색을 선언하지 않고 이 클래스들을 사용.
+ * CSS 변수만 수정하면 레이아웃·카드·버튼·AG Grid 색상이 일괄 변경됨.
+ * ═══════════════════════════════════════════════════════════ */
+
+/* 페이지 배경 */
 .app-shell,
 .app-workspace,
 .app-embed {
   background: var(--color-page);
 }
 
+/* 카드·패널 표면 */
 .app-surface,
 .data-card {
   background: var(--color-surface);
@@ -582,45 +703,58 @@
   box-shadow: var(--shadow-card);
 }
 
+/* 상단 툴바 */
 .app-toolbar {
   background: var(--color-surface);
   border-color: var(--color-line);
 }
 
+/* 앱 헤더 */
 .app-header {
   background: var(--color-surface);
   border-color: var(--color-line);
 }
 
+/* 탭 네비게이션 배경 */
 .app-tabs {
   background: var(--color-surface-muted);
   border-color: var(--color-line);
 }
 
+/* 브랜드 강조색 적용 */
 .app-brand-accent {
   background: var(--color-primary);
   color: var(--color-primary);
 }
 
+/* 로더·아바타 */
 .app-loader { background: var(--color-page); }
 .app-loader-mark,
 .app-loader-dot,
 .app-user-avatar { background: var(--color-primary); }
 .app-loader-dot-muted { background: var(--color-primary-soft); }
+
+/* 헤더 텍스트·아이콘 */
 .app-header-title { color: var(--color-text); }
 .app-header-icon,
 .app-header-accent { color: var(--color-primary); }
 .app-notification-title { color: var(--color-primary); }
 
+/* 활성 탭 */
 .app-tab-active {
   background: var(--color-surface-muted);
   color: var(--color-text-strong);
   border-color: var(--color-line);
 }
+/* 분할 탭 강조 테두리 */
 .app-tab-split { box-shadow: inset 0 0 0 1px var(--color-primary); }
+/* 드래그 드롭 대상 탭 */
 .app-tab-drop-active { background: var(--color-primary-soft); border-color: var(--color-primary); color: var(--color-primary); }
 
-/* Sidebar uses semantic classes so its palette never needs to be edited in JSX. */
+/* ═══════════════════════════════════════════════════════════
+ * 사이드바 — 시맨틱 클래스 기반
+ * JSX에서 색상을 직접 편집하지 않고 이 클래스로 제어
+ * ═══════════════════════════════════════════════════════════ */
 .app-sidebar {
   width: 216px;
   height: 100%;
@@ -632,7 +766,10 @@
   user-select: none;
 }
 
+/* 사이드바 브랜드 영역 (로고 + 제목) */
 .app-sidebar-brand { height: 64px; padding: 0 1rem; }
+
+/* 로고 아이콘 박스 및 사용자 아바타 */
 .app-sidebar-logo,
 .app-sidebar-avatar {
   display: grid;
@@ -643,33 +780,55 @@
 }
 .app-sidebar-logo { width: 2rem; height: 2rem; border-radius: 0.75rem; }
 .app-sidebar-avatar { width: 1.75rem; height: 1.75rem; border-radius: 0.5rem; }
+
+/* 제목·설명 텍스트 */
 .app-sidebar-title { color: #263238; }
 .app-sidebar-caption,
 .app-sidebar-section-label { color: var(--color-primary); }
+
+/* 닫기 버튼 (모바일) */
 .app-sidebar-close { color: var(--color-text-muted); }
+
+/* 호버 상태 */
 .app-sidebar-close:hover,
 .app-sidebar-section:hover,
 .app-sidebar-link:hover,
 .app-sidebar-logout:hover { background: var(--color-surface-muted); color: var(--color-primary); }
+
+/* 섹션 그룹 */
 .app-sidebar-section { border-radius: 0.5rem; }
 .app-sidebar-section-label { color: #a47767; }
 .app-sidebar-section-icon { color: #b9a49b; }
 .app-sidebar-section:hover .app-sidebar-section-label,
 .app-sidebar-section:hover .app-sidebar-section-icon { color: var(--color-primary); }
+
+/* 메뉴 링크 */
 .app-sidebar-link { color: #667085; border-radius: 0.75rem; }
+
+/* 활성 메뉴 링크 */
 .app-sidebar-link-active { background: var(--color-primary); color: #fff; box-shadow: var(--shadow-primary); }
 .app-sidebar-link-active:hover { background: var(--color-primary-hover); color: #fff; }
 .app-sidebar-link-icon { color: #98a2b3; }
 .app-sidebar-link:hover .app-sidebar-link-icon { color: var(--color-primary); }
 .app-sidebar-link-active .app-sidebar-link-icon { color: #fff; }
+
+/* 활성 표시 왼쪽 마커 */
 .app-sidebar-active-marker { background: #fff; border-radius: 0 999px 999px 0; }
+
+/* 구분선·푸터 */
 .app-sidebar-divider,
 .app-sidebar-footer { border-color: var(--color-line); }
+
+/* 사용자 정보 카드 */
 .app-sidebar-user { background: #fff6f2; border-radius: 0.75rem; }
 .app-sidebar-user-name { color: var(--color-text); }
 .app-sidebar-role,
 .app-sidebar-logout { color: var(--ui-muted); }
 
+/* ═══════════════════════════════════════════════════════════
+ * 버튼 — 시맨틱 클래스
+ * wms-primary-button / btn-primary 모두 동일한 강조색 사용
+ * ═══════════════════════════════════════════════════════════ */
 .btn-primary,
 .wms-primary-button {
   background: var(--color-primary) !important;
@@ -683,6 +842,7 @@
   background: var(--color-primary-hover) !important;
 }
 
+/* 아이콘 버튼 (테두리 있는 소형 버튼) */
 .wms-icon-button {
   border: 1px solid var(--color-primary-soft);
   background: var(--color-surface);
@@ -693,57 +853,112 @@
   background: var(--color-primary-soft);
 }
 
+/* ═══════════════════════════════════════════════════════════
+ * 그리드 툴바 (ProductInventoryGrid 상단)
+ * ═══════════════════════════════════════════════════════════ */
 .wms-grid-toolbar {
-  background: var(--color-primary);
-  border-color: var(--color-primary-hover);
+  background: var(--color-surface);
+  border-color: var(--color-line);
 }
 
+.dark .wms-grid-toolbar {
+  background: #1a2535;
+  border-color: #2d3748;
+}
+
+/* 툴바 내 액션 버튼 */
 .wms-toolbar-action {
-  border: 1px solid rgb(255 255 255 / 28%);
-  background: rgb(255 255 255 / 12%);
-  color: #fff;
+  border: 1px solid var(--color-primary);
+  background: transparent;
+  color: var(--color-primary);
 }
 
 .wms-toolbar-action:hover {
-  background: rgb(255 255 255 / 24%);
+  background: var(--color-primary);
+  color: #fff;
 }
 
+.dark .wms-toolbar-action {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.dark .wms-toolbar-action:hover {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+/* ═══════════════════════════════════════════════════════════
+ * 상세 패널 헤더·인라인 편집·링크
+ * ═══════════════════════════════════════════════════════════ */
+/* 상세 정보 패널 헤더 (배경 약한 강조) */
 .wms-detail-header {
   background: var(--color-surface-muted);
   border-color: var(--color-primary-soft);
 }
 
+/* 인라인 편집 입력 */
 .wms-inline-input {
   border-color: var(--color-line);
   background: var(--color-surface);
 }
 .wms-inline-input:focus { border-color: var(--color-primary); }
+
+/* 인라인 링크, 레이블 */
 .wms-inline-link,
 .wms-detail-label { color: var(--color-primary); }
+
+/* 체크박스 accent */
 .wms-checkbox { accent-color: var(--color-primary); }
+
+/* 목록 옵션 호버 */
 .wms-list-option:hover { background: var(--color-surface-muted); }
+
+/* 에디터 패널 */
 .wms-editor-panel { background: var(--color-surface-muted); border: var(--border-default); border-radius: var(--radius-sm); }
+
+/* 모달 헤더 구분선 */
 .wms-modal-header { border-color: var(--color-line); }
+
+/* 모달 상단 강조 마크 */
 .wms-modal-mark { background: var(--color-grid-header); color: #fff; border-radius: var(--radius-sm); }
+
+/* 태그 (뱃지) */
 .wms-tag { background: var(--color-primary-soft); color: var(--color-text); border-radius: 999px; }
 .wms-tag-muted { background: var(--color-surface-muted); color: var(--color-text); border-radius: 999px; }
+
+/* 별점 아이콘 */
 .wms-star { color: var(--color-primary); fill: var(--color-primary); }
+
+/* ═══════════════════════════════════════════════════════════
+ * 패널·탭·코드
+ * ═══════════════════════════════════════════════════════════ */
 .wms-panel { background: var(--color-surface); border: var(--border-default); }
 .wms-panel-header { background: var(--color-surface-muted); border-color: var(--color-line); }
 .wms-tab-active { background: var(--color-primary-soft); border-color: var(--color-primary); color: var(--color-primary); }
 .wms-code { color: var(--color-text); }
+
+/* ═══════════════════════════════════════════════════════════
+ * AG Grid — 신규 행 강조 (wms-ag-grid-row-new)
+ * ═══════════════════════════════════════════════════════════ */
 .wms-ag-grid .ag-row.wms-ag-grid-row-new .ag-cell {
   background: var(--color-surface-muted);
   box-shadow: inset 0 0 0 1px var(--color-primary);
 }
 
+/* ═══════════════════════════════════════════════════════════
+ * HTML 테이블 헤더 & 선택 바
+ * units, categories 등 일반 페이지의 table > thead 스타일
+ * ═══════════════════════════════════════════════════════════ */
 .wms-table-header,
 .wms-selected-bar {
-  background: #344b3e;
+  background: #f59e0b;   /* 주황 헤더 */
   color: #fff;
 }
 
-/* Reusable page primitives consumed through src/styles/ui.ts. */
+/* ═══════════════════════════════════════════════════════════
+ * 공통 페이지 UI 원형 클래스 (src/styles/ui.ts 에서 임포트)
+ * ═══════════════════════════════════════════════════════════ */
 .wms-card,
 .wms-card-flat,
 .wms-table-wrap,
@@ -754,19 +969,31 @@
 }
 .wms-table-wrap { overflow: hidden; }
 .wms-filter-card { display: flex; gap: 0.625rem; padding: 0.75rem; }
+
+/* 테이블 바디 */
 .wms-table-body { border-color: var(--color-line); }
+
+/* 테이블 행 — 호버 트랜지션 */
 .wms-table-row { transition: background-color 150ms ease; }
 .wms-table-row:hover { background: var(--color-surface-muted); }
+
+/* 테이블 셀 */
 .wms-table-cell { padding: 0.5rem 0.75rem; color: var(--color-text); font-size: 0.875rem; }
+
+/* 타이포그래피 */
 .wms-heading { color: var(--color-text-strong); font-size: 1.125rem; font-weight: 700; }
 .wms-subtext { color: var(--color-text-muted); margin-top: 0.125rem; font-size: 0.75rem; }
 .wms-label { display: block; margin-bottom: 0.25rem; color: var(--color-text); font-size: 0.875rem; font-weight: 500; }
+
+/* 공통 입력 */
 .wms-input {
   width: 100%; padding: 0.5rem 0.75rem; border: var(--border-default); border-radius: var(--radius-sm);
   background: var(--color-surface); color: var(--color-text); font-size: 0.875rem; outline: none;
 }
 .wms-input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgb(255 107 74 / 15%); }
 .wms-search-input { padding-left: 2.25rem; }
+
+/* 버튼 기본 구조 */
 .wms-primary-button,
 .wms-secondary-button,
 .wms-danger-button,
@@ -780,9 +1007,15 @@
 .wms-danger-button { padding: 0.375rem 0.75rem; background: var(--color-danger); color: #fff; }
 .wms-icon-button { padding: 0.375rem; }
 .wms-icon-button-danger { color: var(--color-danger); }
+
+/* 모달 */
 .wms-modal-overlay { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; background: rgb(17 24 39 / 45%); }
 .wms-modal-box { padding: var(--space-panel); background: var(--color-surface); border: var(--border-default); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); }
 
+/* ═══════════════════════════════════════════════════════════
+ * 분할 패널 구분자 (wms-splitter)
+ * 상품 재고 그리드와 바코드 패널 사이 드래그 핸들
+ * ═══════════════════════════════════════════════════════════ */
 .wms-splitter {
   background: #f8fafc;
   border-color: var(--ui-line);
@@ -793,7 +1026,10 @@
   background: var(--ui-primary-soft);
 }
 
-/* The grid has the same palette and can be rethemed by editing these variables only. */
+/* ═══════════════════════════════════════════════════════════
+ * AG Grid — CSS 변수 기반 재테마 (tokens.css 변수 연동)
+ * 이 블록을 수정하면 모든 AG Grid 색상이 토큰 값으로 변경됨
+ * ═══════════════════════════════════════════════════════════ */
 .ag-theme-wms {
   --ag-background-color: var(--color-surface);
   --ag-header-background-color: var(--color-grid-header);
@@ -807,10 +1043,400 @@
   --ag-range-selection-border-color: var(--color-primary);
 }
 
+/* ═══════════════════════════════════════════════════════════
+ * WMS 워크스페이스 — 토큰 재매핑
+ * (wms-workspace 내에서 토큰 변수들을 재매핑)
+ * ═══════════════════════════════════════════════════════════ */
 .wms-workspace {
   --wms-ivory: var(--color-page);
   --wms-oatmeal: var(--color-surface-muted);
   --wms-terracotta: var(--color-primary);
   --wms-forest: var(--color-text);
   --wms-line: var(--color-line);
+}
+
+/* Unified UI layer: keep the app visually consistent from shared tokens. */
+:root {
+  --ui-muted: var(--color-text-muted);
+  --ui-line: var(--color-line);
+  --ui-primary-soft: var(--color-primary-soft);
+}
+
+@layer base {
+  body {
+    background: var(--color-page);
+    color: var(--color-text);
+  }
+
+  .dark body {
+    background: var(--color-page);
+  }
+
+  ::selection {
+    background: var(--color-primary-soft);
+    color: var(--color-text-strong);
+  }
+}
+
+.app-shell,
+.app-workspace,
+.app-embed,
+.app-loader {
+  background: var(--color-page) !important;
+  color: var(--color-text);
+}
+
+.app-surface,
+.app-toolbar,
+.app-header,
+.app-sidebar,
+.data-card,
+.wms-card,
+.wms-card-flat,
+.wms-table-wrap,
+.wms-filter-card,
+.wms-panel,
+.wms-modal-box {
+  background: var(--color-surface) !important;
+  border-color: var(--color-line) !important;
+  color: var(--color-text);
+}
+
+.app-surface,
+.data-card,
+.wms-card,
+.wms-card-flat,
+.wms-table-wrap,
+.wms-filter-card,
+.wms-panel,
+.wms-modal-box {
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+}
+
+.app-tabs,
+.app-tab-active,
+.wms-detail-header,
+.wms-panel-header,
+.wms-editor-panel,
+.wms-grid-toolbar {
+  background: var(--color-surface-muted) !important;
+  border-color: var(--color-line) !important;
+}
+
+.app-header-title,
+.app-sidebar-title,
+.wms-heading,
+.page-title {
+  color: var(--color-text-strong) !important;
+}
+
+.app-sidebar-caption,
+.app-sidebar-section-label,
+.app-header-icon,
+.app-header-accent,
+.app-notification-title,
+.wms-detail-label,
+.wms-inline-link {
+  color: var(--color-primary) !important;
+}
+
+.app-brand-accent,
+.app-loader-mark,
+.app-loader-dot,
+.app-user-avatar,
+.app-sidebar-logo,
+.app-sidebar-avatar {
+  background: var(--color-primary) !important;
+}
+
+.app-sidebar-link,
+.app-sidebar-role,
+.app-sidebar-logout,
+.page-subtitle,
+.wms-subtext {
+  color: var(--color-text-muted) !important;
+}
+
+.app-sidebar-link-icon,
+.app-sidebar-section-icon {
+  color: color-mix(in srgb, var(--color-text-muted) 72%, var(--color-surface)) !important;
+}
+
+.app-sidebar-close:hover,
+.app-sidebar-section:hover,
+.app-sidebar-link:hover,
+.app-sidebar-logout:hover,
+.wms-secondary-button:hover,
+.wms-icon-button:hover,
+.wms-list-option:hover,
+.wms-table-row:hover {
+  background: var(--color-surface-muted) !important;
+  color: var(--color-primary) !important;
+}
+
+.app-sidebar-link-active,
+.app-sidebar-link-active:hover,
+.btn-primary,
+.wms-primary-button {
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+.btn-primary:hover,
+.wms-primary-button:hover {
+  background: var(--color-primary-hover) !important;
+}
+
+.wms-secondary-button,
+.btn-outline,
+.wms-icon-button,
+.wms-toolbar-action {
+  background: var(--color-surface) !important;
+  border-color: var(--color-line) !important;
+  color: var(--color-text) !important;
+  box-shadow: none !important;
+}
+
+.wms-toolbar-action:hover,
+.wms-icon-button:hover {
+  border-color: var(--color-primary) !important;
+}
+
+.wms-danger-button,
+.btn-danger {
+  background: var(--color-danger) !important;
+  border-color: var(--color-danger) !important;
+  color: #fff !important;
+}
+
+.wms-input,
+.search-input,
+.wms-inline-input,
+.wms-workspace input:not([type="checkbox"]):not([type="radio"]),
+.wms-workspace select,
+.wms-workspace textarea {
+  background: var(--color-surface) !important;
+  border-color: var(--color-line) !important;
+  color: var(--color-text) !important;
+  border-radius: var(--radius-sm) !important;
+}
+
+.wms-input:focus,
+.search-input:focus,
+.wms-inline-input:focus,
+.wms-workspace input:focus,
+.wms-workspace select:focus,
+.wms-workspace textarea:focus {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent) !important;
+}
+
+.wms-table-header,
+.wms-selected-bar {
+  background: var(--color-grid-header) !important;
+  color: #fff !important;
+}
+
+.wms-table-cell,
+.td {
+  color: var(--color-text) !important;
+  border-color: var(--color-line) !important;
+}
+
+.th,
+.wms-workspace table thead th[class*="bg-indigo-"],
+.wms-workspace table thead th[class*="bg-gray-50"] {
+  background: var(--color-grid-header) !important;
+  border-color: color-mix(in srgb, var(--color-grid-header) 76%, #fff) !important;
+  color: #fff !important;
+}
+
+.wms-workspace {
+  --wms-ivory: var(--color-page);
+  --wms-oatmeal: var(--color-surface-muted);
+  --wms-terracotta: var(--color-primary);
+  --wms-forest: var(--color-text-strong);
+  --wms-line: var(--color-line);
+  color: var(--color-text);
+}
+
+.wms-workspace [class*="bg-white"][class*="border"],
+.wms-workspace [class*="dark:bg-gray-"][class*="border"],
+.wms-workspace [class*="dark:bg-slate-"][class*="border"] {
+  background: var(--color-surface) !important;
+  border-color: var(--color-line) !important;
+}
+
+.wms-workspace table tbody tr,
+.wms-workspace [class*="divide-y"] > * {
+  border-color: var(--color-line) !important;
+}
+
+.wms-workspace table tbody tr {
+  background: var(--color-surface) !important;
+}
+
+.wms-workspace table tbody tr:hover {
+  background: var(--color-surface-muted) !important;
+}
+
+.wms-tag,
+.wms-tab-active,
+.app-tab-drop-active,
+.wms-ag-grid .ag-row.wms-ag-grid-row-new .ag-cell {
+  background: var(--color-primary-soft) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+}
+
+.wms-tag-muted {
+  background: var(--color-surface-muted) !important;
+  color: var(--color-text) !important;
+}
+
+.wms-splitter {
+  background: var(--color-line) !important;
+  border-color: var(--color-line) !important;
+}
+
+.wms-splitter:hover,
+.wms-splitter:active {
+  background: var(--color-primary) !important;
+}
+
+.ag-theme-wms {
+  --ag-background-color: var(--color-surface);
+  --ag-foreground-color: var(--color-text);
+  --ag-header-background-color: var(--color-grid-header);
+  --ag-header-foreground-color: #fff;
+  --ag-odd-row-background-color: color-mix(in srgb, var(--color-surface-muted) 45%, var(--color-surface));
+  --ag-row-hover-color: var(--color-surface-muted);
+  --ag-selected-row-background-color: var(--color-primary-soft);
+  --ag-border-color: var(--color-line);
+  --ag-row-border-color: var(--color-line);
+  --ag-cell-horizontal-border: solid var(--color-line);
+  --ag-active-color: var(--color-primary);
+  --ag-checkbox-checked-color: var(--color-primary);
+  --ag-input-focus-border-color: var(--color-primary);
+  --ag-range-selection-border-color: var(--color-primary);
+  border: 1px solid var(--color-line);
+}
+
+.ag-theme-wms .ag-header,
+.ag-theme-wms .ag-header-cell,
+.ag-theme-wms .ag-header-group-cell,
+.wms-ag-grid .ag-header,
+.wms-ag-grid .ag-header-cell,
+.wms-ag-grid .ag-header-group-cell {
+  background: var(--color-grid-header) !important;
+  color: #fff !important;
+}
+
+.ag-theme-wms .ag-cell {
+  border-right-color: var(--color-line) !important;
+}
+
+.ag-theme-wms .ag-cell-focus,
+.ag-theme-wms .ag-cell-inline-editing {
+  border-color: var(--color-primary) !important;
+  box-shadow: inset 0 0 0 1px var(--color-primary) !important;
+}
+
+.product-grid-overflow .responsive-icon-action,
+.product-grid-overflow > button {
+  color: var(--color-primary) !important;
+}
+
+.product-grid-overflow .responsive-icon-action:hover,
+.product-grid-overflow > button:hover {
+  background: var(--color-primary-soft) !important;
+}
+
+/* AG Grid header alignment: override Quartz and numericColumn header defaults. */
+.ag-theme-wms .ag-header-cell,
+.ag-theme-wms .ag-header-group-cell {
+  text-align: center !important;
+}
+
+.ag-theme-wms .ag-header-cell-comp-wrapper,
+.ag-theme-wms .ag-header-cell-label,
+.ag-theme-wms .ag-header-group-cell-label {
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+.ag-theme-wms .ag-header-cell-text,
+.ag-theme-wms .ag-header-group-text {
+  flex: 0 1 auto;
+  margin: 0 auto;
+  text-align: center !important;
+}
+
+.ag-theme-wms .ag-right-aligned-header .ag-header-cell-label {
+  justify-content: center !important;
+}
+
+/* Product master-only pricing emphasis. */
+.ag-theme-wms .wms-master-cost-header {
+  background: #9a5f05 !important;
+  color: #fff7ed !important;
+}
+
+.ag-theme-wms .wms-master-box-header {
+  background: #0f766e !important;
+  color: #ecfdf5 !important;
+}
+
+.ag-theme-wms .wms-master-cost-cell {
+  background: #fff7ed !important;
+  color: #7c2d12 !important;
+  font-weight: 600;
+}
+
+.ag-theme-wms .wms-master-box-cell,
+.ag-theme-wms .wms-master-box-cost-cell,
+.ag-theme-wms .wms-master-box-total-cell {
+  background: #ecfdf5 !important;
+  color: #064e3b !important;
+  font-weight: 600;
+}
+
+.ag-theme-wms .wms-master-box-cost-cell {
+  background: #d1fae5 !important;
+}
+
+.ag-theme-wms .wms-master-box-total-cell {
+  background: #ccfbf1 !important;
+  color: #0f3f3c !important;
+  font-weight: 700;
+}
+
+.dark .ag-theme-wms .wms-master-cost-cell {
+  background: rgba(154, 95, 5, 0.22) !important;
+  color: #fed7aa !important;
+}
+
+.dark .ag-theme-wms .wms-master-box-cell,
+.dark .ag-theme-wms .wms-master-box-cost-cell,
+.dark .ag-theme-wms .wms-master-box-total-cell {
+  background: rgba(15, 118, 110, 0.22) !important;
+  color: #99f6e4 !important;
+}
+
+@keyframes wms-detail-panel-enter {
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.wms-detail-panel-enter {
+  animation: wms-detail-panel-enter 140ms ease-out both;
 }

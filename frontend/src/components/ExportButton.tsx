@@ -7,9 +7,10 @@ interface Props {
   filename: string
   getData: () => Promise<Record<string, unknown>[]> | Record<string, unknown>[]
   label?: string
+  disabled?: boolean
 }
 
-export function ExportButton({ filename, getData, label = '엑셀' }: Props) {
+export function ExportButton({ filename, getData, label = '내보내기', disabled = false }: Props) {
   const [loading, setLoading] = useState(false)
 
   const handleExport = async () => {
@@ -36,7 +37,7 @@ export function ExportButton({ filename, getData, label = '엑셀' }: Props) {
   return (
     <button
       onClick={handleExport}
-      disabled={loading}
+      disabled={loading || disabled}
       title={loading ? '내보내기 준비 중' : label}
       aria-label={loading ? '내보내기 준비 중' : label}
       className="responsive-icon-action bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"

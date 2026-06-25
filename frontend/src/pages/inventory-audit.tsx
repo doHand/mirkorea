@@ -59,7 +59,7 @@ export default function InventoryAuditPage() {
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="self-start sm:self-auto flex items-center gap-1.5 rounded bg-[#2D4033] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#24352a]"
+          className="self-start sm:self-auto flex items-center gap-1.5 rounded bg-[var(--color-primary)] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[var(--color-primary-hover)]"
         >
 새 재고조사
         </button>
@@ -149,7 +149,7 @@ export default function InventoryAuditPage() {
                   type="date"
                   value={createDate}
                   onChange={(e) => setCreateDate(e.target.value)}
-                  className="mt-1 w-full border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 outline-none focus:border-[#2D4033]"
+                  className="mt-1 w-full border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 outline-none focus:border-[var(--color-primary)]"
                 />
               </label>
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">
@@ -158,7 +158,7 @@ export default function InventoryAuditPage() {
                   value={createMemo}
                   onChange={(e) => setCreateMemo(e.target.value)}
                   placeholder="예: 2026년 6월 월말 재고조사"
-                  className="mt-1 w-full border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 outline-none focus:border-[#2D4033] placeholder-gray-400"
+                  className="mt-1 w-full border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 outline-none focus:border-[var(--color-primary)] placeholder-gray-400"
                 />
               </label>
               <p className="text-xs text-gray-400">현재 창고의 전체 재고 항목이 불러와집니다.</p>
@@ -168,7 +168,7 @@ export default function InventoryAuditPage() {
               <button
                 onClick={() => createMut.mutate()}
                 disabled={createMut.isPending}
-                className="flex-1 bg-[#2D4033] text-white px-4 py-2 text-sm font-semibold hover:bg-[#24352a] disabled:opacity-50"
+                className="flex-1 bg-[var(--color-primary)] text-white px-4 py-2 text-sm font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
               >
                 {createMut.isPending ? '생성 중...' : '시작'}
               </button>
@@ -279,7 +279,7 @@ function AuditDetailPanel({ auditId, onClose, onConfirmed }: {
         {/* 헤더 */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700 shrink-0">
           <div className="flex items-center gap-3">
-            <span className="text-[#2D4033] text-xs font-bold">실사</span>
+            <span className="text-[var(--color-primary)] text-xs font-bold">실사</span>
             <div>
               <h3 className="font-bold text-gray-900 dark:text-white">
                 재고조사 상세 — {audit?.auditDate ?? '...'}
@@ -300,7 +300,7 @@ function AuditDetailPanel({ auditId, onClose, onConfirmed }: {
                 <button key={f} onClick={() => setFilter(f)}
                   className={cn('px-3 py-1.5 text-xs font-medium border-b-2 -mb-px transition-colors',
                     filter === f
-                      ? 'border-[#2D4033] text-[#2D4033] dark:text-[#7ba885] dark:border-[#7ba885]'
+                      ? 'border-[var(--color-primary)] text-[var(--color-primary)] dark:text-[var(--color-primary)] dark:border-[var(--color-primary)]'
                       : 'border-transparent text-gray-400 hover:text-gray-700'
                   )}>
                   {label}
@@ -364,7 +364,7 @@ function AuditDetailPanel({ auditId, onClose, onConfirmed }: {
                             value={counts[item.id] ?? (item.countedQty !== null ? String(item.countedQty) : '')}
                             onChange={(e) => setCounts((prev) => ({ ...prev, [item.id]: e.target.value }))}
                             placeholder="미입력"
-                            className="w-24 border border-gray-200 dark:border-gray-700 px-2 py-1 text-sm text-right bg-white dark:bg-gray-800 outline-none focus:border-[#2D4033] tabular-nums placeholder-gray-300"
+                            className="w-24 border border-gray-200 dark:border-gray-700 px-2 py-1 text-sm text-right bg-white dark:bg-gray-800 outline-none focus:border-[var(--color-primary)] tabular-nums placeholder-gray-300"
                           />
                         )}
                       </td>
@@ -393,14 +393,14 @@ function AuditDetailPanel({ auditId, onClose, onConfirmed }: {
               <button
                 onClick={handleSave}
                 disabled={!hasDirty || saving}
-                className="px-4 py-2 text-sm border border-[#2D4033]/30 text-[#2D4033] dark:text-[#7ba885] hover:bg-[#edf0ec] disabled:opacity-40"
+                className="px-4 py-2 text-sm border border-[var(--color-primary)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)] hover:bg-[#edf0ec] disabled:opacity-40"
               >
                 {saving ? '저장 중...' : '저장'}
               </button>
               <button
                 onClick={handleConfirm}
                 disabled={confirmMut.isPending}
-                className="px-5 py-2 text-sm bg-[#2D4033] text-white font-semibold hover:bg-[#24352a] disabled:opacity-50"
+                className="px-5 py-2 text-sm bg-[var(--color-primary)] text-white font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
               >
                 {confirmMut.isPending ? '처리 중...' : '확정 (재고 조정)'}
               </button>

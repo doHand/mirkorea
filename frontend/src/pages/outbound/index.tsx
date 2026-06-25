@@ -1,7 +1,10 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
+import { AgGridReact } from 'ag-grid-react'
+import { ClientSideRowModelModule, ModuleRegistry, type ColDef } from 'ag-grid-community'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { FileDown, Plus, Printer, RefreshCw, RotateCcw, Search, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { outboundOrderApi } from '@/api/outbound-order.api'
 import { clientApi } from '@/api/client.api'
@@ -15,13 +18,32 @@ import { cn } from '@/utils/cn'
 import * as ui from '@/styles/ui'
 import { CollectOrderModal } from '@/components/CollectOrderModal'
 import { StatusBadge } from '@/components/StatusBadge'
-import type { OutboundOrder, OutboundOrderStatus } from '@/types/api.types'
+import type { OutboundOrder, OutboundOrderItem, OutboundOrderStatus } from '@/types/api.types'
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+ModuleRegistry.registerModules([ClientSideRowModelModule])
+
 type DerivedStatus = OutboundOrderStatus | 'PICKING'
 type TabId = 'ALL' | 'COLLECTED' | 'INSTRUCTED' | 'PICKING' | 'PICKED' | 'SHIPPED' | 'HOLD_CANCEL'
 
-// ─── Constants ───────────────────────────────────────────────────────────────
+interface OutboundLineRow {
+  id: string
+  rowNo: number
+  order: OutboundOrder
+  item: OutboundOrderItem
+  derived: DerivedStatus
+  date: string
+  orderNo: string
+  customer: string
+  productName: string
+  productCode: string
+  spec: string
+  outQty: number
+  unit: string
+  eaQty: number
+  pickedQty: number
+  remainingQty: number
+}
+
 const STATUS_LABEL: Record<DerivedStatus, string> = {
   COLLECTED: '출고대기',
   INSTRUCTED: '피킹대기',
@@ -52,9 +74,8 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'HOLD_CANCEL', label: '보류/취소' },
 ]
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
 function getDerivedStatus(order: OutboundOrder): DerivedStatus {
-  if (order.status === 'INSTRUCTED' && order.items.some((i) => i.pickedBoxCount > 0)) {
+  if (order.status === 'INSTRUCTED' && order.items.some((item) => item.pickedBoxCount > 0)) {
     return 'PICKING'
   }
   return order.status
@@ -69,91 +90,116 @@ function matchesTab(order: OutboundOrder, tab: TabId): boolean {
   return order.status === tab
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function OutboundPage() {
-  const warehouse = useWarehouseStore((s) => s.selectedWarehouse)
-  const supplierInfo = useSupplierInfoStore((s) => s.info)
+  const warehouse = useWarehouseStore((state) => state.selectedWarehouse)
+  const supplierInfo = useSupplierInfoStore((state) => state.info)
   const qc = useQueryClient()
+  const gridRef = useRef<AgGridReact<OutboundLineRow>>(null)
 
-  // filters
   const [activeTab, setActiveTab] = useState<TabId>('ALL')
   const [search, setSearch] = useState('')
   const [pendingSearch, setPendingSearch] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [customerSearch, setCustomerSearch] = useState('')
-
-  // modals
   const [createOpen, setCreateOpen] = useState(false)
   const [editOrder, setEditOrder] = useState<OutboundOrder | null>(null)
-
-  // detail panel
   const [selectedOrder, setSelectedOrder] = useState<OutboundOrder | null>(null)
   const [pickQtys, setPickQtys] = useState<Record<string, number>>({})
 
-  // ─── Data ──────────────────────────────────────────────────────────────────
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isFetching } = useQuery({
     queryKey: QUERY_KEYS.outboundOrders({ warehouseId: warehouse?.id, search }),
     queryFn: () => outboundOrderApi.findAll({ warehouseId: warehouse!.id, search: search || undefined, limit: 200 }),
     enabled: !!warehouse?.id,
   })
-  const { data: clients = [] } = useQuery({ queryKey: ['clients', 'active'], queryFn: clientApi.findAllActive })
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ['clients', 'active'],
+    queryFn: clientApi.findAllActive,
+  })
 
   const orders = data?.items ?? []
 
   const refresh = () => {
-    qc.invalidateQueries({ queryKey: ['outbound-orders'] })
-    setSelectedOrder((prev) => {
-      if (!prev) return null
-      // sync selected order from refreshed data
-      return prev
-    })
+    void qc.invalidateQueries({ queryKey: ['outbound-orders'] })
   }
 
-  // ─── Mutations ─────────────────────────────────────────────────────────────
   const instruct = useMutation({
     mutationFn: outboundOrderApi.instruct,
-    onSuccess: () => { toast.success('출고지시를 확정했습니다'); refresh() },
+    onSuccess: (order) => {
+      toast.success('출고지시를 확정했습니다')
+      setSelectedOrder(order)
+      refresh()
+    },
     onError: () => toast.error('출고지시 확정에 실패했습니다'),
   })
+
   const completePicking = useMutation({
     mutationFn: outboundOrderApi.completePicking,
-    onSuccess: () => { toast.success('피킹 완료 처리했습니다'); refresh() },
+    onSuccess: (updated) => {
+      toast.success('피킹 완료 처리했습니다')
+      setSelectedOrder(updated[0] ?? null)
+      refresh()
+    },
     onError: () => toast.error('피킹 완료 처리에 실패했습니다'),
   })
+
   const ship = useMutation({
     mutationFn: outboundOrderApi.ship,
-    onSuccess: () => { toast.success('출고를 확정했습니다'); refresh() },
+    onSuccess: (order) => {
+      toast.success('출고를 확정했습니다')
+      setSelectedOrder(order)
+      refresh()
+    },
     onError: () => toast.error('출고 확정에 실패했습니다'),
   })
+
   const hold = useMutation({
     mutationFn: outboundOrderApi.hold,
-    onSuccess: () => { toast.success('보류 처리했습니다'); refresh() },
+    onSuccess: (order) => {
+      toast.success('보류 처리했습니다')
+      setSelectedOrder(order)
+      refresh()
+    },
     onError: () => toast.error('보류 처리에 실패했습니다'),
   })
+
   const unhold = useMutation({
     mutationFn: outboundOrderApi.unhold,
-    onSuccess: () => { toast.success('보류를 해제했습니다'); refresh() },
+    onSuccess: (order) => {
+      toast.success('보류를 해제했습니다')
+      setSelectedOrder(order)
+      refresh()
+    },
     onError: () => toast.error('보류 해제에 실패했습니다'),
   })
+
   const cancelOrder = useMutation({
     mutationFn: outboundOrderApi.cancel,
-    onSuccess: () => { toast.success('취소했습니다'); setSelectedOrder(null); refresh() },
+    onSuccess: () => {
+      toast.success('취소했습니다')
+      setSelectedOrder(null)
+      refresh()
+    },
     onError: () => toast.error('취소에 실패했습니다'),
   })
+
   const deleteOrder = useMutation({
     mutationFn: outboundOrderApi.delete,
-    onSuccess: () => { toast.success('전표를 삭제했습니다'); setSelectedOrder(null); refresh() },
+    onSuccess: () => {
+      toast.success('전표를 삭제했습니다')
+      setSelectedOrder(null)
+      refresh()
+    },
     onError: () => toast.error('수집완료 상태의 전표만 삭제할 수 있습니다'),
   })
 
-  // ─── Derived ───────────────────────────────────────────────────────────────
   const summary = useMemo(() => ({
-    collected: orders.filter((o) => o.status === 'COLLECTED').length,
-    instructed: orders.filter((o) => getDerivedStatus(o) === 'INSTRUCTED').length,
-    picking: orders.filter((o) => getDerivedStatus(o) === 'PICKING').length,
-    picked: orders.filter((o) => o.status === 'PICKED').length,
-    shipped: orders.filter((o) => o.status === 'SHIPPED').length,
+    collected: orders.filter((order) => order.status === 'COLLECTED').length,
+    instructed: orders.filter((order) => getDerivedStatus(order) === 'INSTRUCTED').length,
+    picking: orders.filter((order) => getDerivedStatus(order) === 'PICKING').length,
+    picked: orders.filter((order) => order.status === 'PICKED').length,
+    shipped: orders.filter((order) => order.status === 'SHIPPED').length,
   }), [orders])
 
   const filteredLines = useMemo(() => {
@@ -166,10 +212,33 @@ export default function OutboundPage() {
         if (customerSearch && !order.customer.toLowerCase().includes(customerSearch.toLowerCase())) return false
         return true
       })
-      .flatMap((order) => order.items.map((item, idx) => ({ order, item, idx })))
+      .flatMap((order) => order.items.map((item, index) => ({ order, item, index })))
   }, [orders, activeTab, dateFrom, dateTo, customerSearch])
 
-  // ─── Handlers ──────────────────────────────────────────────────────────────
+  const gridRows = useMemo<OutboundLineRow[]>(() => {
+    return filteredLines.map(({ order, item }, rowIndex) => {
+      const derived = getDerivedStatus(order)
+      return {
+        id: item.id || `${order.id}-${item.productId}-${rowIndex}`,
+        rowNo: rowIndex + 1,
+        order,
+        item,
+        derived,
+        date: order.requestedShipDate || order.orderDate || '',
+        orderNo: order.orderNo,
+        customer: order.customer,
+        productName: item.product?.name || '-',
+        productCode: item.product?.code || '',
+        spec: formatUnitSpec(item.product),
+        outQty: item.boxCount,
+        unit: item.product?.unit || 'OUT',
+        eaQty: item.convertedEaQty,
+        pickedQty: item.pickedBoxCount,
+        remainingQty: item.boxCount - item.pickedBoxCount,
+      }
+    })
+  }, [filteredLines])
+
   const handleSelectOrder = (order: OutboundOrder) => {
     setSelectedOrder(order)
     const qtys: Record<string, number> = {}
@@ -179,29 +248,102 @@ export default function OutboundPage() {
     setPickQtys(qtys)
   }
 
+  const columns = useMemo<ColDef<OutboundLineRow>[]>(() => [
+    {
+      headerName: '',
+      width: 48,
+      minWidth: 48,
+      maxWidth: 48,
+      checkboxSelection: true,
+      headerCheckboxSelection: true,
+      pinned: 'left',
+      sortable: false,
+      filter: false,
+      resizable: false,
+    },
+    { headerName: 'No', field: 'rowNo', width: 68, pinned: 'left', type: 'numericColumn' },
+    { headerName: '출고일', field: 'date', width: 112 },
+    { headerName: '전표번호', field: 'orderNo', width: 148, pinned: 'left', cellClass: 'wms-code font-mono font-semibold' },
+    { headerName: '거래처', field: 'customer', width: 150 },
+    { headerName: '상품명', field: 'productName', minWidth: 190, flex: 1, tooltipField: 'productName' },
+    { headerName: '상품코드', field: 'productCode', width: 126, cellClass: 'font-mono text-xs text-gray-500' },
+    { headerName: '규격', field: 'spec', width: 128 },
+    {
+      headerName: '출고수량',
+      field: 'outQty',
+      width: 104,
+      type: 'numericColumn',
+      valueFormatter: (params) => formatNumber(Number(params.value ?? 0)),
+    },
+    { headerName: '단위', field: 'unit', width: 74, cellClass: 'text-center' },
+    {
+      headerName: 'EA환산',
+      field: 'eaQty',
+      width: 98,
+      type: 'numericColumn',
+      valueFormatter: (params) => formatNumber(Number(params.value ?? 0)),
+    },
+    {
+      headerName: '피킹',
+      field: 'pickedQty',
+      width: 88,
+      type: 'numericColumn',
+      cellClass: (params) => Number(params.value ?? 0) > 0 ? 'font-semibold text-emerald-600' : 'text-gray-400',
+      valueFormatter: (params) => Number(params.value ?? 0) > 0 ? formatNumber(Number(params.value)) : '-',
+    },
+    {
+      headerName: '미피킹',
+      field: 'remainingQty',
+      width: 92,
+      type: 'numericColumn',
+      cellClass: (params) => Number(params.value ?? 0) > 0 ? 'font-semibold text-orange-500' : 'text-gray-400',
+      valueFormatter: (params) => Number(params.value ?? 0) > 0 ? formatNumber(Number(params.value)) : '-',
+    },
+    {
+      headerName: '상태',
+      field: 'derived',
+      width: 104,
+      cellRenderer: (params: { data?: OutboundLineRow }) => params.data
+        ? <StatusBadge label={STATUS_LABEL[params.data.derived]} variant={STATUS_VARIANT[params.data.derived]} />
+        : null,
+      cellClass: 'flex items-center justify-center',
+    },
+  ], [])
+
   const handlePickingComplete = () => {
     if (!selectedOrder) return
     const items = selectedOrder.items
       .filter((item) => (pickQtys[item.productId] ?? 0) > 0)
       .map((item) => ({ productId: item.productId, boxCount: pickQtys[item.productId] }))
-    if (items.length === 0) { toast.error('피킹 수량을 입력하세요'); return }
+
+    if (items.length === 0) {
+      toast.error('피킹 수량을 입력하세요')
+      return
+    }
+
     completePicking.mutate({ orderIds: [selectedOrder.id], items })
   }
 
   const handleExcelDownload = async () => {
-    if (!filteredLines.length) { toast.error('내보낼 데이터가 없습니다'); return }
+    if (!gridRows.length) {
+      toast.error('내보낼 데이터가 없습니다')
+      return
+    }
+
     try {
-      const rows = filteredLines.map(({ order, item }) => ({
-        출고일: order.requestedShipDate || order.orderDate || '',
-        전표번호: order.orderNo,
-        거래처: order.customer,
-        품명: item.product?.name || '',
-        규격: formatUnitSpec(item.product),
-        출고수량: item.boxCount,
-        단위: item.product?.unit || 'BOX',
-        피킹수량: item.pickedBoxCount,
-        미피킹: item.boxCount - item.pickedBoxCount,
-        상태: STATUS_LABEL[getDerivedStatus(order)],
+      const rows = gridRows.map((row) => ({
+        출고일: row.date,
+        전표번호: row.orderNo,
+        거래처: row.customer,
+        상품코드: row.productCode,
+        상품명: row.productName,
+        규격: row.spec,
+        출고수량: row.outQty,
+        단위: row.unit,
+        EA환산: row.eaQty,
+        피킹수량: row.pickedQty,
+        미피킹: row.remainingQty,
+        상태: STATUS_LABEL[row.derived],
       }))
       const XLSX = await import('xlsx')
       const ws = XLSX.utils.json_to_sheet(rows)
@@ -213,47 +355,55 @@ export default function OutboundPage() {
     }
   }
 
-  if (!warehouse) {
-    return <div className="flex h-64 items-center justify-center text-gray-400">창고를 먼저 선택하세요.</div>
+  const resetFilters = () => {
+    setPendingSearch('')
+    setSearch('')
+    setDateFrom('')
+    setDateTo('')
+    setCustomerSearch('')
   }
 
   const canEdit = (order: OutboundOrder) =>
     (order.status === 'COLLECTED' || order.status === 'INSTRUCTED') &&
     order.items.every((item) => item.pickedBoxCount === 0)
 
+  if (!warehouse) {
+    return <div className="flex h-64 items-center justify-center text-gray-400">창고를 먼저 선택하세요</div>
+  }
+
   return (
     <div className="flex h-[calc(100vh-150px)] min-h-0 flex-col gap-3 overflow-hidden">
-
-      {/* ── Header ── */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className={ui.h2Cls}>출고관리</h2>
-          <p className="text-xs text-gray-500">출고 등록 → 피킹 → 출고확정까지 한 화면에서 처리합니다.</p>
+          <p className="text-xs text-gray-500">출고 등록, 피킹, 출고 확정을 한 화면에서 처리합니다.</p>
         </div>
         <button
+          type="button"
           onClick={() => setCreateOpen(true)}
-          className="wms-primary-button rounded-xl px-4 py-2 text-sm font-semibold shadow-sm transition-colors"
+          className="wms-primary-button inline-flex items-center gap-1.5 rounded px-3 py-2 text-sm font-semibold shadow-sm transition-colors"
         >
+          <Plus size={15} />
           출고 전표 등록
         </button>
       </div>
 
-      {/* ── Summary Cards ── */}
       <div className="grid grid-cols-5 gap-2">
         {[
-          { label: '출고대기', count: summary.collected, tab: 'COLLECTED' as TabId, color: 'border-blue-300 bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:border-blue-800 dark:text-blue-400' },
-          { label: '피킹대기', count: summary.instructed, tab: 'INSTRUCTED' as TabId, color: 'border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-400' },
-          { label: '피킹중', count: summary.picking, tab: 'PICKING' as TabId, color: 'border-orange-300 bg-orange-50 text-orange-700 dark:bg-orange-950/30 dark:border-orange-800 dark:text-orange-400' },
-          { label: '피킹완료', count: summary.picked, tab: 'PICKED' as TabId, color: 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-400' },
-          { label: '출고완료', count: summary.shipped, tab: 'SHIPPED' as TabId, color: 'border-purple-300 bg-purple-50 text-purple-700 dark:bg-purple-950/30 dark:border-purple-800 dark:text-purple-400' },
+          { label: '출고대기', count: summary.collected, tab: 'COLLECTED' as TabId, color: 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-400' },
+          { label: '피킹대기', count: summary.instructed, tab: 'INSTRUCTED' as TabId, color: 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-400' },
+          { label: '피킹중', count: summary.picking, tab: 'PICKING' as TabId, color: 'border-orange-300 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-950/30 dark:text-orange-400' },
+          { label: '피킹완료', count: summary.picked, tab: 'PICKED' as TabId, color: 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400' },
+          { label: '출고완료', count: summary.shipped, tab: 'SHIPPED' as TabId, color: 'border-purple-300 bg-purple-50 text-purple-700 dark:border-purple-800 dark:bg-purple-950/30 dark:text-purple-400' },
         ].map(({ label, count, tab, color }) => (
           <button
             key={tab}
+            type="button"
             onClick={() => setActiveTab(tab)}
             className={cn(
-              'rounded-xl border p-3 text-left transition-all hover:shadow-sm',
+              'rounded border p-3 text-left transition-all hover:shadow-sm',
               color,
-              activeTab === tab && 'ring-2 ring-offset-1 ring-current',
+              activeTab === tab && 'ring-2 ring-current ring-offset-1',
             )}
           >
             <p className="text-xs font-medium opacity-70">{label}</p>
@@ -262,27 +412,28 @@ export default function OutboundPage() {
         ))}
       </div>
 
-      {/* ── Main Content ── */}
       <div className="flex min-h-0 flex-1 gap-3 overflow-hidden">
-
-        {/* Grid Section */}
-        <div className={cn(
-          'flex min-h-0 flex-col overflow-hidden border border-gray-300 bg-white dark:border-gray-800 dark:bg-gray-900 transition-all duration-200',
-          selectedOrder ? 'flex-1' : 'w-full',
-        )}>
-
-          {/* Status Tabs */}
+        <div
+          className={cn(
+            'app-surface flex min-h-0 flex-col overflow-hidden border border-gray-300 bg-white dark:border-gray-800 dark:bg-gray-900',
+            selectedOrder ? 'flex-1' : 'w-full',
+          )}
+        >
           <div className="flex items-center gap-1 border-b border-gray-200 px-3 pt-2 dark:border-gray-800">
             {TABS.map(({ id, label }) => {
-              const count = id === 'ALL' ? orders.length
-                : id === 'HOLD_CANCEL' ? orders.filter((o) => o.status === 'ON_HOLD' || o.status === 'CANCELLED').length
-                : orders.filter((o) => matchesTab(o, id)).length
+              const count = id === 'ALL'
+                ? orders.length
+                : id === 'HOLD_CANCEL'
+                  ? orders.filter((order) => order.status === 'ON_HOLD' || order.status === 'CANCELLED').length
+                  : orders.filter((order) => matchesTab(order, id)).length
+
               return (
                 <button
                   key={id}
+                  type="button"
                   onClick={() => setActiveTab(id)}
                   className={cn(
-                    'flex items-center gap-1 rounded-t px-3 py-2 text-xs font-medium transition-colors whitespace-nowrap',
+                    'flex items-center gap-1 whitespace-nowrap rounded-t px-3 py-2 text-xs font-medium transition-colors',
                     activeTab === id
                       ? 'border-b-2 border-[var(--color-primary)] text-[var(--color-primary)]'
                       : 'text-gray-500 hover:text-gray-700 dark:text-gray-400',
@@ -298,123 +449,117 @@ export default function OutboundPage() {
                 </button>
               )
             })}
-            <div className="ml-auto flex items-center gap-2 pb-1">
+          </div>
+
+          <div className="wms-grid-toolbar flex flex-wrap items-center justify-between gap-2 border-b px-2 py-1.5">
+            <div className="flex flex-wrap items-center gap-1.5">
               <input
-                type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
-                className="rounded border border-gray-200 px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                type="date"
+                value={dateFrom}
+                onChange={(event) => setDateFrom(event.target.value)}
+                className="h-7 rounded border border-gray-200 px-2 text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
               />
               <span className="text-xs text-gray-400">~</span>
               <input
-                type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
-                className="rounded border border-gray-200 px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                type="date"
+                value={dateTo}
+                onChange={(event) => setDateTo(event.target.value)}
+                className="h-7 rounded border border-gray-200 px-2 text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
               />
               <input
-                value={customerSearch} onChange={(e) => setCustomerSearch(e.target.value)}
+                value={customerSearch}
+                onChange={(event) => setCustomerSearch(event.target.value)}
                 placeholder="거래처"
-                className="w-24 rounded border border-gray-200 px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                className="h-7 w-28 rounded border border-gray-200 px-2 text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
               />
               <input
                 value={pendingSearch}
-                onChange={(e) => setPendingSearch(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && setSearch(pendingSearch)}
-                placeholder="전표번호·품목"
-                className="w-32 rounded border border-gray-200 px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                onChange={(event) => setPendingSearch(event.target.value)}
+                onKeyDown={(event) => event.key === 'Enter' && setSearch(pendingSearch)}
+                placeholder="전표번호/품목"
+                className="h-7 w-36 rounded border border-gray-200 px-2 text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
               />
               <button
+                type="button"
                 onClick={() => setSearch(pendingSearch)}
-                className="wms-primary-button rounded px-3 py-1 text-xs font-medium"
-              >검색</button>
+                className="wms-toolbar-action inline-flex h-7 items-center gap-1 rounded px-2.5 text-xs font-semibold transition-colors"
+              >
+                <Search size={13} />
+                검색
+              </button>
               <button
-                onClick={() => { setPendingSearch(''); setSearch(''); setDateFrom(''); setDateTo(''); setCustomerSearch('') }}
-                className="rounded border border-gray-200 px-2 py-1 text-xs text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
-              >초기화</button>
+                type="button"
+                onClick={resetFilters}
+                className="wms-toolbar-action inline-flex h-7 items-center gap-1 rounded px-2.5 text-xs font-semibold transition-colors"
+              >
+                <RotateCcw size={13} />
+                초기화
+              </button>
+            </div>
+            <div className="flex items-center gap-1.5">
               <button
+                type="button"
+                title="새로고침"
+                onClick={refresh}
+                className="wms-toolbar-action inline-flex h-7 w-7 items-center justify-center rounded transition-colors"
+              >
+                <RefreshCw size={14} className={isFetching ? 'animate-spin' : ''} />
+              </button>
+              <button
+                type="button"
                 onClick={handleExcelDownload}
-                className="rounded border border-gray-200 px-2 py-1 text-xs text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
-              >엑셀</button>
+                className="wms-toolbar-action inline-flex h-7 items-center gap-1 rounded px-2.5 text-xs font-semibold transition-colors"
+              >
+                <FileDown size={13} />
+                엑셀
+              </button>
             </div>
           </div>
 
-          {/* Table */}
-          <div className="min-h-0 flex-1 overflow-auto">
-            <table className="w-full min-w-[960px] table-fixed text-xs">
-              <thead className={ui.thead}>
-                <tr>
-                  <th className={cn(ui.th, 'w-8')}>No</th>
-                  <th className={cn(ui.th, 'w-20')}>출고일</th>
-                  <th className={cn(ui.th, 'w-28')}>전표번호</th>
-                  <th className={cn(ui.th, 'w-24')}>거래처</th>
-                  <th className={cn(ui.th, 'w-36')}>상품명</th>
-                  <th className={cn(ui.th, 'w-20')}>규격</th>
-                  <th className={cn(ui.th, 'w-14 text-right')}>출고수량</th>
-                  <th className={cn(ui.th, 'w-12 text-center')}>단위</th>
-                  <th className={cn(ui.th, 'w-16 text-right')}>EA환산</th>
-                  <th className={cn(ui.th, 'w-14 text-right')}>피킹</th>
-                  <th className={cn(ui.th, 'w-14 text-right')}>미피킹</th>
-                  <th className={cn(ui.th, 'w-20 text-center')}>상태</th>
-                </tr>
-              </thead>
-              <tbody className={ui.tbody}>
-                {isLoading && (
-                  <tr><td colSpan={12} className="py-12 text-center text-gray-400">불러오는 중…</td></tr>
-                )}
-                {!isLoading && filteredLines.length === 0 && (
-                  <tr><td colSpan={12} className="py-12 text-center text-gray-400">조회된 출고 품목이 없습니다.</td></tr>
-                )}
-                {filteredLines.map(({ order, item }, rowIndex) => {
-                  const remaining = item.boxCount - item.pickedBoxCount
-                  const derived = getDerivedStatus(order)
-                  const isSelected = selectedOrder?.id === order.id
-                  return (
-                    <tr
-                      key={item.id}
-                      onClick={() => handleSelectOrder(order)}
-                      className={cn(
-                        ui.tr, 'cursor-pointer text-xs',
-                        isSelected && 'bg-orange-50 dark:bg-orange-950/20',
-                      )}
-                    >
-                      <td className={cn(ui.td, 'text-center text-gray-400')}>{rowIndex + 1}</td>
-                      <td className={cn(ui.td, 'whitespace-nowrap')}>{order.requestedShipDate || order.orderDate}</td>
-                      <td className={cn(ui.td, 'wms-code truncate font-mono font-semibold')}>{order.orderNo}</td>
-                      <td className={cn(ui.td, 'truncate')}>{order.customer}</td>
-                      <td className={cn(ui.td, 'truncate font-medium')}>{item.product?.name || '-'}</td>
-                      <td className={cn(ui.td, 'truncate text-gray-500')}>{formatUnitSpec(item.product)}</td>
-                      <td className={cn(ui.td, 'text-right font-semibold')}>{formatNumber(item.boxCount)}</td>
-                      <td className={cn(ui.td, 'text-center text-gray-500')}>{item.product?.unit || 'BOX'}</td>
-                      <td className={cn(ui.td, 'text-right text-gray-500')}>{formatNumber(item.convertedEaQty)}</td>
-                      <td className={cn(ui.td, 'text-right', item.pickedBoxCount > 0 ? 'font-semibold text-emerald-600' : 'text-gray-400')}>
-                        {item.pickedBoxCount > 0 ? formatNumber(item.pickedBoxCount) : '-'}
-                      </td>
-                      <td className={cn(ui.td, 'text-right', remaining > 0 ? 'font-semibold text-orange-500' : 'text-gray-400')}>
-                        {remaining > 0 ? formatNumber(remaining) : '-'}
-                      </td>
-                      <td className={cn(ui.td, 'text-center')}>
-                        <StatusBadge label={STATUS_LABEL[derived]} variant={STATUS_VARIANT[derived]} />
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+          <div className="ag-theme-quartz ag-theme-wms wms-ag-grid min-h-0 w-full flex-1">
+            <AgGridReact<OutboundLineRow>
+              ref={gridRef}
+              rowData={gridRows}
+              columnDefs={columns}
+              defaultColDef={{
+                sortable: true,
+                resizable: true,
+                filter: true,
+                suppressHeaderMenuButton: true,
+                minWidth: 70,
+              }}
+              rowSelection="multiple"
+              suppressRowClickSelection
+              headerHeight={34}
+              rowHeight={34}
+              animateRows={false}
+              loading={isLoading}
+              overlayLoadingTemplate="<span class='ag-overlay-loading-center'>불러오는 중...</span>"
+              overlayNoRowsTemplate="<span class='ag-overlay-no-rows-center'>조회된 출고 품목이 없습니다.</span>"
+              getRowId={(params) => params.data.id}
+              onRowClicked={(params) => params.data && handleSelectOrder(params.data.order)}
+              rowClassRules={{
+                'bg-orange-50 dark:bg-orange-950/20': (params) => params.data?.order.id === selectedOrder?.id,
+              }}
+            />
           </div>
 
-          {/* Footer */}
           <div className="flex items-center justify-between border-t border-gray-200 px-4 py-2 text-xs text-gray-400 dark:border-gray-800">
-            <span>품목 {formatNumber(filteredLines.length)}건 · 전표 {formatNumber([...new Set(filteredLines.map(l => l.order.id))].length)}건</span>
+            <span>품목 {formatNumber(gridRows.length)}건 · 전표 {formatNumber(new Set(gridRows.map((row) => row.order.id)).size)}건</span>
             <span>전체 {formatNumber(orders.length)}건 중 표시</span>
           </div>
         </div>
 
-        {/* ── Detail / Picking Panel ── */}
         {selectedOrder && (
           <DetailPanel
             order={selectedOrder}
             pickQtys={pickQtys}
             setPickQtys={setPickQtys}
-            clients={clients}
-            supplierInfo={supplierInfo}
             canEdit={canEdit(selectedOrder)}
+            isBusy={
+              instruct.isPending || completePicking.isPending || ship.isPending ||
+              hold.isPending || unhold.isPending || cancelOrder.isPending
+            }
             onClose={() => setSelectedOrder(null)}
             onInstruct={() => instruct.mutate(selectedOrder.id)}
             onPickingComplete={handlePickingComplete}
@@ -434,17 +579,14 @@ export default function OutboundPage() {
             }}
             onPrint={() => printExternalPickingList(
               selectedOrder.requestedShipDate || selectedOrder.orderDate,
-              [selectedOrder], clients, supplierInfo,
+              [selectedOrder],
+              clients,
+              supplierInfo,
             )}
-            isBusy={
-              instruct.isPending || completePicking.isPending || ship.isPending ||
-              hold.isPending || unhold.isPending || cancelOrder.isPending
-            }
           />
         )}
       </div>
 
-      {/* Modals */}
       {createOpen && (
         <CollectOrderModal
           warehouseId={warehouse.id}
@@ -464,13 +606,10 @@ export default function OutboundPage() {
   )
 }
 
-// ─── Detail Panel ─────────────────────────────────────────────────────────────
 interface DetailPanelProps {
   order: OutboundOrder
   pickQtys: Record<string, number>
-  setPickQtys: React.Dispatch<React.SetStateAction<Record<string, number>>>
-  clients: { id: string; name: string }[]
-  supplierInfo: unknown
+  setPickQtys: Dispatch<SetStateAction<Record<string, number>>>
   canEdit: boolean
   isBusy: boolean
   onClose(): void
@@ -486,51 +625,61 @@ interface DetailPanelProps {
 }
 
 function DetailPanel({
-  order, pickQtys, setPickQtys, canEdit, isBusy,
-  onClose, onInstruct, onPickingComplete, onShip,
-  onHold, onUnhold, onCancel, onEdit, onDelete, onPrint,
+  order,
+  pickQtys,
+  setPickQtys,
+  canEdit,
+  isBusy,
+  onClose,
+  onInstruct,
+  onPickingComplete,
+  onShip,
+  onHold,
+  onUnhold,
+  onCancel,
+  onEdit,
+  onDelete,
+  onPrint,
 }: DetailPanelProps) {
   const derived = getDerivedStatus(order)
   const isInstructed = order.status === 'INSTRUCTED'
   const canPrint = !['COLLECTED', 'ON_HOLD', 'CANCELLED'].includes(order.status)
-  const totalBoxes = order.items.reduce((s, i) => s + i.boxCount, 0)
-  const totalPicked = order.items.reduce((s, i) => s + i.pickedBoxCount, 0)
-  const pickProgress = totalBoxes > 0 ? Math.round((totalPicked / totalBoxes) * 100) : 0
+  const totalOuts = order.items.reduce((sum, item) => sum + item.boxCount, 0)
+  const totalPicked = order.items.reduce((sum, item) => sum + item.pickedBoxCount, 0)
+  const pickProgress = totalOuts > 0 ? Math.round((totalPicked / totalOuts) * 100) : 0
 
-  const setQty = (productId: string, val: number) => {
-    setPickQtys((prev) => ({ ...prev, [productId]: val }))
+  const setQty = (productId: string, value: number) => {
+    setPickQtys((prev) => ({ ...prev, [productId]: value }))
   }
 
   return (
-    <div className="flex w-80 min-h-0 flex-col overflow-hidden border border-gray-300 bg-white dark:border-gray-800 dark:bg-gray-900 shrink-0">
-
-      {/* Panel Header */}
+    <div className="wms-detail-panel-enter flex min-h-0 w-80 shrink-0 flex-col overflow-hidden border border-gray-300 bg-white dark:border-gray-800 dark:bg-gray-900">
       <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-900">
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex min-w-0 items-center gap-2">
           <StatusBadge label={STATUS_LABEL[derived]} variant={STATUS_VARIANT[derived]} />
           <span className="wms-code truncate font-mono text-xs font-bold">{order.orderNo}</span>
         </div>
-        <button onClick={onClose} className="ml-2 shrink-0 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800">
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
+        <button
+          type="button"
+          onClick={onClose}
+          className="wms-toolbar-action ml-2 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded transition-colors"
+        >
+          <X size={14} />
         </button>
       </div>
 
-      {/* Order Info */}
       <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 border-b border-gray-100 p-3 dark:border-gray-800">
         <PanelField label="거래처" value={order.customer} />
         <PanelField label="출고일" value={order.requestedShipDate || order.orderDate || '-'} />
-        <PanelField label="수령인" value={order.recipient || '-'} />
+        <PanelField label="수령자" value={order.recipient || '-'} />
         <PanelField label="채널" value={order.channel || '-'} />
         {order.memo && <PanelField label="비고" value={order.memo} className="col-span-2" />}
       </div>
 
-      {/* Picking Progress */}
       <div className="border-b border-gray-100 px-3 py-2 dark:border-gray-800">
         <div className="mb-1 flex items-center justify-between text-xs text-gray-500">
           <span>피킹 진행률</span>
-          <span className="font-semibold text-gray-700 dark:text-gray-300">{totalPicked} / {totalBoxes} BOX</span>
+          <span className="font-semibold text-gray-700 dark:text-gray-300">{totalPicked} / {totalOuts} OUT</span>
         </div>
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
           <div
@@ -540,15 +689,14 @@ function DetailPanel({
         </div>
       </div>
 
-      {/* Items */}
       <div className="min-h-0 flex-1 overflow-y-auto">
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-gray-100 dark:border-gray-800">
-              <th className="px-3 py-2 text-left text-gray-500 font-medium">상품</th>
-              <th className="px-2 py-2 text-right text-gray-500 font-medium w-10">출고</th>
-              <th className="px-2 py-2 text-right text-gray-500 font-medium w-10">피킹</th>
-              {isInstructed && <th className="px-2 py-2 text-center text-gray-500 font-medium w-16">수량입력</th>}
+              <th className="px-3 py-2 text-left font-medium text-gray-500">상품</th>
+              <th className="w-10 px-2 py-2 text-right font-medium text-gray-500">출고</th>
+              <th className="w-10 px-2 py-2 text-right font-medium text-gray-500">피킹</th>
+              {isInstructed && <th className="w-16 px-2 py-2 text-center font-medium text-gray-500">수량</th>}
             </tr>
           </thead>
           <tbody>
@@ -557,12 +705,12 @@ function DetailPanel({
               return (
                 <tr key={item.id} className="border-b border-gray-50 dark:border-gray-800/50">
                   <td className="px-3 py-2">
-                    <p className="truncate font-medium text-gray-900 dark:text-white max-w-[120px]">{item.product?.name || '-'}</p>
-                    <p className="text-gray-400">{item.product?.code || ''}</p>
+                    <p className="max-w-[120px] truncate font-medium text-gray-900 dark:text-white">{item.product?.name || '-'}</p>
+                    <p className="font-mono text-gray-400">{item.product?.code || ''}</p>
                   </td>
-                  <td className="px-2 py-2 text-right font-semibold">{item.boxCount}</td>
+                  <td className="px-2 py-2 text-right font-semibold">{formatNumber(item.boxCount)}</td>
                   <td className={cn('px-2 py-2 text-right font-semibold', item.pickedBoxCount > 0 ? 'text-emerald-600' : 'text-gray-300')}>
-                    {item.pickedBoxCount || '-'}
+                    {item.pickedBoxCount ? formatNumber(item.pickedBoxCount) : '-'}
                   </td>
                   {isInstructed && (
                     <td className="px-2 py-2 text-center">
@@ -571,7 +719,7 @@ function DetailPanel({
                         min={0}
                         max={remaining}
                         value={pickQtys[item.productId] ?? remaining}
-                        onChange={(e) => setQty(item.productId, Math.max(0, Math.min(remaining, Number(e.target.value))))}
+                        onChange={(event) => setQty(item.productId, Math.max(0, Math.min(remaining, Number(event.target.value))))}
                         className="w-14 rounded border border-gray-200 px-1 py-0.5 text-center text-xs dark:border-gray-700 dark:bg-gray-800"
                       />
                     </td>
@@ -583,100 +731,94 @@ function DetailPanel({
         </table>
       </div>
 
-      {/* Action Buttons */}
       <div className="flex flex-col gap-2 border-t border-gray-200 p-3 dark:border-gray-800">
-
-        {/* Primary action */}
         {order.status === 'COLLECTED' && (
           <button
+            type="button"
             onClick={onInstruct}
             disabled={isBusy}
-            className="w-full rounded-lg bg-amber-500 py-2 text-sm font-semibold text-white hover:bg-amber-600 disabled:opacity-50"
+            className="w-full rounded bg-amber-500 py-2 text-sm font-semibold text-white hover:bg-amber-600 disabled:opacity-50"
           >
             출고지시 확정
           </button>
         )}
         {isInstructed && (
           <button
+            type="button"
             onClick={onPickingComplete}
             disabled={isBusy}
-            className="w-full rounded-lg bg-orange-500 py-2 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-50"
+            className="w-full rounded bg-orange-500 py-2 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-50"
           >
             피킹 완료
           </button>
         )}
         {order.status === 'PICKED' && (
           <button
+            type="button"
             onClick={onShip}
             disabled={isBusy}
-            className="w-full rounded-lg bg-purple-600 py-2 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-50"
+            className="w-full rounded bg-purple-600 py-2 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-50"
           >
             출고 확정
           </button>
         )}
 
-        {/* Secondary actions */}
         <div className="flex gap-2">
           {order.orderType === 'EXTERNAL' && (
             <button
-              onClick={canPrint ? onPrint : undefined}
+              type="button"
+              onClick={onPrint}
               disabled={!canPrint}
-              title={canPrint ? '출고증 출력' : order.status === 'COLLECTED' ? '출고지시 후 출력 가능' : '현재 상태에서는 출력 불가'}
-              className={cn(
-                'flex-1 rounded-lg border py-1.5 text-xs font-medium transition-colors',
-                canPrint
-                  ? 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800'
-                  : 'cursor-not-allowed border-dashed border-gray-200 text-gray-300 dark:border-gray-700 dark:text-gray-600',
-              )}
+              className="wms-toolbar-action inline-flex flex-1 items-center justify-center gap-1 rounded py-1.5 text-xs font-medium disabled:opacity-40"
             >
-              출고증 출력{!canPrint && <span className="ml-1 opacity-60">✕</span>}
+              <Printer size={13} />
+              피킹리스트
             </button>
           )}
           {canEdit && (
             <button
+              type="button"
               onClick={onEdit}
-              className="flex-1 rounded-lg border border-gray-200 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              className="wms-toolbar-action flex-1 rounded py-1.5 text-xs font-medium"
             >
-              전표 수정
+              수정
             </button>
           )}
-          {order.status === 'ON_HOLD' ? (
+          {(order.status === 'COLLECTED' || order.status === 'INSTRUCTED') && (
             <button
-              onClick={onUnhold}
-              disabled={isBusy}
-              className="flex-1 rounded-lg border border-indigo-200 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 disabled:opacity-50 dark:border-indigo-800"
+              type="button"
+              onClick={onHold}
+              className="wms-toolbar-action flex-1 rounded py-1.5 text-xs font-medium"
             >
-              보류 해제
+              보류
             </button>
-          ) : (
-            !['SHIPPED', 'CANCELLED'].includes(order.status) && (
-              <button
-                onClick={onHold}
-                disabled={isBusy}
-                className="flex-1 rounded-lg border border-gray-200 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-              >
-                보류
-              </button>
-            )
+          )}
+          {order.status === 'ON_HOLD' && (
+            <button
+              type="button"
+              onClick={onUnhold}
+              className="wms-toolbar-action flex-1 rounded py-1.5 text-xs font-medium"
+            >
+              보류해제
+            </button>
           )}
         </div>
 
-        {/* Danger actions */}
         <div className="flex gap-2">
-          {!['SHIPPED', 'CANCELLED'].includes(order.status) && (
+          {order.status !== 'SHIPPED' && order.status !== 'CANCELLED' && (
             <button
+              type="button"
               onClick={onCancel}
-              disabled={isBusy}
-              className="flex-1 rounded-lg border border-red-200 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 disabled:opacity-50 dark:border-red-900"
+              className="flex-1 rounded border border-red-200 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 dark:border-red-900/50 dark:hover:bg-red-950/20"
             >
               취소
             </button>
           )}
-          {canEdit && (
+          {order.status === 'COLLECTED' && (
             <button
+              type="button"
               onClick={onDelete}
-              disabled={isBusy}
-              className="flex-1 rounded-lg border border-red-200 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 disabled:opacity-50 dark:border-red-900"
+              className="flex-1 rounded border border-gray-200 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
             >
               삭제
             </button>
@@ -690,8 +832,8 @@ function DetailPanel({
 function PanelField({ label, value, className }: { label: string; value: string; className?: string }) {
   return (
     <div className={className}>
-      <p className="text-[10px] text-gray-400">{label}</p>
-      <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">{value}</p>
+      <p className="text-[10px] font-medium uppercase text-gray-400">{label}</p>
+      <p className="truncate text-xs font-medium text-gray-700 dark:text-gray-200">{value}</p>
     </div>
   )
 }

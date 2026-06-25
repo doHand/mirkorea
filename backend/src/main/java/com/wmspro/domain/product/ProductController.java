@@ -68,6 +68,11 @@ public class ProductController {
         return ApiResponse.ok(null, "상품 삭제 완료");
     }
 
+    @GetMapping("/barcodes")
+    public ApiResponse<List<ProductService.BarcodeWithProduct>> findAllBarcodes() {
+        return ApiResponse.ok(productService.findAllBarcodes());
+    }
+
     @GetMapping("/{id}/barcodes")
     public ApiResponse<List<Barcode>> findBarcodes(@PathVariable UUID id) {
         return ApiResponse.ok(productService.findBarcodes(id));
@@ -80,7 +85,7 @@ public class ProductController {
         @RequestBody Map<String, Object> body
     ) {
         String barcodeValue = (String) body.get("barcode");
-        BarcodeUnitType type = BarcodeUnitType.valueOf((String) body.getOrDefault("type", "UNIT"));
+        BarcodeUnitType type = BarcodeUnitType.from((String) body.getOrDefault("type", "UNIT"));
         int unitQty     = (int) body.getOrDefault("unitQty", 1);
         boolean primary = (boolean) body.getOrDefault("isPrimary", false);
         return ApiResponse.ok(productService.addBarcode(id, barcodeValue, type, unitQty, primary));
@@ -93,7 +98,7 @@ public class ProductController {
         @RequestBody Map<String, Object> body
     ) {
         String barcodeValue = body.get("barcode") instanceof String s ? s : null;
-        BarcodeUnitType type = BarcodeUnitType.valueOf((String) body.getOrDefault("type", "UNIT"));
+        BarcodeUnitType type = BarcodeUnitType.from((String) body.getOrDefault("type", "UNIT"));
         int unitQty = body.get("unitQty") instanceof Integer i ? i : 1;
         boolean isPrimary = body.get("isPrimary") instanceof Boolean b ? b : false;
         return ApiResponse.ok(productService.updateBarcode(barcodeId, barcodeValue, type, unitQty, isPrimary));

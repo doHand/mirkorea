@@ -79,8 +79,8 @@ export interface Location {
 }
 
 export type SaleStatus = 'ACTIVE' | 'INACTIVE' | 'DISCONTINUED'
-export type UnitType = 'EA' | 'P' | 'BOX' | 'PL'
-export type BarcodeUnitType = 'UNIT' | 'CXD' | 'CXD_BOX'
+export type UnitType = 'EA' | 'IN' | 'OUT'
+export type BarcodeUnitType = 'UNIT' | 'CXD' | 'CXD_OUT'
 
 export interface Product {
   id: string
@@ -93,9 +93,8 @@ export interface Product {
   defaultLocation?: Location
   unit: string
   baseUnit: UnitType
-  pUnitQty?: number
-  boxUnitQty?: number
-  plUnitQty?: number
+  inUnitQty?: number
+  outUnitQty?: number
   optionName?: string
   spec?: string
   materialNo?: string

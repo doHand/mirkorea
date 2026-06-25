@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 import { useEffect, useState, useMemo } from 'react'
 import { FileText, ShoppingCart } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -14,6 +14,7 @@ import { cn } from '@/utils/cn'
 import { ExportButton } from '@/components/ExportButton'
 import { useRouter } from 'next/router'
 import { ImportButton } from '@/components/ImportButton'
+import { productImportConfig } from '@/config/product-import-config'
 import { useAuthStore } from '@/stores/auth.store'
 import { useMenuPermissionStore } from '@/stores/menu-permission.store'
 import { useSupplierInfoStore } from '@/stores/supplier-info.store'
@@ -22,9 +23,21 @@ import { printQuoteDocument } from '@/utils/printDocument'
 import type { Product, SaleStatus, Barcode, ProductUnit, Client, Location, BarcodeUnitType, Inventory, UnitType } from '@/types/api.types'
 import { ProductBarcodeModal } from '@/components/ProductBarcodeModal'
 import { CategorySelect } from '@/components/CategorySelect'
-import { EMPTY_PRODUCT_FORM } from '@/components/ProductFormModal'
+const EMPTY_PRODUCT_FORM = {
+  code: '', name: '', category: '',
+  clientId: '', locationId: '',
+  unit: 'EA', baseUnit: 'EA' as UnitType,
+  inUnitQty: 0, outUnitQty: 1,
+  spec: '', materialNo: '',
+  boxQty: 1, safetyStock: 0, reorderPoint: 0,
+  costPrice: 0, sellPrice: 0,
+  priceB: 0, priceA: 0, priceC: 0, retailPrice: 0,
+  memo: '', saleStatus: 'ACTIVE' as SaleStatus,
+  initialStockEA: 0,
+}
 import { getPackageUnitQty } from '@/utils/unit-spec'
 import { ProductInventoryGrid } from '@/components/ProductInventoryGrid'
+import { LocationPickerModal } from '@/components/LocationPickerModal'
 
 const PAGE_SIZE = 10
 
@@ -32,7 +45,7 @@ type ClientOption = Pick<Client, 'id' | 'name' | 'phone' | 'email'>
 type SortDirection = 'asc' | 'desc'
 type ProductSortKey =
   | 'client' | 'code' | 'materialNo' | 'name' | 'location' | 'unit'
-  | 'boxQty' | 'inboxStock' | 'outboxStock' | 'eaStock' | 'plStock' | 'category'
+  | 'boxQty' | 'INStock' | 'OUTStock' | 'eaStock' | 'plStock' | 'category'
   | 'costPrice' | 'sellPrice' | 'retailPrice' | 'priceB' | 'priceA' | 'priceC'
   | 'barcode' | 'memo' | 'currentStock' | 'reserved' | 'available' | 'safetyStock'
   | 'saleStatus' | 'createdAt'
@@ -42,7 +55,7 @@ type EditField =
   | 'unit' | 'boxQty' | 'boxStock' | 'safetyStock' | 'reorderPoint'
   | 'costPrice' | 'sellPrice' | 'retailPrice'
   | 'priceB' | 'priceA' | 'priceC' | 'memo'
-  | 'spec' | 'pUnitQty' | 'boxUnitQty' | 'plUnitQty' | 'eaStock' | 'inboxStock' | 'outboxStock'
+  | 'spec' | 'inUnitQty' | 'outUnitQty' | 'eaStock' | 'INStock' | 'OUTStock'
 type EditCell = { id: string; field: EditField; value: string }
 
 const STATUS_STYLE: Record<SaleStatus, string> = {
@@ -58,23 +71,19 @@ const getTotalEA = (product: Product) => {
 
 const roundToTwo = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100
 
-const getInboxStock = (product: Product) => {
+const getINStock = (product: Product) => {
   const ea = getTotalEA(product)
-  const pQty = getPackageUnitQty(product, 'P') ?? 0
+  const pQty = getPackageUnitQty(product, 'IN') ?? 0
   return pQty > 0 ? roundToTwo(ea / pQty) : 0
 }
 
-const getOutboxStock = (product: Product) => {
+const getOUTStock = (product: Product) => {
   const ea = getTotalEA(product)
-  const boxQty = getPackageUnitQty(product, 'BOX') ?? 0
+  const boxQty = getPackageUnitQty(product, 'OUT') ?? 0
   return boxQty > 0 ? roundToTwo(ea / boxQty) : 0
 }
 
-const getPlStock = (product: Product) => {
-  const ea = getTotalEA(product)
-  const plQty = getPackageUnitQty(product, 'PL') ?? 0
-  return plQty > 0 ? roundToTwo(ea / plQty) : 0
-}
+const getPlStock = (_product: Product) => 0
 
 const getPrimaryBarcode = (barcodes?: Barcode[]) => {
   if (!barcodes || barcodes.length === 0) return '-'
@@ -83,10 +92,12 @@ const getPrimaryBarcode = (barcodes?: Barcode[]) => {
 }
 
 function buildInventorySummary(inventory: Inventory[]) {
-  const map = new Map<string, { stockQty: number; items: Inventory[] }>()
+  const map = new Map<string, { stockQty: number; reservedQty: number; availableQty: number; items: Inventory[] }>()
   inventory.forEach((inv) => {
-    const current = map.get(inv.productId) ?? { stockQty: 0, items: [] }
+    const current = map.get(inv.productId) ?? { stockQty: 0, reservedQty: 0, availableQty: 0, items: [] }
     current.stockQty += inv.quantity
+    current.reservedQty += inv.reservedQty ?? 0
+    current.availableQty += inv.availableQty ?? inv.quantity
     current.items.push(inv)
     map.set(inv.productId, current)
   })
@@ -127,7 +138,7 @@ async function adjustBoxStockQty({
       locationId,
       warehouseId,
       adjustedQty: (targetInventory?.locationId === locationId ? targetInventory.quantity : 0) + delta,
-      reason: '상품 그리드 박스 재고수량 수정',
+      reason: '상품 그리드 OUT 재고수량 수정',
     })
     return
   }
@@ -141,7 +152,7 @@ async function adjustBoxStockQty({
       locationId: inv.locationId,
       warehouseId,
       adjustedQty: inv.quantity - decrease,
-      reason: '상품 그리드 박스 재고수량 수정',
+      reason: '상품 그리드 OUT 재고수량 수정',
     })
     remainingDecrease -= decrease
   }
@@ -155,16 +166,16 @@ const TD_NUM  = cn(TD_BASE, 'text-right tabular-nums text-gray-900 dark:text-gra
 const TD_CTR  = cn(TD_BASE, 'text-center text-gray-700 dark:text-gray-300')
 
 const EDIT_NUMERIC_FIELDS: EditField[] = [
-  'boxQty', 'boxStock', 'eaStock', 'outboxStock', 'safetyStock', 'reorderPoint',
+  'boxQty', 'boxStock', 'eaStock', 'OUTStock', 'safetyStock', 'reorderPoint',
   'costPrice', 'sellPrice', 'retailPrice',
   'priceB', 'priceA', 'priceC',
-  'pUnitQty', 'boxUnitQty', 'plUnitQty',
+  'inUnitQty', 'outUnitQty',
 ]
 const EDIT_OPTIONAL_FIELDS: EditField[] = [
   'category', 'materialNo', 'memo',
   'costPrice', 'sellPrice', 'retailPrice',
   'priceB', 'priceA', 'priceC',
-  'spec', 'pUnitQty', 'boxUnitQty', 'plUnitQty',
+  'spec', 'inUnitQty', 'outUnitQty',
 ]
 
 const compareSortValue = (a: string | number | undefined | null, b: string | number | undefined | null, direction: SortDirection) => {
@@ -189,14 +200,10 @@ const getProductSortValue = (product: Product, key: ProductSortKey) => {
     case 'location': return product.defaultLocation?.code
     case 'unit': return product.unit
     case 'boxQty': return product.boxQty
-    case 'inboxStock': return getInboxStock(product)
-    case 'outboxStock': return getOutboxStock(product)
+    case 'INStock': return getINStock(product)
+    case 'OUTStock': return getOUTStock(product)
     case 'eaStock': return getTotalEA(product)
-    case 'plStock': {
-      const ea = getTotalEA(product)
-      const eaPerPl = product.plUnitQty ?? 0
-      return eaPerPl > 0 ? ea / eaPerPl : 0
-    }
+    case 'plStock': return 0
     case 'category': return product.category
     case 'costPrice': return product.costPrice
     case 'sellPrice': return product.sellPrice
@@ -238,7 +245,6 @@ export default function ProductsPage() {
   const [selectedClient, setSelectedClient] = useState<ClientOption | null>(null)
   const [clientTargetProduct, setClientTargetProduct] = useState<Product | null>(null)
   const [showLocationPicker, setShowLocationPicker] = useState(false)
-  const [locationPickerSearch, setLocationPickerSearch] = useState('')
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null)
 
   useEffect(() => {
@@ -322,17 +328,7 @@ export default function ProductsPage() {
     )
   }, [clients, clientPickerSearch])
 
-  const filteredLocations = useMemo(() => {
-    const q = locationPickerSearch.trim().toLowerCase()
-    if (!q) return allLocations.slice(0, 80)
-    return allLocations.filter((l) =>
-      [l.code, l.aisle, l.rack, l.shelf, l.bin, l.zone?.name, l.zone?.code]
-        .filter(Boolean)
-        .some((v) => String(v).toLowerCase().includes(q))
-    )
-  }, [allLocations, locationPickerSearch])
-
-  const selectedClientLabel = selectedClient?.name
+const selectedClientLabel = selectedClient?.name
     ?? clients.find((c) => c.id === form.clientId)?.name
     ?? (editing?.clientId === form.clientId ? editing?.client?.name : undefined)
     ?? ''
@@ -357,6 +353,8 @@ export default function ProductsPage() {
     const rows = (data?.items ?? []).map((product) => ({
       ...product,
       stockQty: inventorySummary.get(product.id)?.stockQty ?? product.stockQty ?? 0,
+      reservedQty: inventorySummary.get(product.id)?.reservedQty ?? 0,
+      availableQty: inventorySummary.get(product.id)?.availableQty ?? inventorySummary.get(product.id)?.stockQty ?? product.stockQty ?? 0,
     }))
     const filteredRows = showSafetyOnly ? rows.filter((p) => getTotalEA(p) < p.safetyStock) : rows
     if (!sort) return filteredRows
@@ -377,8 +375,8 @@ export default function ProductsPage() {
         code: form.code, name: form.name, category: form.category || undefined,
         clientId:   form.clientId   || undefined,
         locationId: form.locationId || undefined,
-        unit: form.unit, baseUnit: form.baseUnit, pUnitQty: form.pUnitQty || undefined,
-        boxUnitQty: form.boxUnitQty || undefined, plUnitQty: form.plUnitQty || undefined,
+        unit: form.unit, baseUnit: form.baseUnit, inUnitQty: form.inUnitQty || undefined,
+        outUnitQty: form.outUnitQty || undefined,
         boxQty: form.boxQty, safetyStock: form.safetyStock, reorderPoint: form.reorderPoint,
         spec: form.spec || undefined, materialNo: form.materialNo || undefined,
         costPrice: form.costPrice || undefined, sellPrice: form.sellPrice || undefined,
@@ -414,8 +412,8 @@ export default function ProductsPage() {
       clearClient:  !form.clientId,
       locationId:   form.locationId || undefined,
       clearLocation: !form.locationId,
-      unit: form.unit, baseUnit: form.baseUnit, pUnitQty: form.pUnitQty || undefined,
-      boxUnitQty: form.boxUnitQty || undefined, plUnitQty: form.plUnitQty || undefined,
+      unit: form.unit, baseUnit: form.baseUnit, inUnitQty: form.inUnitQty || undefined,
+      outUnitQty: form.outUnitQty || undefined,
       boxQty: form.boxQty, safetyStock: form.safetyStock,
       reorderPoint: form.reorderPoint, spec: form.spec, materialNo: form.materialNo,
       costPrice: form.costPrice || undefined, sellPrice: form.sellPrice || undefined,
@@ -448,12 +446,9 @@ export default function ProductsPage() {
     onError: () => toast.error('저장 실패'),
   })
 
-  const buildSpecFromQtys = (pQty: number, boxQty: number, plQty: number) => {
-    const parts: string[] = []
-    if (pQty > 0) parts.push(`${pQty}P`)
-    if (boxQty > 0) parts.push(`${boxQty}BOX`)
-    if (plQty > 0) parts.push(`${plQty}PL`)
-    return parts.join('/')
+  const buildSpecFromQtys = (pQty: number, boxQty: number) => {
+    if (pQty > 0 && boxQty > 0) return `${pQty}IN / ${boxQty}OUT`
+    return ''
   }
 
   const saveEdit = (cell: EditCell) => {
@@ -463,43 +458,40 @@ export default function ProductsPage() {
       return
     }
 
-    // 규격 텍스트 → P/BOX/PL 파싱
+    // 규격 텍스트 → IN/OUT 파싱
     if (cell.field === 'spec') {
       const val = trimmed
-      const pMatch = val.match(/(\d+)\s*P\b/i)
-      const boxMatch = val.match(/(\d+)\s*BOX/i)
-      const plMatch = val.match(/(\d+)\s*PL\b/i)
+      const pMatch   = val.match(/(\d+)\s*IN\b/i)
+      const boxMatch = val.match(/(\d+)\s*OUT\b/i)
       const patch: Record<string, string | number> = { spec: val }
-      if (pMatch) patch.pUnitQty = Number(pMatch[1])
-      if (boxMatch) patch.boxUnitQty = Number(boxMatch[1])
-      if (plMatch) patch.plUnitQty = Number(plMatch[1])
+      if (pMatch)   patch.inUnitQty   = Number(pMatch[1])
+      if (boxMatch) patch.outUnitQty = Number(boxMatch[1])
       gridUpdateMutation.mutate({ id: cell.id, patch })
       setEditCell(null)
       return
     }
 
-    // P / BOX / PL 변경 → spec 자동 업데이트
-    if (cell.field === 'pUnitQty' || cell.field === 'boxUnitQty' || cell.field === 'plUnitQty') {
+    // IN / OUT 변경 → spec 자동 업데이트
+    if (cell.field === 'inUnitQty' || cell.field === 'outUnitQty') {
       const product = productRows.find((p) => p.id === cell.id)
       if (!product) { setEditCell(null); return }
       const newQtys = {
-        pUnitQty:   cell.field === 'pUnitQty'   ? Number(trimmed || 0) : (product.pUnitQty   ?? 0),
-        boxUnitQty: cell.field === 'boxUnitQty' ? Number(trimmed || 0) : (product.boxUnitQty ?? 0),
-        plUnitQty:  cell.field === 'plUnitQty'  ? Number(trimmed || 0) : (product.plUnitQty  ?? 0),
+        inUnitQty:   cell.field === 'inUnitQty'   ? Number(trimmed || 0) : (product.inUnitQty   ?? 0),
+        outUnitQty: cell.field === 'outUnitQty' ? Number(trimmed || 0) : (product.outUnitQty ?? 0),
       }
-      const newSpec = buildSpecFromQtys(newQtys.pUnitQty, newQtys.boxUnitQty, newQtys.plUnitQty)
+      const newSpec = buildSpecFromQtys(newQtys.inUnitQty, newQtys.outUnitQty)
       gridUpdateMutation.mutate({ id: cell.id, patch: { ...newQtys, spec: newSpec } })
       setEditCell(null)
       return
     }
 
-    if (cell.field === 'inboxStock') {
+    if (cell.field === 'INStock') {
       const product = productRows.find((p) => p.id === cell.id)
       if (!product) { setEditCell(null); return }
-      const inputInbox = roundToTwo(Number(trimmed || 0))
-      const eaPerInbox = getPackageUnitQty(product, 'P') ?? 0
-      if (eaPerInbox <= 0) { toast.error('P 단위(pUnitQty)가 설정되지 않았습니다'); setEditCell(null); return }
-      const totalEATarget = roundToTwo(inputInbox * eaPerInbox)
+      const inputIN = roundToTwo(Number(trimmed || 0))
+      const eaPerIN = getPackageUnitQty(product, 'IN') ?? 0
+      if (eaPerIN <= 0) { toast.error('IN 규격이 설정되지 않았습니다'); setEditCell(null); return }
+      const totalEATarget = roundToTwo(inputIN * eaPerIN)
       adjustBoxStockQty({
         product,
         targetQty: Math.round(totalEATarget),
@@ -536,13 +528,13 @@ export default function ProductsPage() {
       return
     }
 
-    if (cell.field === 'outboxStock') {
+    if (cell.field === 'OUTStock') {
       const product = productRows.find((p) => p.id === cell.id)
       if (!product) { setEditCell(null); return }
-      const inputOutbox = roundToTwo(Number(trimmed || 0))
-      const eaPerOutbox = getPackageUnitQty(product, 'BOX') ?? 0
-      if (eaPerOutbox <= 0) { toast.error('OUTBOX 단위(boxUnitQty)가 설정되지 않았습니다'); setEditCell(null); return }
-      const totalEA = roundToTwo(inputOutbox * eaPerOutbox)
+      const inputOUT = roundToTwo(Number(trimmed || 0))
+      const eaPerOUT = getPackageUnitQty(product, 'OUT') ?? 0
+      if (eaPerOUT <= 0) { toast.error('OUT 규격이 설정되지 않았습니다'); setEditCell(null); return }
+      const totalEA = roundToTwo(inputOUT * eaPerOUT)
       adjustBoxStockQty({
         product,
         targetQty: Math.round(totalEA),
@@ -617,28 +609,12 @@ export default function ProductsPage() {
 
   const openGridLocationPicker = (product: Product) => {
     setLocationTargetProduct(product)
-    setLocationPickerSearch('')
     setShowLocationPicker(true)
   }
 
   const closeLocationPicker = () => {
     setShowLocationPicker(false)
     setLocationTargetProduct(null)
-  }
-
-  const selectLocation = (loc: Location) => {
-    if (locationTargetProduct) {
-      gridUpdateMutation.mutate({
-        id: locationTargetProduct.id,
-        patch: { locationId: loc.id },
-      })
-      closeLocationPicker()
-      return
-    }
-
-    setSelectedLocation(loc)
-    setForm((p) => ({ ...p, locationId: loc.id }))
-    setShowLocationPicker(false)
   }
 
   const openCreate = () => {
@@ -659,9 +635,8 @@ export default function ProductsPage() {
       locationId:   product.locationId ?? product.defaultLocation?.id ?? '',
       unit:         product.unit ?? 'EA',
       baseUnit:     product.baseUnit ?? 'EA',
-      pUnitQty:     product.pUnitQty ?? 0,
-      boxUnitQty:   product.boxUnitQty ?? product.boxQty ?? 1,
-      plUnitQty:    product.plUnitQty ?? 0,
+      inUnitQty:     product.inUnitQty ?? 0,
+      outUnitQty:   product.outUnitQty ?? product.boxQty ?? 1,
       spec:         product.spec ?? '',
       materialNo:   product.materialNo ?? '',
       boxQty:       product.boxQty,
@@ -821,40 +796,8 @@ export default function ProductsPage() {
           >
             ! 안전재고 경고만
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              setSearchInput('')
-              setSearch('')
-              setShowSafetyOnly(false)
-              setPage(1)
-            }}
-            className="px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium whitespace-nowrap"
-          >
-            초기화
-          </button>
         </div>
       </div>
-
-      {/* 선택 액션 바 */}
-      {selectedIds.size > 0 && (
-        <div className="wms-selected-bar flex flex-wrap items-center gap-3 px-3 py-2 rounded-xl">
-          <span className="text-sm font-semibold flex-1">{formatNumber(selectedIds.size)}개 선택됨</span>
-          <button
-            onClick={handleBulkDelete}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/80 hover:bg-red-600 rounded-lg text-sm font-medium transition-colors"
-          >
-            삭제
-          </button>
-          <button
-            onClick={() => setSelectedIds(new Set())}
-            className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
-            title="선택 해제"
-          >
-            닫기
-          </button>
-        </div>
-      )}
 
       {/* 테이블 */}
       <ProductInventoryGrid
@@ -884,17 +827,19 @@ export default function ProductsPage() {
           <>
             <ExportButton
               filename="상품목록"
+              disabled={selectedIds.size === 0}
               getData={async () => {
                 const all = await productApi.findAll({ search: search || undefined, limit: 9999 })
-                return all.items.map((p: Product) => ({
+                const items = all.items.filter((p: Product) => selectedIds.has(p.id))
+                return items.map((p: Product) => ({
                   '상품코드': p.code,
                   '자재번호': p.materialNo ?? '',
                   '상품명': p.name,
                   '위치': p.defaultLocation?.code ?? '-',
                   '기준단위': p.unit || 'EA',
                   'EA': getTotalEA(p),
-                  'P': getInboxStock(p),
-                  'BOX': getOutboxStock(p),
+                  'IN': getINStock(p),
+                  'OUT': getOUTStock(p),
                   'PL': getPlStock(p),
                   '카테고리': p.category ?? '',
                   '거래처명': p.client?.name ?? '',
@@ -915,7 +860,7 @@ export default function ProductsPage() {
                 }))
               }}
             />
-            <ImportButton onImported={() => qc.invalidateQueries({ queryKey: ['products'] })} />
+            <ImportButton config={productImportConfig} onImported={() => qc.invalidateQueries({ queryKey: ['products'] })} />
             {canAccessQuotes && (
               <button
                 onClick={openQuoteScreen}
@@ -1041,80 +986,22 @@ export default function ProductsPage() {
         />
       )}
 
-      {/* 보관위치 검색 팝업 */}
       {showLocationPicker && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-700 flex flex-col max-h-[80vh]">
-            <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 dark:border-gray-700 shrink-0">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-emerald-100 dark:bg-emerald-900/30 shrink-0">
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-900 dark:text-white text-sm">보관위치 선택</h3>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">창고에 등록된 위치 중에서 선택하세요</p>
-              </div>
-              <button
-                onClick={closeLocationPicker}
-                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-200 transition-colors"
-              >
-                닫기
-              </button>
-            </div>
-
-            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 shrink-0">
-              <div className="relative">
-                <input
-                  autoFocus
-                  type="text"
-                  placeholder="위치 코드 검색 (예: A-01)"
-                  value={locationPickerSearch}
-                  onChange={(e) => setLocationPickerSearch(e.target.value)}
-                  className="w-full pl-3 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/40 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400"
-                />
-              </div>
-            </div>
-
-            <div className="overflow-y-auto flex-1">
-              {locationsLoading ? (
-                <div className="py-12 text-center text-gray-400 text-sm">
-                  <div className="mx-auto mb-2 h-6 w-6 animate-spin rounded-full border-2 border-gray-200 border-t-emerald-500" />
-                  위치 목록 불러오는 중...
-                </div>
-              ) : filteredLocations.length === 0 ? (
-                <div className="py-12 text-center text-gray-400 text-sm">
-                  {locationPickerSearch ? '검색 결과 없음' : '등록된 위치가 없습니다'}
-                </div>
-              ) : (
-                <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {filteredLocations.map((loc) => (
-                    <button
-                      key={loc.id}
-                      type="button"
-                      onClick={() => selectLocation(loc)}
-                      className="w-full px-5 py-3 text-left hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
-                    >
-                      <p className="text-sm font-mono font-medium text-gray-800 dark:text-gray-100">{loc.code}</p>
-                      {(loc.aisle || loc.rack) && (
-                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                          {[loc.aisle && `통로 ${loc.aisle}`, loc.rack && `랙 ${loc.rack}`, loc.shelf && `선반 ${loc.shelf}`].filter(Boolean).join(' · ')}
-                        </p>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-700 shrink-0">
-              <button
-                type="button"
-                onClick={closeLocationPicker}
-                className="w-full py-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
-              >
-                취소
-              </button>
-            </div>
-          </div>
-        </div>
+        <LocationPickerModal
+          locations={allLocations}
+          isLoading={locationsLoading}
+          onSelect={(loc) => {
+            if (!loc) return
+            if (locationTargetProduct) {
+              gridUpdateMutation.mutate({ id: locationTargetProduct.id, patch: { locationId: loc.id } })
+            } else {
+              setSelectedLocation(loc)
+              setForm((p) => ({ ...p, locationId: loc.id }))
+            }
+            closeLocationPicker()
+          }}
+          onClose={closeLocationPicker}
+        />
       )}
     </div>
   )

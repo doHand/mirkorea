@@ -44,7 +44,7 @@ export default function PickingListPage() {
   const dailyOrders = availableOrders.filter((order) => !excludedOrderIds.has(order.id))
   const excludedOrders = availableOrders.filter((order) => excludedOrderIds.has(order.id))
   const rows = buildDailyPickingRows(dailyOrders)
-  const totalBoxes = rows.reduce((sum, row) => sum + row.boxCount, 0)
+  const totalOuts = rows.reduce((sum, row) => sum + row.boxCount, 0)
   const allSelected = rows.length > 0 && rows.every((row) => selectedRows.has(row.key))
 
   useEffect(() => {
@@ -68,8 +68,8 @@ export default function PickingListPage() {
   })
   const completeRows = (selected: typeof rows) => {
     if (!selected.length) return
-    const boxes = selected.reduce((sum, row) => sum + row.boxCount, 0)
-    if (!window.confirm(`선택한 ${selected.length}개 항목 / ${formatNumber(boxes)} BOX를 완료 처리할까요?`)) return
+    const outs = selected.reduce((sum, row) => sum + row.boxCount, 0)
+    if (!window.confirm(`선택한 ${selected.length}개 항목 / ${formatNumber(outs)} OUT를 완료 처리할까요?`)) return
     completePicking.mutate({
       orderIds: dailyOrders.map((order) => order.id),
       items: selected.map((row) => ({ productId: row.productId, boxCount: row.boxCount })),
@@ -80,7 +80,7 @@ export default function PickingListPage() {
 
   return <div className="flex h-[calc(100vh-150px)] min-h-0 flex-col gap-4 overflow-hidden">
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <div><h2 className="text-lg font-bold">날짜별 피킹리스트</h2><p className="text-sm text-gray-500">출고지시 주문을 상품별 BOX 수량으로 합산합니다.</p></div>
+      <div><h2 className="text-lg font-bold">날짜별 피킹리스트</h2><p className="text-sm text-gray-500">출고지시 주문을 상품별 OUT 수량으로 합산합니다.</p></div>
       <div className="flex items-center gap-1 rounded border bg-white p-1 dark:border-gray-700 dark:bg-gray-900">
         <input type="date" value={pickingDate} onChange={(e) => setPickingDate(e.target.value)} className="bg-transparent px-3 py-1.5 text-sm outline-none" />
         <button onClick={() => printInternalPickingList(pickingDate, dailyOrders)} disabled={!dailyOrders.length} title="내부 피킹리스트 출력" className="flex items-center gap-1.5 rounded bg-[#2D4033] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40">내부 출력</button>
@@ -145,7 +145,7 @@ export default function PickingListPage() {
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded border border-[#D4BF99] bg-white dark:border-gray-800 dark:bg-gray-900">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b bg-[#F9F7F2] px-4 py-3 dark:border-gray-800 dark:bg-gray-800">
         <b>[ {pickingDate} ] 피킹 해야 할 총 리스트</b>
-        <div className="flex items-center gap-3"><b className="text-[#D2691E]">{dailyOrders.length}건 / 남은 {formatNumber(totalBoxes)} BOX</b>
+        <div className="flex items-center gap-3"><b className="text-[#D2691E]">{dailyOrders.length}건 / 남은 {formatNumber(totalOuts)} OUT</b>
           <button onClick={() => completeRows(rows.filter((row) => selectedRows.has(row.key)))} disabled={!selectedRows.size || completePicking.isPending}
             className="rounded-lg bg-violet-700 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40">선택 완료 처리 ({selectedRows.size})</button>
         </div>
@@ -154,7 +154,7 @@ export default function PickingListPage() {
         <table className="w-full min-w-[850px] text-sm"><thead className="sticky top-0 bg-[#2D4033] text-white"><tr>
           <th className="w-12 px-3 py-2"><input type="checkbox" checked={allSelected} onChange={(e) => setSelectedRows(e.target.checked ? new Set(rows.map((row) => row.key)) : new Set())} /></th>
           <th className="px-3 py-2">기본위치</th><th className="px-3 py-2">상품코드</th><th className="px-3 py-2 text-left">상품명</th>
-          <th className="px-3 py-2">가져올 BOX</th><th className="px-3 py-2 text-left">요청처별 수량</th><th className="px-3 py-2">작업</th>
+          <th className="px-3 py-2">가져올 OUT</th><th className="px-3 py-2 text-left">요청처별 수량</th><th className="px-3 py-2">작업</th>
         </tr></thead><tbody className="divide-y dark:divide-gray-800">
           {!rows.length && <tr><td colSpan={7} className="py-12 text-center text-gray-400">해당 날짜에 남은 피킹 작업이 없습니다</td></tr>}
           {rows.map((row) => {
@@ -164,7 +164,7 @@ export default function PickingListPage() {
             return <tr key={row.key} onClick={toggleRow} className="cursor-pointer border-l-4 border-gray-300 !bg-gray-200 dark:border-gray-600 dark:!bg-gray-700/70">
             <td className="px-3 py-2 text-center" onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedRows.has(row.key)} onChange={toggleRow} /></td>
             <td className="px-3 py-2 text-center font-mono font-bold">{row.locationCode}</td><td className="px-3 py-2 text-center font-mono text-xs">{row.product?.code}</td>
-            <td className="px-3 py-2">{row.product?.name}</td><td className="px-3 py-2 text-right text-base font-bold text-[#D2691E]">{formatNumber(row.boxCount)} BOX</td>
+            <td className="px-3 py-2">{row.product?.name}</td><td className="px-3 py-2 text-right text-base font-bold text-[#D2691E]">{formatNumber(row.boxCount)} OUT</td>
             <td className="px-3 py-2 text-xs text-gray-500">{row.requests}</td><td className="px-3 py-2 text-center" onClick={(e) => e.stopPropagation()}><button onClick={() => completeRows([row])}
               disabled={completePicking.isPending} className="rounded-lg border border-violet-300 px-2.5 py-1.5 text-xs font-semibold text-violet-700 disabled:opacity-40">완료 처리</button></td>
           </tr>
@@ -180,8 +180,8 @@ export default function PickingListPage() {
 }
 
 function OrderDetailModal({ order, onClose }: { order: OutboundOrder; onClose: () => void }) {
-  const totalBoxes = order.items.reduce((sum, item) => sum + item.boxCount, 0)
-  const pickedBoxes = order.items.reduce((sum, item) => sum + Number(item.pickedBoxCount || 0), 0)
+  const totalOuts = order.items.reduce((sum, item) => sum + item.boxCount, 0)
+  const pickedOuts = order.items.reduce((sum, item) => sum + Number(item.pickedBoxCount || 0), 0)
   return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4" onClick={onClose}>
     <div onClick={(e) => e.stopPropagation()} className="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded bg-white shadow-2xl dark:bg-gray-900">
       <div className="flex items-center justify-between border-b px-5 py-4 dark:border-gray-800">
@@ -201,7 +201,7 @@ function OrderDetailModal({ order, onClose }: { order: OutboundOrder; onClose: (
         </dl>
         <div className="overflow-hidden rounded border dark:border-gray-800">
           <table className="w-full text-xs"><thead className="bg-gray-50 dark:bg-gray-800"><tr>
-            <th className="p-2 text-left">상품</th><th className="p-2">기본위치</th><th className="p-2">BOX</th><th className="p-2">피킹완료</th>
+            <th className="p-2 text-left">상품</th><th className="p-2">기본위치</th><th className="p-2">OUT</th><th className="p-2">피킹완료</th>
           </tr></thead><tbody className="divide-y dark:divide-gray-800">
             {order.items.map((item) => <tr key={item.id}>
               <td className="p-2"><p>{item.product?.name}</p><p className="font-mono text-gray-400">{item.product?.code}</p></td>
@@ -211,7 +211,7 @@ function OrderDetailModal({ order, onClose }: { order: OutboundOrder; onClose: (
             </tr>)}
           </tbody></table>
         </div>
-        <p className="text-right font-bold text-[#D2691E]">총 {formatNumber(totalBoxes)} BOX (피킹완료 {formatNumber(pickedBoxes)})</p>
+        <p className="text-right font-bold text-[#D2691E]">총 {formatNumber(totalOuts)} OUT (피킹완료 {formatNumber(pickedOuts)})</p>
       </div>
     </div>
   </div>

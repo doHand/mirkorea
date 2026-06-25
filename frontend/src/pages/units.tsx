@@ -1,189 +1,237 @@
-﻿'use client'
-import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { GripVertical } from 'lucide-react'
+'use client'
+import { useCallback, useMemo, useRef, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { AgGridReact } from 'ag-grid-react'
+import { ClientSideRowModelModule, ModuleRegistry } from 'ag-grid-community'
+import type { ColDef } from 'ag-grid-community'
+import { Minus, Plus, RefreshCw, Save } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { unitApi } from '@/api/product.api'
-import { cn } from '@/utils/cn'
-import * as ui from '@/styles/ui'
-import { formatNumber } from '@/utils/format'
 import type { ProductUnit } from '@/types/api.types'
 
-type FormState = { code: string; label: string; description: string; sortOrder: number }
-const emptyForm = (): FormState => ({ code: '', label: '', description: '', sortOrder: 0 })
-const DEFAULT_UNITS = ['EA', 'BOX', 'PALLET']
+ModuleRegistry.registerModules([ClientSideRowModelModule])
+
+const DEFAULT_UNITS = ['EA', 'OUT', 'PALLET']
+
+type UnitRow = {
+  id: string
+  code: string
+  label: string
+  description: string
+  sortOrder: number
+  _new?: boolean
+  _dirty?: boolean
+  _deleted?: boolean
+}
+
+const blankRow = (): UnitRow => ({
+  id: `new-${crypto.randomUUID()}`,
+  code: '', label: '', description: '', sortOrder: 0,
+  _new: true,
+})
+
+function toRow(u: ProductUnit): UnitRow {
+  return { id: u.id, code: u.code, label: u.label, description: u.description ?? '', sortOrder: u.sortOrder }
+}
 
 export default function UnitsPage() {
   const qc = useQueryClient()
-  const [showAdd, setShowAdd] = useState(false)
-  const [form, setForm] = useState<FormState>(emptyForm())
-  const [editId, setEditId] = useState<string | null>(null)
-  const [editForm, setEditForm] = useState<FormState>(emptyForm())
+  const gridRef = useRef<AgGridReact<UnitRow>>(null)
+  const [rows, setRows] = useState<UnitRow[]>([])
+  const [saving, setSaving] = useState(false)
 
-  const { data, isLoading } = useQuery({
+  const { isLoading } = useQuery({
     queryKey: ['product-units'],
-    queryFn: () => unitApi.findAll(),
-  })
-
-  const createMutation = useMutation({
-    mutationFn: () => unitApi.create({ ...form, code: form.code.toUpperCase() }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['product-units'] })
-      setForm(emptyForm()); setShowAdd(false)
-      toast.success('단위가 추가되었습니다')
+    queryFn: async () => {
+      const data = await unitApi.findAll()
+      setRows(data.map(toRow))
+      return data
     },
-    onError: () => toast.error('추가 실패 (코드 중복 또는 오류)'),
   })
 
-  const updateMutation = useMutation({
-    mutationFn: (id: string) => unitApi.update(id, { ...editForm, code: editForm.code.toUpperCase() }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['product-units'] })
-      setEditId(null); toast.success('수정되었습니다')
-    },
-    onError: () => toast.error('수정 실패'),
-  })
+  const refetchRows = useCallback(async () => {
+    const data = await unitApi.findAll()
+    setRows(data.map(toRow))
+    qc.invalidateQueries({ queryKey: ['product-units'] })
+  }, [qc])
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => unitApi.delete(id),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['product-units'] }); toast.success('삭제되었습니다') },
-    onError: () => toast.error('삭제 실패'),
-  })
+  const updateRow = useCallback((id: string, patch: Partial<UnitRow>) => {
+    setRows(prev => prev.map(r =>
+      r.id === id ? { ...r, ...patch, _dirty: r._new ? r._dirty : true } : r,
+    ))
+  }, [])
 
-  const startEdit = (u: ProductUnit) => {
-    setEditId(u.id)
-    setEditForm({ code: u.code, label: u.label, description: u.description ?? '', sortOrder: u.sortOrder })
+  const visibleRows = useMemo(() => rows.filter(r => !r._deleted), [rows])
+  const hasChanges  = rows.some(r => r._new || r._dirty || r._deleted)
+
+  const addRow = useCallback(() => {
+    setRows(prev => [blankRow(), ...prev])
+  }, [])
+
+  const deleteSelected = useCallback(() => {
+    const api = gridRef.current?.api
+    const selected = api?.getSelectedRows() ?? []
+    if (!selected.length) { toast.error('???????깆뱽 ?醫뤾문??곻폒?紐꾩뒄'); return }
+    const protected_ = selected.filter(r => DEFAULT_UNITS.includes(r.code))
+    if (protected_.length > 0) {
+      toast.error(`${protected_.map(r => r.code).join(', ')}??疫꿸퀡????μ맄嚥??????????곷뮸??덈뼄`)
+    }
+    const toDelete = selected.filter(r => !DEFAULT_UNITS.includes(r.code))
+    toDelete.forEach(r => {
+      if (r._new) {
+        setRows(prev => prev.filter(row => row.id !== r.id))
+      } else {
+        setRows(prev => prev.map(row => row.id === r.id ? { ...row, _deleted: true } : row))
+      }
+    })
+  }, [])
+
+  const discardChanges = useCallback(async () => {
+    await refetchRows()
+  }, [refetchRows])
+
+  const saveChanges = async () => {
+    setSaving(true)
+    let ok = 0, fail = 0
+    try {
+      for (const row of rows.filter(r => r._deleted && !r._new)) {
+        try { await unitApi.delete(row.id); ok++ } catch { fail++ }
+      }
+      for (const row of rows.filter(r => r._dirty && !r._deleted && !r._new)) {
+        try {
+          await unitApi.update(row.id, {
+            code: row.code.toUpperCase(),
+            label: row.label,
+            description: row.description,
+            sortOrder: row.sortOrder,
+          })
+          ok++
+        } catch { fail++ }
+      }
+      for (const row of rows.filter(r => r._new && r.code && r.label)) {
+        try {
+          await unitApi.create({
+            code: row.code.toUpperCase(),
+            label: row.label,
+            description: row.description,
+            sortOrder: row.sortOrder,
+          })
+          ok++
+        } catch { fail++ }
+      }
+      if (ok > 0) toast.success(`${ok}椰??????袁⑥┷`)
+      if (fail > 0) toast.error(`${fail}椰???쎈솭`)
+      await refetchRows()
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const units: ProductUnit[] = data ?? []
+  const colDefs: ColDef<UnitRow>[] = useMemo(() => [
+    {
+      headerName: '',
+      checkboxSelection: true,
+      headerCheckboxSelection: true,
+      width: 52,
+      minWidth: 52,
+      maxWidth: 52,
+      suppressMovable: true,
+      resizable: false,
+    },
+    {
+      headerName: '코드', field: 'code', width: 100,
+      sort: 'asc', sortIndex: 1,
+      editable: true,
+      valueParser: p => (p.newValue as string).toUpperCase(),
+      onCellValueChanged: p => updateRow(p.data.id, { code: (p.newValue as string).toUpperCase() }),
+    },
+    {
+      headerName: '라벨', field: 'label', width: 130,
+      editable: true,
+      onCellValueChanged: p => updateRow(p.data.id, { label: p.newValue }),
+    },
+    {
+      headerName: '설명', field: 'description', flex: 1, minWidth: 160,
+      editable: true,
+      onCellValueChanged: p => updateRow(p.data.id, { description: p.newValue ?? '' }),
+    },
+    {
+      headerName: '순번', field: 'sortOrder', width: 110, minWidth: 100,
+      sort: 'asc', sortIndex: 0,
+      type: 'numericColumn',
+      editable: true,
+      cellEditor: 'agNumberCellEditor',
+      onCellValueChanged: p => updateRow(p.data.id, { sortOrder: Number(p.newValue) || 0 }),
+    },
+  ], [updateRow])
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
-            단위 관리
-          </h2>
-          <p className="text-xs text-gray-400 mt-0.5">EA, BOX, PALLET 등 단위 마스터를 관리합니다.</p>
-        </div>
-        <button onClick={() => { setShowAdd(true); setForm(emptyForm()) }}
-          className="flex items-center gap-1.5 px-3 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded transition-colors shadow-sm shadow-indigo-500/20">
-          <span className="hidden sm:inline">단위 추가</span>
-        </button>
+    <div className="flex h-[calc(100vh-118px)] min-h-0 flex-col gap-2 overflow-hidden">
+      <div>
+        <h2 className="whitespace-nowrap text-base font-bold text-gray-900 dark:text-white tracking-tight">단위 관리</h2>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">EA, OUT, PALLET 등 단위 마스터를 관리합니다. 셀을 클릭하면 편집됩니다.</p>
       </div>
 
-      <div className="bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-        <table className="w-full min-w-[560px] text-sm">
-          <thead>
-            <tr className={ui.thead}>
-              <th className="w-8" />
-              <th className={cn(ui.th, 'w-24')}>코드</th>
-              <th className={cn(ui.th, 'w-32')}>레이블</th>
-              <th className={ui.th}>설명</th>
-              <th className={cn(ui.th, 'w-20')}>순서</th>
-              <th className="w-20" />
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading && <tr><td colSpan={6} className="text-center py-10 text-gray-400 text-sm">불러오는 중...</td></tr>}
-            {units.length === 0 && !isLoading && (
-              <tr><td colSpan={6} className="text-center py-10 text-gray-300 text-sm">단위가 없습니다</td></tr>
-            )}
-            {units.map((u: ProductUnit) => (
-              <tr key={u.id} onDoubleClick={() => startEdit(u)} className={cn('border-t border-gray-100 dark:border-gray-800 group/row cursor-pointer', ui.tr)}>
-                <td className="pl-3 pr-0 py-3 w-8">
-                  <GripVertical size={14} className="text-gray-300 dark:text-gray-700" />
-                </td>
-                {editId === u.id ? (
-                  <>
-                    <td className="px-3 py-2">
-                      <input value={editForm.code} onChange={(e) => setEditForm({ ...editForm, code: e.target.value })}
-                        className="w-20 px-2 py-1 text-sm border border-indigo-400 rounded-lg bg-white dark:bg-gray-800 font-mono outline-none uppercase" />
-                    </td>
-                    <td className="px-3 py-2">
-                      <input value={editForm.label} onChange={(e) => setEditForm({ ...editForm, label: e.target.value })}
-                        className="w-28 px-2 py-1 text-sm border border-indigo-400 rounded-lg bg-white dark:bg-gray-800 outline-none" />
-                    </td>
-                    <td className="px-3 py-2">
-                      <input value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                        className="w-full px-2 py-1 text-sm border border-indigo-400 rounded-lg bg-white dark:bg-gray-800 outline-none" />
-                    </td>
-                    <td className="px-3 py-2">
-                      <input type="number" value={editForm.sortOrder} onChange={(e) => setEditForm({ ...editForm, sortOrder: Number(e.target.value) })}
-                        className="w-16 px-2 py-1 text-sm border border-indigo-400 rounded-lg bg-white dark:bg-gray-800 text-center outline-none" />
-                    </td>
-                    <td className="px-3 py-2">
-                      <div className="flex items-center gap-1 justify-end">
-                        <button onClick={() => updateMutation.mutate(u.id)} className="text-indigo-500 hover:text-indigo-600 p-1">확인</button>
-                        <button onClick={() => setEditId(null)} className="text-gray-400 hover:text-gray-600 p-1">닫기</button>
-                      </div>
-                    </td>
-                  </>
-                ) : (
-                  <>
-                    <td className="px-4 py-3">
-                      <span className="font-mono font-bold text-gray-800 dark:text-gray-200">{u.code}</span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{u.label}</td>
-                    <td className="px-4 py-3 text-gray-400 dark:text-gray-500">{u.description ?? '—'}</td>
-                    <td className="px-4 py-3 text-right tabular-nums text-gray-500">{formatNumber(u.sortOrder)}</td>
-                    <td className="px-3 py-3">
-                      <div className="flex items-center gap-1 justify-end opacity-0 group-hover/row:opacity-100 transition-opacity">
-                        <button onClick={() => startEdit(u)} className="text-gray-400 hover:text-indigo-500 p-1 transition-colors">수정</button>
-                        <button
-                          disabled={DEFAULT_UNITS.includes(u.code)}
-                          onClick={() => { if (confirm(`"${u.label}" 단위를 삭제할까요?`)) deleteMutation.mutate(u.id) }}
-                          className={cn('p-1 transition-colors', DEFAULT_UNITS.includes(u.code)
-                            ? 'text-gray-200 dark:text-gray-800 cursor-not-allowed'
-                            : 'text-gray-400 hover:text-rose-500')}
-                          title={DEFAULT_UNITS.includes(u.code) ? '기본 단위는 삭제할 수 없습니다' : undefined}
-                        >
-                          삭제
-                        </button>
-                      </div>
-                    </td>
-                  </>
-                )}
-              </tr>
-            ))}
+      <div className="app-surface flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden dark:border-gray-800 dark:bg-gray-900">
+        {/* ??而?*/}
+        <div className="wms-grid-toolbar flex items-center justify-end gap-1.5 border-b px-2 py-1.5">
+          <button
+            onClick={addRow}
+            title="행 추가"
+            aria-label="행 추가"
+            className="wms-toolbar-action inline-flex h-7 w-7 items-center justify-center rounded transition-colors"
+          >
+            <Plus size={15} strokeWidth={2.5} />
+          </button>
+          <button
+            onClick={deleteSelected}
+            title="선택 행 삭제"
+            aria-label="선택 행 삭제"
+            className="wms-toolbar-action inline-flex h-7 w-7 items-center justify-center rounded transition-colors"
+          >
+            <Minus size={16} strokeWidth={2.5} />
+          </button>
+          <button
+            onClick={discardChanges}
+            disabled={saving}
+            title="변경사항을 버리고 서버 데이터로 새로고침"
+            className="wms-toolbar-action inline-flex h-7 items-center gap-1 rounded px-2 text-xs transition-colors disabled:opacity-40"
+          >
+            <RefreshCw size={13} /> 새로고침
+          </button>
+          <button
+            onClick={saveChanges}
+            disabled={saving || !hasChanges}
+            className="wms-toolbar-action inline-flex items-center gap-1 rounded px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-40"
+          >
+            <Save size={14} /> {saving ? '저장 중' : '저장'}
+          </button>
+        </div>
 
-            {showAdd && (
-              <tr className="border-t border-indigo-100 dark:border-indigo-900/30 bg-indigo-50/30 dark:bg-indigo-900/5">
-                <td className="pl-3 pr-0 py-3 w-8" />
-                <td className="px-3 py-2">
-                  <input autoFocus placeholder="KG" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })}
-                    className="w-20 px-2 py-1 text-sm border border-indigo-400 rounded-lg bg-white dark:bg-gray-800 font-mono outline-none uppercase" />
-                </td>
-                <td className="px-3 py-2">
-                  <input placeholder="레이블" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })}
-                    className="w-28 px-2 py-1 text-sm border border-indigo-400 rounded-lg bg-white dark:bg-gray-800 outline-none" />
-                </td>
-                <td className="px-3 py-2">
-                  <input placeholder="설명 (선택)" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
-                    className="w-full px-2 py-1 text-sm border border-indigo-400 rounded-lg bg-white dark:bg-gray-800 outline-none" />
-                </td>
-                <td className="px-3 py-2">
-                  <input type="number" value={form.sortOrder} onChange={(e) => setForm({ ...form, sortOrder: Number(e.target.value) })}
-                    className="w-16 px-2 py-1 text-sm border border-indigo-400 rounded-lg bg-white dark:bg-gray-800 text-center outline-none" />
-                </td>
-                <td className="px-3 py-2">
-                  <div className="flex items-center gap-1 justify-end">
-                    <button onClick={() => createMutation.mutate()}
-                      disabled={!form.code.trim() || !form.label.trim() || createMutation.isPending}
-                      className="text-indigo-500 hover:text-indigo-600 disabled:opacity-40 p-1">
-                      확인
-                    </button>
-                    <button onClick={() => setShowAdd(false)} className="text-gray-400 hover:text-gray-600 p-1">닫기</button>
-                  </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+        {/* 域밸챶???*/}
+        <div className="ag-theme-quartz ag-theme-wms wms-ag-grid min-w-0 w-full flex-1">
+          {isLoading ? (
+            <div className="flex h-full items-center justify-center text-sm text-gray-400 animate-pulse">불러오는 중...</div>
+          ) : (
+            <AgGridReact<UnitRow>
+              ref={gridRef}
+              rowData={visibleRows}
+              columnDefs={colDefs}
+              defaultColDef={{ resizable: true, suppressHeaderMenuButton: true }}
+              rowSelection="multiple"
+              rowClassRules={{
+                'row-new':      p => !!p.data?._new,
+                'row-modified': p => !!p.data?._dirty && !p.data?._new,
+              }}
+              headerHeight={36}
+              animateRows
+              stopEditingWhenCellsLoseFocus
+              singleClickEdit
+            />
+          )}
         </div>
       </div>
-      <p className="text-xs text-gray-400 dark:text-gray-600">* EA, BOX, PALLET는 기본 단위로 삭제할 수 없습니다.</p>
+      <p className="text-xs text-gray-400 dark:text-gray-600">* EA, OUT, PALLET은 기본 단위로 삭제할 수 없습니다.</p>
     </div>
   )
 }

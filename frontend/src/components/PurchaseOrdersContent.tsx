@@ -5,7 +5,6 @@ import { useRouter } from 'next/router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { purchaseOrderApi, type PurchaseOrderRequest } from '@/api/purchase-order.api'
-import { productApi } from '@/api/product.api'
 import { clientApi } from '@/api/client.api'
 import { userApi } from '@/api/user.api'
 import { QUERY_KEYS } from '@/constants/query-keys'
@@ -16,6 +15,7 @@ import type { Product, PurchaseOrder, PurchaseOrderStatus } from '@/types/api.ty
 import { printPurchaseOrder } from '@/utils/printPurchaseOrder'
 import { StatusBadge } from '@/components/StatusBadge'
 import { ActionDropdown } from '@/components/ActionDropdown'
+import { ProductPickerModal } from '@/components/ProductPickerModal'
 
 const STATUS: Record<PurchaseOrderStatus, string> = {
   DRAFT: '작성 중', ORDERED: '발주 완료', CONVERTED: '입고예정 등록', CANCELLED: '취소',
@@ -134,14 +134,14 @@ export function PurchaseOrdersContent({ createTrigger }: Props) {
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 outline-none focus:border-[#2D4033]"
+            className="border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 outline-none focus:border-[var(--color-primary)]"
           />
           <span className="text-xs text-gray-400">~</span>
           <input
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 outline-none focus:border-[#2D4033]"
+            className="border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 outline-none focus:border-[var(--color-primary)]"
           />
 
           {/* 공급업체 검색 */}
@@ -149,14 +149,14 @@ export function PurchaseOrdersContent({ createTrigger }: Props) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="발주번호 또는 공급업체 검색"
-            className="min-w-48 flex-1 border border-gray-200 dark:border-gray-700 py-2 pl-3 pr-3 text-sm outline-none focus:border-[#2D4033] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            className="min-w-48 flex-1 border border-gray-200 dark:border-gray-700 py-2 pl-3 pr-3 text-sm outline-none focus:border-[var(--color-primary)] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
           />
 
           {/* 상태 필터 */}
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value as PurchaseOrderStatus | '')}
-            className="border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 outline-none focus:border-[#2D4033]"
+            className="border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 outline-none focus:border-[var(--color-primary)]"
           >
             <option value="">전체 상태</option>
             {Object.entries(STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -165,7 +165,7 @@ export function PurchaseOrdersContent({ createTrigger }: Props) {
           {/* 버튼 그룹 */}
           <button
             onClick={() => {/* 서버 필터는 status/search로 이미 적용됨 */}}
-            className="bg-[#2D4033] text-white px-4 py-2 text-sm font-semibold hover:bg-[#24352a]"
+            className="bg-[var(--color-primary)] text-white px-4 py-2 text-sm font-semibold hover:bg-[var(--color-primary-hover)]"
           >
             검색
           </button>
@@ -219,7 +219,7 @@ export function PurchaseOrdersContent({ createTrigger }: Props) {
               )}
               {orders.map((o) => (
                 <tr key={o.id} className={cn(ui.tr, 'cursor-pointer')} onDoubleClick={() => setEditing(o)}>
-                  <td className="px-3 py-3 font-mono font-semibold text-[#2D4033] dark:text-emerald-400 text-xs">{o.orderNo}</td>
+                  <td className="px-3 py-3 font-mono font-semibold text-[var(--color-primary)] dark:text-emerald-400 text-xs">{o.orderNo}</td>
                   <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{o.supplier || '-'}</td>
                   <td className="px-3 py-3 text-center text-gray-500 dark:text-gray-400">{o.orderDate}</td>
                   <td className="px-3 py-3 text-center text-gray-500 dark:text-gray-400">{o.expectedDate || '-'}</td>
@@ -334,16 +334,16 @@ function PrintByDateModal({ orders, clients, onClose }: {
               type="date"
               value={printDate}
               onChange={(e) => setPrintDate(e.target.value)}
-              className="mt-1 w-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm outline-none focus:border-[#2D4033] text-gray-900 dark:text-gray-100"
+              className="mt-1 w-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm outline-none focus:border-[var(--color-primary)] text-gray-900 dark:text-gray-100"
             />
           </label>
 
           <label className="flex items-center gap-2 cursor-pointer select-none">
             <input
-              type="checkbox"
+              type="checkOUT"
               checked={splitByClient}
               onChange={(e) => setSplitByClient(e.target.checked)}
-              className="h-4 w-4 accent-[#2D4033]"
+              className="h-4 w-4 accent-[var(--color-primary)]"
             />
             <span className="text-sm text-gray-700 dark:text-gray-300">거래처별 구분 출력</span>
           </label>
@@ -361,7 +361,7 @@ function PrintByDateModal({ orders, clients, onClose }: {
           <button
             onClick={handlePrint}
             disabled={!filtered.length}
-            className="bg-[#2D4033] px-5 py-2 text-sm font-semibold text-white hover:bg-[#24352a] disabled:opacity-50"
+            className="bg-[var(--color-primary)] px-5 py-2 text-sm font-semibold text-white hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
           >
             출력 ({filtered.length}건)
           </button>
@@ -420,7 +420,7 @@ function OrderModal({ warehouseId, order, onClose, onSaved }: {
     onError: () => toast.error('저장에 실패했습니다'),
   })
 
-  const totalBoxes = useMemo(() => items.reduce((sum, i) => sum + i.boxCount, 0), [items])
+  const totalOUTes = useMemo(() => items.reduce((sum, i) => sum + i.boxCount, 0), [items])
   const totalEa    = useMemo(() => items.reduce((sum, i) => sum + i.quantity, 0), [items])
   const totalAmt   = useMemo(() => items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0), [items])
 
@@ -456,7 +456,7 @@ function OrderModal({ warehouseId, order, onClose, onSaved }: {
     })
   }
 
-  const fieldCls = 'mt-1 w-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm outline-none focus:border-[#2D4033] text-gray-900 dark:text-gray-100'
+  const fieldCls = 'mt-1 w-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm outline-none focus:border-[var(--color-primary)] text-gray-900 dark:text-gray-100'
   const sectionTitle = (title: string) => (
     <p className="text-xs font-semibold text-gray-500 pb-1 mb-3 border-b border-gray-100">{title}</p>
   )
@@ -537,7 +537,7 @@ function OrderModal({ warehouseId, order, onClose, onSaved }: {
               <button
                 type="button"
                 onClick={() => setProductPickerOpen(true)}
-                className="flex items-center gap-2 bg-[#2D4033] px-3 py-2 text-sm font-semibold text-white hover:bg-[#24352a]"
+                className="flex items-center gap-2 bg-[var(--color-primary)] px-3 py-2 text-sm font-semibold text-white hover:bg-[var(--color-primary-hover)]"
               >
                 등록 상품 불러오기
               </button>
@@ -549,7 +549,7 @@ function OrderModal({ warehouseId, order, onClose, onSaved }: {
                 <thead className={ui.thead}>
                   <tr>
                     <th className={cn(ui.th, 'text-left')}>상품명/규격</th>
-                    <th className={ui.th}>BOX수</th>
+                    <th className={ui.th}>OUT수</th>
                     <th className={ui.th}>EA수량</th>
                     <th className={ui.th}>규격/호환</th>
                     <th className={ui.thR}>단가</th>
@@ -571,14 +571,14 @@ function OrderModal({ warehouseId, order, onClose, onSaved }: {
                         <input
                           type="number" min={0} value={item.boxCount}
                           onChange={(e) => setItems(items.map((x, n) => n === idx ? { ...x, boxCount: Math.max(0, Number(e.target.value)) } : x))}
-                          className="w-20 border border-gray-200 dark:border-gray-700 px-2 py-1 text-sm text-right bg-white dark:bg-gray-800 outline-none focus:border-[#2D4033]"
+                          className="w-20 border border-gray-200 dark:border-gray-700 px-2 py-1 text-sm text-right bg-white dark:bg-gray-800 outline-none focus:border-[var(--color-primary)]"
                         />
                       </td>
                       <td className="px-2 py-2 text-center">
                         <input
                           type="number" min={1} value={item.quantity}
                           onChange={(e) => setItems(items.map((x, n) => n === idx ? { ...x, quantity: Math.max(1, Number(e.target.value)) } : x))}
-                          className="w-20 border border-gray-200 dark:border-gray-700 px-2 py-1 text-sm text-right bg-white dark:bg-gray-800 outline-none focus:border-[#2D4033]"
+                          className="w-20 border border-gray-200 dark:border-gray-700 px-2 py-1 text-sm text-right bg-white dark:bg-gray-800 outline-none focus:border-[var(--color-primary)]"
                         />
                       </td>
                       <td className="px-2 py-2">
@@ -586,14 +586,14 @@ function OrderModal({ warehouseId, order, onClose, onSaved }: {
                           value={item.capSize}
                           onChange={(e) => setItems(items.map((x, n) => n === idx ? { ...x, capSize: e.target.value } : x))}
                           placeholder="규격/호환"
-                          className="w-full border border-gray-200 dark:border-gray-700 px-2 py-1 text-sm bg-white dark:bg-gray-800 outline-none focus:border-[#2D4033]"
+                          className="w-full border border-gray-200 dark:border-gray-700 px-2 py-1 text-sm bg-white dark:bg-gray-800 outline-none focus:border-[var(--color-primary)]"
                         />
                       </td>
                       <td className="px-2 py-2">
                         <input
                           type="number" min={0} value={item.unitPrice}
                           onChange={(e) => setItems(items.map((x, n) => n === idx ? { ...x, unitPrice: Math.max(0, Number(e.target.value)) } : x))}
-                          className="w-24 border border-gray-200 dark:border-gray-700 px-2 py-1 text-sm text-right bg-white dark:bg-gray-800 outline-none focus:border-[#2D4033]"
+                          className="w-24 border border-gray-200 dark:border-gray-700 px-2 py-1 text-sm text-right bg-white dark:bg-gray-800 outline-none focus:border-[var(--color-primary)]"
                         />
                       </td>
                       <td className="px-3 py-2 text-right text-sm tabular-nums text-gray-700 dark:text-gray-300">
@@ -623,7 +623,7 @@ function OrderModal({ warehouseId, order, onClose, onSaved }: {
               onChange={(e) => setMemo(e.target.value)}
               placeholder="발주 관련 메모"
               rows={3}
-              className="w-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm outline-none focus:border-[#2D4033] text-gray-900 dark:text-gray-100 resize-none"
+              className="w-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm outline-none focus:border-[var(--color-primary)] text-gray-900 dark:text-gray-100 resize-none"
             />
           </div>
         </div>
@@ -631,132 +631,25 @@ function OrderModal({ warehouseId, order, onClose, onSaved }: {
         {/* 푸터 — 하단 고정 */}
         <div className="flex items-center justify-between border-t border-gray-100 dark:border-gray-700 px-5 py-4 shrink-0">
           <span className="text-sm font-semibold text-[#D2691E]">
-            총 BOX {totalBoxes.toLocaleString()}박스&nbsp;|&nbsp;EA {totalEa.toLocaleString()}개&nbsp;|&nbsp;합계 {totalAmt.toLocaleString()}원
+            총 OUT {totalOUTes.toLocaleString()}OUT&nbsp;|&nbsp;EA {totalEa.toLocaleString()}개&nbsp;|&nbsp;합계 {totalAmt.toLocaleString()}원
           </span>
           <div className="flex gap-2">
             <button onClick={onClose} className="border border-gray-200 dark:border-gray-700 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800">닫기</button>
-            <button onClick={submit} disabled={save.isPending} className="bg-[#2D4033] px-5 py-2 text-sm font-semibold text-white hover:bg-[#24352a] disabled:opacity-50">
+            <button onClick={submit} disabled={save.isPending} className="bg-[var(--color-primary)] px-5 py-2 text-sm font-semibold text-white hover:bg-[var(--color-primary-hover)] disabled:opacity-50">
               {save.isPending ? '저장 중...' : '저장'}
             </button>
           </div>
         </div>
 
         {productPickerOpen && (
-          <ProductPicker
+          <ProductPickerModal
+            multiSelect
             existingIds={items.map((i) => i.productId)}
+            title="등록 상품 불러오기"
             onClose={() => setProductPickerOpen(false)}
-            onAdd={addProducts}
+            onConfirm={addProducts}
           />
         )}
-      </div>
-    </div>
-  )
-}
-
-// ── ProductPicker ─────────────────────────────────────────────────────────────
-
-function ProductPicker({ existingIds, onClose, onAdd }: {
-  existingIds: string[]
-  onClose: () => void
-  onAdd: (products: Product[]) => void
-}) {
-  const [search, setSearch]     = useState('')
-  const [selected, setSelected] = useState<string[]>([])
-  const { data, isLoading } = useQuery({
-    queryKey: QUERY_KEYS.products({ search, picker: true }),
-    queryFn: () => productApi.findAll({ search: search || undefined, limit: 100 }),
-  })
-  const products = data?.items ?? []
-  const existing = new Set(existingIds)
-  const toggle = (id: string) =>
-    setSelected((curr) => curr.includes(id) ? curr.filter((x) => x !== id) : [...curr, id])
-  const selectedProducts = products.filter((p) => selected.includes(p.id))
-
-  return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/55 p-4">
-      <div className="flex max-h-[82vh] w-full max-w-4xl flex-col bg-white shadow-2xl dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 px-5 py-3 shrink-0">
-          <div>
-            <h3 className="font-bold text-gray-900 dark:text-white text-sm">등록 상품 불러오기</h3>
-            <p className="mt-0.5 text-xs text-gray-500">추가할 상품을 여러 개 선택할 수 있습니다</p>
-          </div>
-          <button type="button" onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-sm">
-            닫기
-          </button>
-        </div>
-        <div className="border-b border-gray-100 dark:border-gray-700 p-3 shrink-0">
-          <div className="relative">
-            <input
-              autoFocus value={search} onChange={(e) => setSearch(e.target.value)}
-              placeholder="상품명, 상품코드, 자재번호, 거래처 검색"
-              className="w-full border border-gray-200 dark:border-gray-700 py-2 pl-3 pr-3 text-sm outline-none focus:border-[#2D4033] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-            />
-          </div>
-        </div>
-        <div className="flex-1 overflow-auto">
-          <table className="w-full min-w-[720px] text-sm">
-            <thead className="sticky top-0">
-              <tr className={ui.thead}>
-                <th className="w-14 px-3 py-2" />
-                <th className={cn(ui.th, 'text-left')}>상품코드</th>
-                <th className={cn(ui.th, 'text-left')}>제품명</th>
-                <th className={cn(ui.th, 'text-left')}>거래처</th>
-                <th className={ui.th}>박스당 EA</th>
-                <th className={cn(ui.th, 'text-left')}>규격/캡사이즈</th>
-              </tr>
-            </thead>
-            <tbody className={ui.tbody}>
-              {isLoading && <tr><td colSpan={6} className="py-12 text-center text-gray-400">상품을 불러오는 중...</td></tr>}
-              {!isLoading && products.length === 0 && <tr><td colSpan={6} className="py-12 text-center text-gray-400">등록된 상품이 없습니다</td></tr>}
-              {products.map((product) => {
-                const alreadyAdded = existing.has(product.id)
-                const checked = selected.includes(product.id)
-                return (
-                  <tr
-                    key={product.id}
-                    onClick={() => !alreadyAdded && toggle(product.id)}
-                    className={cn(
-                      'transition-colors',
-                      alreadyAdded ? 'bg-gray-50 dark:bg-gray-800/20 text-gray-400' : 'cursor-pointer hover:bg-[#f4f7f3] dark:hover:bg-gray-800/30',
-                      checked && 'bg-[#edf0ec] dark:bg-[#2D4033]/20',
-                    )}
-                  >
-                    <td className="px-3 py-2 text-center">
-                      <span className={cn(
-                        'inline-flex h-5 w-5 items-center justify-center border',
-                        checked ? 'border-[#2D4033] bg-[#2D4033] text-white' : 'border-gray-300',
-                      )}>
-                        {checked && <span>✓</span>}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 font-mono text-xs text-[#2D4033] dark:text-emerald-400">{product.code}</td>
-                    <td className="px-3 py-2 font-medium text-gray-900 dark:text-gray-100">
-                      {product.name}
-                      {alreadyAdded && <span className="ml-2 text-xs text-[#D2691E]">추가됨</span>}
-                    </td>
-                    <td className="px-3 py-2 text-gray-500 dark:text-gray-400">{product.client?.name || '-'}</td>
-                    <td className="px-3 py-2 text-center text-gray-600 dark:text-gray-400">{product.boxQty?.toLocaleString() || 1}</td>
-                    <td className="px-3 py-2 text-gray-500 dark:text-gray-400">{product.spec || '-'}</td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-        <div className="flex items-center justify-between border-t border-gray-100 dark:border-gray-700 px-5 py-3 shrink-0">
-          <span className="text-sm font-semibold text-[#2D4033] dark:text-emerald-400">{selected.length}개 선택</span>
-          <div className="flex gap-2">
-            <button type="button" onClick={onClose} className="border border-gray-200 dark:border-gray-700 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800">취소</button>
-            <button
-              type="button"
-              disabled={!selected.length}
-              onClick={() => onAdd(selectedProducts)}
-              className="bg-[#D2691E] px-5 py-2 text-sm font-semibold text-white hover:bg-[#b85b19] disabled:opacity-40"
-            >
-              선택 상품 추가
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   )

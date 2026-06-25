@@ -4,86 +4,48 @@ import { Upload } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { cn } from '@/utils/cn'
 import { formatNumber } from '@/utils/format'
-import type { SaleStatus } from '@/types/api.types'
 
-interface ImportRow {
-  code: string
-  name: string
-  category?: string
-  brand?: string
-  unit: string
-  boxQty: number
-  safetyStock: number
-  reorderPoint: number
-  costPrice?: number
-  sellPrice?: number
-  saleStatus: SaleStatus
-  _error?: string
-}
+export type ImportRow = Record<string, unknown> & { _error?: string }
 
-const STATUS_MAP: Record<string, SaleStatus> = {
-  '판매중': 'ACTIVE',  '활성': 'ACTIVE',  ACTIVE: 'ACTIVE',
-  '비활성': 'INACTIVE', INACTIVE: 'INACTIVE',
-  '단종': 'DISCONTINUED', DISCONTINUED: 'DISCONTINUED',
+export interface ImportConfig {
+  templateFilename: string
+  templateRows: Record<string, unknown>[]
+  sheetName?: string
+  parse: (raw: Record<string, string | number>[]) => ImportRow[]
+  previewColumns: Array<{
+    key: string
+    label: string
+    align?: 'left' | 'right' | 'center'
+    mono?: boolean
+    format?: (value: unknown) => React.ReactNode
+  }>
+  save: (validRows: ImportRow[], setProgress: (pct: number) => void) => Promise<{ ok: number; fail: number }>
 }
 
 interface Props {
+  config: ImportConfig
   onImported?: () => void
+  label?: string
+  className?: string
+  labelClassName?: string
 }
 
-export function ImportButton({ onImported }: Props) {
-  const fileRef   = useRef<HTMLInputElement>(null)
-  const [preview,   setPreview]   = useState<ImportRow[] | null>(null)
+export function ImportButton({ config, onImported, label = '가져오기', className, labelClassName }: Props) {
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [preview, setPreview] = useState<ImportRow[] | null>(null)
   const [importing, setImporting] = useState(false)
-  const [progress,  setProgress]  = useState(0)
-
-  const parseExcel = async (file: File): Promise<ImportRow[]> => {
-    const XLSX = await import('xlsx')
-    const buf  = await file.arrayBuffer()
-    const wb   = XLSX.read(buf, { type: 'array' })
-    const ws   = wb.Sheets[wb.SheetNames[0]]
-    const raw  = XLSX.utils.sheet_to_json<Record<string, string | number>>(ws, { defval: '' })
-
-    return raw.map((row) => {
-      const str = (keys: string[]) => {
-        for (const k of keys) {
-          const v = row[k]
-          if (v !== undefined && v !== '') return String(v)
-        }
-        return undefined
-      }
-      const num = (keys: string[]) => {
-        const v = str(keys)
-        const n = Number(v)
-        return v !== undefined && !isNaN(n) ? n : undefined
-      }
-
-      const code      = str(['상품코드', 'code']) ?? ''
-      const name      = str(['상품명',   'name']) ?? ''
-      const statusRaw = str(['상태', 'saleStatus']) ?? 'ACTIVE'
-
-      return {
-        code,
-        name,
-        category:     str(['카테고리', 'category']),
-        brand:        str(['브랜드',   'brand']),
-        unit:         str(['단위',     'unit']) ?? 'EA',
-        boxQty:       num(['박스입수', 'boxQty'])    ?? 1,
-        safetyStock:  num(['안전재고', 'safetyStock']) ?? 0,
-        reorderPoint: num(['재주문점', 'reorderPoint']) ?? 0,
-        costPrice:    num(['원가',     'costPrice']),
-        sellPrice:    num(['판매가',   'sellPrice']),
-        saleStatus:   STATUS_MAP[statusRaw] ?? 'ACTIVE',
-        _error: !code || !name ? '코드/명 필수' : undefined,
-      }
-    })
-  }
+  const [progress, setProgress] = useState(0)
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     try {
-      const rows = await parseExcel(file)
+      const XLSX = await import('xlsx')
+      const buf = await file.arrayBuffer()
+      const wb = XLSX.read(buf, { type: 'array' })
+      const ws = wb.Sheets[wb.SheetNames[0]]
+      const raw = XLSX.utils.sheet_to_json<Record<string, string | number>>(ws, { defval: '' })
+      const rows = config.parse(raw)
       if (!rows.length) { toast.error('데이터가 없습니다'); return }
       setPreview(rows)
     } catch {
@@ -95,79 +57,56 @@ export function ImportButton({ onImported }: Props) {
 
   const downloadTemplate = async () => {
     const XLSX = await import('xlsx')
-    const tpl = [{
-      상품코드: 'PRD-001', 상품명: '샘플상품', 카테고리: '전자',
-      브랜드: 'ACME', 단위: 'EA', 박스입수: 12,
-      안전재고: 10, 재주문점: 5, 원가: 5000, 판매가: 8000, 상태: '판매중',
-    }]
-    const ws = XLSX.utils.json_to_sheet(tpl)
+    const ws = XLSX.utils.json_to_sheet(config.templateRows)
     const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, '상품')
-    XLSX.writeFile(wb, '상품등록_템플릿.xlsx')
+    XLSX.utils.book_append_sheet(wb, ws, config.sheetName ?? '데이터')
+    XLSX.writeFile(wb, config.templateFilename)
   }
 
   const handleImport = async () => {
     if (!preview) return
-    const valid = preview.filter((r) => !r._error)
+    const valid = preview.filter(r => !r._error)
     if (!valid.length) { toast.error('가져올 항목이 없습니다'); return }
-
     setImporting(true)
     setProgress(0)
-    const { productApi } = await import('@/api/product.api')
-    let ok = 0, fail = 0
-
-    for (let i = 0; i < valid.length; i++) {
-      try {
-        await productApi.create(valid[i])
-        ok++
-      } catch {
-        fail++
-      }
-      setProgress(Math.round(((i + 1) / valid.length) * 100))
+    try {
+      const { ok, fail } = await config.save(valid, setProgress)
+      if (ok > 0) toast.success(`${ok}개 등록 완료`)
+      if (fail > 0) toast.error(`${fail}개 실패 (중복 코드 등)`)
+      setPreview(null)
+      onImported?.()
+    } finally {
+      setImporting(false)
     }
-
-    setImporting(false)
-    if (ok > 0)   toast.success(`${ok}개 등록 완료`)
-    if (fail > 0) toast.error(`${fail}개 실패 (중복 코드 등)`)
-    setPreview(null)
-    onImported?.()
   }
 
-  const validCount = preview?.filter((r) => !r._error).length ?? 0
-  const errorCount = preview?.filter((r) =>  r._error).length ?? 0
+  const validCount = preview?.filter(r => !r._error).length ?? 0
+  const errorCount = preview?.filter(r => r._error).length ?? 0
 
   return (
     <>
-      <input
-        ref={fileRef}
-        type="file"
-        accept=".xlsx,.xls,.csv"
-        className="hidden"
-        onChange={handleFile}
-      />
+      <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFile} />
 
       <button
         onClick={() => fileRef.current?.click()}
-        title="가져오기"
-        aria-label="가져오기"
-        className="responsive-icon-action bg-accent-500 text-white hover:bg-accent-600"
+        title={label}
+        aria-label={label}
+        className={className ?? 'responsive-icon-action bg-accent-500 text-white hover:bg-accent-600'}
       >
         <Upload size={15} aria-hidden="true" />
-        <span className="responsive-action-label">가져오기</span>
+        <span className={labelClassName ?? 'responsive-action-label'}>{label}</span>
       </button>
 
       {preview && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-none flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-900 rounded shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col border border-gray-200 dark:border-gray-700">
-
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-none p-4">
+          <div className="flex w-full max-w-3xl max-h-[85vh] flex-col overflow-hidden rounded border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
             {/* 헤더 */}
-            <div className="flex items-start justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-start justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-700">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-accent-100 dark:bg-accent-900/30 rounded-md flex items-center justify-center shrink-0">
-                </div>
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-accent-100 dark:bg-accent-900/30" />
                 <div>
                   <h3 className="font-semibold text-gray-900 dark:text-white">엑셀 가져오기</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                     {formatNumber(preview.length)}행 파싱 ·{' '}
                     <span className="text-emerald-600 dark:text-emerald-400">정상 {formatNumber(validCount)}건</span>
                     {errorCount > 0 && <span className="text-red-500"> · 오류 {formatNumber(errorCount)}건</span>}
@@ -177,13 +116,13 @@ export function ImportButton({ onImported }: Props) {
               <div className="flex items-center gap-1">
                 <button
                   onClick={downloadTemplate}
-                  className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  className="rounded-lg px-2.5 py-1.5 text-xs text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
                 >
                   템플릿
                 </button>
                 <button
-                  onClick={() => { setPreview(null) }}
-                  className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 transition-colors"
+                  onClick={() => setPreview(null)}
+                  className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
                 >
                   닫기
                 </button>
@@ -194,15 +133,20 @@ export function ImportButton({ onImported }: Props) {
             <div className="flex-1 overflow-auto">
               <table className="w-full text-xs">
                 <thead className="sticky top-0 z-10">
-                  <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                    {['#','코드','상품명','카테고리','원가','판매가','확인'].map((h) => (
-                      <th key={h} className={cn(
-                        'px-4 py-2.5 font-medium text-gray-500 dark:text-gray-400',
-                        h === '#' ? 'text-left w-10' :
-                        h === '확인' ? 'text-center' :
-                        ['원가','판매가'].includes(h) ? 'text-right' : 'text-left'
-                      )}>{h}</th>
+                  <tr className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
+                    <th className="w-10 px-4 py-2.5 text-left font-medium text-gray-500 dark:text-gray-400">#</th>
+                    {config.previewColumns.map(col => (
+                      <th
+                        key={col.key}
+                        className={cn(
+                          'px-4 py-2.5 font-medium text-gray-500 dark:text-gray-400',
+                          col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left',
+                        )}
+                      >
+                        {col.label}
+                      </th>
                     ))}
+                    <th className="px-4 py-2.5 text-center font-medium text-gray-500 dark:text-gray-400">확인</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -213,30 +157,29 @@ export function ImportButton({ onImported }: Props) {
                         'transition-colors',
                         row._error
                           ? 'bg-red-50 dark:bg-red-900/10'
-                          : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                          : 'hover:bg-gray-50 dark:hover:bg-gray-800/50',
                       )}
                     >
-                      <td className="px-4 py-2 text-right text-gray-400 tabular-nums">{formatNumber(i + 1)}</td>
-                      <td className="px-4 py-2 font-mono text-gray-700 dark:text-gray-300">
-                        {row.code || <span className="text-red-500 font-sans">없음</span>}
-                      </td>
-                      <td className="px-4 py-2 text-gray-900 dark:text-gray-100 font-medium">
-                        {row.name || <span className="text-red-500">없음</span>}
-                      </td>
-                      <td className="px-4 py-2 text-gray-500 dark:text-gray-400">{row.category || '—'}</td>
-                      <td className="px-4 py-2 text-right tabular-nums text-gray-700 dark:text-gray-300">
-                        {row.costPrice != null ? `₩${formatNumber(row.costPrice)}` : '-'}
-                      </td>
-                      <td className="px-4 py-2 text-right tabular-nums text-gray-700 dark:text-gray-300">
-                        {row.sellPrice != null ? `₩${formatNumber(row.sellPrice)}` : '-'}
-                      </td>
+                      <td className="px-4 py-2 text-right tabular-nums text-gray-400">{formatNumber(i + 1)}</td>
+                      {config.previewColumns.map(col => (
+                        <td
+                          key={col.key}
+                          className={cn(
+                            'px-4 py-2',
+                            col.mono ? 'font-mono text-gray-700 dark:text-gray-300' : 'text-gray-900 dark:text-gray-100',
+                            col.align === 'right' ? 'text-right tabular-nums' : col.align === 'center' ? 'text-center' : '',
+                          )}
+                        >
+                          {col.format
+                            ? col.format(row[col.key])
+                            : (row[col.key] as string | number | undefined) ?? '—'}
+                        </td>
+                      ))}
                       <td className="px-4 py-2 text-center">
                         {row._error ? (
-                          <span className="inline-flex items-center gap-1 text-red-500">
-                            ! {row._error}
-                          </span>
+                          <span className="inline-flex items-center gap-1 text-red-500">! {row._error as string}</span>
                         ) : (
-                          <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
+                          <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
                         )}
                       </td>
                     </tr>
@@ -247,39 +190,32 @@ export function ImportButton({ onImported }: Props) {
 
             {/* 진행바 */}
             {importing && (
-              <div className="px-5 py-3 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1.5">
+              <div className="border-t border-gray-200 px-5 py-3 dark:border-gray-700">
+                <div className="mb-1.5 flex justify-between text-xs text-gray-500 dark:text-gray-400">
                   <span>등록 중...</span><span>{progress}%</span>
                 </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                  <div
-                    className="bg-accent-500 h-1.5 rounded-full transition-all duration-300"
-                    style={{ width: `${progress}%` }}
-                  />
+                <div className="h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+                  <div className="h-1.5 rounded-full bg-accent-500 transition-all duration-300" style={{ width: `${progress}%` }} />
                 </div>
               </div>
             )}
 
             {/* 푸터 */}
-            <div className="flex gap-3 px-5 py-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex gap-3 border-t border-gray-200 px-5 py-4 dark:border-gray-700">
               <button
                 onClick={() => setPreview(null)}
-                className="flex-1 py-2.5 border border-gray-200 dark:border-gray-700 rounded text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                className="flex-1 rounded border border-gray-200 py-2.5 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
               >
                 취소
               </button>
               <button
                 onClick={handleImport}
                 disabled={importing || validCount === 0}
-                className="flex-1 py-2.5 bg-accent-500 text-white rounded-md text-sm font-semibold hover:bg-accent-600 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                className="flex-1 rounded-md bg-accent-500 py-2.5 text-sm font-semibold text-white hover:bg-accent-600 disabled:opacity-50"
               >
-                {importing
-                  ? <>가져오는 중...</>
-                  : `${formatNumber(validCount)}개 등록`
-                }
+                {importing ? '가져오는 중...' : `${formatNumber(validCount)}개 등록`}
               </button>
             </div>
-
           </div>
         </div>
       )}

@@ -33,7 +33,7 @@ public class Barcode {
     @Builder.Default
     private BarcodeUnitType type = BarcodeUnitType.UNIT;
 
-    // 스캔 1회당 처리 수량 (박스=boxQty, 낱개=1)
+    // 스캔 1회당 처리 수량 (OUT=boxQty, 낱개=1)
     @Column(name = "unit_qty", nullable = false)
     @Builder.Default
     private int unitQty = 1;

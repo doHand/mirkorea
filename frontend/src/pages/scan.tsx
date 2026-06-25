@@ -18,21 +18,21 @@ import { useMenuLabel } from '@/hooks/use-menu-label'
 import type { Barcode as ProductBarcode, BarcodeResolveResult, Zone, BarcodeUnitType } from '@/types/api.types'
 
 const UNIT_LABEL: Record<BarcodeUnitType, string> = {
-  UNIT: '일반바코드', CXD: 'CXD낱개(INBOX)', CXD_BOX: 'CXD BOX',
+  UNIT: '일반바코드', CXD: 'CXD낱개(IN)', CXD_OUT: 'CXD OUT',
 }
 const UNIT_CLS: Record<BarcodeUnitType, string> = {
   UNIT: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400',
   CXD:  'bg-violet-100 text-violet-700 dark:bg-violet-900/20 dark:text-violet-400',
-  CXD_BOX: 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400',
+  CXD_OUT: 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400',
 }
 const displayBarcodeStock = (stockQty: number | undefined, type: BarcodeUnitType, unitQty: number, barcodes: ProductBarcode[]) => {
   const stock = Number(stockQty ?? 0)
-  if (type === 'CXD') return `${formatDecimal(stock / Math.max(1, unitQty))}INBOX`
-  if (type === 'CXD_BOX') {
-    const inboxUnitQty = barcodes.find((barcode) => barcode.type === 'CXD' && barcode.isPrimary)?.unitQty
+  if (type === 'CXD') return `${formatDecimal(stock / Math.max(1, unitQty))}IN`
+  if (type === 'CXD_OUT') {
+    const inoutUnitQty = barcodes.find((barcode) => barcode.type === 'CXD' && barcode.isPrimary)?.unitQty
       ?? barcodes.find((barcode) => barcode.type === 'CXD')?.unitQty
       ?? 1
-    return `${formatDecimal(stock / (Math.max(1, inboxUnitQty) * Math.max(1, unitQty)))}OUTBOX`
+    return `${formatDecimal(stock / (Math.max(1, inoutUnitQty) * Math.max(1, unitQty)))}OUT`
   }
   return `${formatNumber(stock)}EA`
 }
@@ -264,7 +264,7 @@ export default function ScanPage() {
                   {SCAN_MODES.filter((m) => m === 'INBOUND' || m === 'OUTBOUND' || m === 'INQUIRY').map((m) => (
                     <button key={m} onClick={() => { setMode(m); setPendingScan(null) }}
                       className={cn('flex-1 py-2 rounded-lg text-sm font-medium transition-colors',
-                        mode === m ? 'bg-[#2D4033] text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600')}>
+                        mode === m ? 'bg-[var(--color-primary)] text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600')}>
                       {SCAN_MODE_LABEL[m]}
                     </button>
                   ))}
@@ -310,7 +310,7 @@ export default function ScanPage() {
                     setSelectedLocation(loc ?? null)
                     setTimeout(() => inputRef.current?.focus(), 0)
                   }}
-                  className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2D4033]/25 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/25 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 >
                   <option value="">위치 선택 (스캔 시 자동 선택됩니다)</option>
                   {zones.length > 0
@@ -326,7 +326,7 @@ export default function ScanPage() {
                     : (locations as any[]).map((l: any) => <option key={l.id} value={l.id}>{l.code}</option>)}
                 </select>
                 {selectedLocation && (
-                  <p className="mt-1.5 text-xs text-[#2D4033] dark:text-emerald-400 flex items-center gap-1">
+                  <p className="mt-1.5 text-xs text-[var(--color-primary)] dark:text-emerald-400 flex items-center gap-1">
                     선택됨: {selectedLocation.code}
                   </p>
                 )}
@@ -336,7 +336,7 @@ export default function ScanPage() {
             {/* 바코드 입력 */}
             <div className={cn(
               'bg-white dark:bg-gray-800 rounded border-2 p-4 transition-colors',
-              pendingScan ? 'border-gray-200 dark:border-gray-700' : 'border-[#2D4033]',
+              pendingScan ? 'border-gray-200 dark:border-gray-700' : 'border-[var(--color-primary)]',
             )}>
               <div className="flex flex-wrap items-center gap-3 mb-3">
                 <span className="font-medium text-gray-900 dark:text-gray-100">바코드 스캔</span>
@@ -346,7 +346,7 @@ export default function ScanPage() {
                 <button
                   onClick={() => setCameraOpen(true)}
                   disabled={!!pendingScan}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#2D4033] text-white text-xs rounded-lg hover:bg-[#253628] transition-colors disabled:opacity-40"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-primary)] text-white text-xs rounded-lg hover:bg-[var(--color-primary-hover)] transition-colors disabled:opacity-40"
                 >
                   카메라
                 </button>
@@ -360,7 +360,7 @@ export default function ScanPage() {
                   'w-full border rounded-lg px-3 py-3 text-base focus:outline-none focus:ring-2 font-mono placeholder-gray-400 dark:placeholder-gray-500 transition-colors',
                   pendingScan
                     ? 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
-                    : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-[#2D4033]/25',
+                    : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-[var(--color-primary)]/25',
                 )}
                 placeholder={
                   mode === 'INQUIRY'
@@ -442,7 +442,7 @@ export default function ScanPage() {
 
                 {/* 수량 입력 */}
                 <div className="flex items-center gap-3 mb-3">
-                  <label className="text-xs font-medium text-gray-500 dark:text-gray-400 shrink-0">박스 수량</label>
+                  <label className="text-xs font-medium text-gray-500 dark:text-gray-400 shrink-0">OUT 수량</label>
                   <div className="flex items-center gap-1 flex-1">
                     <button
                       onClick={() => setPendingScan((prev) => prev ? { ...prev, quantity: Math.max(1, prev.quantity - 1) } : null)}
@@ -465,7 +465,7 @@ export default function ScanPage() {
                     >
                       +
                     </button>
-                    <span className="text-xs text-gray-400 ml-1">박스</span>
+                    <span className="text-xs text-gray-400 ml-1">OUT</span>
                   </div>
                   <span className="text-[10px] text-gray-400">1회 스캔={formatNumber(pendingScan.result.qtyPerScan)}개</span>
                 </div>
@@ -512,7 +512,7 @@ export default function ScanPage() {
                   <button
                     onClick={() => submitMutation.mutate(cart)}
                     disabled={submitMutation.isPending}
-                    className="w-full py-3 bg-[#2D4033] text-white font-semibold rounded-lg hover:bg-[#253628] disabled:opacity-50 transition-colors"
+                    className="w-full py-3 bg-[var(--color-primary)] text-white font-semibold rounded-lg hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-colors"
                   >
                     {submitMutation.isPending ? '처리 중...' : `${SCAN_MODE_LABEL[mode as 'INBOUND' | 'OUTBOUND']} 완료 (${formatNumber(cart.length)}건)`}
                   </button>
@@ -562,7 +562,7 @@ export default function ScanPage() {
                 {/* 상품 헤더 */}
                 <div className="bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 p-4">
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded bg-[#2D4033]/10 flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded bg-[var(--color-primary)]/10 flex items-center justify-center shrink-0">
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-gray-900 dark:text-white text-sm leading-tight">{lastResult.product.name}</p>
@@ -606,7 +606,7 @@ export default function ScanPage() {
                           <span className="text-xs text-gray-400 tabular-nums shrink-0">
                             {bc.type === 'UNIT' && `현재 재고 :  ${displayBarcodeStock(lastResult.product.stockQty, bc.type, bc.unitQty, inquiryBarcodes)}`}
                             {bc.type === 'CXD' && `현재 재고 :  ${displayBarcodeStock(lastResult.product.stockQty, bc.type, bc.unitQty, inquiryBarcodes)} · 낱개 구성 ${formatNumber(bc.unitQty)}개`}
-                            {bc.type === 'CXD_BOX' && `현재 재고 :  ${displayBarcodeStock(lastResult.product.stockQty, bc.type, bc.unitQty, inquiryBarcodes)} · INBOX ${formatNumber(bc.unitQty)}개 포함`}
+                            {bc.type === 'CXD_OUT' && `현재 재고 :  ${displayBarcodeStock(lastResult.product.stockQty, bc.type, bc.unitQty, inquiryBarcodes)} · IN ${formatNumber(bc.unitQty)}개 포함`}
                           </span>
                           {bc.isPrimary && <span className="text-amber-400 shrink-0 text-[11px]">★</span>}
                         </div>

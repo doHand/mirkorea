@@ -4,7 +4,7 @@ import { useRouter } from 'next/router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft, Truck, PackageCheck, ClipboardCheck, Check,
-  Ban, BarChart3, AlertTriangle, RefreshCw, Save, Trash2,
+  Ban, BarChart3, AlertTriangle, RefreshCw, Save,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { inboundApi } from '@/api/inbound.api'
@@ -54,6 +54,7 @@ export default function InboundDetailPage() {
   const router  = useRouter()
   const id      = router.query.id as string
   const qc      = useQueryClient()
+  const compact = router.query.embed === '1'
 
   const { data: order, isLoading, refetch } = useQuery({
     queryKey: QUERY_KEYS.inboundOrder(id),
@@ -85,9 +86,9 @@ export default function InboundDetailPage() {
   }
 
   return (
-    <div className="space-y-5 max-w-4xl mx-auto">
+    <div className={cn(compact ? 'space-y-2 p-2' : 'mx-auto max-w-4xl space-y-5')}>
       {/* 상단 내비게이션 */}
-      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+      {!compact && <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
         <button
           onClick={() => router.push('/inbound')}
           className="flex items-center gap-1 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
@@ -97,44 +98,44 @@ export default function InboundDetailPage() {
         </button>
         <span>/</span>
         <span className="font-mono font-semibold text-gray-800 dark:text-gray-200">{order.orderNo}</span>
-      </div>
+      </div>}
 
       {/* 주문 헤더 카드 */}
-      <OrderHeader order={order} onRefresh={handleRefresh} onCancel={() => handleRefresh()} qc={qc} />
+      <OrderHeader order={order} onRefresh={handleRefresh} onCancel={() => handleRefresh()} qc={qc} compact={compact} />
 
       {/* 진행 스텝 */}
-      <StepBar status={order.status} />
+      <StepBar status={order.status} compact={compact} />
 
       {/* 단계별 작업 패널 */}
       {(order.status === 'PENDING' || order.status === 'RECEIVING') && (
-        <ReceivePanel order={order} onDone={handleRefresh} />
+        <ReceivePanel order={order} onDone={handleRefresh} compact={compact} />
       )}
       {order.status === 'INSPECTING' && (
-        <InspectPanel order={order} onDone={handleRefresh} />
+        <InspectPanel order={order} onDone={handleRefresh} compact={compact} />
       )}
       {order.status === 'COMPLETED' && (
-        <CompletedPanel order={order} />
+        <CompletedPanel order={order} compact={compact} />
       )}
       {order.status === 'CANCELLED' && (
         <CancelledPanel />
       )}
 
       {/* 품목 상세 테이블 */}
-      <ItemsTable order={order} />
+      <ItemsTable order={order} compact={compact} />
     </div>
   )
 }
 
 // ── 주문 헤더 ─────────────────────────────────────────────────────
 function OrderHeader({
-  order, onRefresh, onCancel, qc,
+  order, onRefresh, onCancel, qc, compact = false,
 }: {
   order: InboundOrder
   onRefresh: () => void
   onCancel: () => void
   qc: ReturnType<typeof useQueryClient>
+  compact?: boolean
 }) {
-  const router  = useRouter()
   const isFinal = order.status === 'COMPLETED' || order.status === 'CANCELLED'
 
   const cancelMutation = useMutation({
@@ -147,42 +148,24 @@ function OrderHeader({
     onError: () => toast.error('취소에 실패했습니다'),
   })
 
-  const deleteMutation = useMutation({
-    mutationFn: () => inboundApi.delete(order.id),
-    onSuccess: () => {
-      toast.success('입고 주문이 삭제되었습니다')
-      qc.invalidateQueries({ queryKey: ['inbound'] })
-      router.push('/inbound')
-    },
-    onError: () => toast.error('삭제에 실패했습니다'),
-  })
-
   const handleCancel = () => {
     if (!confirm('입고 주문을 취소하시겠습니까?')) return
     cancelMutation.mutate()
   }
 
-  const handleDelete = () => {
-    const message = order.status === 'COMPLETED'
-      ? `${order.orderNo} 입고 주문을 삭제하시겠습니까?\n이미 증가된 재고는 자동으로 되돌려지지 않습니다.`
-      : `${order.orderNo} 입고 주문을 삭제하시겠습니까?`
-    if (!confirm(message)) return
-    deleteMutation.mutate()
-  }
-
   return (
-    <div className="bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 p-5">
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-xl font-bold text-indigo-600 dark:text-indigo-400">
+    <div className={cn('rounded border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800', compact ? 'p-3' : 'p-5')}>
+      <div className={cn('flex items-start justify-between', compact ? 'gap-2' : 'gap-4')}>
+        <div className={cn(compact ? 'space-y-1.5' : 'space-y-2')}>
+          <div className={cn('flex items-center', compact ? 'gap-2' : 'gap-3')}>
+            <span className={cn('font-mono font-bold text-indigo-600 dark:text-indigo-400', compact ? 'text-base' : 'text-xl')}>
               {order.orderNo}
             </span>
             <span className={cn('px-2.5 py-1 rounded-full text-xs font-semibold', STATUS_COLOR[order.status])}>
               {STATUS_LABEL[order.status]}
             </span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-1 text-sm">
+          <div className={cn('grid grid-cols-1 text-sm sm:grid-cols-2 md:grid-cols-4', compact ? 'gap-x-3 gap-y-0.5' : 'gap-x-8 gap-y-1')}>
             <div>
               <span className="text-gray-400 text-xs">공급업체</span>
               <p className="font-medium text-gray-800 dark:text-gray-200">{order.supplier || '-'}</p>
@@ -201,7 +184,7 @@ function OrderHeader({
             </div>
           </div>
           {order.memo && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 px-3 py-2 rounded-lg">
+            <p className={cn('rounded bg-gray-50 text-sm text-gray-500 dark:bg-gray-700/50 dark:text-gray-400', compact ? 'px-2 py-1' : 'px-3 py-2')}>
               {order.memo}
             </p>
           )}
@@ -225,14 +208,6 @@ function OrderHeader({
               주문 취소
             </button>
           )}
-          <button
-            onClick={handleDelete}
-            disabled={deleteMutation.isPending}
-            className="flex items-center gap-1.5 px-3 py-2 text-sm text-white bg-red-600 hover:bg-red-700 rounded transition-colors disabled:opacity-50"
-          >
-            <Trash2 size={13} />
-            삭제
-          </button>
         </div>
       </div>
     </div>
@@ -240,12 +215,12 @@ function OrderHeader({
 }
 
 // ── 스텝 바 ───────────────────────────────────────────────────────
-function StepBar({ status }: { status: InboundStatus }) {
+function StepBar({ status, compact = false }: { status: InboundStatus; compact?: boolean }) {
   const currentIdx = STEP_ORDER.indexOf(status)
   const isCancelled = status === 'CANCELLED'
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 px-6 py-5">
+    <div className={cn('rounded border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800', compact ? 'px-3 py-2' : 'px-6 py-5')}>
       <div className="flex items-center">
         {STEPS.map((step, idx) => {
           const done    = !isCancelled && STEP_ORDER.indexOf(step.status) < currentIdx
@@ -253,9 +228,10 @@ function StepBar({ status }: { status: InboundStatus }) {
           const Icon    = step.icon
           return (
             <div key={step.status} className="flex items-center flex-1">
-              <div className="flex flex-col items-center min-w-[64px]">
+              <div className={cn('flex flex-col items-center', compact ? 'min-w-[48px]' : 'min-w-[64px]')}>
                 <div className={cn(
-                  'w-10 h-10 rounded-full flex items-center justify-center transition-all',
+                  'rounded-full flex items-center justify-center transition-all',
+                  compact ? 'h-8 w-8' : 'h-10 w-10',
                   isCancelled
                     ? 'bg-gray-100 dark:bg-gray-700 text-gray-400'
                     : done
@@ -267,7 +243,8 @@ function StepBar({ status }: { status: InboundStatus }) {
                   {done ? <Check size={16} /> : <Icon size={16} />}
                 </div>
                 <span className={cn(
-                  'text-xs mt-1.5 font-medium whitespace-nowrap',
+                  'text-xs font-medium whitespace-nowrap',
+                  compact ? 'mt-1' : 'mt-1.5',
                   isCancelled ? 'text-gray-400'
                   : done || current ? 'text-indigo-600 dark:text-indigo-400'
                   : 'text-gray-400'
@@ -277,7 +254,8 @@ function StepBar({ status }: { status: InboundStatus }) {
               </div>
               {idx < STEPS.length - 1 && (
                 <div className={cn(
-                  'flex-1 h-0.5 mx-2 mb-4 rounded-full',
+                  'flex-1 h-0.5 mx-2 rounded-full',
+                  compact ? 'mb-3' : 'mb-4',
                   !isCancelled && done ? 'bg-indigo-500' : 'bg-gray-200 dark:bg-gray-700'
                 )} />
               )}
@@ -290,7 +268,7 @@ function StepBar({ status }: { status: InboundStatus }) {
 }
 
 // ── 수령 패널 ────────────────────────────────────────────────────
-function ReceivePanel({ order, onDone }: { order: InboundOrder; onDone: () => void }) {
+function ReceivePanel({ order, onDone, compact = false }: { order: InboundOrder; onDone: () => void; compact?: boolean }) {
   const [state, setState] = useState<Record<string, { qty: string; locationId: string }>>(() =>
     Object.fromEntries(order.items.map((i) => [i.id, {
       qty:        String(i.receivedQty || i.expectedQty),
@@ -364,8 +342,8 @@ function ReceivePanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
   const isPending = receiveMutation.isPending || inspectMutation.isPending || completeMutation.isPending
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 overflow-hidden">
-      <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
+    <div className="overflow-hidden rounded border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+      <div className={cn('flex items-center gap-2 border-b border-gray-100 dark:border-gray-700', compact ? 'px-3 py-2' : 'px-5 py-4')}>
         <Truck size={16} className="text-amber-500" />
         <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">수령 처리</h3>
         <span className="ml-auto text-xs tabular-nums text-gray-400">{formatNumber(order.items.length)}개 품목</span>
@@ -373,8 +351,8 @@ function ReceivePanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
 
       <div className="divide-y divide-gray-100 dark:divide-gray-700">
         {order.items.map((item) => (
-          <div key={item.id} className="px-5 py-4">
-            <div className="flex items-center justify-between mb-3">
+          <div key={item.id} className={cn(compact ? 'px-3 py-2.5' : 'px-5 py-4')}>
+            <div className={cn('flex items-center justify-between', compact ? 'mb-2' : 'mb-3')}>
               <div>
                 <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{item.product?.name}</p>
                 <p className="text-xs text-gray-400">{item.product?.code} · 예정 {formatNumber(item.expectedQty)}{item.product?.unit}</p>
@@ -384,14 +362,14 @@ function ReceivePanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
                 <p className="text-sm font-bold tabular-nums text-amber-600 dark:text-amber-400">{formatNumber(item.receivedQty)}{item.product?.unit}</p>
               </div>
             </div>
-            <div className="flex items-end gap-3 flex-wrap">
+            <div className={cn('flex flex-wrap items-end', compact ? 'gap-2' : 'gap-3')}>
               <div>
                 <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">수령 수량</label>
                 <input
                   type="number" min={0}
                   value={state[item.id]?.qty ?? ''}
                   onChange={(e) => setState((p) => ({ ...p, [item.id]: { ...p[item.id], qty: e.target.value } }))}
-                  className="w-28 px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-right tabular-nums font-semibold"
+                  className={cn('w-28 rounded border border-gray-200 bg-white text-right text-sm font-semibold tabular-nums text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-400 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100', compact ? 'px-2 py-1.5' : 'px-3 py-2')}
                 />
               </div>
               <div className="flex-1 min-w-48">
@@ -399,7 +377,7 @@ function ReceivePanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
                 <select
                   value={state[item.id]?.locationId ?? ''}
                   onChange={(e) => setState((p) => ({ ...p, [item.id]: { ...p[item.id], locationId: e.target.value } }))}
-                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  className={cn('w-full rounded border border-gray-200 bg-white text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-400 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100', compact ? 'px-2 py-1.5' : 'px-3 py-2')}
                 >
                   <option value="">위치 선택</option>
                   {receivingLocations.map((l) => (
@@ -412,7 +390,7 @@ function ReceivePanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
         ))}
       </div>
 
-      <div className="px-5 py-4 bg-gray-50 dark:bg-gray-700/30 flex gap-3 flex-wrap">
+      <div className={cn('flex flex-wrap gap-3 bg-gray-50 dark:bg-gray-700/30', compact ? 'px-3 py-2.5' : 'px-5 py-4')}>
         <button
           onClick={handleReceive}
           disabled={isPending}
@@ -447,7 +425,7 @@ function ReceivePanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
 }
 
 // ── 검수 패널 ────────────────────────────────────────────────────
-function InspectPanel({ order, onDone }: { order: InboundOrder; onDone: () => void }) {
+function InspectPanel({ order, onDone, compact = false }: { order: InboundOrder; onDone: () => void; compact?: boolean }) {
   const [state, setState] = useState<Record<string, { passed: string; defect: string; defectLoc: string }>>(() =>
     Object.fromEntries(order.items.map((i) => [i.id, {
       passed:    String(i.passedQty || i.receivedQty || 0),
@@ -516,8 +494,8 @@ function InspectPanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
   const isPending = inspectMutation.isPending || completeMutation.isPending
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 overflow-hidden">
-      <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
+    <div className="overflow-hidden rounded border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+      <div className={cn('flex items-center gap-2 border-b border-gray-100 dark:border-gray-700', compact ? 'px-3 py-2' : 'px-5 py-4')}>
         <ClipboardCheck size={16} className="text-purple-500" />
         <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">검수 처리</h3>
         <span className="ml-auto text-xs tabular-nums text-gray-400">{formatNumber(order.items.length)}개 품목</span>
@@ -530,8 +508,8 @@ function InspectPanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
           const defect = parseInt(s?.defect ?? '0') || 0
           const over   = passed + defect > item.receivedQty
           return (
-            <div key={item.id} className="px-5 py-4">
-              <div className="flex items-center justify-between mb-3">
+            <div key={item.id} className={cn(compact ? 'px-3 py-2.5' : 'px-5 py-4')}>
+              <div className={cn('flex items-center justify-between', compact ? 'mb-2' : 'mb-3')}>
                 <div>
                   <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{item.product?.name}</p>
                   <p className="text-xs text-gray-400">{item.product?.code} · 수령 {formatNumber(item.receivedQty)}{item.product?.unit}</p>
@@ -547,7 +525,7 @@ function InspectPanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
                   </span>
                 </div>
               </div>
-              <div className="flex items-end gap-3 flex-wrap">
+              <div className={cn('flex flex-wrap items-end', compact ? 'gap-2' : 'gap-3')}>
                 <div>
                   <label className="text-xs text-emerald-600 dark:text-emerald-400 font-medium block mb-1">합격 수량</label>
                   <input
@@ -555,7 +533,8 @@ function InspectPanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
                     value={s?.passed ?? ''}
                     onChange={(e) => setState((p) => ({ ...p, [item.id]: { ...p[item.id], passed: e.target.value } }))}
                     className={cn(
-                      'w-28 px-3 py-2 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-right tabular-nums font-semibold',
+                      'w-28 rounded border bg-white text-right text-sm font-semibold tabular-nums text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-400 dark:bg-gray-700 dark:text-gray-100',
+                      compact ? 'px-2 py-1.5' : 'px-3 py-2',
                       over ? 'border-red-400' : 'border-gray-200 dark:border-gray-600'
                     )}
                   />
@@ -571,7 +550,8 @@ function InspectPanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
                       setState((p) => ({ ...p, [item.id]: { ...p[item.id], defect: e.target.value, passed: String(passed) } }))
                     }}
                     className={cn(
-                      'w-28 px-3 py-2 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-red-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-right tabular-nums font-semibold',
+                      'w-28 rounded border bg-white text-right text-sm font-semibold tabular-nums text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-400 dark:bg-gray-700 dark:text-gray-100',
+                      compact ? 'px-2 py-1.5' : 'px-3 py-2',
                       over ? 'border-red-400' : 'border-gray-200 dark:border-gray-600'
                     )}
                   />
@@ -582,7 +562,7 @@ function InspectPanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
                     <select
                       value={s?.defectLoc ?? ''}
                       onChange={(e) => setState((p) => ({ ...p, [item.id]: { ...p[item.id], defectLoc: e.target.value } }))}
-                      className="w-full px-3 py-2 text-sm border border-red-200 dark:border-red-900/50 rounded focus:outline-none focus:ring-2 focus:ring-red-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      className={cn('w-full rounded border border-red-200 bg-white text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-400 dark:border-red-900/50 dark:bg-gray-700 dark:text-gray-100', compact ? 'px-2 py-1.5' : 'px-3 py-2')}
                     >
                       <option value="">위치 선택</option>
                       {damagedLocations.length > 0
@@ -598,7 +578,7 @@ function InspectPanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
         })}
       </div>
 
-      <div className="px-5 py-4 bg-gray-50 dark:bg-gray-700/30 flex gap-3 flex-wrap">
+      <div className={cn('flex flex-wrap gap-3 bg-gray-50 dark:bg-gray-700/30', compact ? 'px-3 py-2.5' : 'px-5 py-4')}>
         <button
           onClick={handleInspect}
           disabled={isPending}
@@ -621,16 +601,16 @@ function InspectPanel({ order, onDone }: { order: InboundOrder; onDone: () => vo
 }
 
 // ── 완료 요약 패널 ────────────────────────────────────────────────
-function CompletedPanel({ order }: { order: InboundOrder }) {
+function CompletedPanel({ order, compact = false }: { order: InboundOrder; compact?: boolean }) {
   const totalExpected = order.items.reduce((s, i) => s + i.expectedQty, 0)
   const totalReceived = order.items.reduce((s, i) => s + i.receivedQty, 0)
   const totalPassed   = order.items.reduce((s, i) => s + i.passedQty,   0)
   const totalDefect   = order.items.reduce((s, i) => s + i.defectQty,   0)
 
   return (
-    <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded border border-emerald-200 dark:border-emerald-800 p-5">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center">
+    <div className={cn('rounded border border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/20', compact ? 'p-3' : 'p-5')}>
+      <div className={cn('flex items-center gap-2', compact ? 'mb-2' : 'mb-4')}>
+        <div className={cn('flex items-center justify-center rounded-full bg-emerald-600', compact ? 'h-7 w-7' : 'h-8 w-8')}>
           <Check size={16} className="text-white" />
         </div>
         <div>
@@ -638,15 +618,15 @@ function CompletedPanel({ order }: { order: InboundOrder }) {
           <p className="text-xs text-emerald-600 dark:text-emerald-500">재고가 자동으로 증가되었습니다</p>
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className={cn('grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4', compact ? 'gap-2' : 'gap-3')}>
         {[
           { label: '예정 수량', value: totalExpected, color: 'text-gray-700 dark:text-gray-300' },
           { label: '수령 수량', value: totalReceived, color: 'text-amber-600 dark:text-amber-400' },
           { label: '합격 수량', value: totalPassed,   color: 'text-emerald-700 dark:text-emerald-400' },
           { label: '불량 수량', value: totalDefect,   color: 'text-red-600 dark:text-red-400' },
         ].map(({ label, value, color }) => (
-          <div key={label} className="bg-white dark:bg-gray-800 rounded p-3 text-center">
-            <p className={cn('text-2xl font-bold tabular-nums', color)}>{formatNumber(value)}</p>
+          <div key={label} className={cn('rounded bg-white text-center dark:bg-gray-800', compact ? 'p-2' : 'p-3')}>
+            <p className={cn('font-bold tabular-nums', compact ? 'text-lg' : 'text-2xl', color)}>{formatNumber(value)}</p>
             <p className="text-xs text-gray-400 mt-0.5">{label}</p>
           </div>
         ))}
@@ -666,10 +646,10 @@ function CancelledPanel() {
 }
 
 // ── 품목 상세 테이블 ──────────────────────────────────────────────
-function ItemsTable({ order }: { order: InboundOrder }) {
+function ItemsTable({ order, compact = false }: { order: InboundOrder; compact?: boolean }) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 overflow-hidden">
-      <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+    <div className="overflow-hidden rounded border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+      <div className={cn('border-b border-gray-100 dark:border-gray-700', compact ? 'px-3 py-2' : 'px-5 py-4')}>
         <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">품목 상세</h3>
       </div>
       <div className="overflow-x-auto">
@@ -688,26 +668,26 @@ function ItemsTable({ order }: { order: InboundOrder }) {
           <tbody className={ui.tbody}>
             {order.items.map((item) => (
               <tr key={item.id} className={ui.tr}>
-                <td className="px-4 py-3">
+                <td className={cn(compact ? 'px-3 py-2' : 'px-4 py-3')}>
                   <p className="font-medium text-gray-800 dark:text-gray-200">{item.product?.name}</p>
                   <p className="text-xs text-gray-400">{item.product?.code}</p>
                 </td>
-                <td className="px-4 py-3 text-right tabular-nums text-gray-600 dark:text-gray-400">
+                <td className={cn('text-right tabular-nums text-gray-600 dark:text-gray-400', compact ? 'px-3 py-2' : 'px-4 py-3')}>
                   {formatNumber(item.expectedQty)}
                 </td>
-                <td className="px-4 py-3 text-right tabular-nums font-medium text-amber-600 dark:text-amber-400">
+                <td className={cn('text-right font-medium tabular-nums text-amber-600 dark:text-amber-400', compact ? 'px-3 py-2' : 'px-4 py-3')}>
                   {formatNumber(item.receivedQty)}
                 </td>
-                <td className="px-4 py-3 text-right tabular-nums font-medium text-emerald-600 dark:text-emerald-400">
+                <td className={cn('text-right font-medium tabular-nums text-emerald-600 dark:text-emerald-400', compact ? 'px-3 py-2' : 'px-4 py-3')}>
                   {item.passedQty > 0 ? formatNumber(item.passedQty) : <span className="text-gray-300 dark:text-gray-600">-</span>}
                 </td>
-                <td className="px-4 py-3 text-right tabular-nums font-medium text-red-500">
+                <td className={cn('text-right font-medium tabular-nums text-red-500', compact ? 'px-3 py-2' : 'px-4 py-3')}>
                   {item.defectQty > 0 ? formatNumber(item.defectQty) : <span className="text-gray-300 dark:text-gray-600">-</span>}
                 </td>
-                <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
+                <td className={cn('text-xs text-gray-500 dark:text-gray-400', compact ? 'px-3 py-2' : 'px-4 py-3')}>
                   {item.location?.code ?? <span className="text-gray-300 dark:text-gray-600">-</span>}
                 </td>
-                <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
+                <td className={cn('text-xs text-gray-500 dark:text-gray-400', compact ? 'px-3 py-2' : 'px-4 py-3')}>
                   {item.lotNumber && <span className="font-mono bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">{item.lotNumber}</span>}
                   {item.expireDate && <span className="ml-1">{fmtDate(item.expireDate)}</span>}
                   {!item.lotNumber && !item.expireDate && <span className="text-gray-300 dark:text-gray-600">-</span>}

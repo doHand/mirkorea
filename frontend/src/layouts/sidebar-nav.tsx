@@ -20,7 +20,7 @@ const TEXT_MAP: Record<string, string> = {
   'product-codes':     '코드',
   barcodes:            '바코',
   'product-attrs':     '속성',
-  'box-qty':           '박스',
+  'box-qty':           'OUT',
   lot:                 'LOT',
   units:               '단위',
   categories:          '분류',

@@ -19,7 +19,7 @@ export const productApi = {
   create: (data: {
     code: string; name: string; category?: string
     clientId?: string; locationId?: string
-    unit?: string; baseUnit?: UnitType; pUnitQty?: number; boxUnitQty?: number; plUnitQty?: number; boxQty?: number; safetyStock?: number; reorderPoint?: number
+    unit?: string; baseUnit?: UnitType; inUnitQty?: number; outUnitQty?: number; boxQty?: number; safetyStock?: number; reorderPoint?: number
     costPrice?: number; sellPrice?: number
     spec?: string; materialNo?: string
     priceA?: number; priceB?: number; priceC?: number; retailPrice?: number
@@ -30,7 +30,7 @@ export const productApi = {
     code?: string; name?: string; category?: string
     clientId?: string | null; clearClient?: boolean
     locationId?: string | null; clearLocation?: boolean
-    unit?: string; baseUnit?: UnitType; pUnitQty?: number; boxUnitQty?: number; plUnitQty?: number; boxQty?: number; safetyStock?: number; reorderPoint?: number
+    unit?: string; baseUnit?: UnitType; inUnitQty?: number; outUnitQty?: number; boxQty?: number; safetyStock?: number; reorderPoint?: number
     costPrice?: number; sellPrice?: number
     spec?: string; materialNo?: string
     priceA?: number; priceB?: number; priceC?: number; retailPrice?: number
@@ -38,6 +38,9 @@ export const productApi = {
   }) => put<Product>(`/products/${id}`, data),
 
   delete: (id: string) => del(`/products/${id}`),
+
+  findAllBarcodes: () =>
+    get<Array<{ id: string; productId: string; productCode: string; productName: string; barcode: string; type: BarcodeUnitType; unitQty: number; isPrimary: boolean; isActive: boolean }>>('/products/barcodes'),
 
   findBarcodes: (productId: string) =>
     get<Barcode[]>(`/products/${productId}/barcodes`),

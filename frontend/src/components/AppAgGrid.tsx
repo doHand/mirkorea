@@ -31,7 +31,7 @@ export function AppAgGrid<T extends { id: string }>({
         overlayLoadingTemplate={'<span class="ag-overlay-loading-center">불러오는 중…</span>'}
         overlayNoRowsTemplate={'<span class="ag-overlay-no-rows-center">표시할 데이터가 없습니다.</span>'}
         loading={loading}
-        animateRows={false}
+        animateRows
         onRowClicked={(event: RowClickedEvent<T>) => event.data && onRowClicked?.(event.data)}
         onRowDoubleClicked={(event) => event.data && onRowDoubleClicked?.(event.data)}
       />

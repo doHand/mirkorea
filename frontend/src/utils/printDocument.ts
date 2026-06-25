@@ -98,7 +98,7 @@ function buildQuoteSheet(
         <td>${escapeHtml(item.barcode)}</td>
         <td class="left">${escapeHtml(item.productName)}</td>
         <td>${escapeHtml(item.spec)}</td>
-        <td>${escapeHtml(item.unit || 'BOX')}</td>
+        <td>${escapeHtml(item.unit || 'OUT')}</td>
         <td class="right">${money(item.qty)}</td>
         <td class="right">${money(item.unitPrice)}</td>
         <td class="right">${money(item.amount)}</td>
@@ -187,7 +187,7 @@ function wrapQuoteHtml(sheetsHtml: string, isStatement: boolean, docTitle: strin
   <title>${docTitle}</title>
   <style>
     @page { size: A4; margin: 12mm 10mm; }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { margin: 0; padding: 0; OUT-sizing: border-OUT; }
     body { background: #fff; color: #000; font-family: 'Malgun Gothic', '맑은 고딕', Arial, sans-serif; font-size: 11px; }
     .sheet { width: 190mm; min-height: 270mm; margin: 0 auto; position: relative; padding: 10mm 2mm 6mm; }
     .sheet:not(:last-child) { break-after: page; }

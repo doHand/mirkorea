@@ -58,7 +58,7 @@ export default function ForgotPasswordPage() {
     }
   }
 
-  const inputCls = 'w-full px-3 py-2 border border-[#ede5d8] dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c9b99e] bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-sm'
+  const inputCls = 'w-full px-3 py-2 border border-[#ede5d8] dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-sm'
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f5efe6] via-[#faf7f2] to-[#ede5d8] flex items-center justify-center p-4">
@@ -74,7 +74,7 @@ export default function ForgotPasswordPage() {
             <div key={n} className="flex items-center gap-2 flex-1">
               <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors ${
                 step >= n
-                  ? 'bg-brand-600 text-white'
+                  ? 'bg-[var(--color-primary)] text-white'
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
               }`}>
                 {n}
@@ -118,7 +118,7 @@ export default function ForgotPasswordPage() {
             </div>
             <button
               type="submit"
-              className="w-full py-2.5 mt-1 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-700 transition-colors"
+              className="w-full py-2.5 mt-1 bg-[var(--color-primary)] text-white font-semibold rounded-lg hover:bg-[var(--color-primary-hover)] transition-colors"
             >
               다음
             </button>
@@ -170,7 +170,7 @@ export default function ForgotPasswordPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 py-2.5 bg-brand-600 text-white font-semibold rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors text-sm"
+                className="flex-1 py-2.5 bg-[var(--color-primary)] text-white font-semibold rounded-lg hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-colors text-sm"
               >
                 {loading ? '처리 중...' : '비밀번호 재설정'}
               </button>
@@ -179,7 +179,7 @@ export default function ForgotPasswordPage() {
         )}
 
         <p className="mt-5 text-center text-sm text-gray-500 dark:text-gray-400">
-          <Link href="/login" className="text-brand-600 hover:underline font-medium">
+          <Link href="/login" className="text-[var(--color-primary)] hover:underline font-medium">
             로그인으로 돌아가기
           </Link>
         </p>

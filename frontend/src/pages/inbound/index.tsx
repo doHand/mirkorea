@@ -1,7 +1,10 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/router'
+import { AgGridReact } from 'ag-grid-react'
+import { ClientSideRowModelModule, ModuleRegistry, type ColDef } from 'ag-grid-community'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { FileDown, Menu, Minus, Plus, RefreshCw, RotateCcw, Search, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useWarehouseStore } from '@/stores/warehouse.store'
 import { inboundApi } from '@/api/inbound.api'
@@ -14,9 +17,33 @@ import { cn } from '@/utils/cn'
 import * as ui from '@/styles/ui'
 import { formatNumber } from '@/utils/format'
 import { formatUnitSpec } from '@/utils/unit-spec'
-import type { InboundStatus, Product, Inventory } from '@/types/api.types'
+import type { InboundOrder, InboundOrderItem, InboundStatus, Product } from '@/types/api.types'
 import { StatusBadge } from '@/components/StatusBadge'
 import { StockSummaryBox } from '@/components/StockSummaryBox'
+import { ImportButton, type ImportConfig, type ImportRow } from '@/components/ImportButton'
+
+ModuleRegistry.registerModules([ClientSideRowModelModule])
+
+interface InboundLineRow {
+  id: string
+  rowNo: number
+  order: InboundOrder
+  item: InboundOrderItem
+  expectedDate: string
+  orderNo: string
+  supplier: string
+  productName: string
+  productCode: string
+  spec: string
+  expectedQty: number
+  receivedQty: number
+  passedQty: number
+  defectQty: number
+  unit: string
+  costPrice: number | null
+  materialNo: string
+  status: InboundStatus
+}
 
 const STATUS_LABEL: Record<InboundStatus, string> = {
   PENDING:    '입고 예정',
@@ -39,10 +66,26 @@ function fmtDate(s?: string | null) {
   return s.slice(0, 10)
 }
 
+function readText(row: Record<string, string | number>, keys: string[]) {
+  for (const key of keys) {
+    const value = row[key]
+    if (value != null && String(value).trim() !== '') return String(value).trim()
+  }
+  return ''
+}
+
+function readNumber(row: Record<string, string | number>, keys: string[]) {
+  const value = readText(row, keys)
+  const n = Number(String(value).replaceAll(',', ''))
+  return Number.isFinite(n) ? n : 0
+}
+
 export default function InboundPage() {
   const router    = useRouter()
   const warehouse = useWarehouseStore((s) => s.selectedWarehouse)
   const qc        = useQueryClient()
+  const gridRef   = useRef<AgGridReact<InboundLineRow>>(null)
+  const menuRef   = useRef<HTMLDivElement>(null)
 
   // 검색 / 필터 state
   const [searchInput,  setSearchInput]  = useState('')
@@ -53,10 +96,20 @@ export default function InboundPage() {
 
   // 모달 state
   const [createOpen,    setCreateOpen]    = useState(false)
-  const [selectedOrder, setSelectedOrder] = useState<import('@/types/api.types').InboundOrder | null>(null)
+  const [selectedOrder, setSelectedOrder] = useState<InboundOrder | null>(null)
   const [detailOrderId, setDetailOrderId] = useState<string | null>(null)
+  const [menuOpen,      setMenuOpen]      = useState(false)
+  const [selectedRowCount, setSelectedRowCount] = useState(0)
 
-  const { data: page, isLoading } = useQuery({
+  useEffect(() => {
+    const onMouseDown = (event: MouseEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) setMenuOpen(false)
+    }
+    document.addEventListener('mousedown', onMouseDown)
+    return () => document.removeEventListener('mousedown', onMouseDown)
+  }, [])
+
+  const { data: page, isLoading, isFetching } = useQuery({
     queryKey: QUERY_KEYS.inboundOrders({ warehouseId: warehouse?.id, status: statusFilter || undefined }),
     queryFn:  () => inboundApi.findAll({ warehouseId: warehouse!.id, status: statusFilter || undefined, limit: 50 }),
     enabled:  !!warehouse?.id,
@@ -105,9 +158,273 @@ export default function InboundPage() {
     () => filtered.flatMap((order) => order.items.map((item, index) => ({ order, item, index }))),
     [filtered]
   )
+
+  const gridRows = useMemo<InboundLineRow[]>(() => lines.map(({ order, item }, rowIndex) => ({
+    id: item.id || `${order.id}-${item.productId}-${rowIndex}`,
+    rowNo: rowIndex + 1,
+    order,
+    item,
+    expectedDate: fmtDate(order.expectedDate),
+    orderNo: order.orderNo,
+    supplier: order.supplier || '-',
+    productName: item.product?.name || '-',
+    productCode: item.product?.code || '',
+    spec: formatUnitSpec(item.product),
+    expectedQty: item.expectedQty,
+    receivedQty: item.receivedQty,
+    passedQty: item.passedQty,
+    defectQty: item.defectQty,
+    unit: item.product?.unit || item.inputUnit || '-',
+    costPrice: item.product?.costPrice ?? null,
+    materialNo: item.product?.materialNo || item.product?.code || '-',
+    status: order.status,
+  })), [lines])
+
+  const refresh = () => {
+    void qc.invalidateQueries({ queryKey: ['inbound'] })
+    void qc.invalidateQueries({ queryKey: QUERY_KEYS.inboundOrders({ warehouseId: warehouse?.id, status: statusFilter || undefined }) })
+    void qc.invalidateQueries({ queryKey: QUERY_KEYS.inboundOrders({ warehouseId: warehouse?.id }) })
+  }
+
+  const deleteMutation = useMutation({
+    mutationFn: inboundApi.delete,
+    onSuccess: (_data, deletedId) => {
+      if (detailOrderId === deletedId) setDetailOrderId(null)
+      setSelectedOrder((current) => current?.id === deletedId ? null : current)
+    },
+    onError: () => toast.error('삭제에 실패했습니다'),
+  })
+
+  const handleDeleteSelected = async () => {
+    const selectedRows = gridRef.current?.api.getSelectedRows() ?? []
+    const ordersToDelete = [...new Map(selectedRows.map((row) => [row.order.id, row.order])).values()]
+    if (!ordersToDelete.length) {
+      toast.error('삭제할 전표를 선택해주세요')
+      return
+    }
+
+    const hasCompleted = ordersToDelete.some((order) => order.status === 'COMPLETED')
+    const message = hasCompleted
+      ? `${ordersToDelete.length}개 입고 전표를 삭제하시겠습니까?\n완료 전표는 이미 증가된 재고가 자동으로 되돌려지지 않습니다.`
+      : `${ordersToDelete.length}개 입고 전표를 삭제하시겠습니까?`
+    if (!window.confirm(message)) return
+
+    try {
+      for (const order of ordersToDelete) {
+        await deleteMutation.mutateAsync(order.id)
+      }
+      toast.success(`${ordersToDelete.length}개 입고 전표를 삭제했습니다`)
+      refresh()
+      gridRef.current?.api.deselectAll()
+      setSelectedRowCount(0)
+    } catch {
+      refresh()
+    }
+  }
+
+  const columns = useMemo<ColDef<InboundLineRow>[]>(() => [
+    {
+      headerName: '',
+      width: 48,
+      minWidth: 48,
+      maxWidth: 48,
+      checkboxSelection: true,
+      headerCheckboxSelection: true,
+      pinned: 'left',
+      sortable: false,
+      filter: false,
+      resizable: false,
+    },
+    { headerName: 'No', field: 'rowNo', width: 68, pinned: 'left', type: 'numericColumn' },
+    { headerName: '입고예정일', field: 'expectedDate', width: 118 },
+    { headerName: '전표번호', field: 'orderNo', width: 148, pinned: 'left', cellClass: 'wms-code font-mono font-semibold' },
+    { headerName: '공급업체', field: 'supplier', width: 150 },
+    { headerName: '상품명', field: 'productName', minWidth: 190, flex: 1, tooltipField: 'productName' },
+    { headerName: '상품코드', field: 'productCode', width: 126, cellClass: 'font-mono text-xs text-gray-500' },
+    { headerName: '규격', field: 'spec', width: 128 },
+    {
+      headerName: '예정수량',
+      field: 'expectedQty',
+      width: 104,
+      type: 'numericColumn',
+      valueFormatter: (params) => formatNumber(Number(params.value ?? 0)),
+    },
+    {
+      headerName: '입고수량',
+      field: 'receivedQty',
+      width: 104,
+      type: 'numericColumn',
+      valueFormatter: (params) => formatNumber(Number(params.value ?? 0)),
+    },
+    {
+      headerName: '합격',
+      field: 'passedQty',
+      width: 88,
+      type: 'numericColumn',
+      valueFormatter: (params) => formatNumber(Number(params.value ?? 0)),
+    },
+    {
+      headerName: '불량',
+      field: 'defectQty',
+      width: 88,
+      type: 'numericColumn',
+      cellClass: (params) => Number(params.value ?? 0) > 0 ? 'font-semibold text-red-500' : 'text-gray-400',
+      valueFormatter: (params) => Number(params.value ?? 0) > 0 ? formatNumber(Number(params.value)) : '-',
+    },
+    { headerName: '단위', field: 'unit', width: 74, cellClass: 'text-center' },
+    {
+      headerName: '원가',
+      field: 'costPrice',
+      width: 96,
+      type: 'numericColumn',
+      valueFormatter: (params) => params.value == null ? '-' : formatNumber(Number(params.value)),
+    },
+    { headerName: '자재번호', field: 'materialNo', width: 126, cellClass: 'font-mono text-xs' },
+    {
+      headerName: '상태',
+      field: 'status',
+      width: 104,
+      cellRenderer: (params: { data?: InboundLineRow }) => params.data
+        ? <StatusBadge label={STATUS_LABEL[params.data.status]} variant={STATUS_BADGE_VARIANT[params.data.status]} />
+        : null,
+      cellClass: 'flex items-center justify-center',
+    },
+  ], [])
+
   const activeOrder = selectedOrder && filtered.some((o) => o.id === selectedOrder.id)
     ? selectedOrder
     : filtered[0] ?? null
+
+  const handleExcelDownload = async () => {
+    if (!gridRows.length) {
+      toast.error('내보낼 데이터가 없습니다')
+      return
+    }
+    try {
+      const rows = gridRows.map((row) => ({
+        입고예정일: row.expectedDate,
+        전표번호: row.orderNo,
+        공급업체: row.supplier,
+        상품코드: row.productCode,
+        상품명: row.productName,
+        규격: row.spec,
+        예정수량: row.expectedQty,
+        입고수량: row.receivedQty,
+        합격: row.passedQty,
+        불량: row.defectQty,
+        단위: row.unit,
+        원가: row.costPrice ?? '',
+        자재번호: row.materialNo,
+        상태: STATUS_LABEL[row.status],
+      }))
+      const XLSX = await import('xlsx')
+      const ws = XLSX.utils.json_to_sheet(rows)
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, ws, '입고내역')
+      XLSX.writeFile(wb, `입고내역_${new Date().toISOString().slice(0, 10)}.xlsx`)
+    } catch {
+      toast.error('엑셀 다운로드에 실패했습니다')
+    }
+  }
+
+  const inboundImportConfig = useMemo<ImportConfig>(() => ({
+    templateFilename: '입고예정_가져오기_양식.xlsx',
+    sheetName: '입고예정',
+    templateRows: [
+      {
+        공급업체: '샘플공급사',
+        입고예정일: new Date().toISOString().slice(0, 10),
+        상품코드: 'P0001',
+        예정수량: 10,
+        로트번호: '',
+        유통기한: '',
+        메모: '',
+      },
+    ],
+    parse: (raw) => raw.map((row, index): ImportRow => {
+      const productCode = readText(row, ['상품코드', 'productCode', 'code'])
+      const expectedQty = readNumber(row, ['예정수량', '수량', 'expectedQty', 'qty'])
+      return {
+        supplier: readText(row, ['공급업체', '거래처', 'supplier']),
+        expectedDate: readText(row, ['입고예정일', '예정일', 'expectedDate']),
+        productCode,
+        expectedQty,
+        lotNumber: readText(row, ['로트번호', 'LOT', 'lotNumber']),
+        expireDate: readText(row, ['유통기한', '만료일', 'expireDate']),
+        memo: readText(row, ['메모', 'memo']),
+        _error: !productCode
+          ? '상품코드 누락'
+          : expectedQty <= 0
+            ? '예정수량 오류'
+            : undefined,
+        rowNo: index + 1,
+      }
+    }),
+    previewColumns: [
+      { key: 'supplier', label: '공급업체' },
+      { key: 'expectedDate', label: '입고예정일', mono: true },
+      { key: 'productCode', label: '상품코드', mono: true },
+      { key: 'expectedQty', label: '예정수량', align: 'right', format: (value) => formatNumber(Number(value ?? 0)) },
+      { key: 'lotNumber', label: '로트번호', mono: true },
+      { key: 'expireDate', label: '유통기한', mono: true },
+      { key: 'memo', label: '메모' },
+    ],
+    save: async (validRows, setProgress) => {
+      if (!warehouse?.id) return { ok: 0, fail: validRows.length }
+      let ok = 0
+      let fail = 0
+      const groups = new Map<string, CreateInboundOrderRequest>()
+
+      for (let i = 0; i < validRows.length; i += 1) {
+        const row = validRows[i]
+        const productCode = String(row.productCode ?? '').trim()
+        try {
+          const productPage = await productApi.findAll({ search: productCode, limit: 20 })
+          const product = productPage.items.find((item) => item.code === productCode) ?? productPage.items[0]
+          if (!product) {
+            fail += 1
+            continue
+          }
+
+          const supplier = String(row.supplier ?? '').trim()
+          const expectedDate = String(row.expectedDate ?? '').trim()
+          const memo = String(row.memo ?? '').trim()
+          const key = `${supplier}|${expectedDate}|${memo}`
+          const request = groups.get(key) ?? {
+            warehouseId: warehouse.id,
+            supplier: supplier || undefined,
+            expectedDate: expectedDate || undefined,
+            memo: memo || undefined,
+            items: [],
+          }
+          request.items.push({
+            productId: product.id,
+            expectedQty: Number(row.expectedQty ?? 0),
+            lotNumber: String(row.lotNumber ?? '').trim() || undefined,
+            expireDate: String(row.expireDate ?? '').trim() || undefined,
+          })
+          groups.set(key, request)
+        } catch {
+          fail += 1
+        } finally {
+          setProgress(Math.round(((i + 1) / validRows.length) * 50))
+        }
+      }
+
+      const requests = [...groups.values()].filter((request) => request.items.length > 0)
+      for (let i = 0; i < requests.length; i += 1) {
+        try {
+          await inboundApi.create(requests[i])
+          ok += requests[i].items.length
+        } catch {
+          fail += requests[i].items.length
+        } finally {
+          setProgress(50 + Math.round(((i + 1) / Math.max(1, requests.length)) * 50))
+        }
+      }
+      return { ok, fail }
+    },
+  }), [warehouse?.id])
 
   const handleResetFilters = () => {
     setSearchInput('')
@@ -126,7 +443,7 @@ export default function InboundPage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-150px)] min-h-0 flex-col gap-4 overflow-hidden">
+    <div className="flex h-[calc(100vh-128px)] min-h-0 flex-col gap-2 overflow-hidden">
 
       {/* ── 페이지 헤더 ── */}
       <div className="flex flex-col gap-3">
@@ -137,22 +454,6 @@ export default function InboundPage() {
             <p className="mt-0.5 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
               발주서 작성·출력 → 입고 예정 등록 → 수령 · 검수 · 재고 증가
             </p>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => router.push('/quotes?tab=PURCHASE')}
-              title="발주서 작성·출력"
-              className={cn(ui.btnSecondary, 'px-4 py-2 text-sm whitespace-nowrap')}
-            >
-              발주서 작성·출력
-            </button>
-            <button
-              onClick={() => setCreateOpen(true)}
-              title="직접 입고 예정 등록"
-              className="wms-primary-button px-4 py-2 text-sm font-medium rounded transition-colors whitespace-nowrap"
-            >
-              직접 입고 예정 등록
-            </button>
           </div>
         </div>
 
@@ -179,9 +480,11 @@ export default function InboundPage() {
         </div>
       </div>
 
+      <div className="flex min-h-0 flex-1 gap-3 overflow-hidden">
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
       {/* ── 전표 정보 패널 ── */}
       <section className="wms-panel overflow-hidden border dark:border-gray-800 dark:bg-gray-900">
-        <div className="wms-panel-header flex items-center justify-between border-b px-4 py-2 dark:border-gray-800 dark:bg-gray-900">
+        <div className="wms-panel-header flex items-center justify-between border-b px-3 py-1.5 dark:border-gray-800 dark:bg-gray-900">
           <div className="flex items-center gap-2">
             <span className="wms-modal-mark grid h-8 w-8 place-items-center rounded-lg">전표</span>
             <p className="font-bold text-gray-900 dark:text-white">매입(입고) 전표정보</p>
@@ -190,7 +493,7 @@ export default function InboundPage() {
             {new Date().toLocaleDateString('ko-KR')}
           </span>
         </div>
-        <div className="grid gap-x-5 gap-y-2 p-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-x-4 gap-y-1.5 p-3 md:grid-cols-2 xl:grid-cols-4">
           <InboundInfo label="공급업체"    value={activeOrder?.supplier || '전표를 선택하세요'} />
           <InboundInfo label="입고전표번호" value={activeOrder?.orderNo || '-'} mono />
           <InboundInfo label="입고예정일"  value={fmtDate(activeOrder?.expectedDate)} />
@@ -198,7 +501,7 @@ export default function InboundPage() {
           <InboundInfo label="품목 수"     value={activeOrder ? `${formatNumber(activeOrder.items.length)}종` : '-'} />
           <InboundInfo label="등록일"      value={fmtDate(activeOrder?.createdAt)} />
           <InboundInfo label="메모"        value={activeOrder?.memo || '-'} />
-          <InboundInfo label="열기"        value="행을 더블클릭하면 새 창에서 상세를 엽니다." />
+          <InboundInfo label="열기"        value="행을 클릭하면 오른쪽에 상세를 엽니다." />
         </div>
       </section>
 
@@ -242,154 +545,198 @@ export default function InboundPage() {
         })}
       </div>
 
-      {/* ── 필터 카드 ── */}
-      <div className={cn(ui.filterCard, 'flex-wrap gap-3')}>
-        {/* 날짜 범위 */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <label className="text-xs text-gray-500 whitespace-nowrap">입고예정일</label>
-          <input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            className={cn(ui.formInput, 'w-36 py-1.5')}
-          />
-          <span className="text-xs text-gray-400">~</span>
-          <input
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            className={cn(ui.formInput, 'w-36 py-1.5')}
+      {/* ── 목록 그리드 / 상세 패널 ── */}
+      <div className={cn(
+        'app-surface flex min-h-0 flex-col overflow-hidden border border-gray-300 bg-white dark:border-gray-800 dark:bg-gray-900',
+        detailOrderId ? 'flex-1' : 'w-full flex-1',
+      )}>
+        <div className="wms-grid-toolbar flex flex-wrap items-center justify-between gap-2 border-b px-2 py-1.5">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(event) => setDateFrom(event.target.value)}
+              className="h-7 rounded border border-gray-200 px-2 text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+            />
+            <span className="text-xs text-gray-400">~</span>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(event) => setDateTo(event.target.value)}
+              className="h-7 rounded border border-gray-200 px-2 text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+            />
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value as InboundStatus | '')}
+              className="h-7 rounded border border-gray-200 px-2 text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+            >
+              <option value="">전체 상태</option>
+              {Object.entries(STATUS_LABEL).map(([key, value]) => (
+                <option key={key} value={key}>{value}</option>
+              ))}
+            </select>
+            <input
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
+              onKeyDown={(event) => { if (event.key === 'Enter') setSearch(searchInput) }}
+              placeholder="전표번호/공급업체"
+              className="h-7 w-40 rounded border border-gray-200 px-2 text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+            />
+            <button
+              type="button"
+              onClick={() => setSearch(searchInput)}
+              className="wms-toolbar-action inline-flex h-7 items-center gap-1 rounded px-2.5 text-xs font-semibold transition-colors"
+            >
+              <Search size={13} />
+              검색
+            </button>
+            <button
+              type="button"
+              onClick={handleResetFilters}
+              className="wms-toolbar-action inline-flex h-7 items-center gap-1 rounded px-2.5 text-xs font-semibold transition-colors"
+            >
+              <RotateCcw size={13} />
+              초기화
+            </button>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setCreateOpen(true)}
+              title="직접 입고 예정 등록"
+              className="wms-toolbar-action inline-flex h-7 w-7 items-center justify-center rounded transition-colors"
+            >
+              <Plus size={15} strokeWidth={2.5} />
+            </button>
+            <button
+              type="button"
+              onClick={() => { void handleDeleteSelected() }}
+              disabled={selectedRowCount === 0 || deleteMutation.isPending}
+              title="선택 전표 삭제"
+              className="wms-toolbar-action inline-flex h-7 w-7 items-center justify-center rounded transition-colors disabled:opacity-40"
+            >
+              <Minus size={16} strokeWidth={2.5} />
+            </button>
+            <button
+              type="button"
+              title="새로고침"
+              onClick={refresh}
+              className="wms-toolbar-action inline-flex h-7 w-7 items-center justify-center rounded transition-colors"
+            >
+              <RefreshCw size={14} className={isFetching ? 'animate-spin' : ''} />
+            </button>
+            <div ref={menuRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setMenuOpen((open) => !open)}
+                title="추가 작업"
+                aria-label="추가 작업"
+                aria-expanded={menuOpen}
+                className="wms-toolbar-action inline-flex h-7 w-7 items-center justify-center rounded transition-colors"
+              >
+                <Menu size={16} strokeWidth={2.2} />
+              </button>
+              {menuOpen && (
+                <div className="product-grid-overflow absolute right-0 top-8 z-50 flex min-w-[156px] flex-col gap-1 rounded border border-gray-200 bg-white p-1.5 shadow-lg dark:border-gray-700 dark:bg-gray-900">
+                  <button
+                    type="button"
+                    onClick={() => { setMenuOpen(false); void handleExcelDownload() }}
+                    className="wms-toolbar-action inline-flex h-8 items-center gap-2 rounded px-2 text-xs font-semibold transition-colors"
+                  >
+                    <FileDown size={13} />
+                    엑셀 내보내기
+                  </button>
+                  <ImportButton
+                    config={inboundImportConfig}
+                    label="엑셀 가져오기"
+                    className="wms-toolbar-action inline-flex h-8 items-center gap-2 rounded px-2 text-xs font-semibold transition-colors"
+                    labelClassName="whitespace-nowrap"
+                    onImported={() => {
+                      setMenuOpen(false)
+                      refresh()
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => { setMenuOpen(false); router.push('/quotes?tab=PURCHASE') }}
+                    className="wms-toolbar-action inline-flex h-8 items-center gap-2 rounded px-2 text-xs font-semibold transition-colors"
+                  >
+                    발주서 작성·출력
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="ag-theme-quartz ag-theme-wms wms-ag-grid min-h-0 w-full flex-1">
+          <AgGridReact<InboundLineRow>
+            ref={gridRef}
+            rowData={gridRows}
+            columnDefs={columns}
+            defaultColDef={{
+              sortable: true,
+              resizable: true,
+              filter: true,
+              suppressHeaderMenuButton: true,
+              minWidth: 70,
+            }}
+            rowSelection="multiple"
+            suppressRowClickSelection
+            headerHeight={34}
+            rowHeight={34}
+            animateRows
+            loading={isLoading}
+            overlayLoadingTemplate="<span class='ag-overlay-loading-center'>불러오는 중...</span>"
+            overlayNoRowsTemplate="<span class='ag-overlay-no-rows-center'>조회된 입고 품목이 없습니다.</span>"
+            getRowId={(params) => params.data.id}
+            onSelectionChanged={() => setSelectedRowCount(gridRef.current?.api.getSelectedRows().length ?? 0)}
+            onRowClicked={(params) => {
+              if (!params.data) return
+              setSelectedOrder(params.data.order)
+              setDetailOrderId(params.data.order.id)
+            }}
+            onRowDoubleClicked={(params) => {
+              if (!params.data) return
+              setSelectedOrder(params.data.order)
+              setDetailOrderId(params.data.order.id)
+            }}
+            rowClassRules={{
+              'bg-indigo-50/60 dark:bg-indigo-950/20': (params) => params.data?.order.id === activeOrder?.id,
+            }}
           />
         </div>
 
-        {/* 공급업체 검색 */}
-        <div className="flex flex-1 min-w-44 gap-1.5">
-          <input
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') setSearch(searchInput) }}
-            placeholder="주문번호 또는 공급업체 검색"
-            className={cn(ui.formInput, 'flex-1 py-1.5')}
-          />
-        </div>
-
-        {/* 상태 select */}
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as InboundStatus | '')}
-          className={cn(ui.selectCls, 'py-1.5')}
-        >
-          <option value="">전체 상태</option>
-          {Object.entries(STATUS_LABEL).map(([k, v]) => (
-            <option key={k} value={k}>{v}</option>
-          ))}
-        </select>
-
-        {/* 검색 / 초기화 버튼 */}
-        <div className="flex gap-1.5">
-          <button
-            onClick={() => setSearch(searchInput)}
-            className="wms-primary-button px-4 py-1.5 text-sm font-medium rounded transition-colors whitespace-nowrap"
-          >
-            검색
-          </button>
-          <button
-            onClick={handleResetFilters}
-            className={cn(ui.btnSecondary, 'py-1.5 whitespace-nowrap')}
-          >
-            초기화
-          </button>
+        <div className="flex shrink-0 items-center justify-between border-t border-gray-200 px-4 py-2 text-xs text-gray-400 dark:border-gray-800">
+          <span>품목 {formatNumber(gridRows.length)}건 · 전표 {formatNumber(new Set(gridRows.map((row) => row.order.id)).size)}건</span>
+          {activeOrder && <span>선택: <b className="text-indigo-600 dark:text-indigo-400">{activeOrder.orderNo}</b></span>}
         </div>
       </div>
+      </div>
 
-      {/* ── 목록 그리드 ── */}
-      <div className="flex min-h-0 flex-1 flex-col bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 overflow-hidden">
-        <div className="min-h-0 flex-1 overflow-auto">
-          <table className="w-full min-w-[1200px] table-fixed text-sm">
-            <thead>
-              <tr className={ui.thead}>
-                <th className={cn(ui.th, 'w-12')}>No</th>
-                <th className={cn(ui.th, 'w-24')}>입고예정일</th>
-                <th className={cn(ui.th, 'w-32')}>전표번호</th>
-                <th className={cn(ui.th, 'w-32')}>공급업체</th>
-                <th className={cn(ui.th, 'w-44')}>품명</th>
-                <th className={cn(ui.th, 'w-28')}>규격</th>
-                <th className={cn(ui.th, 'w-20')}>예정수량</th>
-                <th className={cn(ui.th, 'w-20')}>입고수량</th>
-                <th className={cn(ui.th, 'w-14')}>단위</th>
-                <th className={cn(ui.th, 'w-20')}>단가</th>
-                <th className={cn(ui.th, 'w-28')}>자재번호</th>
-                <th className={cn(ui.th, 'w-20')}>상태</th>
-                <th className={cn(ui.th, 'w-24')}>작업</th>
-              </tr>
-            </thead>
-            <tbody className={ui.tbody}>
-              {isLoading && (
-                <tr>
-                  <td colSpan={13} className="text-center py-10 text-gray-400">로딩 중...</td>
-                </tr>
-              )}
-              {!isLoading && lines.length === 0 && (
-                <tr>
-                  <td colSpan={13} className="text-center py-10 text-gray-400">입고 품목이 없습니다</td>
-                </tr>
-              )}
-              {lines.map(({ order, item }, rowIndex) => (
-                <tr
-                  key={item.id}
-                  onClick={() => setSelectedOrder(order)}
-                  onDoubleClick={() => setDetailOrderId(order.id)}
-                  title="더블클릭하면 상세 보기"
-                  className={cn(
-                    'group cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors',
-                    activeOrder?.id === order.id && 'bg-indigo-50/60 dark:bg-indigo-950/20',
-                  )}
-                >
-                  <td className="px-4 py-3 text-center text-gray-400">{rowIndex + 1}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-gray-500">{fmtDate(order.expectedDate)}</td>
-                  <td className="truncate px-4 py-3 font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400">{order.orderNo}</td>
-                  <td className="truncate px-4 py-3 text-gray-700 dark:text-gray-300">{order.supplier || '-'}</td>
-                  <td className="truncate px-4 py-3 font-medium text-gray-800 dark:text-gray-100">{item.product?.name || '-'}</td>
-                  <td className="truncate px-4 py-3 text-gray-500">{formatUnitSpec(item.product)}</td>
-                  <td className="px-4 py-3 text-right font-semibold tabular-nums">{formatNumber(item.expectedQty)}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{formatNumber(item.receivedQty)}</td>
-                  <td className="px-4 py-3 text-center">{item.product?.unit || '-'}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">
-                    {item.product?.costPrice ? formatNumber(item.product.costPrice) : '-'}
-                  </td>
-                  <td className="truncate px-4 py-3 font-mono text-xs">
-                    {item.product?.materialNo || item.product?.code || '-'}
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <StatusBadge
-                      label={STATUS_LABEL[order.status]}
-                      variant={STATUS_BADGE_VARIANT[order.status]}
-                    />
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setDetailOrderId(order.id) }}
-                      className="px-2 py-0.5 text-xs rounded border border-gray-200 dark:border-gray-700 text-gray-500 hover:text-indigo-600 hover:border-indigo-300 dark:hover:text-indigo-400 transition-colors"
-                      title="더블클릭으로도 열 수 있습니다"
-                    >
-                      상세보기
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {detailOrderId && (
+        <div className="wms-detail-panel-enter flex min-h-0 w-[520px] shrink-0 flex-col overflow-hidden border border-gray-300 bg-white dark:border-gray-800 dark:bg-gray-900">
+          <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-900">
+            <div className="min-w-0">
+              <b className="block truncate text-sm">입고 상세</b>
+              <span className="block truncate font-mono text-xs text-gray-500">{activeOrder?.orderNo ?? detailOrderId}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setDetailOrderId(null)}
+              className="wms-toolbar-action ml-2 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded transition-colors"
+              title="닫기"
+            >
+              <X size={14} />
+            </button>
+          </div>
+          <iframe
+            src={`/inbound/${detailOrderId}?embed=1`}
+            title="입고 상세"
+            className="min-h-0 flex-1 border-0"
+          />
         </div>
-
-        {/* 하단 요약 바 */}
-        <div className="flex items-center justify-between border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/60 px-4 py-1.5 text-xs text-gray-500 shrink-0">
-          <span>총 <b className="text-gray-700 dark:text-gray-200">{formatNumber(lines.length)}</b>건</span>
-          {activeOrder && (
-            <span>
-              선택: <b className="text-indigo-600 dark:text-indigo-400">{activeOrder.orderNo}</b>
-            </span>
-          )}
-        </div>
+      )}
       </div>
 
       {/* ── 입고 예정 등록 모달 ── */}
@@ -406,34 +753,6 @@ export default function InboundPage() {
         />
       )}
 
-      {/* ── 상세 iframe 모달 ── */}
-      {detailOrderId && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-5"
-          onClick={() => setDetailOrderId(null)}
-        >
-          <div
-            className="flex h-[88vh] w-full max-w-6xl flex-col overflow-hidden rounded border bg-white shadow-2xl dark:bg-gray-900"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b px-4 py-2">
-              <b className="text-sm">입고 상세</b>
-              <button
-                onClick={() => setDetailOrderId(null)}
-                className="rounded p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800"
-                title="닫기"
-              >
-                닫기
-              </button>
-            </div>
-            <iframe
-              src={`/inbound/${detailOrderId}?embed=1`}
-              title="입고 상세"
-              className="h-full w-full border-0"
-            />
-          </div>
-        </div>
-      )}
     </div>
   )
 }
@@ -444,7 +763,7 @@ function InboundInfo({ label, value, mono = false }: { label: string; value: str
     <div>
       <p className="text-xs font-medium text-gray-500">{label}</p>
       <p className={cn(
-        'mt-1 min-h-5 border-b border-gray-200 pb-1 text-sm font-semibold text-gray-900 dark:border-gray-700 dark:text-white',
+        'mt-0.5 min-h-4 border-b border-gray-200 pb-0.5 text-sm font-semibold text-gray-900 dark:border-gray-700 dark:text-white',
         mono && 'font-mono text-xs',
       )}>
         {value}
@@ -674,7 +993,7 @@ function CreateModal({
                         </button>
                       </div>
 
-                      {/* 재고 요약 박스 */}
+                      {/* 재고 요약 영역 */}
                       <StockSummaryBox
                         currentStock={currentStock}
                         changeAmount={item.expectedQty}

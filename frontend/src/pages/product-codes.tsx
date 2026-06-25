@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { productApi } from '@/api/product.api'
 import { cn } from '@/utils/cn'
+import * as ui from '@/styles/ui'
 import type { Product, SaleStatus } from '@/types/api.types'
 
 const STATUS_LABEL: Record<SaleStatus, string> = { ACTIVE: '판매중', INACTIVE: '비활성', DISCONTINUED: '단종' }
@@ -62,7 +63,7 @@ export default function ProductCodesPage() {
         <div className="overflow-x-auto">
         <table className="w-full min-w-[480px] text-sm">
           <thead>
-            <tr className="bg-[#2D4033] text-white">
+            <tr className={ui.thead}>
               <th className="text-center px-5 py-3 font-semibold w-44">상품코드</th>
               <th className="text-center px-4 py-3 font-semibold">상품명</th>
               <th className="text-center px-4 py-3 font-semibold w-32">카테고리</th>

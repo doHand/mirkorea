@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
 public class ProductService {
 
     private static final Pattern PACKAGE_SPEC_PATTERN = Pattern.compile(
-        "^\\s*(\\d+)\\s*P\\s*/\\s*(\\d+)\\s*BOX\\s*/\\s*(\\d+)\\s*PL\\s*$",
+        "^\\s*(\\d+)\\s*IN\\s*/\\s*(\\d+)\\s*OUT\\s*$",
         Pattern.CASE_INSENSITIVE
     );
 
@@ -57,13 +57,12 @@ public class ProductService {
             .locationId(req.locationId)
             .unit(req.unit != null ? req.unit : "EA")
             .baseUnit(req.baseUnit != null ? req.baseUnit : UnitType.EA)
-            .pUnitQty(normalizeConversion(packageSpec.pUnitQty() != null ? packageSpec.pUnitQty() : req.pUnitQty))
-            .boxUnitQty(normalizeConversion(packageSpec.boxUnitQty() != null ? packageSpec.boxUnitQty() : (req.boxUnitQty != null ? req.boxUnitQty : req.boxQty)))
-            .plUnitQty(normalizeConversion(packageSpec.plUnitQty() != null ? packageSpec.plUnitQty() : req.plUnitQty))
+            .inUnitQty(normalizeConversion(packageSpec.inUnitQty() != null ? packageSpec.inUnitQty() : req.inUnitQty))
+            .outUnitQty(normalizeConversion(packageSpec.outUnitQty() != null ? packageSpec.outUnitQty() : (req.outUnitQty != null ? req.outUnitQty : req.boxQty)))
             .optionName(req.optionName)
             .spec(req.spec)
             .materialNo(req.materialNo)
-            .boxQty(req.boxQty > 0 ? req.boxQty : 1)
+            .outQty(req.boxQty > 0 ? req.boxQty : 1)
             .weightG(req.weightG)
             .imageUrl(req.imageUrl)
             .safetyStock(req.safetyStock)
@@ -100,16 +99,14 @@ public class ProductService {
         else if (req.locationId != null) product.setLocationId(req.locationId);
         if (req.unit        != null) product.setUnit(req.unit);
         if (req.baseUnit    != null) product.setBaseUnit(req.baseUnit);
-        if (req.pUnitQty    != null) product.setPUnitQty(normalizeConversion(req.pUnitQty));
-        if (req.boxUnitQty  != null) product.setBoxUnitQty(normalizeConversion(req.boxUnitQty));
-        if (req.plUnitQty   != null) product.setPlUnitQty(normalizeConversion(req.plUnitQty));
+        if (req.inUnitQty    != null) product.setInUnitQty(normalizeConversion(req.inUnitQty));
+        if (req.outUnitQty  != null) product.setOutUnitQty(normalizeConversion(req.outUnitQty));
         if (req.optionName  != null) product.setOptionName(req.optionName);
         if (req.spec        != null) {
             product.setSpec(req.spec);
             PackageSpec packageSpec = parsePackageSpec(req.spec);
-            if (packageSpec.pUnitQty() != null) product.setPUnitQty(packageSpec.pUnitQty());
-            if (packageSpec.boxUnitQty() != null) product.setBoxUnitQty(packageSpec.boxUnitQty());
-            if (packageSpec.plUnitQty() != null) product.setPlUnitQty(packageSpec.plUnitQty());
+            if (packageSpec.inUnitQty() != null) product.setInUnitQty(packageSpec.inUnitQty());
+            if (packageSpec.outUnitQty() != null) product.setOutUnitQty(packageSpec.outUnitQty());
         }
         if (req.materialNo  != null) product.setMaterialNo(req.materialNo);
         if (req.boxQty      > 0)    product.setBoxQty(req.boxQty);
@@ -134,17 +131,16 @@ public class ProductService {
     }
 
     private PackageSpec parsePackageSpec(String spec) {
-        if (spec == null || spec.isBlank()) return new PackageSpec(null, null, null);
+        if (spec == null || spec.isBlank()) return new PackageSpec(null, null);
         Matcher matcher = PACKAGE_SPEC_PATTERN.matcher(spec);
-        if (!matcher.matches()) return new PackageSpec(null, null, null);
+        if (!matcher.matches()) return new PackageSpec(null, null);
         return new PackageSpec(
             Integer.parseInt(matcher.group(1)),
-            Integer.parseInt(matcher.group(2)),
-            Integer.parseInt(matcher.group(3))
+            Integer.parseInt(matcher.group(2))
         );
     }
 
-    private record PackageSpec(Integer pUnitQty, Integer boxUnitQty, Integer plUnitQty) {}
+    private record PackageSpec(Integer inUnitQty, Integer outUnitQty) {}
 
     @Transactional
     public void delete(UUID id) {
@@ -162,6 +158,27 @@ public class ProductService {
 
     public List<Barcode> findBarcodes(UUID productId) {
         return barcodeRepo.findByProductIdOrderByIsPrimaryDesc(productId);
+    }
+
+    public record BarcodeWithProduct(
+        String id, String productId, String productCode, String productName,
+        String barcode, BarcodeUnitType type, int unitQty, boolean isPrimary, boolean isActive
+    ) {}
+
+    public List<BarcodeWithProduct> findAllBarcodes() {
+        return barcodeRepo.findAllWithProductOrderByCode().stream()
+            .map(b -> new BarcodeWithProduct(
+                b.getId().toString(),
+                b.getProductId().toString(),
+                b.getProductCode(),
+                b.getProduct().getName(),
+                b.getBarcode(),
+                b.getType(),
+                b.getUnitQty(),
+                b.isPrimary(),
+                b.isActive()
+            ))
+            .toList();
     }
 
     @Transactional
@@ -222,13 +239,13 @@ public class ProductService {
         if (isSingleUnitBarcode(barcode.getType())) {
             return 1;
         }
-        if (barcode.getType() == BarcodeUnitType.CXD_BOX) {
-            int inboxUnitQty = barcodeRepo.findByProductIdOrderByIsPrimaryDesc(barcode.getProductId()).stream()
+        if (barcode.getType() == BarcodeUnitType.CXD_OUT) {
+            int inoutUnitQty = barcodeRepo.findByProductIdOrderByIsPrimaryDesc(barcode.getProductId()).stream()
                 .filter(item -> item.getType() == BarcodeUnitType.CXD && item.isActive())
                 .mapToInt(Barcode::getUnitQty)
                 .findFirst()
                 .orElse(1);
-            return Math.max(1, inboxUnitQty) * Math.max(1, barcode.getUnitQty());
+            return Math.max(1, inoutUnitQty) * Math.max(1, barcode.getUnitQty());
         }
         return Math.max(1, barcode.getUnitQty());
     }

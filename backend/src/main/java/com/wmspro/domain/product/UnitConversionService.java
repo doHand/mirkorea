@@ -31,9 +31,8 @@ public class UnitConversionService {
     public int factor(Product product, UnitType unit) {
         return switch (unit) {
             case EA -> 1;
-            case P -> positive(product.getPUnitQty());
-            case BOX -> positive(product.getBoxUnitQty());
-            case PL -> positive(product.getPlUnitQty());
+            case IN -> positive(product.getInUnitQty());
+            case OUT -> positive(product.getOutUnitQty());
         };
     }
 
