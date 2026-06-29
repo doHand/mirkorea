@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useEscapeKey } from '@/hooks/useEscapeKey'
 import type { Client } from '@/types/api.types'
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export function ClientPickerModal({ clients, onSelect, onClose, allowClear }: Props) {
+  useEscapeKey(onClose)
   const [search, setSearch] = useState('')
   const q = search.toLowerCase()
   const filtered = q

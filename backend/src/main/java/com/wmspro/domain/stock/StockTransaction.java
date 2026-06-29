@@ -102,4 +102,12 @@ public class StockTransaction {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", insertable = false, updatable = false)
     private User createdByUser;
+
+    public String getCreatedByName() {
+        if (createdByUser == null) return null;
+        if (createdByUser.getFullName() != null && !createdByUser.getFullName().isBlank()) {
+            return createdByUser.getFullName();
+        }
+        return createdByUser.getUsername();
+    }
 }

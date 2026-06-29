@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { inventoryAuditApi } from '@/api/inventory-audit.api'
+import { useEscapeKey } from '@/hooks/useEscapeKey'
 import { useWarehouseStore } from '@/stores/warehouse.store'
 import { formatNumber } from '@/utils/format'
 import { cn } from '@/utils/cn'
@@ -19,6 +20,8 @@ export default function InventoryAuditPage() {
   const [detailId,   setDetailId]       = useState<string | null>(null)
   const [createDate, setCreateDate]     = useState(today())
   const [createMemo, setCreateMemo]     = useState('')
+  useEscapeKey(() => setShowCreate(false), showCreate)
+  useEscapeKey(() => setDetailId(null), !!detailId)
 
   const { data: audits = [], isLoading } = useQuery({
     queryKey: ['inventory-audits', warehouse?.id],
@@ -204,6 +207,7 @@ function AuditDetailPanel({ auditId, onClose, onConfirmed }: {
   const [counts, setCounts] = useState<Record<string, string>>({})
   const [filter, setFilter] = useState<'all' | 'diff' | 'empty'>('all')
   const [saving, setSaving] = useState(false)
+  useEscapeKey(onClose, !saving)
 
   const { data: audit, isLoading } = useQuery({
     queryKey: ['inventory-audit', auditId],

@@ -1,14 +1,16 @@
 'use client'
 
 import { useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
+import { useRouter } from 'next/router'
 import { AgGridReact } from 'ag-grid-react'
 import { ClientSideRowModelModule, ModuleRegistry, type ColDef } from 'ag-grid-community'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { FileDown, Plus, Printer, RefreshCw, RotateCcw, Search, X } from 'lucide-react'
+import { ClipboardList, FileDown, Plus, Printer, RefreshCw, RotateCcw, Search, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { outboundOrderApi } from '@/api/outbound-order.api'
 import { clientApi } from '@/api/client.api'
 import { QUERY_KEYS } from '@/constants/query-keys'
+import { useEscapeKey } from '@/hooks/useEscapeKey'
 import { useSupplierInfoStore } from '@/stores/supplier-info.store'
 import { useWarehouseStore } from '@/stores/warehouse.store'
 import { printExternalPickingList } from '@/utils/printPickingList'
@@ -34,6 +36,7 @@ interface OutboundLineRow {
   date: string
   orderNo: string
   customer: string
+  orderType: string
   productName: string
   productCode: string
   spec: string
@@ -91,6 +94,7 @@ function matchesTab(order: OutboundOrder, tab: TabId): boolean {
 }
 
 export default function OutboundPage() {
+  const router = useRouter()
   const warehouse = useWarehouseStore((state) => state.selectedWarehouse)
   const supplierInfo = useSupplierInfoStore((state) => state.info)
   const qc = useQueryClient()
@@ -194,14 +198,6 @@ export default function OutboundPage() {
     onError: () => toast.error('수집완료 상태의 전표만 삭제할 수 있습니다'),
   })
 
-  const summary = useMemo(() => ({
-    collected: orders.filter((order) => order.status === 'COLLECTED').length,
-    instructed: orders.filter((order) => getDerivedStatus(order) === 'INSTRUCTED').length,
-    picking: orders.filter((order) => getDerivedStatus(order) === 'PICKING').length,
-    picked: orders.filter((order) => order.status === 'PICKED').length,
-    shipped: orders.filter((order) => order.status === 'SHIPPED').length,
-  }), [orders])
-
   const filteredLines = useMemo(() => {
     return orders
       .filter((order) => {
@@ -227,6 +223,7 @@ export default function OutboundPage() {
         date: order.requestedShipDate || order.orderDate || '',
         orderNo: order.orderNo,
         customer: order.customer,
+        orderType: order.orderType === 'EXTERNAL' ? '외부' : '내부',
         productName: item.product?.name || '-',
         productCode: item.product?.code || '',
         spec: formatUnitSpec(item.product),
@@ -264,6 +261,22 @@ export default function OutboundPage() {
     { headerName: 'No', field: 'rowNo', width: 68, pinned: 'left', type: 'numericColumn' },
     { headerName: '출고일', field: 'date', width: 112 },
     { headerName: '전표번호', field: 'orderNo', width: 148, pinned: 'left', cellClass: 'wms-code font-mono font-semibold' },
+    {
+      headerName: '구분',
+      field: 'orderType',
+      width: 84,
+      cellRenderer: (params: { data?: OutboundLineRow }) => params.data ? (
+        <span className={cn(
+          'inline-flex rounded px-2 py-0.5 text-xs font-semibold',
+          params.data.order.orderType === 'EXTERNAL'
+            ? 'bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300'
+            : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300',
+        )}>
+          {params.data.orderType}
+        </span>
+      ) : null,
+      cellClass: 'flex items-center justify-center',
+    },
     { headerName: '거래처', field: 'customer', width: 150 },
     { headerName: '상품명', field: 'productName', minWidth: 190, flex: 1, tooltipField: 'productName' },
     { headerName: '상품코드', field: 'productCode', width: 126, cellClass: 'font-mono text-xs text-gray-500' },
@@ -334,6 +347,7 @@ export default function OutboundPage() {
       const rows = gridRows.map((row) => ({
         출고일: row.date,
         전표번호: row.orderNo,
+        구분: row.orderType,
         거래처: row.customer,
         상품코드: row.productCode,
         상품명: row.productName,
@@ -378,38 +392,24 @@ export default function OutboundPage() {
           <h2 className={ui.h2Cls}>출고관리</h2>
           <p className="text-xs text-gray-500">출고 등록, 피킹, 출고 확정을 한 화면에서 처리합니다.</p>
         </div>
-        <button
-          type="button"
-          onClick={() => setCreateOpen(true)}
-          className="wms-primary-button inline-flex items-center gap-1.5 rounded px-3 py-2 text-sm font-semibold shadow-sm transition-colors"
-        >
-          <Plus size={15} />
-          출고 전표 등록
-        </button>
-      </div>
-
-      <div className="grid grid-cols-5 gap-2">
-        {[
-          { label: '출고대기', count: summary.collected, tab: 'COLLECTED' as TabId, color: 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-400' },
-          { label: '피킹대기', count: summary.instructed, tab: 'INSTRUCTED' as TabId, color: 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-400' },
-          { label: '피킹중', count: summary.picking, tab: 'PICKING' as TabId, color: 'border-orange-300 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-950/30 dark:text-orange-400' },
-          { label: '피킹완료', count: summary.picked, tab: 'PICKED' as TabId, color: 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400' },
-          { label: '출고완료', count: summary.shipped, tab: 'SHIPPED' as TabId, color: 'border-purple-300 bg-purple-50 text-purple-700 dark:border-purple-800 dark:bg-purple-950/30 dark:text-purple-400' },
-        ].map(({ label, count, tab, color }) => (
+        <div className="flex items-center gap-2">
           <button
-            key={tab}
             type="button"
-            onClick={() => setActiveTab(tab)}
-            className={cn(
-              'rounded border p-3 text-left transition-all hover:shadow-sm',
-              color,
-              activeTab === tab && 'ring-2 ring-current ring-offset-1',
-            )}
+            onClick={() => router.push('/picking-list')}
+            className="wms-toolbar-action inline-flex items-center gap-1.5 rounded px-3 py-2 text-sm font-semibold shadow-sm transition-colors"
           >
-            <p className="text-xs font-medium opacity-70">{label}</p>
-            <p className="mt-0.5 text-2xl font-bold">{formatNumber(count)}</p>
+            <ClipboardList size={15} />
+            피킹리스트
           </button>
-        ))}
+          <button
+            type="button"
+            onClick={() => setCreateOpen(true)}
+            className="wms-primary-button inline-flex items-center gap-1.5 rounded px-3 py-2 text-sm font-semibold shadow-sm transition-colors"
+          >
+            <Plus size={15} />
+            출고 전표 등록
+          </button>
+        </div>
       </div>
 
       <div className="flex min-h-0 flex-1 gap-3 overflow-hidden">
@@ -538,8 +538,22 @@ export default function OutboundPage() {
               overlayNoRowsTemplate="<span class='ag-overlay-no-rows-center'>조회된 출고 품목이 없습니다.</span>"
               getRowId={(params) => params.data.id}
               onRowClicked={(params) => params.data && handleSelectOrder(params.data.order)}
-              rowClassRules={{
-                'bg-orange-50 dark:bg-orange-950/20': (params) => params.data?.order.id === selectedOrder?.id,
+              getRowStyle={(params) => {
+                if (!params.data) return undefined
+                const isDark = document.documentElement.classList.contains('dark')
+                if (params.data.order.id === selectedOrder?.id) {
+                  return { backgroundColor: isDark ? 'rgba(194,120,35,0.20)' : 'rgba(255,237,213,0.90)' } as Record<string, string>
+                }
+                switch (params.data.derived) {
+                  case 'COLLECTED':  return { backgroundColor: isDark ? 'rgba(59,130,246,0.10)'   : 'rgba(219,234,254,0.60)' } as Record<string, string>
+                  case 'INSTRUCTED': return undefined
+                  case 'PICKING':    return { backgroundColor: isDark ? 'rgba(249,115,22,0.15)'  : 'rgba(255,237,213,0.80)' } as Record<string, string>
+                  case 'PICKED':     return { backgroundColor: isDark ? 'rgba(16,185,129,0.10)'  : 'rgba(209,250,229,0.60)' } as Record<string, string>
+                  case 'SHIPPED':    return { backgroundColor: isDark ? 'rgba(168,85,247,0.10)'  : 'rgba(243,232,255,0.60)' } as Record<string, string>
+                  case 'ON_HOLD':    return { backgroundColor: isDark ? 'rgba(99,102,241,0.10)'  : 'rgba(224,231,255,0.60)' } as Record<string, string>
+                  case 'CANCELLED':  return { backgroundColor: isDark ? 'rgba(107,114,128,0.15)' : 'rgba(229,231,235,0.70)', opacity: '0.65' } as Record<string, string>
+                  default: return undefined
+                }
               }}
             />
           </div>
@@ -641,6 +655,7 @@ function DetailPanel({
   onDelete,
   onPrint,
 }: DetailPanelProps) {
+  useEscapeKey(onClose)
   const derived = getDerivedStatus(order)
   const isInstructed = order.status === 'INSTRUCTED'
   const canPrint = !['COLLECTED', 'ON_HOLD', 'CANCELLED'].includes(order.status)

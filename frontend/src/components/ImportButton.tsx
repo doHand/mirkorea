@@ -2,6 +2,7 @@
 import { useRef, useState } from 'react'
 import { Upload } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useEscapeKey } from '@/hooks/useEscapeKey'
 import { cn } from '@/utils/cn'
 import { formatNumber } from '@/utils/format'
 
@@ -35,6 +36,7 @@ export function ImportButton({ config, onImported, label = '가져오기', class
   const [preview, setPreview] = useState<ImportRow[] | null>(null)
   const [importing, setImporting] = useState(false)
   const [progress, setProgress] = useState(0)
+  useEscapeKey(() => setPreview(null), !!preview && !importing)
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]

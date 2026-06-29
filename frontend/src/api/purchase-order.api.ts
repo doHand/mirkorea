@@ -3,7 +3,7 @@ import type { PageResponse, PurchaseOrder, PurchaseOrderStatus, UnitType } from 
 
 export interface PurchaseOrderRequest {
   warehouseId: string
-  clientId: string
+  clientId?: string
   supplier?: string
   orderDate: string
   expectedDate?: string

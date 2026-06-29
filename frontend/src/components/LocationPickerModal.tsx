@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useEscapeKey } from '@/hooks/useEscapeKey'
 import type { Location } from '@/types/api.types'
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function LocationPickerModal({ locations, onSelect, onClose, allowClear, isLoading }: Props) {
+  useEscapeKey(onClose)
   const [search, setSearch] = useState('')
   const q = search.trim().toLowerCase()
   const filtered = q

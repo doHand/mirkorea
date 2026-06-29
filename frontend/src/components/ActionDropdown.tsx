@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { useEscapeKey } from '@/hooks/useEscapeKey'
 import { cn } from '@/utils/cn'
 
 export interface DropdownItem {
@@ -19,6 +20,7 @@ interface Props {
 export function ActionDropdown({ label, items, className, buttonClassName }: Props) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  useEscapeKey(() => setOpen(false), open)
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {

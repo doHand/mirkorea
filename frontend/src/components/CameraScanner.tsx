@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { useEscapeKey } from '@/hooks/useEscapeKey'
 
 interface Props {
   onScan:  (barcode: string) => void
@@ -7,6 +8,7 @@ interface Props {
 }
 
 export function CameraScanner({ onScan, onClose }: Props) {
+  useEscapeKey(onClose)
   const videoRef    = useRef<HTMLVideoElement>(null)
   const [error, setError]           = useState<string | null>(null)
   const [lastScanned, setLastScanned] = useState<string | null>(null)

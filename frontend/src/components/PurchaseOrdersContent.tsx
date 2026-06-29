@@ -8,6 +8,7 @@ import { purchaseOrderApi, type PurchaseOrderRequest } from '@/api/purchase-orde
 import { clientApi } from '@/api/client.api'
 import { userApi } from '@/api/user.api'
 import { QUERY_KEYS } from '@/constants/query-keys'
+import { useEscapeKey } from '@/hooks/useEscapeKey'
 import { useWarehouseStore } from '@/stores/warehouse.store'
 import { cn } from '@/utils/cn'
 import * as ui from '@/styles/ui'
@@ -15,7 +16,9 @@ import type { Product, PurchaseOrder, PurchaseOrderStatus } from '@/types/api.ty
 import { printPurchaseOrder } from '@/utils/printPurchaseOrder'
 import { StatusBadge } from '@/components/StatusBadge'
 import { ActionDropdown } from '@/components/ActionDropdown'
+import { AppAgGrid } from '@/components/AppAgGrid'
 import { ProductPickerModal } from '@/components/ProductPickerModal'
+import type { ColDef } from 'ag-grid-community'
 
 const STATUS: Record<PurchaseOrderStatus, string> = {
   DRAFT: '작성 중', ORDERED: '발주 완료', CONVERTED: '입고예정 등록', CANCELLED: '취소',
@@ -77,6 +80,103 @@ export function PurchaseOrdersContent({ createTrigger }: Props) {
       return true
     })
   }, [rawOrders, dateFrom, dateTo])
+
+  const orderColumns = useMemo<ColDef<PurchaseOrder>[]>(() => [
+    {
+      headerName: '발주번호',
+      field: 'orderNo',
+      width: 150,
+      cellClass: 'font-mono text-xs font-semibold text-[var(--color-primary)]',
+    },
+    {
+      headerName: '공급업체',
+      minWidth: 180,
+      flex: 1,
+      valueGetter: (p) => p.data?.supplier || '-',
+      cellRenderer: (p: { data?: PurchaseOrder }) => (
+        <div className="flex h-full min-w-0 flex-col justify-center leading-tight">
+          <span className="truncate font-medium text-gray-800 dark:text-gray-100">{p.data?.supplier || '-'}</span>
+          {p.data?.memo && <span className="truncate text-xs text-gray-400">{p.data.memo}</span>}
+        </div>
+      ),
+    },
+    { headerName: '발주일', field: 'orderDate', width: 115 },
+    { headerName: '납기예정일', field: 'expectedDate', width: 125, valueGetter: (p) => p.data?.expectedDate || '-' },
+    {
+      headerName: '품목',
+      width: 95,
+      valueGetter: (p) => p.data?.items.length ?? 0,
+      valueFormatter: (p) => `${p.value ?? 0}종`,
+    },
+    {
+      headerName: '총금액',
+      width: 135,
+      type: 'rightAligned',
+      valueGetter: (p) => p.data ? calcTotal(p.data) : 0,
+      valueFormatter: (p) => `${Number(p.value ?? 0).toLocaleString()}원`,
+      cellClass: 'font-semibold tabular-nums',
+    },
+    {
+      headerName: '상태',
+      width: 125,
+      valueGetter: (p) => p.data ? STATUS[p.data.status] : '',
+      cellRenderer: (p: { data?: PurchaseOrder }) => p.data ? (
+        <StatusBadge label={STATUS[p.data.status]} variant={STATUS_VARIANT[p.data.status]} />
+      ) : '-',
+    },
+    {
+      headerName: '작업',
+      width: 260,
+      sortable: false,
+      filter: false,
+      cellRenderer: (p: { data?: PurchaseOrder }) => {
+        if (!p.data) return '-'
+        const order = p.data
+        const client = clients.find((c) => c.id === order.clientId) ?? clients.find((c) => c.name === order.supplier)
+        return (
+          <div className="flex h-full items-center gap-1">
+            <button
+              type="button"
+              title="출력"
+              onClick={(e) => { e.stopPropagation(); printPurchaseOrder(order, client) }}
+              className="rounded border border-emerald-200 px-2 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900 dark:text-emerald-300 dark:hover:bg-emerald-950/40"
+            >
+              출력
+            </button>
+            {(order.status === 'DRAFT' || order.status === 'ORDERED') && (
+              <button
+                type="button"
+                title="수정"
+                onClick={(e) => { e.stopPropagation(); setEditing(order) }}
+                className="rounded border border-indigo-200 px-2 py-1 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-300 dark:hover:bg-indigo-950/40"
+              >
+                수정
+              </button>
+            )}
+            {order.status === 'DRAFT' && (
+              <button
+                type="button"
+                title="발주 완료"
+                onClick={(e) => { e.stopPropagation(); action.mutate({ kind: 'ordered', id: order.id }) }}
+                className="rounded border border-amber-200 px-2 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-50 dark:border-amber-900 dark:text-amber-300 dark:hover:bg-amber-950/40"
+              >
+                발주완료
+              </button>
+            )}
+            {order.status === 'ORDERED' && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); action.mutate({ kind: 'convert', id: order.id }) }}
+                className="rounded bg-[#D2691E] px-2 py-1 text-xs font-semibold text-white hover:bg-[#b85b19]"
+              >
+                입고예정
+              </button>
+            )}
+          </div>
+        )
+      },
+    },
+  ], [clients])
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ['purchase-orders'] })
@@ -195,74 +295,14 @@ export function PurchaseOrdersContent({ createTrigger }: Props) {
       </div>
 
       {/* 테이블 */}
-      <div className="flex min-h-0 flex-1 flex-col border border-[#d8ddd8] bg-white shadow-sm dark:bg-gray-900">
-        <div className="min-h-0 flex-1 overflow-auto">
-          <table className="w-full min-w-[900px] text-sm">
-            <thead>
-              <tr className={ui.thead}>
-                <th className={cn(ui.th, 'text-left')}>발주번호</th>
-                <th className={cn(ui.th, 'text-left')}>공급업체</th>
-                <th className={ui.th}>발주일</th>
-                <th className={ui.th}>납기예정일</th>
-                <th className={ui.th}>품목</th>
-                <th className={ui.thR}>총금액</th>
-                <th className={ui.th}>상태</th>
-                <th className={ui.th}>작업</th>
-              </tr>
-            </thead>
-            <tbody className={ui.tbody}>
-              {isLoading && (
-                <tr><td colSpan={8} className="py-12 text-center text-gray-400">로딩 중...</td></tr>
-              )}
-              {!isLoading && orders.length === 0 && (
-                <tr><td colSpan={8} className="py-12 text-center text-gray-400">작성된 발주서가 없습니다</td></tr>
-              )}
-              {orders.map((o) => (
-                <tr key={o.id} className={cn(ui.tr, 'cursor-pointer')} onDoubleClick={() => setEditing(o)}>
-                  <td className="px-3 py-3 font-mono font-semibold text-[var(--color-primary)] dark:text-emerald-400 text-xs">{o.orderNo}</td>
-                  <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{o.supplier || '-'}</td>
-                  <td className="px-3 py-3 text-center text-gray-500 dark:text-gray-400">{o.orderDate}</td>
-                  <td className="px-3 py-3 text-center text-gray-500 dark:text-gray-400">{o.expectedDate || '-'}</td>
-                  <td className="px-3 py-3 text-center text-gray-600 dark:text-gray-400">{o.items.length}종</td>
-                  <td className="px-3 py-3 text-right tabular-nums font-semibold text-gray-900 dark:text-gray-100">
-                    {calcTotal(o).toLocaleString()}원
-                  </td>
-                  <td className="px-3 py-3 text-center">
-                    <StatusBadge label={STATUS[o.status]} variant={STATUS_VARIANT[o.status]} />
-                  </td>
-                  <td className="px-3 py-2">
-                    <div className="flex justify-center gap-1">
-                      <button
-                        title="출력"
-                        onClick={(e) => { e.stopPropagation(); printPurchaseOrder(o, clients.find((c) => c.id === o.clientId) ?? clients.find((c) => c.name === o.supplier)) }}
-                        className={ui.btnIconPrint}
-                      >
-                        출력
-                      </button>
-                      {(o.status === 'DRAFT' || o.status === 'ORDERED') && (
-                        <button title="수정" onClick={(e) => { e.stopPropagation(); setEditing(o) }} className={ui.btnIconEdit}>
-                          수정
-                        </button>
-                      )}
-                      {o.status === 'DRAFT' && (
-                        <button title="발주 완료" onClick={(e) => { e.stopPropagation(); action.mutate({ kind: 'ordered', id: o.id }) }} className={ui.btnIconEdit}>
-                          발주완료
-                        </button>
-                      )}
-                      {o.status === 'ORDERED' && (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); action.mutate({ kind: 'convert', id: o.id }) }}
-                          className="flex items-center gap-1 bg-[#D2691E] px-2 py-1 text-xs font-semibold text-white hover:bg-[#b85b19]"
-                        >
-                          입고예정
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div className="min-h-0 flex-1">
+          <AppAgGrid
+            rows={orders}
+            columns={orderColumns}
+            loading={isLoading}
+            onRowDoubleClicked={setEditing}
+          />
         </div>
       </div>
 
@@ -295,6 +335,7 @@ function PrintByDateModal({ orders, clients, onClose }: {
   clients: { id: string; name: string; phone?: string; mobile?: string; fax?: string }[]
   onClose: () => void
 }) {
+  useEscapeKey(onClose)
   const [printDate, setPrintDate]       = useState(today())
   const [splitByClient, setSplitByClient] = useState(false)
 
@@ -388,6 +429,7 @@ function OrderModal({ warehouseId, order, onClose, onSaved }: {
   const [memo, setMemo]                 = useState(order?.memo ?? '')
   const [clientId, setClientId]         = useState(order?.clientId ?? '')
   const [productPickerOpen, setProductPickerOpen] = useState(false)
+  useEscapeKey(onClose, !productPickerOpen)
   const [items, setItems] = useState(
     (order?.items ?? []).map((i) => ({
       productId: i.productId, product: i.product, boxCount: i.boxCount ?? 0,

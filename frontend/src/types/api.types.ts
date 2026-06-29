@@ -188,6 +188,7 @@ export interface StockTransaction {
   isCancelled: boolean
   cancelledAt?: string
   createdBy: string
+  createdByName?: string
   createdAt: string
   product?: Product
   location?: Location

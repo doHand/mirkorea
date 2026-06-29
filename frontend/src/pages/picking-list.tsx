@@ -1,11 +1,14 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ArrowLeft } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { clientApi } from '@/api/client.api'
 import { outboundOrderApi } from '@/api/outbound-order.api'
 import { QUERY_KEYS } from '@/constants/query-keys'
+import { useEscapeKey } from '@/hooks/useEscapeKey'
 import { useSupplierInfoStore } from '@/stores/supplier-info.store'
 import { useWarehouseStore } from '@/stores/warehouse.store'
 import { buildDailyPickingRows, printExternalPickingList, printInternalPickingList } from '@/utils/printPickingList'
@@ -16,6 +19,7 @@ import type { OutboundOrder } from '@/types/api.types'
 const today = () => new Date().toISOString().slice(0, 10)
 
 export default function PickingListPage() {
+  const router = useRouter()
   const warehouse = useWarehouseStore((s) => s.selectedWarehouse)
   const supplierInfo = useSupplierInfoStore((s) => s.info)
   const qc = useQueryClient()
@@ -80,7 +84,17 @@ export default function PickingListPage() {
 
   return <div className="flex h-[calc(100vh-150px)] min-h-0 flex-col gap-4 overflow-hidden">
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <div><h2 className="text-lg font-bold">날짜별 피킹리스트</h2><p className="text-sm text-gray-500">출고지시 주문을 상품별 OUT 수량으로 합산합니다.</p></div>
+      <div className="flex min-w-0 items-center gap-3">
+        <button
+          type="button"
+          onClick={() => router.push('/outbound')}
+          className="wms-toolbar-action inline-flex h-8 items-center gap-1.5 rounded px-2.5 text-xs font-semibold transition-colors"
+        >
+          <ArrowLeft size={14} />
+          뒤로
+        </button>
+        <div><h2 className="text-lg font-bold">날짜별 피킹리스트</h2><p className="text-sm text-gray-500">출고지시 주문을 상품별 OUT 수량으로 합산합니다.</p></div>
+      </div>
       <div className="flex items-center gap-1 rounded border bg-white p-1 dark:border-gray-700 dark:bg-gray-900">
         <input type="date" value={pickingDate} onChange={(e) => setPickingDate(e.target.value)} className="bg-transparent px-3 py-1.5 text-sm outline-none" />
         <button onClick={() => printInternalPickingList(pickingDate, dailyOrders)} disabled={!dailyOrders.length} title="내부 피킹리스트 출력" className="flex items-center gap-1.5 rounded bg-[#2D4033] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40">내부 출력</button>
@@ -180,6 +194,7 @@ export default function PickingListPage() {
 }
 
 function OrderDetailModal({ order, onClose }: { order: OutboundOrder; onClose: () => void }) {
+  useEscapeKey(onClose)
   const totalOuts = order.items.reduce((sum, item) => sum + item.boxCount, 0)
   const pickedOuts = order.items.reduce((sum, item) => sum + Number(item.pickedBoxCount || 0), 0)
   return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4" onClick={onClose}>

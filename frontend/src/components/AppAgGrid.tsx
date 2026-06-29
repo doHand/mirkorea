@@ -13,6 +13,8 @@ export function AppAgGrid<T extends { id: string }>({
   onRowClicked,
   onRowDoubleClicked,
   className = '',
+  rowHeight,
+  headerHeight,
 }: {
   rows: T[]
   columns: ColDef<T>[]
@@ -20,6 +22,8 @@ export function AppAgGrid<T extends { id: string }>({
   onRowClicked?: (row: T) => void
   onRowDoubleClicked?: (row: T) => void
   className?: string
+  rowHeight?: number
+  headerHeight?: number
 }) {
   return (
     <div className={`ag-theme-quartz ag-theme-wms wms-ag-grid h-full min-h-0 w-full ${className}`}>
@@ -31,6 +35,8 @@ export function AppAgGrid<T extends { id: string }>({
         overlayLoadingTemplate={'<span class="ag-overlay-loading-center">불러오는 중…</span>'}
         overlayNoRowsTemplate={'<span class="ag-overlay-no-rows-center">표시할 데이터가 없습니다.</span>'}
         loading={loading}
+        rowHeight={rowHeight}
+        headerHeight={headerHeight}
         animateRows
         onRowClicked={(event: RowClickedEvent<T>) => event.data && onRowClicked?.(event.data)}
         onRowDoubleClicked={(event) => event.data && onRowDoubleClicked?.(event.data)}

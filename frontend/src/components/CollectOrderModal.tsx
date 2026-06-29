@@ -7,6 +7,7 @@ import { clientApi } from '@/api/client.api'
 import { outboundOrderApi, type OutboundOrderRequest } from '@/api/outbound-order.api'
 import { productApi } from '@/api/product.api'
 import { QUERY_KEYS } from '@/constants/query-keys'
+import { useEscapeKey } from '@/hooks/useEscapeKey'
 import { formatNumber } from '@/utils/format'
 import type { OutboundOrder, OutboundOrderType, Product } from '@/types/api.types'
 
@@ -18,6 +19,7 @@ export function CollectOrderModal({ warehouseId, order, onClose, onSaved }: {
   onClose: () => void
   onSaved: () => void
 }) {
+  useEscapeKey(onClose)
   const [orderType, setOrderType] = useState<OutboundOrderType>(order?.orderType ?? 'EXTERNAL')
   const [clientId, setClientId] = useState(order?.clientId ?? '')
   const [channel, setChannel] = useState(order?.channel ?? '')

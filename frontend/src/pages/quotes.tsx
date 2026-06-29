@@ -1,25 +1,27 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { clientApi } from '@/api/client.api'
 import { productApi } from '@/api/product.api'
 import { quoteApi } from '@/api/quote.api'
+import { AppAgGrid } from '@/components/AppAgGrid'
 import { PurchaseOrdersContent } from '@/components/PurchaseOrdersContent'
 import { ClientPickerModal } from '@/components/ClientPickerModal'
 import { ProductPickerModal } from '@/components/ProductPickerModal'
 import { useSupplierInfoStore } from '@/stores/supplier-info.store'
+import { useEscapeKey } from '@/hooks/useEscapeKey'
 import { formatNumber } from '@/utils/format'
 import { cn } from '@/utils/cn'
-import { editableRowProps } from '@/utils/table'
 import * as ui from '@/styles/ui'
 import {
   QUOTE_PRINT_TITLES,
   printQuoteDocument,
 } from '@/utils/printDocument'
 import type { Client, Product, Quote } from '@/types/api.types'
+import type { ColDef } from 'ag-grid-community'
 
 const DOC_TYPE_LABEL: Record<string, string> = {
   STATEMENT: '거래명세서',
@@ -146,6 +148,8 @@ export default function QuotesPage() {
 
   const closeModal = () => { setShowModal(false); setEditing(null); setForm({ ...EMPTY_FORM, docDate: today() }) }
   const commitSearch = () => { setSearch(searchInput); setPage(1) }
+  useEscapeKey(() => setListPrint(null), !!listPrint)
+  useEscapeKey(closeModal, showModal && !listPrint && !showClientPicker && productPickerIdx === null && !showProductAdder)
 
   const openCreate = () => {
     setEditing(null)
@@ -280,6 +284,103 @@ export default function QuotesPage() {
     { value: 'PURCHASE',  label: '발주서',     href: null },
   ]
 
+  const quoteColumns = useMemo<ColDef<Quote>[]>(() => [
+    {
+      headerName: '거래처',
+      minWidth: 180,
+      flex: 1,
+      valueGetter: (p) => p.data?.clientName || '-',
+      cellRenderer: (p: { data?: Quote }) => (
+        <div className="flex h-full min-w-0 flex-col justify-center leading-tight">
+          <span className="truncate font-medium text-gray-800 dark:text-gray-100">{p.data?.clientName || '-'}</span>
+          {p.data?.memo && <span className="truncate text-xs text-gray-400">{p.data.memo}</span>}
+        </div>
+      ),
+    },
+    {
+      headerName: '문서번호',
+      field: 'docNo',
+      width: 150,
+      cellClass: 'font-mono text-xs font-semibold text-[var(--color-primary)]',
+    },
+    {
+      headerName: '종류',
+      width: 115,
+      valueGetter: (p) => p.data ? DOC_TYPE_LABEL[p.data.docType] : '',
+      cellRenderer: (p: { data?: Quote }) => p.data ? (
+        <span className={cn(
+          'inline-flex rounded px-2 py-0.5 text-xs font-semibold',
+          p.data.docType === 'STATEMENT'
+            ? 'bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300'
+            : 'bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300',
+        )}>
+          {DOC_TYPE_LABEL[p.data.docType]}
+        </span>
+      ) : '-',
+    },
+    { headerName: '날짜', field: 'docDate', width: 115 },
+    {
+      headerName: '합계금액',
+      width: 135,
+      type: 'rightAligned',
+      valueGetter: (p) => Number(p.data?.totalAmount ?? 0),
+      valueFormatter: (p) => `${formatNumber(Number(p.value ?? 0))}원`,
+      cellClass: 'font-semibold tabular-nums',
+    },
+    {
+      headerName: '상태',
+      width: 105,
+      valueGetter: (p) => p.data ? STATUS_LABEL[p.data.status] : '',
+      cellRenderer: (p: { data?: Quote }) => p.data ? (
+        <span className={cn('inline-flex rounded px-2 py-1 text-xs font-semibold', STATUS_STYLE[p.data.status])}>
+          {STATUS_LABEL[p.data.status]}
+        </span>
+      ) : '-',
+    },
+    {
+      headerName: '관리',
+      width: 176,
+      sortable: false,
+      filter: false,
+      cellRenderer: (p: { data?: Quote }) => {
+        if (!p.data) return '-'
+        const quote = p.data
+        return (
+          <div className="flex h-full items-center gap-1">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                if (quote.docType === 'QUOTE') setListPrint({ quote, title: QUOTE_PRINT_TITLES[0] ?? '견적서' })
+                else printQuoteDocument(quote, null, findClientForQuote(quote), supplierInfo)
+              }}
+              className="rounded border border-emerald-200 px-2 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900 dark:text-emerald-300 dark:hover:bg-emerald-950/40"
+            >
+              출력
+            </button>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); openEdit(quote) }}
+              className="rounded border border-indigo-200 px-2 py-1 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-300 dark:hover:bg-indigo-950/40"
+            >
+              수정
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                if (confirm('삭제하시겠습니까?')) deleteMutation.mutate(quote.id)
+              }}
+              className="rounded border border-rose-200 px-2 py-1 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:border-rose-900 dark:text-rose-300 dark:hover:bg-rose-950/40"
+            >
+              삭제
+            </button>
+          </div>
+        )
+      },
+    },
+  ], [deleteMutation, findClientForQuote, supplierInfo])
+
   return (
     <div className="flex h-[calc(100vh-150px)] min-h-0 flex-col gap-4 overflow-hidden">
       {/* 공통 헤더 */}
@@ -322,58 +423,23 @@ export default function QuotesPage() {
 
       {/* 거래명세서 / 견적서 탭 콘텐츠 */}
       {docTypeFilter !== 'PURCHASE' && (<>
-      <div className="flex flex-wrap gap-2 border border-[#d8ddd8] bg-white p-3 shadow-sm dark:bg-gray-900 shrink-0">
-        <div className="relative min-w-60 flex-1 flex gap-1.5">
+      <div className="shrink-0 rounded border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div className="relative flex min-w-60 flex-1 gap-1.5">
           <div className="relative flex-1">
-            <input value={searchInput} onChange={(e) => setSearchInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && commitSearch()} placeholder="문서번호, 거래처명 검색" className="w-full border border-gray-200 dark:border-gray-700 py-2 pl-3 pr-3 text-sm outline-none focus:border-[var(--color-primary)] bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400" />
+            <input value={searchInput} onChange={(e) => setSearchInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && commitSearch()} placeholder="문서번호, 거래처명 검색" className="wms-input w-full rounded dark:border-gray-700 dark:bg-gray-800" />
           </div>
-          <button onClick={commitSearch} className="px-3 py-2 text-sm bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] transition-colors font-medium">검색</button>
+          <button onClick={commitSearch} className="wms-primary-button h-9 rounded px-4 text-sm font-medium transition-colors">검색</button>
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col border border-[#d8ddd8] bg-white shadow-sm dark:bg-gray-900">
-        <div className="min-h-0 flex-1 overflow-auto">
-          <table className="w-full min-w-[720px] text-sm">
-            <thead>
-              <tr className={ui.thead}>
-                <th className={cn(ui.th, 'text-left')}>거래처</th>
-                <th className={cn(ui.th, 'text-left')}>문서번호</th>
-                <th className={ui.th}>종류</th>
-                <th className={ui.th}>날짜</th>
-                <th className={ui.thR}>합계금액</th>
-                <th className={ui.th}>상태</th>
-                <th className="w-28 px-3 py-3" />
-              </tr>
-            </thead>
-            <tbody className={ui.tbody}>
-              {isLoading && <tr><td colSpan={7} className="text-center py-10 text-gray-400">불러오는 중...</td></tr>}
-              {!isLoading && data?.items.length === 0 && <tr><td colSpan={7} className="text-center py-10 text-gray-400">문서가 없습니다</td></tr>}
-              {data?.items.map((quote) => {
-                const { className: editableClass, ...editableHandlers } = editableRowProps(true, () => openEdit(quote))
-                return (
-                <tr key={quote.id} {...editableHandlers} className={cn(ui.tr, editableClass)}>
-                  <td className="px-3 py-3 text-gray-700 dark:text-gray-300">{quote.clientName ?? '-'}</td>
-                  <td className="px-3 py-3 font-mono text-xs text-[var(--color-primary)] dark:text-gray-300 font-semibold">{quote.docNo}</td>
-                  <td className="px-3 py-3 text-center"><span className={`px-2 py-0.5 text-xs font-medium ${quote.docType === 'STATEMENT' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400' : 'bg-violet-50 text-violet-700 dark:bg-violet-900/20 dark:text-violet-400'}`}>{DOC_TYPE_LABEL[quote.docType]}</span></td>
-                  <td className="px-3 py-3 text-center text-gray-500">{quote.docDate}</td>
-                  <td className="px-3 py-3 text-right font-semibold tabular-nums">￦{formatNumber(quote.totalAmount)}</td>
-                  <td className="px-3 py-3 text-center"><span className={`px-2 py-1 text-xs font-medium ${STATUS_STYLE[quote.status]}`}>{STATUS_LABEL[quote.status]}</span></td>
-                  <td className="px-3 py-2">
-                    <div className="flex justify-center gap-1">
-                      {quote.docType === 'QUOTE' ? (
-                        <button onClick={(e) => { e.stopPropagation(); setListPrint({ quote, title: '견적서' }) }} className={ui.btnIconPrint} title="인쇄 (제목 선택)">출력</button>
-                      ) : (
-                        <button onClick={(e) => { e.stopPropagation(); printQuoteDocument(quote, null, findClientForQuote(quote), supplierInfo) }} className={ui.btnIconPrint} title="인쇄">출력</button>
-                      )}
-                      <button onClick={(e) => { e.stopPropagation(); openEdit(quote) }} className={ui.btnIconEdit} title="수정">수정</button>
-                      <button onClick={(e) => { e.stopPropagation(); if (confirm('삭제하시겠습니까?')) deleteMutation.mutate(quote.id) }} className={ui.btnIconDelete} title="삭제">삭제</button>
-                    </div>
-                  </td>
-                </tr>
-                )
-              })}
-            </tbody>
-          </table>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div className="min-h-0 flex-1">
+          <AppAgGrid
+            rows={data?.items ?? []}
+            columns={quoteColumns}
+            loading={isLoading}
+            onRowDoubleClicked={openEdit}
+          />
         </div>
       </div>
 

@@ -4,6 +4,11 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .scrollbar-hide { scrollbar-width: none; -ms-overflow-style: none; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+}
+
 /* ═══════════════════════════════════════════════════════════
  * 스크롤바 스타일
  * 모든 페이지의 얇은 커스텀 스크롤바 (라이트/다크 공통)

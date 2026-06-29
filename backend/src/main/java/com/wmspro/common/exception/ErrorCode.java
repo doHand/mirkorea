@@ -30,6 +30,8 @@ public enum ErrorCode {
     ZONE_NOT_FOUND(HttpStatus.NOT_FOUND,            "구역을 찾을 수 없습니다"),
     LOCATION_NOT_FOUND(HttpStatus.NOT_FOUND,        "위치를 찾을 수 없습니다"),
     LOCATION_CODE_DUPLICATE(HttpStatus.CONFLICT,    "위치코드가 이미 존재합니다"),
+    LOCATION_HAS_INVENTORY(HttpStatus.CONFLICT,     "재고가 있는 위치는 삭제할 수 없습니다"),
+    ZONE_HAS_LOCATIONS(HttpStatus.CONFLICT,         "위치가 등록된 구역은 삭제할 수 없습니다"),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND,            "사용자를 찾을 수 없습니다"),
     USER_DUPLICATE(HttpStatus.CONFLICT,             "이미 존재하는 사용자명입니다"),
 

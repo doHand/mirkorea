@@ -2,6 +2,7 @@ package com.wmspro.domain.warehouse;
 
 import com.wmspro.common.exception.BusinessException;
 import com.wmspro.common.exception.ErrorCode;
+import com.wmspro.domain.inventory.InventoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,7 @@ public class WarehouseService {
     private final WarehouseRepository warehouseRepo;
     private final ZoneRepository      zoneRepo;
     private final LocationRepository  locationRepo;
+    private final InventoryRepository inventoryRepo;
 
     public List<Warehouse> findAll() {
         return warehouseRepo.findByIsActiveTrueOrderByName();
@@ -88,6 +90,9 @@ public class WarehouseService {
     public void deleteZone(UUID zoneId) {
         Zone zone = zoneRepo.findById(zoneId)
             .orElseThrow(() -> new BusinessException(ErrorCode.ZONE_NOT_FOUND));
+        if (locationRepo.countByZoneIdAndIsActiveTrue(zoneId) > 0) {
+            throw new BusinessException(ErrorCode.ZONE_HAS_LOCATIONS);
+        }
         zone.setActive(false);
         zoneRepo.save(zone);
     }
@@ -95,6 +100,9 @@ public class WarehouseService {
     @Transactional
     public void deleteLocation(UUID locationId) {
         Location loc = findLocation(locationId);
+        if (inventoryRepo.existsByLocationIdAndQuantityGreaterThan(locationId, 0)) {
+            throw new BusinessException(ErrorCode.LOCATION_HAS_INVENTORY);
+        }
         loc.setActive(false);
         locationRepo.save(loc);
     }

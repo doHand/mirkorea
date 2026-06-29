@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { productApi } from '@/api/product.api'
+import { useEscapeKey } from '@/hooks/useEscapeKey'
 import { formatNumber } from '@/utils/format'
 import { cn } from '@/utils/cn'
 import * as ui from '@/styles/ui'
@@ -24,6 +25,7 @@ export function ProductPickerModal({
   onClose,
   onConfirm,
 }: Props) {
+  useEscapeKey(onClose)
   const [search, setSearch] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 

@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
@@ -53,6 +55,7 @@ public class InboundOrder {
     private Instant updatedAt;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @Fetch(FetchMode.SUBSELECT)
     @JsonManagedReference
     @Builder.Default
     private List<InboundOrderItem> items = new ArrayList<>();

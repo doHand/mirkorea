@@ -33,6 +33,8 @@ public interface InventoryRepository extends JpaRepository<Inventory, UUID> {
     // 조회용 (락 없음)
     List<Inventory> findByProductIdAndQuantityGreaterThan(UUID productId, int qty);
 
+    boolean existsByLocationIdAndQuantityGreaterThan(UUID locationId, int qty);
+
     @Query("SELECT i FROM Inventory i JOIN FETCH i.product p JOIN FETCH i.location l " +
            "WHERE i.warehouseId = :warehouseId AND i.quantity <= p.safetyStock AND p.safetyStock > 0")
     List<Inventory> findLowStock(@Param("warehouseId") UUID warehouseId);

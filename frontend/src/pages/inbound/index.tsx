@@ -4,7 +4,7 @@ import { useRouter } from 'next/router'
 import { AgGridReact } from 'ag-grid-react'
 import { ClientSideRowModelModule, ModuleRegistry, type ColDef } from 'ag-grid-community'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { FileDown, Menu, Minus, Plus, RefreshCw, RotateCcw, Search, X } from 'lucide-react'
+import { FileDown, FileText, Menu, Minus, Plus, RefreshCw, RotateCcw, Search, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useWarehouseStore } from '@/stores/warehouse.store'
 import { inboundApi } from '@/api/inbound.api'
@@ -16,10 +16,9 @@ import { QUERY_KEYS } from '@/constants/query-keys'
 import { cn } from '@/utils/cn'
 import * as ui from '@/styles/ui'
 import { formatNumber } from '@/utils/format'
-import { formatUnitSpec } from '@/utils/unit-spec'
-import type { InboundOrder, InboundOrderItem, InboundStatus, Product } from '@/types/api.types'
+import { formatUnitSpec, getPackageUnitQty } from '@/utils/unit-spec'
+import type { InboundOrder, InboundOrderItem, InboundStatus, Product, UnitType } from '@/types/api.types'
 import { StatusBadge } from '@/components/StatusBadge'
-import { StockSummaryBox } from '@/components/StockSummaryBox'
 import { ImportButton, type ImportConfig, type ImportRow } from '@/components/ImportButton'
 
 ModuleRegistry.registerModules([ClientSideRowModelModule])
@@ -28,7 +27,7 @@ interface InboundLineRow {
   id: string
   rowNo: number
   order: InboundOrder
-  item: InboundOrderItem
+  item: InboundOrderItem | undefined
   expectedDate: string
   orderNo: string
   supplier: string
@@ -154,31 +153,32 @@ export default function InboundPage() {
     return result
   }, [orders, search, dateFrom, dateTo])
 
-  const lines = useMemo(
-    () => filtered.flatMap((order) => order.items.map((item, index) => ({ order, item, index }))),
-    [filtered]
-  )
-
-  const gridRows = useMemo<InboundLineRow[]>(() => lines.map(({ order, item }, rowIndex) => ({
-    id: item.id || `${order.id}-${item.productId}-${rowIndex}`,
-    rowNo: rowIndex + 1,
-    order,
-    item,
-    expectedDate: fmtDate(order.expectedDate),
-    orderNo: order.orderNo,
-    supplier: order.supplier || '-',
-    productName: item.product?.name || '-',
-    productCode: item.product?.code || '',
-    spec: formatUnitSpec(item.product),
-    expectedQty: item.expectedQty,
-    receivedQty: item.receivedQty,
-    passedQty: item.passedQty,
-    defectQty: item.defectQty,
-    unit: item.product?.unit || item.inputUnit || '-',
-    costPrice: item.product?.costPrice ?? null,
-    materialNo: item.product?.materialNo || item.product?.code || '-',
-    status: order.status,
-  })), [lines])
+  const gridRows = useMemo<InboundLineRow[]>(() => filtered.map((order, rowIndex) => {
+    const firstItem = order.items[0]
+    const itemCount = order.items.length
+    const firstName = firstItem?.product?.name || '-'
+    const productName = itemCount > 1 ? `${firstName} 외 ${itemCount - 1}개` : firstName
+    return {
+      id: order.id,
+      rowNo: rowIndex + 1,
+      order,
+      item: firstItem,
+      expectedDate: fmtDate(order.expectedDate),
+      orderNo: order.orderNo,
+      supplier: order.supplier || '-',
+      productName,
+      productCode: itemCount === 1 ? (firstItem?.product?.code || '') : '',
+      spec: itemCount === 1 ? formatUnitSpec(firstItem?.product) : `${itemCount}종`,
+      expectedQty: order.items.reduce((s, i) => s + i.expectedQty, 0),
+      receivedQty: order.items.reduce((s, i) => s + i.receivedQty, 0),
+      passedQty: order.items.reduce((s, i) => s + i.passedQty, 0),
+      defectQty: order.items.reduce((s, i) => s + i.defectQty, 0),
+      unit: itemCount === 1 ? (firstItem?.product?.unit || firstItem?.inputUnit || '-') : '-',
+      costPrice: null,
+      materialNo: itemCount === 1 ? (firstItem?.product?.materialNo || firstItem?.product?.code || '-') : '-',
+      status: order.status,
+    }
+  }), [filtered])
 
   const refresh = () => {
     void qc.invalidateQueries({ queryKey: ['inbound'] })
@@ -458,7 +458,7 @@ export default function InboundPage() {
         </div>
 
         {/* 하단 행: 상태 필터 버튼 */}
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
           {(['', 'PENDING', 'RECEIVING', 'INSPECTING', 'COMPLETED'] as (InboundStatus | '')[]).map((value) => {
             const count = value === '' ? allOrders.length : allOrders.filter((o) => o.status === value).length
             const label = value === '' ? '전체' : STATUS_LABEL[value]
@@ -467,7 +467,7 @@ export default function InboundPage() {
                 key={value || 'all'}
                 onClick={() => setStatusFilter(value)}
                 className={cn(
-                  'rounded-lg border px-2.5 py-2 text-xs font-semibold transition-colors',
+                  'shrink-0 whitespace-nowrap rounded-lg border px-2.5 py-2 text-xs font-semibold transition-colors',
                   statusFilter === value
                     ? 'wms-table-header border-[var(--color-grid-header)]'
                     : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200',
@@ -486,7 +486,7 @@ export default function InboundPage() {
       <section className="wms-panel overflow-hidden border dark:border-gray-800 dark:bg-gray-900">
         <div className="wms-panel-header flex items-center justify-between border-b px-3 py-1.5 dark:border-gray-800 dark:bg-gray-900">
           <div className="flex items-center gap-2">
-            <span className="wms-modal-mark grid h-8 w-8 place-items-center rounded-lg">전표</span>
+            <span className="wms-modal-mark grid h-8 w-8 place-items-center rounded-lg"><FileText size={16} /></span>
             <p className="font-bold text-gray-900 dark:text-white">매입(입고) 전표정보</p>
           </div>
           <span className="inline-flex items-center gap-1 text-xs text-gray-500">
@@ -550,25 +550,25 @@ export default function InboundPage() {
         'app-surface flex min-h-0 flex-col overflow-hidden border border-gray-300 bg-white dark:border-gray-800 dark:bg-gray-900',
         detailOrderId ? 'flex-1' : 'w-full flex-1',
       )}>
-        <div className="wms-grid-toolbar flex flex-wrap items-center justify-between gap-2 border-b px-2 py-1.5">
-          <div className="flex flex-wrap items-center gap-1.5">
+        <div className="wms-grid-toolbar flex items-center gap-2 border-b px-2 py-1.5 min-w-0">
+          <div className="flex items-center gap-1.5 flex-1 min-w-0 overflow-x-auto scrollbar-hide">
             <input
               type="date"
               value={dateFrom}
               onChange={(event) => setDateFrom(event.target.value)}
-              className="h-7 rounded border border-gray-200 px-2 text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+              className="h-7 shrink-0 rounded border border-gray-200 px-2 text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
             />
-            <span className="text-xs text-gray-400">~</span>
+            <span className="shrink-0 text-xs text-gray-400">~</span>
             <input
               type="date"
               value={dateTo}
               onChange={(event) => setDateTo(event.target.value)}
-              className="h-7 rounded border border-gray-200 px-2 text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+              className="h-7 shrink-0 rounded border border-gray-200 px-2 text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
             />
             <select
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value as InboundStatus | '')}
-              className="h-7 rounded border border-gray-200 px-2 text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+              className="h-7 shrink-0 rounded border border-gray-200 px-2 text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
             >
               <option value="">전체 상태</option>
               {Object.entries(STATUS_LABEL).map(([key, value]) => (
@@ -580,12 +580,12 @@ export default function InboundPage() {
               onChange={(event) => setSearchInput(event.target.value)}
               onKeyDown={(event) => { if (event.key === 'Enter') setSearch(searchInput) }}
               placeholder="전표번호/공급업체"
-              className="h-7 w-40 rounded border border-gray-200 px-2 text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+              className="h-7 w-40 shrink-0 rounded border border-gray-200 px-2 text-xs dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
             />
             <button
               type="button"
               onClick={() => setSearch(searchInput)}
-              className="wms-toolbar-action inline-flex h-7 items-center gap-1 rounded px-2.5 text-xs font-semibold transition-colors"
+              className="wms-toolbar-action shrink-0 inline-flex h-7 items-center gap-1 rounded px-2.5 text-xs font-semibold transition-colors"
             >
               <Search size={13} />
               검색
@@ -593,13 +593,13 @@ export default function InboundPage() {
             <button
               type="button"
               onClick={handleResetFilters}
-              className="wms-toolbar-action inline-flex h-7 items-center gap-1 rounded px-2.5 text-xs font-semibold transition-colors"
+              className="wms-toolbar-action shrink-0 inline-flex h-7 items-center gap-1 rounded px-2.5 text-xs font-semibold transition-colors"
             >
               <RotateCcw size={13} />
               초기화
             </button>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex shrink-0 items-center gap-1.5">
             <button
               type="button"
               onClick={() => setCreateOpen(true)}
@@ -701,14 +701,26 @@ export default function InboundPage() {
               setSelectedOrder(params.data.order)
               setDetailOrderId(params.data.order.id)
             }}
-            rowClassRules={{
-              'bg-indigo-50/60 dark:bg-indigo-950/20': (params) => params.data?.order.id === activeOrder?.id,
+            getRowStyle={(params) => {
+              if (!params.data) return undefined
+              const isDark = document.documentElement.classList.contains('dark')
+              if (params.data.order.id === activeOrder?.id) {
+                return { backgroundColor: isDark ? 'rgba(45,64,51,0.40)' : 'rgba(224,236,227,0.90)' } as Record<string, string>
+              }
+              switch (params.data.status) {
+                case 'PENDING':    return { backgroundColor: isDark ? 'rgba(59,130,246,0.10)'   : 'rgba(219,234,254,0.60)' } as Record<string, string>
+                case 'RECEIVING':  return { backgroundColor: isDark ? 'rgba(245,158,11,0.10)'  : 'rgba(254,243,199,0.70)' } as Record<string, string>
+                case 'INSPECTING': return { backgroundColor: isDark ? 'rgba(168,85,247,0.10)'  : 'rgba(243,232,255,0.70)' } as Record<string, string>
+                case 'COMPLETED':  return { backgroundColor: isDark ? 'rgba(16,185,129,0.10)'  : 'rgba(209,250,229,0.60)' } as Record<string, string>
+                case 'CANCELLED':  return { backgroundColor: isDark ? 'rgba(107,114,128,0.15)' : 'rgba(229,231,235,0.70)', opacity: '0.65' } as Record<string, string>
+                default: return undefined
+              }
             }}
           />
         </div>
 
         <div className="flex shrink-0 items-center justify-between border-t border-gray-200 px-4 py-2 text-xs text-gray-400 dark:border-gray-800">
-          <span>품목 {formatNumber(gridRows.length)}건 · 전표 {formatNumber(new Set(gridRows.map((row) => row.order.id)).size)}건</span>
+          <span>전표 {formatNumber(gridRows.length)}건 · 품목 {formatNumber(gridRows.reduce((s, r) => s + r.order.items.length, 0))}종</span>
           {activeOrder && <span>선택: <b className="text-indigo-600 dark:text-indigo-400">{activeOrder.orderNo}</b></span>}
         </div>
       </div>
@@ -789,12 +801,42 @@ function CreateModal({
   const [items, setItems] = useState<{
     productId: string
     expectedQty: number
+    inputUnit: UnitType
     lotNumber: string
     expireDate: string
     locationId: string
     product?: Product
   }[]>([])
   const [productSearch, setProductSearch] = useState('')
+  const [dropdownIdx,   setDropdownIdx]   = useState(-1)
+  const [poConfirmId, setPoConfirmId] = useState<string | null>(null)
+
+  const supplierRef   = useRef<HTMLInputElement>(null)
+  const searchRef     = useRef<HTMLInputElement>(null)
+  const dropdownRef   = useRef<HTMLDivElement>(null)
+
+  // 모달 열리면 공급업체 포커스
+  useEffect(() => { supplierRef.current?.focus() }, [])
+
+  // 검색어 바뀌면 드롭다운 선택 초기화
+  useEffect(() => { setDropdownIdx(-1) }, [productSearch])
+
+  // 하이라이트 항목 스크롤 보이기
+  useEffect(() => {
+    if (dropdownIdx >= 0 && dropdownRef.current) {
+      const el = dropdownRef.current.children[dropdownIdx] as HTMLElement | undefined
+      el?.scrollIntoView({ block: 'nearest' })
+    }
+  }, [dropdownIdx])
+
+  // Escape → 모달 닫기 (검색창 비어있을 때)
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !productSearch && poConfirmId === null) onClose()
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [productSearch, poConfirmId, onClose])
 
   // 창고 재고 조회 (품목별 현재 재고 표시용)
   const { data: inventoryList } = useQuery({
@@ -813,7 +855,7 @@ function CreateModal({
     return map
   }, [inventoryList])
 
-  const { data: productPage } = useQuery({
+  const { data: productPage, isFetching: productFetching } = useQuery({
     queryKey: QUERY_KEYS.products({ search: productSearch }),
     queryFn:  () => productApi.findAll({ search: productSearch, limit: 20 }),
     enabled:  productSearch.length > 0,
@@ -821,8 +863,26 @@ function CreateModal({
 
   const createMutation = useMutation({
     mutationFn: (req: CreateInboundOrderRequest) => inboundApi.create(req),
-    onSuccess: (data) => onCreated(data.id),
+    onSuccess: (data) => setPoConfirmId(data.id),
     onError:   () => toast.error('등록에 실패했습니다'),
+  })
+
+  const purchaseMutation = useMutation({
+    mutationFn: () => purchaseOrderApi.create({
+      warehouseId,
+      supplier: supplier || undefined,
+      orderDate: new Date().toISOString().slice(0, 10),
+      expectedDate: expectedDate || undefined,
+      memo: memo || undefined,
+      items: items.map((i) => ({
+        productId: i.productId,
+        quantity: i.expectedQty,
+        boxCount: 0,
+        unitPrice: i.product?.costPrice ?? 0,
+      })),
+    }),
+    onSuccess: () => { toast.success('발주서도 함께 등록되었습니다'); onCreated(poConfirmId!) },
+    onError:   () => { toast.error('발주서 등록에 실패했습니다');    onCreated(poConfirmId!) },
   })
 
   const addItem = (product: Product) => {
@@ -832,9 +892,17 @@ function CreateModal({
     }
     setItems((prev) => [
       ...prev,
-      { productId: product.id, expectedQty: 1, lotNumber: '', expireDate: '', locationId: '', product },
+      {
+        productId: product.id,
+        expectedQty: 1,
+        inputUnit: getPackageUnitQty(product, 'IN') ? 'IN' : 'EA',
+        lotNumber: '', expireDate: '', locationId: '', product,
+      },
     ])
     setProductSearch('')
+    setDropdownIdx(-1)
+    // 상품 추가 후 검색창으로 포커스 복귀
+    setTimeout(() => searchRef.current?.focus(), 0)
   }
 
   const removeItem = (productId: string) =>
@@ -850,6 +918,7 @@ function CreateModal({
       items: items.map((i) => ({
         productId:   i.productId,
         expectedQty: i.expectedQty,
+        inputUnit:   i.inputUnit !== 'EA' ? i.inputUnit : undefined,
         lotNumber:   i.lotNumber || undefined,
         expireDate:  i.expireDate || undefined,
         locationId:  i.locationId || undefined,
@@ -857,172 +926,269 @@ function CreateModal({
     })
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl mx-4 flex flex-col max-h-[90vh]">
+  const totalEa = items.reduce((s, i) => {
+    const p = i.product
+    const f = i.inputUnit === 'IN' ? (p ? (getPackageUnitQty(p, 'IN') ?? 1) : 1)
+            : i.inputUnit === 'OUT' ? (p ? (getPackageUnitQty(p, 'OUT') ?? 1) : 1)
+            : 1
+    return s + i.expectedQty * f
+  }, 0)
 
-        {/* 모달 헤더 */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 shrink-0">
-          <h3 className="text-base font-semibold text-gray-900 dark:text-white">입고 예정 등록</h3>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400"
-          >
-            닫기
+  const updateQty = (idx: number, val: number) =>
+    setItems((prev) => prev.map((i, j) => j === idx ? { ...i, expectedQty: Math.max(1, val) } : i))
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[88vh]">
+
+        {/* 헤더 */}
+        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 dark:border-gray-700 shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-900/30">
+              <FileText size={14} className="text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">입고 예정 등록</h3>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+            <X size={15} />
           </button>
         </div>
 
-        <div className="overflow-y-auto flex-1 px-6 py-5 space-y-6">
-
-          {/* ── 섹션 1: 기본 정보 ── */}
-          <section>
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">기본 정보</p>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div>
-                <label className={ui.label}>공급업체</label>
-                <input
-                  value={supplier}
-                  onChange={(e) => setSupplier(e.target.value)}
-                  className={ui.formInput}
-                  placeholder="공급업체명"
-                />
-              </div>
-              <div>
-                <label className={ui.label}>입고 예정일</label>
-                <input
-                  type="date"
-                  value={expectedDate}
-                  onChange={(e) => setExpectedDate(e.target.value)}
-                  className={ui.formInput}
-                />
-              </div>
+        {/* 등록 완료 → 발주서 확인 */}
+        {poConfirmId !== null ? (
+          <div className="flex flex-col items-center gap-3 py-8 px-6 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 text-xl">✓</div>
+            <p className="text-base font-semibold text-gray-900 dark:text-white">입고 예정이 등록되었습니다</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">발주서도 함께 등록하시겠습니까?</p>
+            <div className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 p-3 text-left">
+              <p className="mb-2 text-xs font-medium text-gray-400">등록될 발주서 품목</p>
+              {items.map((item) => (
+                <div key={item.productId} className="flex items-center justify-between py-0.5 text-sm">
+                  <span className="text-gray-700 dark:text-gray-300">{item.product?.name}</span>
+                  <span className="text-gray-500 tabular-nums">{formatNumber(item.expectedQty)} {item.inputUnit}</span>
+                </div>
+              ))}
             </div>
-            <div className="mt-3">
-              <label className={ui.label}>메모</label>
-              <input
-                value={memo}
-                onChange={(e) => setMemo(e.target.value)}
-                className={ui.formInput}
-                placeholder="메모 (선택)"
-              />
+          </div>
+        ) : null}
+
+        {/* 본문 */}
+        <div className={cn('overflow-y-auto flex-1 px-5 py-4 space-y-4', poConfirmId !== null && 'hidden')}>
+
+          {/* 기본 정보 */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">공급업체</label>
+              <input ref={supplierRef} value={supplier} onChange={(e) => setSupplier(e.target.value)}
+                className={ui.formInput} placeholder="공급업체명" />
             </div>
-          </section>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">입고 예정일</label>
+              <input type="date" value={expectedDate} onChange={(e) => setExpectedDate(e.target.value)}
+                className={ui.formInput} />
+            </div>
+            <div className="col-span-2">
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                메모 <span className="font-normal text-gray-300 dark:text-gray-600">(선택)</span>
+              </label>
+              <input value={memo} onChange={(e) => setMemo(e.target.value)}
+                className={ui.formInput} placeholder="특이사항, 담당자 등" />
+            </div>
+          </div>
 
-          {/* ── 섹션 2: 품목 추가 ── */}
-          <section>
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">품목 추가</p>
+          <div className="border-t border-dashed border-gray-200 dark:border-gray-700" />
 
-            {/* 상품 검색 드롭다운 */}
+          {/* 상품 검색 */}
+          <div className="relative">
             <div className="relative">
-              <label className={ui.label}>상품 검색</label>
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               <input
+                ref={searchRef}
                 value={productSearch}
                 onChange={(e) => setProductSearch(e.target.value)}
-                className={ui.formInput}
-                placeholder="상품명 또는 코드 입력"
+                onKeyDown={(e) => {
+                  const results = productPage?.items ?? []
+                  if (e.key === 'ArrowDown') {
+                    e.preventDefault()
+                    setDropdownIdx((i) => Math.min(i + 1, results.length - 1))
+                  } else if (e.key === 'ArrowUp') {
+                    e.preventDefault()
+                    setDropdownIdx((i) => Math.max(i - 1, -1))
+                  } else if (e.key === 'Enter') {
+                    e.preventDefault()
+                    const target = dropdownIdx >= 0 ? results[dropdownIdx] : results[0]
+                    if (target) addItem(target)
+                  } else if (e.key === 'Escape') {
+                    e.stopPropagation()
+                    if (productSearch) {
+                      setProductSearch('')
+                      setDropdownIdx(-1)
+                    } else {
+                      onClose()
+                    }
+                  }
+                }}
+                className="wms-input pl-9"
+                placeholder="상품명 또는 코드 검색 — ↑↓ 선택, Enter 추가, Esc 닫기"
               />
-              {productPage && productPage.items.length > 0 && productSearch && (
-                <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded shadow-lg max-h-48 overflow-y-auto">
-                  {productPage.items.map((p) => (
-                    <button
-                      key={p.id}
-                      onClick={() => addItem(p)}
-                      className="w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-600 text-sm text-gray-800 dark:text-gray-200 flex items-center justify-between"
-                    >
-                      <span>{p.name}</span>
-                      <span className="text-xs text-gray-400">{p.code}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
-
-            {/* 품목 목록 */}
-            {items.length > 0 && (
-              <div className="mt-3 space-y-3">
-                <p className="text-xs font-medium text-gray-500">
-                  품목 <span className="text-gray-900 dark:text-gray-100">{formatNumber(items.length)}개</span>
-                </p>
-                {items.map((item, idx) => {
-                  const currentStock = inventoryMap[item.productId] ?? 0
-                  return (
-                    <div
-                      key={item.productId}
-                      className="rounded border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 p-3 space-y-2"
-                    >
-                      {/* 품목 행 */}
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                            {item.product?.name}
-                          </p>
-                          <p className="text-xs text-gray-400">
-                            {item.product?.code}
-                            {item.product?.unit && (
-                              <span className="ml-1.5 text-gray-400">({item.product.unit})</span>
-                            )}
-                          </p>
+            {productSearch && (
+              <div ref={dropdownRef} className="absolute z-[100] top-full left-0 right-0 mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-52 overflow-y-auto">
+                {productFetching ? (
+                  <p className="px-4 py-3 text-xs text-gray-400 text-center">검색 중...</p>
+                ) : productPage && productPage.items.length > 0 ? (
+                  productPage.items.map((p, i) => {
+                    const stock = inventoryMap[p.id] ?? 0
+                    const spec  = formatUnitSpec(p)
+                    const highlighted = i === dropdownIdx
+                    return (
+                      <button key={p.id} onClick={() => addItem(p)}
+                        className={cn(
+                          'w-full text-left px-3 py-2.5 flex items-center justify-between gap-3 border-b border-gray-100 dark:border-gray-600/50 last:border-0 transition-colors',
+                          highlighted
+                            ? 'bg-indigo-50 dark:bg-indigo-900/30'
+                            : 'hover:bg-gray-50 dark:hover:bg-gray-600',
+                        )}>
+                        <div className="min-w-0">
+                          <p className={cn('text-sm font-medium truncate', highlighted ? 'text-indigo-700 dark:text-indigo-300' : 'text-gray-800 dark:text-gray-200')}>{p.name}</p>
+                          <p className="text-xs text-gray-400 font-mono">{p.code}{spec !== '-' ? ` · ${spec}` : ''}</p>
                         </div>
-                        {/* 수량 입력 */}
-                        <div className="flex items-center gap-1">
-                          <input
-                            type="number"
-                            min={1}
-                            value={item.expectedQty}
-                            onChange={(e) =>
-                              setItems((prev) =>
-                                prev.map((i, j) =>
-                                  j === idx ? { ...i, expectedQty: parseInt(e.target.value) || 1 } : i
-                                )
-                              )
-                            }
-                            className="wms-input w-20 px-2 py-1 text-right tabular-nums dark:border-gray-600 dark:bg-gray-700"
-                            placeholder="수량"
-                          />
-                          <span className="w-8 text-center text-xs text-gray-400">
-                            {item.product?.unit || '-'}
-                          </span>
+                        <div className="text-right shrink-0">
+                          <p className={cn('text-xs font-semibold tabular-nums', stock <= 0 ? 'text-red-500' : stock < 10 ? 'text-amber-500' : 'text-emerald-600 dark:text-emerald-400')}>
+                            {formatNumber(stock)}
+                          </p>
+                          <p className="text-[10px] text-gray-400">현재고</p>
                         </div>
-                        {/* 삭제 */}
-                        <button
-                          onClick={() => removeItem(item.productId)}
-                          className="p-1 text-gray-400 hover:text-red-500 transition-colors text-xs"
-                          title="품목 삭제"
-                        >
-                          ✕
-                        </button>
-                      </div>
-
-                      {/* 재고 요약 영역 */}
-                      <StockSummaryBox
-                        currentStock={currentStock}
-                        changeAmount={item.expectedQty}
-                        unit={item.product?.unit || 'EA'}
-                        type="inbound"
-                      />
-                    </div>
-                  )
-                })}
+                      </button>
+                    )
+                  })
+                ) : (
+                  <p className="px-4 py-3 text-xs text-gray-400 text-center">검색 결과 없음</p>
+                )}
               </div>
             )}
-          </section>
+          </div>
+
+          {/* 품목 테이블 */}
+          <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                품목 <span className="font-bold text-gray-900 dark:text-white">{items.length}개</span>
+              </span>
+              {items.length > 0 && (
+                <span className="text-xs text-gray-400 tabular-nums">
+                  총 <span className="font-semibold text-gray-700 dark:text-gray-300">{formatNumber(totalEa)} EA</span> 입고 예정
+                </span>
+              )}
+            </div>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100 dark:border-gray-700">
+                  <th className="px-3 py-1.5 text-left text-xs font-medium text-gray-400 w-36">상품명</th>
+                  <th className="px-2 py-1.5 text-center text-xs font-medium text-gray-400">수량</th>
+                  <th className="px-2 py-1.5 text-center text-xs font-medium text-gray-400 w-28">단위</th>
+                  <th className="px-2 py-1.5 text-right text-xs font-medium text-gray-400 w-20 whitespace-nowrap">현재재고</th>
+                  <th className="w-8"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-700/60">
+                {items.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-3 py-6 text-center text-xs text-gray-400">
+                      위 검색창에서 상품을 검색하여 추가하세요
+                    </td>
+                  </tr>
+                ) : items.map((item, idx) => {
+                  const currentStock = inventoryMap[item.productId] ?? 0
+                  const inQty  = item.product ? getPackageUnitQty(item.product, 'IN')  : null
+                  const outQty = item.product ? getPackageUnitQty(item.product, 'OUT') : null
+                  const factor = item.inputUnit === 'IN' ? (inQty ?? 1) : item.inputUnit === 'OUT' ? (outQty ?? 1) : 1
+                  const eaCount = item.expectedQty * factor
+                  return (
+                    <tr key={item.productId} className="hover:bg-gray-50/80 dark:hover:bg-gray-700/30 transition-colors">
+                      <td className="px-3 py-2.5">
+                        <p className="font-medium text-gray-800 dark:text-gray-200 truncate max-w-[130px] text-xs leading-tight">{item.product?.name}</p>
+                        <p className="text-[10px] text-gray-400 font-mono mt-0.5">{item.product?.code}</p>
+                      </td>
+                      <td className="px-2 py-2 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => updateQty(idx, item.expectedQty - 1)}
+                            className="h-6 w-6 rounded border border-gray-200 dark:border-gray-600 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 flex items-center justify-center text-sm font-medium transition-colors shrink-0"
+                          >−</button>
+                          <input
+                            type="number" min={1} value={item.expectedQty}
+                            onChange={(e) => updateQty(idx, parseInt(e.target.value) || 1)}
+                            className="wms-input w-14 px-1 py-0.5 text-center tabular-nums dark:border-gray-600 dark:bg-gray-700 text-sm"
+                          />
+                          <button
+                            onClick={() => updateQty(idx, item.expectedQty + 1)}
+                            className="h-6 w-6 rounded border border-gray-200 dark:border-gray-600 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 flex items-center justify-center text-sm font-medium transition-colors shrink-0"
+                          >＋</button>
+                        </div>
+                        {item.inputUnit !== 'EA' && factor > 1 && (
+                          <p className="text-[10px] text-blue-500 tabular-nums mt-0.5 text-center">= {formatNumber(eaCount)} EA</p>
+                        )}
+                      </td>
+                      <td className="px-2 py-2 text-center">
+                        {(inQty || outQty) ? (
+                          <select
+                            value={item.inputUnit}
+                            onChange={(e) => setItems((prev) => prev.map((i, j) => j === idx ? { ...i, inputUnit: e.target.value as UnitType } : i))}
+                            className="wms-input px-1 py-0.5 text-xs dark:border-gray-600 dark:bg-gray-700 w-full"
+                          >
+                            <option value="EA">EA</option>
+                            {inQty  && <option value="IN">IN ({inQty})</option>}
+                            {outQty && <option value="OUT">OUT ({outQty})</option>}
+                          </select>
+                        ) : (
+                          <span className="text-xs text-gray-400">{item.product?.unit || 'EA'}</span>
+                        )}
+                      </td>
+                      <td className="px-2 py-2 text-right">
+                        <span className="text-xs tabular-nums text-gray-400 dark:text-gray-500">
+                          {formatNumber(currentStock)}
+                        </span>
+                      </td>
+                      <td className="px-2 py-2 text-center">
+                        <button onClick={() => removeItem(item.productId)}
+                          className="h-5 w-5 rounded text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center justify-center mx-auto"
+                          title="품목 삭제">
+                          <X size={11} />
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        {/* 모달 푸터 */}
-        <div className="flex gap-2 px-6 py-4 border-t border-gray-200 dark:border-gray-700 shrink-0">
-          <button
-            onClick={onClose}
-            className={cn(ui.btnSecondary, 'flex-1 py-2 text-sm')}
-          >
-            취소
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={createMutation.isPending}
-            className="wms-primary-button flex-1 py-2 rounded text-sm font-medium disabled:opacity-50 transition-colors"
-          >
-            {createMutation.isPending ? '등록 중...' : '등록'}
-          </button>
+        {/* 푸터 */}
+        <div className="flex items-center gap-3 px-5 py-3.5 border-t border-gray-200 dark:border-gray-700 shrink-0">
+          {poConfirmId !== null ? (
+            <>
+              <button onClick={() => onCreated(poConfirmId)} className={cn(ui.btnSecondary, 'flex-1 py-2 text-sm')}>건너뛰기</button>
+              <button onClick={() => purchaseMutation.mutate()} disabled={purchaseMutation.isPending}
+                className="wms-primary-button flex-1 py-2 rounded text-sm font-medium disabled:opacity-50 transition-colors">
+                {purchaseMutation.isPending ? '등록 중...' : '발주서 등록'}
+              </button>
+            </>
+          ) : (
+            <>
+              {items.length > 0 && (
+                <span className="text-xs text-gray-400 tabular-nums mr-auto">
+                  {items.length}개 품목 · {formatNumber(totalEa)} EA
+                </span>
+              )}
+              <button onClick={onClose} className={cn(ui.btnSecondary, 'px-5 py-2 text-sm')}>취소</button>
+              <button onClick={handleSubmit} disabled={createMutation.isPending}
+                className="wms-primary-button px-6 py-2 rounded text-sm font-medium disabled:opacity-50 transition-colors">
+                {createMutation.isPending ? '등록 중...' : '입고 등록'}
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

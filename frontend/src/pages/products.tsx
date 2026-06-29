@@ -8,6 +8,7 @@ import { clientApi } from '@/api/client.api'
 import { warehouseApi } from '@/api/warehouse.api'
 import { stockApi } from '@/api/stock.api'
 import { QUERY_KEYS } from '@/constants/query-keys'
+import { useEscapeKey } from '@/hooks/useEscapeKey'
 import { SALE_STATUS_LABEL } from '@/constants/stock.constants'
 import { formatNumber, formatDecimal, formatDateTime } from '@/utils/format'
 import { cn } from '@/utils/cn'
@@ -667,6 +668,9 @@ const selectedClientLabel = selectedClient?.name
     setNewBcVal(''); setNewBcType('UNIT'); setNewBcQty(1); setNewBcPrimary(false)
     setPendingBarcodes([])
   }
+  useEscapeKey(closeModal, showModal && !showClientPicker && !showLocationPicker && !barcodeModal)
+  useEscapeKey(() => setShowClientPicker(false), showClientPicker)
+  useEscapeKey(() => setShowLocationPicker(false), showLocationPicker)
 
   const toggleRow = (id: string) => {
     setSelectedIds((prev) => {
