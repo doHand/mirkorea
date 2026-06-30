@@ -1,5 +1,5 @@
-import { get, post, put, del, patch } from './client'
-import type { Product, Barcode, BarcodeUnitType, PageResponse, SaleStatus, BarcodeResolveResult, ProductPricing, ProductUnit, ProductCategory, UnitType } from '@/types/api.types'
+import { get, post, put, del } from './client'
+import type { Product, Barcode, BarcodeUnitType, PageResponse, SaleStatus, BarcodeResolveResult, ProductUnit, ProductCategory, UnitType } from '@/types/api.types'
 
 interface ProductFilter {
   search?: string
@@ -57,11 +57,6 @@ export const productApi = {
   resolveBarcode: (barcodeValue: string) =>
     get<BarcodeResolveResult>(`/products/barcode/${encodeURIComponent(barcodeValue)}`),
 
-  getPricing: () =>
-    get<ProductPricing[]>('/products/pricing'),
-
-  updatePrice: (id: string, data: { costPrice?: number; sellPrice?: number }) =>
-    patch<Product>(`/products/${id}`, data),
 }
 
 export const unitApi = {

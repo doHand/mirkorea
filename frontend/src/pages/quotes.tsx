@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
@@ -20,6 +20,7 @@ import {
   QUOTE_PRINT_TITLES,
   printQuoteDocument,
 } from '@/utils/printDocument'
+import { openBlankPrintWindow } from '@/utils/printWindow'
 import type { Client, Product, Quote } from '@/types/api.types'
 import type { ColDef } from 'ag-grid-community'
 
@@ -108,10 +109,10 @@ export default function QuotesPage() {
   const { data: clients } = useQuery({ queryKey: ['clients-all'], queryFn: clientApi.findAllActive })
   const { data: products } = useQuery({ queryKey: ['products-all'], queryFn: () => productApi.findAll({ limit: 999 }) })
 
-  const findClientForQuote = (quote: Quote) =>
+  const findClientForQuote = useCallback((quote: Quote) =>
     clients?.find((client) => client.id === quote.clientId)
     ?? clients?.find((client) => client.name === quote.clientName)
-    ?? null
+    ?? null, [clients])
 
   const selectedClient = clients?.find((c) => c.id === form.clientId)
 
@@ -263,8 +264,8 @@ export default function QuotesPage() {
   }
 
   const submitForm = async (printAfterSave = false) => {
-    const printWindow = printAfterSave ? window.open('', '_blank', 'width=820,height=1060') : null
-    if (printAfterSave && !printWindow) { toast.error('팝업 차단을 해제해주세요'); return }
+    const printWindow = printAfterSave ? openBlankPrintWindow('width=820,height=1060') : null
+    if (printAfterSave && !printWindow) return
     try {
       const saved = editing ? await updateMutation.mutateAsync() : await createMutation.mutateAsync()
       if (printAfterSave) printQuoteDocument(saved, printWindow, findClientForQuote(saved), supplierInfo, form.printTitle)

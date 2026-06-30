@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/router'
 import { AgGridReact } from 'ag-grid-react'
-import { ClientSideRowModelModule, ModuleRegistry, type ColDef } from 'ag-grid-community'
+import type { ColDef } from 'ag-grid-community'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { FileDown, FileText, Menu, Minus, Plus, RefreshCw, RotateCcw, Search, X } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -15,13 +15,12 @@ import { stockApi } from '@/api/stock.api'
 import { QUERY_KEYS } from '@/constants/query-keys'
 import { cn } from '@/utils/cn'
 import * as ui from '@/styles/ui'
+import { datedExcelFilename, writeRowsToExcel } from '@/utils/excel'
 import { formatNumber } from '@/utils/format'
 import { formatUnitSpec, getPackageUnitQty } from '@/utils/unit-spec'
 import type { InboundOrder, InboundOrderItem, InboundStatus, Product, UnitType } from '@/types/api.types'
 import { StatusBadge } from '@/components/StatusBadge'
 import { ImportButton, type ImportConfig, type ImportRow } from '@/components/ImportButton'
-
-ModuleRegistry.registerModules([ClientSideRowModelModule])
 
 interface InboundLineRow {
   id: string
@@ -131,7 +130,7 @@ export default function InboundPage() {
     enabled: !!warehouse?.id,
   })
 
-  const orders    = page?.items ?? []
+  const orders    = useMemo(() => page?.items ?? [], [page?.items])
   const allOrders = allPage?.items ?? []
 
   const filtered = useMemo(() => {
@@ -317,11 +316,7 @@ export default function InboundPage() {
         자재번호: row.materialNo,
         상태: STATUS_LABEL[row.status],
       }))
-      const XLSX = await import('xlsx')
-      const ws = XLSX.utils.json_to_sheet(rows)
-      const wb = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(wb, ws, '입고내역')
-      XLSX.writeFile(wb, `입고내역_${new Date().toISOString().slice(0, 10)}.xlsx`)
+      await writeRowsToExcel(rows, datedExcelFilename('입고내역'), '입고내역')
     } catch {
       toast.error('엑셀 다운로드에 실패했습니다')
     }

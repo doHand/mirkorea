@@ -52,10 +52,21 @@ export default function LoginPage() {
   const inputCls = 'w-full px-3 py-2 border border-[#ede5d8] dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500'
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f5efe6] via-[#faf7f2] to-[#ede5d8] flex items-center justify-center p-4">
-      <div className="bg-[#fefdfb] dark:bg-gray-800 rounded-2xl shadow-xl border border-[#ede5d8] w-full max-w-md p-8">
+    <div
+      className="min-h-screen flex items-center justify-center p-4 relative"
+      style={{
+        backgroundImage: "url('/login-bg.jpg')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
+      {/* 배경 어둠 오버레이 */}
+      <div className="absolute inset-0 bg-black/40" />
+
+      <div className="relative z-10 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/30 w-full max-w-md p-8">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">MK WMS</h1>
+          <h1 className="text-2xl font-bold text-green-800 dark:text-white">MIRKOREA WMS</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">창고 물류 관리 시스템</p>
         </div>
 

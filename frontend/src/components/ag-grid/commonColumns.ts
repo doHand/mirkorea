@@ -4,7 +4,7 @@ import type { SaleStatus } from '@/types/api.types'
 type WithSaleStatus = { saleStatus?: SaleStatus }
 type WithCreatedAt = { createdAt?: string }
 
-export const SALE_STATUS_VALUES = ['ACTIVE', 'INACTIVE', 'DISCONTINUED'] satisfies SaleStatus[]
+const SALE_STATUS_VALUES = ['ACTIVE', 'INACTIVE', 'DISCONTINUED'] satisfies SaleStatus[]
 
 const SALE_STATUS_LABEL: Record<SaleStatus, string> = {
   ACTIVE: '활성',
@@ -12,7 +12,7 @@ const SALE_STATUS_LABEL: Record<SaleStatus, string> = {
   DISCONTINUED: '단종',
 }
 
-export function createSaleStatusColumn<T extends WithSaleStatus>(): ColDef<T> {
+function createSaleStatusColumn<T extends WithSaleStatus>(): ColDef<T> {
   return {
     headerName: '상태',
     field: 'saleStatus' as ColDef<T>['field'],
@@ -24,7 +24,7 @@ export function createSaleStatusColumn<T extends WithSaleStatus>(): ColDef<T> {
   }
 }
 
-export function createCreatedAtColumn<T extends WithCreatedAt>(): ColDef<T> {
+function createCreatedAtColumn<T extends WithCreatedAt>(): ColDef<T> {
   return {
     headerName: '등록일',
     field: 'createdAt' as ColDef<T>['field'],

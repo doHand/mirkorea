@@ -53,12 +53,12 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
-    public ApiResponse<Product> update(@PathVariable UUID id, @RequestBody ProductUpdateRequest req) {
+    public ApiResponse<Product> update(@PathVariable UUID id, @Valid @RequestBody ProductUpdateRequest req) {
         return ApiResponse.ok(productService.update(id, req));
     }
 
     @PatchMapping("/{id}")
-    public ApiResponse<Product> patch(@PathVariable UUID id, @RequestBody ProductUpdateRequest req) {
+    public ApiResponse<Product> patch(@PathVariable UUID id, @Valid @RequestBody ProductUpdateRequest req) {
         return ApiResponse.ok(productService.update(id, req));
     }
 

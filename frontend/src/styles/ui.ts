@@ -2,7 +2,6 @@
 // Usage: import { card, tableWrap, btnPrimary } from '@/styles/ui'
 
 // ── Container / Card ────────────────────────────────────────────────────────
-export const card     = 'wms-card'
 export const cardFlat = 'wms-card-flat'
 
 /** Card with overflow-hidden for tables */
@@ -18,7 +17,6 @@ export const thC   = 'text-center px-3 py-2 text-xs font-semibold'
 export const thR   = 'text-right px-3 py-2 text-xs font-semibold'
 export const tbody = 'wms-table-body'
 export const tr    = 'wms-table-row'
-export const td    = 'wms-table-cell'
 
 // ── Typography ───────────────────────────────────────────────────────────────
 export const h2Cls   = 'wms-heading'
@@ -42,7 +40,6 @@ export const btnDanger    = 'wms-danger-button'
 export const btnIcon       = 'wms-icon-button'
 export const btnIconEdit   = 'wms-icon-button'
 export const btnIconDelete = 'wms-icon-button wms-icon-button-danger'
-export const btnIconPrint  = 'wms-icon-button'
 
 // ── Modal ────────────────────────────────────────────────────────────────────
 export const modalOverlay = 'wms-modal-overlay'

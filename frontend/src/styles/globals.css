@@ -996,6 +996,7 @@
   background: var(--color-surface); color: var(--color-text); font-size: 0.875rem; outline: none;
 }
 .wms-input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgb(255 107 74 / 15%); }
+.wms-input::-ms-clear, .wms-input::-webkit-search-cancel-button { display: none; }
 .wms-search-input { padding-left: 2.25rem; }
 
 /* 버튼 기본 구조 */

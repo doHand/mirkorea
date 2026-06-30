@@ -104,6 +104,8 @@ public class OutboundOrderService {
             || orders.stream().anyMatch(order -> order.getStatus() != OutboundOrderStatus.INSTRUCTED)) {
             throw invalidStatus();
         }
+        long distinctWarehouses = orders.stream().map(OutboundOrder::getWarehouseId).distinct().count();
+        if (distinctWarehouses > 1) throw new BusinessException(ErrorCode.INVALID_REQUEST);
 
         Map<UUID, Integer> requestedByProduct = new HashMap<>();
         for (PickingCompletionRequest.ItemRequest item : req.items) {

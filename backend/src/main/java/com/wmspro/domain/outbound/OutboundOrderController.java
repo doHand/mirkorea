@@ -2,6 +2,7 @@ package com.wmspro.domain.outbound;
 
 import com.wmspro.common.*;
 import com.wmspro.common.security.WmsPrincipal;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,13 +25,13 @@ public class OutboundOrderController {
     }
 
     @PostMapping @ResponseStatus(HttpStatus.CREATED) @PreAuthorize("hasAnyRole('ADMIN','MANAGER','WORKER')")
-    public ApiResponse<OutboundOrder> create(@RequestBody OutboundOrderRequest req,
+    public ApiResponse<OutboundOrder> create(@Valid @RequestBody OutboundOrderRequest req,
         @AuthenticationPrincipal WmsPrincipal principal) {
         return ApiResponse.ok(service.create(req, principal.getUuid()), "주문을 수집했습니다");
     }
 
     @PutMapping("/{id}") @PreAuthorize("hasAnyRole('ADMIN','MANAGER','WORKER')")
-    public ApiResponse<OutboundOrder> update(@PathVariable UUID id, @RequestBody OutboundOrderRequest req) {
+    public ApiResponse<OutboundOrder> update(@PathVariable UUID id, @Valid @RequestBody OutboundOrderRequest req) {
         return ApiResponse.ok(service.update(id, req), "주문을 수정했습니다");
     }
 
@@ -46,7 +47,7 @@ public class OutboundOrderController {
     }
 
     @PostMapping("/complete-picking") @PreAuthorize("hasAnyRole('ADMIN','MANAGER','WORKER')")
-    public ApiResponse<java.util.List<OutboundOrder>> completePicking(@RequestBody PickingCompletionRequest req,
+    public ApiResponse<java.util.List<OutboundOrder>> completePicking(@Valid @RequestBody PickingCompletionRequest req,
         @AuthenticationPrincipal WmsPrincipal principal) {
         return ApiResponse.ok(service.completePicking(req, principal.getUuid()), "선택한 피킹을 완료했습니다");
     }

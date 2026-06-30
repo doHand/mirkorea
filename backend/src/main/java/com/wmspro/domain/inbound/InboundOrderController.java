@@ -6,6 +6,7 @@ import com.wmspro.common.security.WmsPrincipal;
 import com.wmspro.domain.inbound.dto.CreateInboundOrderRequest;
 import com.wmspro.domain.inbound.dto.InspectItemRequest;
 import com.wmspro.domain.inbound.dto.ReceiveItemRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -41,7 +42,7 @@ public class InboundOrderController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER','WORKER')")
     public ApiResponse<InboundOrder> create(
-        @RequestBody CreateInboundOrderRequest req,
+        @Valid @RequestBody CreateInboundOrderRequest req,
         @AuthenticationPrincipal WmsPrincipal principal
     ) {
         return ApiResponse.ok(service.create(req, principal.getUuid()), "입고 예정이 등록되었습니다");
@@ -51,7 +52,7 @@ public class InboundOrderController {
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER','WORKER')")
     public ApiResponse<InboundOrder> receive(
         @PathVariable UUID id,
-        @RequestBody List<ReceiveItemRequest> items
+        @Valid @RequestBody List<ReceiveItemRequest> items
     ) {
         return ApiResponse.ok(service.receive(id, items), "수령 정보가 저장되었습니다");
     }
@@ -60,7 +61,7 @@ public class InboundOrderController {
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ApiResponse<InboundOrder> inspect(
         @PathVariable UUID id,
-        @RequestBody List<InspectItemRequest> items
+        @Valid @RequestBody List<InspectItemRequest> items
     ) {
         return ApiResponse.ok(service.inspect(id, items), "검수 정보가 저장되었습니다");
     }

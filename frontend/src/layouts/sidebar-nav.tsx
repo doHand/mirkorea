@@ -5,52 +5,21 @@ import { useState } from 'react'
 import {
   LogOut, ChevronDown, Warehouse, LayoutDashboard, Package, Barcode, Ruler, Tags,
   ArrowDownToLine, ArrowUpFromLine, ScanLine, History, ClipboardCheck, Building2,
-  FileText, Users, ShieldCheck, Settings, Bell, UserCircle, type LucideIcon,
+  FileText, Users, Settings, Bell, UserCircle, BookOpen, type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/utils/cn'
 import { useAuthStore } from '@/stores/auth.store'
 import { useMenuPermissionStore } from '@/stores/menu-permission.store'
 import type { UserRole } from '@/types/api.types'
 
-const TEXT_MAP: Record<string, string> = {
-  dashboard:           '홈',
-  products:            '상품',
-  inventory:           '재고',
-  scan:                '스캔',
-  'product-codes':     '코드',
-  barcodes:            '바코',
-  'product-attrs':     '속성',
-  'box-qty':           'OUT',
-  lot:                 'LOT',
-  units:               '단위',
-  categories:          '분류',
-  inbound:             '입고',
-  outbound:            '출고',
-  pricing:             '가격',
-  warehouse:           '창고',
-  transactions:        '거래',
-  users:               '유저',
-  'menu-permissions':  '메뉴',
-  profile:             '내정보',
-  clients:             '거래처',
-  quotes:              '견적',
-  'supplier-settings': '공급',
-  'role-management':   '역할',
-  'audit-logs':        '로그',
-  alerts:              '알림',
-  permissions:         '권한',
-  'inventory-audit':   '실사',
-}
-
 // Menu IDs are stable even when administrators rename menu labels, so icons remain consistent.
 const MENU_ICONS: Record<string, LucideIcon> = {
-  dashboard: LayoutDashboard, products: Package, inventory: ClipboardCheck, scan: ScanLine,
-  'product-codes': Tags, barcodes: Barcode, 'product-attrs': Package, 'box-qty': Package,
-  lot: ClipboardCheck, units: Ruler, categories: Tags, inbound: ArrowDownToLine,
-  outbound: ArrowUpFromLine, pricing: Tags, warehouse: Warehouse, transactions: History,
+  dashboard: LayoutDashboard, help: BookOpen, products: Package, inventory: ClipboardCheck, scan: ScanLine,
+  barcodes: Barcode, 'product-attrs': Package, units: Ruler, categories: Tags, inbound: ArrowDownToLine,
+  outbound: ArrowUpFromLine, warehouse: Warehouse, transactions: History,
   'inventory-audit': ClipboardCheck, clients: Building2, quotes: FileText, users: Users,
-  permissions: ShieldCheck, 'menu-permissions': Settings, 'supplier-settings': Settings,
-  'role-management': ShieldCheck, 'audit-logs': History, alerts: Bell, profile: UserCircle,
+  'menu-permissions': Settings, 'supplier-settings': Settings,
+  'audit-logs': History, alerts: Bell, profile: UserCircle,
 }
 
 interface Props {

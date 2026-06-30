@@ -8,7 +8,7 @@ interface LoginResponse {
 }
 
 export const authApi = {
-  register: async (data: { username: string; email: string; fullName: string; password: string }): Promise<void> => {
+  register: async (data: { username: string; email: string; fullName: string; phone?: string; password: string }): Promise<void> => {
     await apiClient.post('/auth/register', data)
   },
 

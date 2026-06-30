@@ -11,6 +11,9 @@ frontend/out/
 backend/target/
 frontend/build/
 frontend/dist/
+frontend/tsconfig.tsbuildinfo
+*.tsbuildinfo
+*.class
 
 # Logs
 *.log
@@ -40,6 +43,10 @@ yarn-error.log*
 # OS
 .DS_Store
 Thumbs.db
+
+# Local screenshots / QA artifacts
+screenshot*.png
+frontend/screenshot*.mjs
 
 # Spring Boot
 *.jar

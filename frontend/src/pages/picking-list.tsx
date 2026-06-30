@@ -39,7 +39,7 @@ export default function PickingListPage() {
     queryKey: ['clients', 'active'],
     queryFn: clientApi.findAllActive,
   })
-  const orders = data?.items ?? []
+  const orders = useMemo(() => data?.items ?? [], [data?.items])
   const instructedDates = useMemo(() => Array.from(new Set(
     orders.filter((order) => order.status === 'INSTRUCTED' && order.requestedShipDate)
       .map((order) => order.requestedShipDate!),

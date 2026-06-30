@@ -1,5 +1,5 @@
 import apiClient from '@/lib/axios.config'
-import type { ApiResponse, PageResponse } from '@/types/api.types'
+import type { ApiResponse } from '@/types/api.types'
 
 // 공통 요청 헬퍼
 export async function get<T>(url: string, params?: object): Promise<T> {
@@ -26,5 +26,3 @@ export async function del<T = void>(url: string): Promise<T> {
   const res = await apiClient.delete<ApiResponse<T>>(url)
   return res.data.data as T
 }
-
-export type { PageResponse }

@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-export interface OpenTab {
+interface OpenTab {
   href: string
   label: string
 }
@@ -21,7 +21,7 @@ interface OpenTabsState {
   setSplitRatio: (ratio: number) => void
 }
 
-export const MAX_OPEN_TABS = 10
+const MAX_OPEN_TABS = 10
 
 export const useOpenTabsStore = create<OpenTabsState>()(
   persist(

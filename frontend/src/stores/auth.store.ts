@@ -1,8 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { clearAuthTokens, getSessionExpiry, saveAuthTokens, saveSessionExpiry } from '@/utils/auth-token'
 import type { User } from '@/types/api.types'
-
-const SESSION_MINUTES = 30
 
 interface AuthState {
   user:             User | null
@@ -30,25 +29,20 @@ export const useAuthStore = create<AuthState>()(
       setHasHydrated:   (v) => set({ _hasHydrated: v }),
 
       setAuth: (user, accessToken, refreshToken) => {
-        const sessionExpiresAt = Date.now() + SESSION_MINUTES * 60 * 1000
-        localStorage.setItem('access_token', accessToken)
-        localStorage.setItem('refresh_token', refreshToken)
-        localStorage.setItem('wms-session-expiry', String(sessionExpiresAt))
+        const sessionExpiresAt = getSessionExpiry()
+        saveAuthTokens(accessToken, refreshToken, sessionExpiresAt)
         set({ user, accessToken, refreshToken, isAuth: true, sessionExpiresAt })
       },
 
       setUser: (user) => set({ user }),
 
       extendSession: () => {
-        const sessionExpiresAt = Date.now() + SESSION_MINUTES * 60 * 1000
-        localStorage.setItem('wms-session-expiry', String(sessionExpiresAt))
+        const sessionExpiresAt = saveSessionExpiry()
         set({ sessionExpiresAt })
       },
 
       clearAuth: () => {
-        localStorage.removeItem('access_token')
-        localStorage.removeItem('refresh_token')
-        localStorage.removeItem('wms-session-expiry')
+        clearAuthTokens()
         set({ user: null, accessToken: null, refreshToken: null, isAuth: false, sessionExpiresAt: null })
       },
     }),

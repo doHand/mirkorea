@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { clearAuthTokens, getAccessToken, getRefreshToken, saveAuthTokens } from '@/utils/auth-token'
 
 const apiClient = axios.create({
   baseURL: '/api/v1',
@@ -8,7 +9,7 @@ const apiClient = axios.create({
 
 // 요청 인터셉터: JWT 자동 첨부
 apiClient.interceptors.request.use((config) => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
+  const token = getAccessToken()
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
@@ -31,7 +32,7 @@ apiClient.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null
+    const refreshToken = getRefreshToken()
     if (!refreshToken) {
       redirectToLogin()
       return Promise.reject(error)
@@ -52,12 +53,7 @@ apiClient.interceptors.response.use(
     try {
       const res = await axios.post('/api/v1/auth/refresh', { refreshToken })
       const { accessToken, refreshToken: newRefreshToken } = res.data.data
-      localStorage.setItem('access_token', accessToken)
-      localStorage.setItem('refresh_token', newRefreshToken)
-
-      // 세션 만료 시각 30분 연장
-      const expiry = Date.now() + 30 * 60 * 1000
-      localStorage.setItem('wms-session-expiry', String(expiry))
+      saveAuthTokens(accessToken, newRefreshToken)
 
       apiClient.defaults.headers.common.Authorization = `Bearer ${accessToken}`
       original.headers.Authorization = `Bearer ${accessToken}`
@@ -74,9 +70,7 @@ apiClient.interceptors.response.use(
 
 function redirectToLogin() {
   if (typeof window === 'undefined') return
-  localStorage.removeItem('access_token')
-  localStorage.removeItem('refresh_token')
-  localStorage.removeItem('wms-session-expiry')
+  clearAuthTokens()
   window.location.href = '/login'
 }
 

@@ -40,10 +40,3 @@ export const SALE_STATUS_LABEL = {
   INACTIVE:     '판매중지',
   DISCONTINUED: '단종',
 }
-
-export const BARCODE_UNIT_LABEL = {
-  UNIT:   '낱개',
-  OUT:    'OUT',
-  INNER:  '이너OUT',
-  PALLET: '팔레트',
-}

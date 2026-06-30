@@ -241,7 +241,7 @@ export interface InboundOrder {
 
 export type PurchaseOrderStatus = 'DRAFT' | 'ORDERED' | 'CONVERTED' | 'CANCELLED'
 
-export interface PurchaseOrderItem {
+interface PurchaseOrderItem {
   id: string
   productId: string
   quantity: number
@@ -345,7 +345,7 @@ export interface Client {
   createdAt: string
 }
 
-export interface QuoteItem {
+interface QuoteItem {
   id: string
   productId?: string
   productCode?: string
@@ -375,23 +375,7 @@ export interface Quote {
   items: QuoteItem[]
 }
 
-export interface ProductPricing {
-  id: string
-  code: string
-  name: string
-  category?: string
-  clientId?: string
-  clientName?: string
-  unit: string
-  boxQty: number
-  costPrice?: number
-  sellPrice?: number
-  safetyStock: number
-  saleStatus: SaleStatus
-  totalStock: number
-}
-
-export type AuditStatus = 'DRAFT' | 'CONFIRMED'
+type AuditStatus = 'DRAFT' | 'CONFIRMED'
 
 export interface InventoryAuditItem {
   id: string

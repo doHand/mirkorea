@@ -3,6 +3,8 @@ package com.wmspro.domain.product;
 import com.wmspro.common.ApiResponse;
 import com.wmspro.common.exception.BusinessException;
 import com.wmspro.common.exception.ErrorCode;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -30,7 +32,7 @@ public class ProductUnitController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
     @Transactional
-    public ApiResponse<ProductUnit> create(@RequestBody UnitRequest req) {
+    public ApiResponse<ProductUnit> create(@Valid @RequestBody UnitRequest req) {
         if (unitRepo.existsByCode(req.code)) {
             throw new BusinessException(ErrorCode.PRODUCT_CODE_DUPLICATE);
         }
@@ -46,7 +48,7 @@ public class ProductUnitController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
     @Transactional
-    public ApiResponse<ProductUnit> update(@PathVariable UUID id, @RequestBody UnitRequest req) {
+    public ApiResponse<ProductUnit> update(@PathVariable UUID id, @Valid @RequestBody UnitRequest req) {
         ProductUnit unit = unitRepo.findById(id)
             .orElseThrow(() -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND));
         if (unitRepo.existsByCodeAndIdNot(req.code, id)) {
@@ -70,8 +72,8 @@ public class ProductUnitController {
 
     @Getter @Setter
     static class UnitRequest {
-        public String  code;
-        public String  label;
+        @NotBlank public String  code;
+        @NotBlank public String  label;
         public String  description;
         public int     sortOrder = 0;
         public Boolean isActive;

@@ -13,8 +13,9 @@ export interface MenuDef {
 const ALL: UserRole[] = ['ADMIN', 'MANAGER', 'WORKER', 'VIEWER']
 const ADMIN_ONLY: UserRole[] = ['ADMIN']
 
-export const DEFAULT_MENUS: MenuDef[] = [
+const DEFAULT_MENUS: MenuDef[] = [
   { menuId: 'dashboard',        href: '/',                 label: '대시보드',          section: '홈', roles: ALL },
+  { menuId: 'help',             href: '/help',             label: '사용 설명서',        section: '홈', roles: ALL },
   { menuId: 'products',         href: '/products',         label: '상품 관리',         section: '상품 관리', roles: ALL },
   { menuId: 'product-attrs',    href: '/product-attrs',    label: '상품 마스터',       section: '상품 관리', roles: ALL },
   { menuId: 'barcodes',         href: '/barcodes',         label: '바코드 관리',       section: '상품 관리', roles: ALL },
@@ -29,7 +30,6 @@ export const DEFAULT_MENUS: MenuDef[] = [
   { menuId: 'quotes',           href: '/quotes',           label: '출력서류 관리',      section: '영업 관리', roles: ['ADMIN', 'MANAGER'] },
   { menuId: 'warehouse',        href: '/warehouse',        label: '창고/위치',         section: '시스템 관리', roles: ALL },
   { menuId: 'users',            href: '/users',            label: '사용자 & 역할 관리', section: '시스템 관리', roles: ADMIN_ONLY },
-  { menuId: 'permissions',      href: '/permissions',      label: '권한 관리',         section: '시스템 관리', roles: ['ADMIN', 'MANAGER'] },
   { menuId: 'supplier-settings', href: '/supplier-settings', label: '공급자 정보',    section: '시스템 관리', roles: ADMIN_ONLY },
   { menuId: 'menu-permissions', href: '/menu-permissions', label: '메뉴 권한',         section: '시스템 관리', roles: ADMIN_ONLY },
   { menuId: 'audit-logs',       href: '/audit-logs',       label: '수정·삭제 로그',     section: '시스템 관리', roles: ADMIN_ONLY },
@@ -37,7 +37,7 @@ export const DEFAULT_MENUS: MenuDef[] = [
   { menuId: 'profile',          href: '/profile',          label: '내 계정',           section: '계정', roles: ALL },
 ]
 
-export const DEFAULT_SECTION_ORDER = ['홈', '상품 관리', '입출고 관리', '영업 관리', '시스템 관리', '계정']
+const DEFAULT_SECTION_ORDER = ['홈', '상품 관리', '입출고 관리', '영업 관리', '시스템 관리', '계정']
 
 interface MenuPermissionState {
   menus: MenuDef[]
@@ -145,14 +145,14 @@ export const useMenuPermissionStore = create<MenuPermissionState>()(
     }),
     {
       name: 'wms-menu-permissions',
-      version: 19,
+      version: 23,
       migrate: (stored: unknown) => {
         const s = stored as Partial<MenuPermissionState>
         // Remove obsolete menus: product-codes/box-qty/lot merged into product-attrs,
         // pricing merged into inventory, role-management merged into users
         // Note: barcodes is now a standalone page — removed from obsolete list
         const purchaseOrderRoles = s.menus?.find((m) => m.menuId === 'purchase-orders')?.roles ?? []
-        const obsolete = new Set(['product-codes', 'box-qty', 'lot', 'pricing', 'role-management', 'inventory', 'purchase-orders', 'picking-list'])
+        const obsolete = new Set(['product-codes', 'box-qty', 'lot', 'pricing', 'role-management', 'inventory', 'purchase-orders', 'picking-list', 'permissions'])
         let menus = (s.menus ?? []).filter((m) => !obsolete.has(m.menuId))
         // Rename product-attrs label to "상품 마스터"
         menus = menus.map((m) =>
@@ -169,6 +169,14 @@ export const useMenuPermissionStore = create<MenuPermissionState>()(
           if (m.menuId === 'outbound') return { ...m, label: '출고 관리' }
           return m
         })
+        // Fix labels that may have been corrupted in earlier versions
+        const FORCED_LABELS: Record<string, string> = {
+          'alerts':     '알림',
+          'audit-logs': '수정·삭제 로그',
+        }
+        menus = menus.map((m) =>
+          FORCED_LABELS[m.menuId] ? { ...m, label: FORCED_LABELS[m.menuId] } : m,
+        )
         // Add any new menus not yet in stored state
         const storedIds = new Set(menus.map((m) => m.menuId))
         const newMenus  = DEFAULT_MENUS.filter((m) => !storedIds.has(m.menuId))

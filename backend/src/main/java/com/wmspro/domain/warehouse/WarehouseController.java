@@ -1,6 +1,8 @@
 package com.wmspro.domain.warehouse;
 
 import com.wmspro.common.ApiResponse;
+import com.wmspro.common.exception.BusinessException;
+import com.wmspro.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -60,10 +62,14 @@ public class WarehouseController {
     @PostMapping("/{id}/locations")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<Location> createLocation(@PathVariable UUID id, @RequestBody Map<String, String> body) {
+        String zoneIdStr = body.get("zoneId");
+        String code      = body.get("code");
+        if (zoneIdStr == null || code == null || code.isBlank())
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
         return ApiResponse.ok(warehouseService.createLocation(
             id,
-            UUID.fromString(body.get("zoneId")),
-            body.get("code"),
+            UUID.fromString(zoneIdStr),
+            code,
             body.get("aisle"),
             body.get("rack"),
             body.get("shelf"),

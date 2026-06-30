@@ -55,6 +55,7 @@ public enum ErrorCode {
     INBOUND_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND,    "입고 품목을 찾을 수 없습니다"),
     INBOUND_INVALID_STATUS(HttpStatus.CONFLICT,     "현재 상태에서 허용되지 않는 작업입니다"),
     INBOUND_QTY_EXCEEDED(HttpStatus.BAD_REQUEST,    "검수 수량이 수령 수량을 초과합니다"),
+    INBOUND_DEFECT_LOCATION_REQUIRED(HttpStatus.BAD_REQUEST, "불량 수량이 있는 품목에는 불량 위치를 지정해야 합니다"),
 
     // Inventory Audit
     AUDIT_NOT_FOUND(HttpStatus.NOT_FOUND,            "재고조사를 찾을 수 없습니다"),

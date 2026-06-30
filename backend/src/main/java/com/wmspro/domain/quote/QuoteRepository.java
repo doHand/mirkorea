@@ -24,5 +24,4 @@ public interface QuoteRepository extends JpaRepository<Quote, UUID> {
         Pageable pageable
     );
 
-    long countByDocNoStartingWith(String prefix);
 }

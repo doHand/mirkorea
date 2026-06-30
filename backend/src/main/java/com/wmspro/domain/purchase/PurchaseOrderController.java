@@ -2,6 +2,7 @@ package com.wmspro.domain.purchase;
 
 import com.wmspro.common.*;
 import com.wmspro.common.security.WmsPrincipal;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,12 +24,12 @@ public class PurchaseOrderController {
     }
 
     @PostMapping @ResponseStatus(HttpStatus.CREATED) @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
-    public ApiResponse<PurchaseOrder> create(@RequestBody PurchaseOrderRequest req, @AuthenticationPrincipal WmsPrincipal principal) {
+    public ApiResponse<PurchaseOrder> create(@Valid @RequestBody PurchaseOrderRequest req, @AuthenticationPrincipal WmsPrincipal principal) {
         return ApiResponse.ok(service.create(req, principal.getUuid()), "발주서가 저장되었습니다");
     }
 
     @PutMapping("/{id}") @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
-    public ApiResponse<PurchaseOrder> update(@PathVariable UUID id, @RequestBody PurchaseOrderRequest req) {
+    public ApiResponse<PurchaseOrder> update(@PathVariable UUID id, @Valid @RequestBody PurchaseOrderRequest req) {
         return ApiResponse.ok(service.update(id, req), "발주서가 수정되었습니다");
     }
 

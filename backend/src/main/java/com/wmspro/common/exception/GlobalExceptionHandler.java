@@ -3,6 +3,7 @@ package com.wmspro.common.exception;
 import com.wmspro.common.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -45,6 +46,19 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Object>> handleAccess(AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
             .body(ApiResponse.fail("FORBIDDEN", "접근 권한이 없습니다", null));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Object>> handleIllegalArgument(IllegalArgumentException ex) {
+        return ResponseEntity.badRequest()
+            .body(ApiResponse.fail("INVALID_REQUEST", ex.getMessage() != null ? ex.getMessage() : "잘못된 요청입니다", null));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<Object>> handleDataIntegrity(DataIntegrityViolationException ex, HttpServletRequest req) {
+        log.warn("[{}] {} - Data integrity violation", req.getMethod(), req.getRequestURI());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(ApiResponse.fail("DUPLICATE", "이미 존재하는 데이터입니다", null));
     }
 
     @ExceptionHandler(Exception.class)

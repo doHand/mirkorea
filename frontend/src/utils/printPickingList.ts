@@ -1,6 +1,7 @@
 import type { Client, OutboundOrder, Product, Quote } from '@/types/api.types'
 import type { SupplierInfo } from '@/stores/supplier-info.store'
 import { printQuoteDocuments } from '@/utils/printDocument'
+import { openBlankPrintWindow, writePrintHtml } from '@/utils/printWindow'
 
 const esc = (value?: string | number | null) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -79,10 +80,10 @@ export function printInternalPickingList(date: string, orders: OutboundOrder[]) 
   const totalOUTes = pickingRows.reduce((sum, row) => sum + row.boxCount, 0)
   const blankRows = Array.from({ length: Math.max(18 - pickingRows.length, 0) },
     () => '<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>').join('')
-  const win = window.open('', '_blank', 'width=1100,height=1100')
+  const win = openBlankPrintWindow('width=1100,height=1100')
   if (!win) return
 
-  win.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8">
+  writePrintHtml(`<!doctype html><html lang="ko"><head><meta charset="utf-8">
   <title>내부용 통합 피킹리스트 ${esc(date)}</title><style>
   @page{size:A4 landscape;margin:10mm}*{OUT-sizing:border-OUT}html,body{margin:0;padding:0}body{font-family:"Malgun Gothic",sans-serif;color:#111;font-size:9pt}
   h1{text-align:center;font-size:18pt;letter-spacing:.25em;margin:0 0 5mm}.meta{display:flex;justify-content:space-between;margin-bottom:3mm;font-size:10pt}
@@ -94,8 +95,7 @@ export function printInternalPickingList(date: string, orders: OutboundOrder[]) 
   <div class="meta"><b>피킹일: ${esc(date)}</b><b>출고지시 ${orders.length.toLocaleString()}건 / 총 ${totalOUTes.toLocaleString()} OUT</b></div>
   <table><thead><tr><th style="width:5%">번호</th><th style="width:11%">기본위치</th><th style="width:14%">상품코드</th><th style="width:22%">상품명</th><th style="width:10%">가져올 OUT</th><th>요청처별 수량</th><th class="check">피킹확인</th></tr></thead>
   <tbody>${rows}${blankRows}</tbody></table><div class="summary">총 ${totalOUTes.toLocaleString()} OUT</div>
-  <script>window.onload=()=>window.print()<\/script></body></html>`)
-  win.document.close()
+  <script>window.onload=()=>window.print()<\/script></body></html>`, win)
 }
 
 function printLegacyExternalPickingList(date: string, orders: OutboundOrder[]) {
@@ -140,9 +140,9 @@ function printLegacyExternalPickingList(date: string, orders: OutboundOrder[]) {
     </section>`
   }).join('')
 
-  const win = window.open('', '_blank', 'width=900,height=1100')
+  const win = openBlankPrintWindow('width=900,height=1100')
   if (!win) return
-  win.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8">
+  writePrintHtml(`<!doctype html><html lang="ko"><head><meta charset="utf-8">
   <title>외부용 출고 확인서 ${esc(date)}</title><style>
   @page{size:A4 portrait;margin:12mm}*{OUT-sizing:border-OUT}html,body{margin:0;padding:0}body{font-family:"Malgun Gothic",sans-serif;color:#111;font-size:9pt}
   .sheet{min-height:270mm;position:relative;break-after:page}.sheet:last-child{break-after:auto}h1{text-align:center;font-size:18pt;letter-spacing:.2em;margin:0 0 7mm}
@@ -151,8 +151,7 @@ function printLegacyExternalPickingList(date: string, orders: OutboundOrder[]) {
   .items{border:2px solid #111}.items th{height:8mm;background:#f3f3f3}.items td{height:9mm}.left{text-align:left}.OUTes{font-size:12pt;font-weight:700}
   .summary{margin-top:4mm;text-align:right;font-size:13pt;font-weight:700}.sign{position:absolute;left:0;right:0;bottom:5mm;display:flex;justify-content:space-between;font-size:10pt}
   @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-  </style></head><body>${pages}<script>window.onload=()=>window.print()<\/script></body></html>`)
-  win.document.close()
+  </style></head><body>${pages}<script>window.onload=()=>window.print()<\/script></body></html>`, win)
 }
 
 function toStatement(order: OutboundOrder): Quote {
@@ -242,7 +241,7 @@ export function printExternalPickingList(
     return groups
   }, new Map<string, OutboundOrder>()).values())
 
-  const win = window.open('', '_blank', 'width=900,height=1100')
+  const win = openBlankPrintWindow('width=900,height=1100')
   if (!win) return
   printQuoteDocuments(
     groupedOrders.map((order) => ({ doc: toStatement(order), client: toReceiver(order, clients) })),

@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import { useRouter } from 'next/router'
 import { AgGridReact } from 'ag-grid-react'
-import { ClientSideRowModelModule, ModuleRegistry, type ColDef } from 'ag-grid-community'
+import type { ColDef } from 'ag-grid-community'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ClipboardList, FileDown, Plus, Printer, RefreshCw, RotateCcw, Search, X } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -15,14 +15,13 @@ import { useSupplierInfoStore } from '@/stores/supplier-info.store'
 import { useWarehouseStore } from '@/stores/warehouse.store'
 import { printExternalPickingList } from '@/utils/printPickingList'
 import { formatNumber } from '@/utils/format'
+import { datedExcelFilename, writeRowsToExcel } from '@/utils/excel'
 import { formatUnitSpec } from '@/utils/unit-spec'
 import { cn } from '@/utils/cn'
 import * as ui from '@/styles/ui'
 import { CollectOrderModal } from '@/components/CollectOrderModal'
 import { StatusBadge } from '@/components/StatusBadge'
 import type { OutboundOrder, OutboundOrderItem, OutboundOrderStatus } from '@/types/api.types'
-
-ModuleRegistry.registerModules([ClientSideRowModelModule])
 
 type DerivedStatus = OutboundOrderStatus | 'PICKING'
 type TabId = 'ALL' | 'COLLECTED' | 'INSTRUCTED' | 'PICKING' | 'PICKED' | 'SHIPPED' | 'HOLD_CANCEL'
@@ -122,7 +121,7 @@ export default function OutboundPage() {
     queryFn: clientApi.findAllActive,
   })
 
-  const orders = data?.items ?? []
+  const orders = useMemo(() => data?.items ?? [], [data?.items])
 
   const refresh = () => {
     void qc.invalidateQueries({ queryKey: ['outbound-orders'] })
@@ -359,11 +358,7 @@ export default function OutboundPage() {
         미피킹: row.remainingQty,
         상태: STATUS_LABEL[row.derived],
       }))
-      const XLSX = await import('xlsx')
-      const ws = XLSX.utils.json_to_sheet(rows)
-      const wb = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(wb, ws, '출고내역')
-      XLSX.writeFile(wb, `출고내역_${new Date().toISOString().slice(0, 10)}.xlsx`)
+      await writeRowsToExcel(rows, datedExcelFilename('출고내역'), '출고내역')
     } catch {
       toast.error('엑셀 다운로드에 실패했습니다')
     }

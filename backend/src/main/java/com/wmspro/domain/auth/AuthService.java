@@ -51,7 +51,7 @@ public class AuthService {
     }
 
     @Transactional
-    public void register(String username, String email, String fullName, String password) {
+    public void register(String username, String email, String fullName, String phone, String password) {
         String normalizedEmail = email.trim().toLowerCase();
         if (userRepo.existsByUsername(username))
             throw new BusinessException(ErrorCode.USER_DUPLICATE);
@@ -62,6 +62,7 @@ public class AuthService {
             .email(normalizedEmail)
             .passwordHash(passwordEncoder.encode(password))
             .fullName(fullName)
+            .phone(phone)
             .role(UserRole.WORKER)
             .build());
     }

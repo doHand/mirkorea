@@ -1,14 +1,12 @@
 'use client'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AgGridReact } from 'ag-grid-react'
-import { ClientSideRowModelModule, ModuleRegistry, type ColDef, type GetRowIdParams } from 'ag-grid-community'
+import type { ColDef, GetRowIdParams } from 'ag-grid-community'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Minus, Plus, RefreshCw, Save } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { categoryApi } from '@/api/product.api'
 import type { ProductCategory } from '@/types/api.types'
-
-ModuleRegistry.registerModules([ClientSideRowModelModule])
 
 type DraftCategory = ProductCategory & { _new?: boolean; _deleted?: boolean; _dirty?: boolean }
 

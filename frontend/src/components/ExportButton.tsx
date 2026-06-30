@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { Download } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { datedExcelFilename, writeRowsToExcel } from '@/utils/excel'
 
 interface Props {
   filename: string
@@ -21,12 +22,7 @@ export function ExportButton({ filename, getData, label = '내보내기', disabl
         toast.error('내보낼 데이터가 없습니다')
         return
       }
-      const XLSX = await import('xlsx')
-      const ws = XLSX.utils.json_to_sheet(rows)
-      const wb = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(wb, ws, 'Sheet1')
-      const date = new Date().toISOString().slice(0, 10)
-      XLSX.writeFile(wb, `${filename}_${date}.xlsx`)
+      await writeRowsToExcel(rows, datedExcelFilename(filename))
     } catch {
       toast.error('내보내기 실패')
     } finally {

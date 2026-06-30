@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { AgGridReact } from 'ag-grid-react'
-import { ClientSideRowModelModule, ModuleRegistry, type ColDef, type ColGroupDef } from 'ag-grid-community'
+import type { ColDef, ColGroupDef } from 'ag-grid-community'
 import { useQuery } from '@tanstack/react-query'
 import { GripHorizontal, Menu, Minus, Plus, RefreshCw, Save } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -14,8 +14,6 @@ import { LocationPickerModal } from '@/components/LocationPickerModal'
 import { formatDecimal } from '@/utils/format'
 import { getPackageUnitQty } from '@/utils/unit-spec'
 import type { Barcode, BarcodeUnitType, Location, Product, UnitType } from '@/types/api.types'
-
-ModuleRegistry.registerModules([ClientSideRowModelModule])
 
 type DraftProduct = Product & {
   reservedQty?: number
@@ -431,7 +429,7 @@ export function ProductInventoryGrid({
       masterColumns,
       ...baseColumns.slice(insertMasterIndex),
     ]
-  }, [categoryOptions, clients, onBarcodeClick, showMasterColumns])
+  }, [categoryOptions, clients, showMasterColumns])
 
 
   const togglePrimary = useCallback((id: string) => {
@@ -476,24 +474,25 @@ export function ProductInventoryGrid({
     },
   ], [togglePrimary])
 
-  const defaultBarcodeRows = (product: DraftProduct): DraftBarcode[] => [
+  const defaultBarcodeRows = useCallback((product: DraftProduct): DraftBarcode[] => [
     { ...blankBarcode(product.id, product.code, 'UNIT', 1), isPrimary: true },
     blankBarcode(product.id, product.code, 'CXD', barcodeUnitQtyForType(product, 'CXD')),
     blankBarcode(product.id, product.code, 'CXD_OUT', barcodeUnitQtyForType(product, 'CXD_OUT')),
-  ]
+  ], [])
 
-  const addRow = () => {
+  const addRow = useCallback(() => {
     const newProduct = blankProduct()
     setRows((current) => [newProduct, ...current])
     setSelectedProduct(newProduct)
     setBarcodeRows(defaultBarcodeRows(newProduct))
-  }
-  const deleteRows = () => {
+  }, [defaultBarcodeRows])
+
+  const deleteRows = useCallback(() => {
     const selected = new Set(gridRef.current?.api.getSelectedRows().map((row) => row.id) ?? [])
     if (!selected.size) return toast.error('삭제할 행을 선택해주세요')
     // Keep the record visible until save; the server receives a logical deactivation then.
     setRows((current) => current.map((row) => selected.has(row.id) ? { ...row, _deleted: true, _dirty: true } : row))
-  }
+  }, [])
   const saveBarcodes = async () => {
     barcodeGridRef.current?.api.stopEditing()
     await new Promise((resolve) => setTimeout(resolve, 0))
@@ -547,7 +546,7 @@ export function ProductInventoryGrid({
       setRefreshing(false)
     }
   }
-  const saveRows = async () => {
+  const saveRows = useCallback(async () => {
     const invalid = rows.find((row) => !row._deleted && (!row.code.trim() || !row.name.trim() || !hasValidSpec(row)))
     if (invalid) {
       const missing = [!invalid.code.trim() && '상품코드', !invalid.name.trim() && '상품명', !hasValidSpec(invalid) && '규격(IN/OUT)'].filter(Boolean).join(', ')
@@ -606,7 +605,7 @@ export function ProductInventoryGrid({
     } finally {
       setSaving(false)
     }
-  }
+  }, [barcodeRows, onSaved, onStockQtySave, rows])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -648,7 +647,7 @@ export function ProductInventoryGrid({
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [clientPickerRowId, locationPickerRowId, saving, rows])
+  }, [addRow, clientPickerRowId, deleteRows, locationPickerRowId, saveRows, saving, rows])
 
   return (
     <div className="app-surface flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden dark:border-gray-800 dark:bg-gray-900">

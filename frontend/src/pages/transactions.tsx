@@ -10,6 +10,7 @@ import { useWarehouseStore } from '@/stores/warehouse.store'
 import { QUERY_KEYS } from '@/constants/query-keys'
 import { TX_TYPE_COLOR, TX_TYPE_LABEL } from '@/constants/stock.constants'
 import { formatDateTime, formatNumber, formatQtyDelta } from '@/utils/format'
+import { datedExcelFilename, writeRowsToExcel } from '@/utils/excel'
 import { AppAgGrid } from '@/components/AppAgGrid'
 import { GridPageLayout } from '@/components/grid/GridPageLayout'
 import { cn } from '@/utils/cn'
@@ -77,12 +78,7 @@ export default function TransactionsPage() {
         '작업자': txn.createdByName ?? txn.createdByUser?.fullName ?? txn.createdByUser?.username ?? '',
         '일시': formatDateTime(txn.createdAt),
       }))
-      const XLSX = await import('xlsx')
-      const ws = XLSX.utils.json_to_sheet(rows)
-      const wb = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(wb, ws, 'Sheet1')
-      const date = new Date().toISOString().slice(0, 10)
-      XLSX.writeFile(wb, `재고_변경_이력_${date}.xlsx`)
+      await writeRowsToExcel(rows, datedExcelFilename('재고_변경_이력'))
     } catch {
       toast.error('엑셀 다운로드에 실패했습니다')
     } finally {

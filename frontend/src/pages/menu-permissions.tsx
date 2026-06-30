@@ -10,7 +10,7 @@ import {
   verticalListSortingStrategy, arrayMove,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical } from 'lucide-react'
+import { Check, FolderPlus, GripVertical, RotateCcw, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '@/stores/auth.store'
 import { useMenuPermissionStore } from '@/stores/menu-permission.store'
@@ -105,7 +105,7 @@ function SortableSectionHeader({
                 onClick={() => onDelete(label)}
                 className="ml-auto text-gray-300 dark:text-gray-700 hover:text-rose-500 dark:hover:text-rose-400 transition-colors opacity-0 group-hover/sec:opacity-100 p-0.5 rounded"
               >
-                삭제
+                <Trash2 size={13} />
               </button>
             </>
           )}
@@ -202,7 +202,7 @@ function SortableMenuRow({
               )}
             >
               {checked && (
-                <span className={cn('text-xs font-bold', isAdmin ? 'text-purple-600 dark:text-purple-400' : 'text-white')}>확인</span>
+                <Check size={13} strokeWidth={3} className={cn(isAdmin ? 'text-purple-600 dark:text-purple-400' : 'text-white')} />
               )}
             </button>
           </td>
@@ -393,12 +393,14 @@ export default function MenuPermissionsPage() {
             onClick={handleAddSection}
             className="flex items-center gap-1.5 px-3 py-2 text-sm bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/40 rounded hover:bg-indigo-100 dark:hover:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 transition-colors"
           >
+            <FolderPlus size={14} />
             <span className="hidden sm:inline">새 폴더</span>
           </button>
           <button
             onClick={handleReset}
             className="flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-colors"
           >
+            <RotateCcw size={14} />
             <span className="hidden sm:inline">초기화</span>
           </button>
         </div>
@@ -483,7 +485,7 @@ export default function MenuPermissionsPage() {
                 onClick={() => handleDeleteSection(label)}
                 className="text-gray-300 dark:text-gray-700 hover:text-rose-500 transition-colors p-0.5"
               >
-                삭제
+                <Trash2 size={13} />
               </button>
             </div>
             <div className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -523,7 +525,7 @@ export default function MenuPermissionsPage() {
                             'w-5 h-5 rounded flex items-center justify-center shrink-0',
                             isAdmin ? checkCls : checked ? checkCls : 'border-2 border-gray-300 dark:border-gray-600',
                           )}>
-                            {checked && <span className={cn('text-[10px] font-bold', isAdmin ? 'text-purple-600 dark:text-purple-400' : 'text-white')}>확인</span>}
+                            {checked && <Check size={11} strokeWidth={3} className={cn(isAdmin ? 'text-purple-600 dark:text-purple-400' : 'text-white')} />}
                           </div>
                           <span className={cn('text-xs font-medium', headerCls)}>{roleLabel}</span>
                         </button>

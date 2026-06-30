@@ -3,6 +3,8 @@ package com.wmspro.domain.product;
 import com.wmspro.common.ApiResponse;
 import com.wmspro.common.exception.BusinessException;
 import com.wmspro.common.exception.ErrorCode;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -31,7 +33,7 @@ public class ProductCategoryController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
     @Transactional
-    public ApiResponse<ProductCategory> create(@RequestBody CategoryRequest req) {
+    public ApiResponse<ProductCategory> create(@Valid @RequestBody CategoryRequest req) {
         if (categoryRepo.existsByName(req.name.trim())) {
             throw new BusinessException(ErrorCode.CATEGORY_DUPLICATE);
         }
@@ -46,7 +48,7 @@ public class ProductCategoryController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
     @Transactional
-    public ApiResponse<ProductCategory> update(@PathVariable UUID id, @RequestBody CategoryRequest req) {
+    public ApiResponse<ProductCategory> update(@PathVariable UUID id, @Valid @RequestBody CategoryRequest req) {
         ProductCategory cat = categoryRepo.findById(id)
             .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
         if (categoryRepo.existsByNameAndIdNot(req.name.trim(), id)) {
@@ -82,7 +84,7 @@ public class ProductCategoryController {
 
     @Getter @Setter
     static class CategoryRequest {
-        public String  name;
+        @NotBlank public String  name;
         public String  description;
         public int     sortOrder = 0;
         public Boolean isActive;

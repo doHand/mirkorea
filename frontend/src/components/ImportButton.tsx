@@ -4,6 +4,7 @@ import { Upload } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useEscapeKey } from '@/hooks/useEscapeKey'
 import { cn } from '@/utils/cn'
+import { readFirstSheetRows, writeRowsToExcel } from '@/utils/excel'
 import { formatNumber } from '@/utils/format'
 
 export type ImportRow = Record<string, unknown> & { _error?: string }
@@ -42,11 +43,7 @@ export function ImportButton({ config, onImported, label = '가져오기', class
     const file = e.target.files?.[0]
     if (!file) return
     try {
-      const XLSX = await import('xlsx')
-      const buf = await file.arrayBuffer()
-      const wb = XLSX.read(buf, { type: 'array' })
-      const ws = wb.Sheets[wb.SheetNames[0]]
-      const raw = XLSX.utils.sheet_to_json<Record<string, string | number>>(ws, { defval: '' })
+      const raw = await readFirstSheetRows<Record<string, string | number>>(file)
       const rows = config.parse(raw)
       if (!rows.length) { toast.error('데이터가 없습니다'); return }
       setPreview(rows)
@@ -58,11 +55,7 @@ export function ImportButton({ config, onImported, label = '가져오기', class
   }
 
   const downloadTemplate = async () => {
-    const XLSX = await import('xlsx')
-    const ws = XLSX.utils.json_to_sheet(config.templateRows)
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, config.sheetName ?? '데이터')
-    XLSX.writeFile(wb, config.templateFilename)
+    await writeRowsToExcel(config.templateRows, config.templateFilename, config.sheetName ?? '데이터')
   }
 
   const handleImport = async () => {

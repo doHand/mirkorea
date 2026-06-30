@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useEscapeKey } from '@/hooks/useEscapeKey'
 import { cn } from '@/utils/cn'
 
-export interface DropdownItem {
+interface DropdownItem {
   label: string
   onClick: () => void
   disabled?: boolean

@@ -40,7 +40,7 @@ public class StockService {
 
         int beforeQty = invOpt.map(Inventory::getQuantity).orElse(0);
         int afterQty  = beforeQty + req.quantity;
-        assertNotNegative(afterQty, "inbound");
+        assertNotNegative(afterQty);
 
         if (invOpt.isPresent()) {
             Inventory inv = invOpt.get();
@@ -90,7 +90,7 @@ public class StockService {
 
         int beforeQty = inv.getQuantity();
         int afterQty  = beforeQty - req.quantity;
-        assertNotNegative(afterQty, "outbound");
+        assertNotNegative(afterQty);
 
         inv.setQuantity(afterQty);
         inv.setLastSyncedAt(Instant.now());
@@ -121,7 +121,7 @@ public class StockService {
     // ────────────────────────────────────────────────────────────
     @Transactional
     public StockTransaction adjust(AdjustRequest req, UUID userId) {
-        assertNotNegative(req.adjustedQty, "adjustment");
+        assertNotNegative(req.adjustedQty);
 
         Optional<Inventory> invOpt = lockInventory(req.productId, req.locationId, req.lotNumber);
         int beforeQty = invOpt.map(Inventory::getQuantity).orElse(0);
@@ -263,7 +263,7 @@ public class StockService {
 
         int beforeQty = inv.getQuantity();
         int afterQty  = beforeQty - original.getQty();
-        assertNotNegative(afterQty, "cancel inbound");
+        assertNotNegative(afterQty);
 
         inv.setQuantity(afterQty);
         invRepo.save(inv);
@@ -367,7 +367,7 @@ public class StockService {
         }
     }
 
-    private void assertNotNegative(int qty, String context) {
+    private void assertNotNegative(int qty) {
         if (qty < 0) throw new BusinessException(ErrorCode.STOCK_NEGATIVE);
     }
 

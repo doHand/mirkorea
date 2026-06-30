@@ -96,6 +96,8 @@ public class InboundOrderService {
         for (ReceiveItemRequest req : requests) {
             InboundOrderItem item = itemRepo.findById(req.itemId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.INBOUND_ITEM_NOT_FOUND));
+            if (!item.getOrder().getId().equals(orderId))
+                throw new BusinessException(ErrorCode.INBOUND_ITEM_NOT_FOUND);
             item.setReceivedQty(req.receivedQty);
             if (req.barcodeScanned != null) item.setBarcodeScanned(req.barcodeScanned);
             if (req.lotNumber      != null) item.setLotNumber(req.lotNumber);
@@ -123,6 +125,8 @@ public class InboundOrderService {
         for (InspectItemRequest req : requests) {
             InboundOrderItem item = itemRepo.findById(req.itemId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.INBOUND_ITEM_NOT_FOUND));
+            if (!item.getOrder().getId().equals(orderId))
+                throw new BusinessException(ErrorCode.INBOUND_ITEM_NOT_FOUND);
             if (req.passedQty + req.defectQty > item.getReceivedQty()) {
                 throw new BusinessException(ErrorCode.INBOUND_QTY_EXCEEDED);
             }
@@ -166,6 +170,9 @@ public class InboundOrderService {
             }
 
             // 불량 수량 → 불량 위치 입고
+            if (item.getDefectQty() > 0 && item.getDefectLocationId() == null) {
+                throw new BusinessException(ErrorCode.INBOUND_DEFECT_LOCATION_REQUIRED);
+            }
             if (item.getDefectQty() > 0 && item.getDefectLocationId() != null) {
                 InboundRequest defReq = new InboundRequest();
                 defReq.productId   = item.getProductId();

@@ -42,7 +42,7 @@ public class InventoryAuditController {
     @PutMapping("/{id}/counts")
     public ApiResponse<Void> updateCounts(
         @PathVariable UUID id,
-        @RequestBody UpdateCountsRequest req
+        @Valid @RequestBody UpdateCountsRequest req
     ) {
         service.updateCounts(id, req);
         return ApiResponse.ok(null);

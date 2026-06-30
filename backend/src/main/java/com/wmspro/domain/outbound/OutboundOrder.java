@@ -33,7 +33,7 @@ public class OutboundOrder {
     @Column(name = "instructed_at") private Instant instructedAt;
     @Column(name = "picked_at") private Instant pickedAt;
     @Column(name = "shipped_at") private Instant shippedAt;
-    @Column(name = "discount_rate", nullable = false, precision = 5, scale = 2) private BigDecimal discountRate;
+    @Column(name = "discount_rate", nullable = false, precision = 5, scale = 2) @Builder.Default private BigDecimal discountRate = BigDecimal.ZERO;
     @Column(columnDefinition = "TEXT") private String memo;
     @Column(name = "created_by", nullable = false) private UUID createdBy;
     @CreationTimestamp @Column(name = "created_at", updatable = false) private Instant createdAt;

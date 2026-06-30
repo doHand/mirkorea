@@ -15,6 +15,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +41,7 @@ public class UserController {
     }
 
     @PatchMapping("/me")
+    @Transactional
     public ApiResponse<Map<String, Object>> updateMe(
         @AuthenticationPrincipal WmsPrincipal principal,
         @Valid @RequestBody UpdateMeRequest req
@@ -80,6 +83,7 @@ public class UserController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     public ApiResponse<Map<String, Object>> create(@Valid @RequestBody CreateRequest req) {
         if (userRepo.existsByUsername(req.getUsername()))
             throw new BusinessException(ErrorCode.USER_DUPLICATE);
@@ -103,6 +107,7 @@ public class UserController {
 
     @PatchMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     public ApiResponse<Map<String, Object>> update(@PathVariable UUID id,
                                                     @Valid @RequestBody UpdateRequest req) {
         User user = userRepo.findById(id)
@@ -132,6 +137,7 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         if (!userRepo.existsById(id))
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);

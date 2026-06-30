@@ -1,9 +1,7 @@
 'use client'
 
 import { AgGridReact } from 'ag-grid-react'
-import { ClientSideRowModelModule, ModuleRegistry, type ColDef, type GetRowIdParams, type RowClickedEvent } from 'ag-grid-community'
-
-ModuleRegistry.registerModules([ClientSideRowModelModule])
+import type { ColDef, GetRowIdParams, RowClickedEvent } from 'ag-grid-community'
 
 /** Shared read/write grid shell for operational lists. It never clears row data during loading. */
 export function AppAgGrid<T extends { id: string }>({

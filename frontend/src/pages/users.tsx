@@ -10,6 +10,7 @@ import { useAuthStore } from '@/stores/auth.store'
 import { useRoleStore, COLOR_OPTIONS } from '@/stores/role.store'
 import { formatDate, formatDateTime, formatNumber, formatPhoneInput } from '@/utils/format'
 import { cn } from '@/utils/cn'
+import { Plus } from 'lucide-react'
 import { ExportButton } from '@/components/ExportButton'
 import { AppAgGrid } from '@/components/AppAgGrid'
 import { useMenuLabel } from '@/hooks/use-menu-label'
@@ -75,7 +76,10 @@ export default function UsersPage() {
   const createMutation = useMutation({
     mutationFn: () => userApi.create(form),
     onSuccess: () => { toast.success('사용자가 등록되었습니다'); qc.invalidateQueries({ queryKey: ['users'] }); closeModal() },
-    onError: (err: any) => toast.error(err.response?.data?.code === 'USER_DUPLICATE' ? '이미 존재하는 사용자명/이메일입니다' : '등록 실패'),
+    onError: (err: unknown) => {
+      const code = (err as { response?: { data?: { code?: string } } })?.response?.data?.code
+      toast.error(code === 'USER_DUPLICATE' ? '이미 존재하는 사용자명/이메일입니다' : '등록 실패')
+    },
   })
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UserFormState }) => userApi.update(id, { fullName: data.fullName, email: data.email, phone: data.phone, hireDate: data.hireDate, role: data.role, warehouseId: data.warehouseId, isActive: data.isActive, password: data.password || undefined }),
@@ -136,7 +140,7 @@ export default function UsersPage() {
   const columns = useMemo<ColDef<UserDetail>[]>(() => [
     {
       headerName: '사용자',
-      minWidth: 220,
+      minWidth: 160,
       flex: 1.2,
       pinned: 'left',
       valueGetter: (p) => p.data ? `${p.data.fullName} @${p.data.username}` : '-',
@@ -154,7 +158,7 @@ export default function UsersPage() {
     },
     {
       headerName: '역할',
-      width: 130,
+      width: 110,
       valueGetter: (p) => p.data ? ROLE_META[p.data.role].label : '-',
       cellRenderer: (p: { data?: UserDetail }) => p.data ? (
         <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', ROLE_META[p.data.role].cls)}>
@@ -164,7 +168,7 @@ export default function UsersPage() {
     },
     {
       headerName: '연락처',
-      minWidth: 210,
+      minWidth: 140,
       flex: 1,
       valueGetter: (p) => [p.data?.email, p.data?.phone].filter(Boolean).join(' / ') || '-',
       cellRenderer: (p: { data?: UserDetail }) => p.data ? (
@@ -176,13 +180,12 @@ export default function UsersPage() {
     },
     {
       headerName: '담당 창고',
-      minWidth: 130,
-      flex: 0.75,
-      valueGetter: (p) => (warehouses as any[]).find((w) => w.id === p.data?.warehouseId)?.name ?? '미지정',
+      width: 110,
+      valueGetter: (p) => warehouses.find((w) => w.id === p.data?.warehouseId)?.name ?? '미지정',
     },
     {
       headerName: '상태',
-      width: 96,
+      width: 90,
       valueGetter: (p) => p.data?.isActive ? '활성' : '비활성',
       cellRenderer: (p: { data?: UserDetail }) => p.data ? (
         <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', p.data.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500')}>
@@ -218,8 +221,9 @@ export default function UsersPage() {
             filename="사용자목록"
             getData={() => users.map((u) => ({ '아이디': u.username, '이름': u.fullName, '이메일': u.email, '역할': ROLE_META[u.role].label, '활성': u.isActive ? 'Y' : 'N', '마지막 로그인': u.lastLoginAt ? formatDateTime(u.lastLoginAt) : '-', '등록일': formatDateTime(u.createdAt) }))}
           />
-          <button onClick={openCreate} title="사용자 추가" aria-label="사용자 추가" className="responsive-icon-action bg-indigo-600 text-white hover:bg-indigo-700 shadow-none shadow-indigo-500/20">
-            <span className="responsive-action-label">사용자 추가</span>
+          <button onClick={openCreate} className="flex items-center gap-1.5 h-7 px-3 rounded text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">
+            <Plus className="h-3.5 w-3.5" />
+            사용자 추가
           </button>
         </div>
       </div>
@@ -341,7 +345,7 @@ export default function UsersPage() {
                     <PanelField label="담당 창고">
                       <select value={form.warehouseId} onChange={(e) => setForm((p) => ({ ...p, warehouseId: e.target.value }))} className="w-full rounded border border-gray-200 bg-white px-2 py-1 text-xs text-gray-900 outline-none focus:border-indigo-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100">
                         <option value="">미지정</option>
-                        {(warehouses as any[]).map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+                        {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
                       </select>
                     </PanelField>
                     <PanelField label="새 비밀번호">
@@ -359,7 +363,7 @@ export default function UsersPage() {
                       { label: '연락처', value: selectedUser.phone ?? '-' },
                       { label: '입사일', value: selectedUser.hireDate ? formatDate(selectedUser.hireDate) : '-' },
                       { label: '역할', value: <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium', ROLE_META[selectedUser.role].cls)}>{ROLE_META[selectedUser.role].label}</span> },
-                      { label: '담당 창고', value: (warehouses as any[]).find((w) => w.id === selectedUser.warehouseId)?.name ?? '미지정' },
+                      { label: '담당 창고', value: warehouses.find((w) => w.id === selectedUser.warehouseId)?.name ?? '미지정' },
                       { label: '계정 상태', value: <span className={cn('text-xs px-2 py-0.5 rounded-full', selectedUser.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500')}>{selectedUser.isActive ? '활성' : '비활성'}</span> },
                       { label: '마지막 로그인', value: selectedUser.lastLoginAt ? formatDateTime(selectedUser.lastLoginAt) : '-' },
                       { label: '등록일', value: formatDateTime(selectedUser.createdAt) },
@@ -467,7 +471,7 @@ export default function UsersPage() {
                   <select value={form.warehouseId} onChange={(e) => setForm((p) => ({ ...p, warehouseId: e.target.value }))}
                     className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                     <option value="">미지정</option>
-                    {(warehouses as any[]).map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+                    {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
                   </select>
                 </div>
               </div>

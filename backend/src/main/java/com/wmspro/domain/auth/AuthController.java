@@ -8,6 +8,7 @@ import com.wmspro.domain.user.UserRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -28,7 +29,7 @@ public class AuthController {
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<Void> register(@Valid @RequestBody RegisterRequest req) {
-        authService.register(req.username, req.email, req.fullName, req.password);
+        authService.register(req.username, req.email, req.fullName, req.phone, req.password);
         return ApiResponse.ok(null, "회원가입이 완료되었습니다");
     }
 
@@ -72,13 +73,18 @@ public class AuthController {
         @NotBlank String username;
         @NotBlank @Email String email;
         @NotBlank String fullName;
-        @NotBlank String password;
+        String phone;
+        @NotBlank
+        @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*\\d).{7,}$", message = "비밀번호는 영문·숫자 포함 7자 이상이어야 합니다")
+        String password;
     }
 
     @Getter @Setter
     static class ResetPasswordRequest {
         @NotBlank String username;
         @NotBlank @Email String email;
-        @NotBlank String newPassword;
+        @NotBlank
+        @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*\\d).{7,}$", message = "비밀번호는 영문·숫자 포함 7자 이상이어야 합니다")
+        String newPassword;
     }
 }

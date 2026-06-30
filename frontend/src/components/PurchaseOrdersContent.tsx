@@ -70,7 +70,7 @@ export function PurchaseOrdersContent({ createTrigger }: Props) {
     queryKey: ['clients-all'],
     queryFn: clientApi.findAllActive,
   })
-  const rawOrders = data?.items ?? []
+  const rawOrders = useMemo(() => data?.items ?? [], [data?.items])
 
   // 날짜 범위 클라이언트 사이드 필터
   const orders = useMemo(() => {
@@ -80,6 +80,22 @@ export function PurchaseOrdersContent({ createTrigger }: Props) {
       return true
     })
   }, [rawOrders, dateFrom, dateTo])
+
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ['purchase-orders'] })
+    qc.invalidateQueries({ queryKey: ['inbound'] })
+  }
+
+  const action = useMutation({
+    mutationFn: ({ kind, id }: { kind: 'ordered' | 'convert'; id: string }) =>
+      kind === 'ordered' ? purchaseOrderApi.markOrdered(id) : purchaseOrderApi.convertToInbound(id),
+    onSuccess: (order, vars) => {
+      refresh()
+      toast.success(vars.kind === 'ordered' ? '발주 완료로 처리했습니다' : '입고 예정으로 등록했습니다')
+      if (vars.kind === 'convert' && order.inboundOrderId) router.push(`/inbound/${order.inboundOrderId}`)
+    },
+    onError: () => toast.error('처리에 실패했습니다'),
+  })
 
   const orderColumns = useMemo<ColDef<PurchaseOrder>[]>(() => [
     {
@@ -176,23 +192,7 @@ export function PurchaseOrdersContent({ createTrigger }: Props) {
         )
       },
     },
-  ], [clients])
-
-  const refresh = () => {
-    qc.invalidateQueries({ queryKey: ['purchase-orders'] })
-    qc.invalidateQueries({ queryKey: ['inbound'] })
-  }
-
-  const action = useMutation({
-    mutationFn: ({ kind, id }: { kind: 'ordered' | 'convert'; id: string }) =>
-      kind === 'ordered' ? purchaseOrderApi.markOrdered(id) : purchaseOrderApi.convertToInbound(id),
-    onSuccess: (order, vars) => {
-      refresh()
-      toast.success(vars.kind === 'ordered' ? '발주 완료로 처리했습니다' : '입고 예정으로 등록했습니다')
-      if (vars.kind === 'convert' && order.inboundOrderId) router.push(`/inbound/${order.inboundOrderId}`)
-    },
-    onError: () => toast.error('처리에 실패했습니다'),
-  })
+  ], [action, clients])
 
   const handleReset = () => {
     setSearch('')

@@ -6,6 +6,7 @@ import com.wmspro.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class QuoteService {
 
     private final QuoteRepository repo;
+    private final JdbcTemplate    jdbcTemplate;
 
     public PageResponse<Quote> findAll(String docType, String search, int page, int limit) {
         String dt = (docType != null && !docType.isBlank()) ? docType : null;
@@ -96,10 +98,9 @@ public class QuoteService {
     }
 
     private String generateDocNo(String docType) {
-        String prefix    = "STATEMENT".equals(docType) ? "명세" : "견적";
-        String dateStr   = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        String fullPfx   = prefix + "-" + dateStr + "-";
-        long   seq       = repo.countByDocNoStartingWith(fullPfx) + 1;
-        return fullPfx + String.format("%04d", seq);
+        String prefix  = "STATEMENT".equals(docType) ? "명세" : "견적";
+        String dateStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        Long   seq     = jdbcTemplate.queryForObject("SELECT nextval('quote_seq')", Long.class);
+        return prefix + "-" + dateStr + "-" + String.format("%04d", seq);
     }
 }

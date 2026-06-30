@@ -2,14 +2,11 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { AgGridReact } from 'ag-grid-react'
-import { ClientSideRowModelModule, ModuleRegistry } from 'ag-grid-community'
 import type { ColDef } from 'ag-grid-community'
 import { Minus, Plus, RefreshCw, Save } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { unitApi } from '@/api/product.api'
 import type { ProductUnit } from '@/types/api.types'
-
-ModuleRegistry.registerModules([ClientSideRowModelModule])
 
 const DEFAULT_UNITS = ['EA', 'OUT', 'PALLET']
 

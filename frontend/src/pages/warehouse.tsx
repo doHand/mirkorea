@@ -9,7 +9,9 @@ import { useEscapeKey } from '@/hooks/useEscapeKey'
 import { useWarehouseStore } from '@/stores/warehouse.store'
 import { QUERY_KEYS } from '@/constants/query-keys'
 import { cn } from '@/utils/cn'
+import { datedExcelFilename, writeRowsToExcel } from '@/utils/excel'
 import { formatNumber } from '@/utils/format'
+import { getApiErrorMessage } from '@/utils/error'
 import * as ui from '@/styles/ui'
 import type { Inventory, Zone, Location } from '@/types/api.types'
 
@@ -36,14 +38,6 @@ const IconX = () => (
 
 function pad(n: number, len: number) {
   return String(n).padStart(len, '0')
-}
-
-function getErrorMessage(error: unknown, fallback: string) {
-  if (typeof error === 'object' && error !== null && 'response' in error) {
-    const response = (error as { response?: { data?: { message?: string } } }).response
-    return response?.data?.message ?? fallback
-  }
-  return fallback
 }
 
 const DEFAULT_BULK = {
@@ -132,12 +126,7 @@ export default function WarehousePage() {
         toast.error('내보낼 데이터가 없습니다')
         return
       }
-      const XLSX = await import('xlsx')
-      const ws = XLSX.utils.json_to_sheet(rows)
-      const wb = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(wb, ws, 'Sheet1')
-      const date = new Date().toISOString().slice(0, 10)
-      XLSX.writeFile(wb, `위치목록_${date}.xlsx`)
+      await writeRowsToExcel(rows, datedExcelFilename('위치목록'))
     } catch {
       toast.error('내보내기 실패')
     } finally {
@@ -167,7 +156,7 @@ export default function WarehousePage() {
       if (selectedZone === deleteConfirm?.id) setSelectedZone('')
       setDeleteConfirm(null)
     },
-    onError: (error) => toast.error(getErrorMessage(error, '삭제 실패')),
+    onError: (error) => toast.error(getApiErrorMessage(error, '삭제 실패')),
   })
 
   const createLocMutation = useMutation({
@@ -192,7 +181,7 @@ export default function WarehousePage() {
       setDeleteConfirm(null)
       setSelectedLoc(null)
     },
-    onError: (error) => toast.error(getErrorMessage(error, '삭제 실패')),
+    onError: (error) => toast.error(getApiErrorMessage(error, '삭제 실패')),
   })
 
   const updateStrategyMutation = useMutation({
@@ -1169,7 +1158,7 @@ export default function WarehousePage() {
                   {deleteConfirm.type === 'zone' ? '구역 삭제' : '위치 삭제'}
                 </h3>
                 <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
-                  <span className="font-mono font-semibold text-gray-900 dark:text-white">"{deleteConfirm.name}"</span>을(를) 삭제할까요?
+                  <span className="font-mono font-semibold text-gray-900 dark:text-white">&quot;{deleteConfirm.name}&quot;</span>을(를) 삭제할까요?
                   {deleteConfirm.type === 'zone' && <span className="mt-1 block text-xs text-rose-500">위치가 없는 구역만 삭제할 수 있습니다.</span>}
                 </p>
               </div>

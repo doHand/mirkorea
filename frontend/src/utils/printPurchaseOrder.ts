@@ -1,4 +1,5 @@
 import { useSupplierInfoStore } from '@/stores/supplier-info.store'
+import { openBlankPrintWindow, writePrintHtml } from '@/utils/printWindow'
 import type { Client, PurchaseOrder } from '@/types/api.types'
 
 const escapeHtml = (value?: string | number | null) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -44,10 +45,10 @@ export function printPurchaseOrder(order: PurchaseOrder, client?: Pick<Client, '
     () => '<tr class="blank-row"><td></td><td></td><td></td><td></td><td></td></tr>',
   )
 
-  const win = window.open('', '_blank', 'width=900,height=1100')
+  const win = openBlankPrintWindow('width=900,height=1100')
   if (!win) return
 
-  win.document.write(`<!doctype html>
+  writePrintHtml(`<!doctype html>
 <html lang="ko">
 <head>
   <meta charset="utf-8">
@@ -224,7 +225,7 @@ export function printPurchaseOrder(order: PurchaseOrder, client?: Pick<Client, '
           <tr>
             <th>번호</th>
             <th>제품명</th>
-            <th>OUT수량</th>
+            <th>박스수량</th>
             <th>수량(ea)</th>
             <th>캡사이즈</th>
           </tr>
@@ -244,6 +245,5 @@ export function printPurchaseOrder(order: PurchaseOrder, client?: Pick<Client, '
   </main>
   <script>window.onload = () => window.print()<\/script>
 </body>
-</html>`)
-  win.document.close()
+</html>`, win)
 }

@@ -59,7 +59,7 @@ export default function ProfilePage() {
     if (!fullName.trim()) { toast.error('이름을 입력하세요'); return }
     if (!email.trim()) { toast.error('이메일을 입력하세요'); return }
     if (password && password !== confirm) { toast.error('비밀번호가 일치하지 않습니다'); return }
-    if (password && password.length < 6) { toast.error('비밀번호는 6자 이상이어야 합니다'); return }
+    if (password && (password.length < 7 || !/[a-zA-Z]/.test(password) || !/[0-9]/.test(password))) { toast.error('비밀번호는 영문·숫자 포함 7자 이상이어야 합니다'); return }
     updateMutation.mutate()
   }
 
@@ -151,7 +151,7 @@ export default function ProfilePage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="새 비밀번호 (6자 이상)"
+                placeholder="영문·숫자 포함 7자 이상"
                 className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
               />
               <input

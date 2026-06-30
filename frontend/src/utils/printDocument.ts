@@ -1,15 +1,12 @@
-import toast from 'react-hot-toast'
 import { DEFAULT_SUPPLIER_INFO } from '@/stores/supplier-info.store'
+import { openPrintHtmlBlob, writePrintHtml } from '@/utils/printWindow'
 import type { Quote, Client } from '@/types/api.types'
 import type { SupplierInfo } from '@/stores/supplier-info.store'
 
-export { DEFAULT_SUPPLIER_INFO }
 export type { SupplierInfo }
 
 export const QUOTE_PRINT_TITLES = ['견적서', '발주서', '청구서', '납품서', '지시서', '의뢰서'] as const
-export type QuotePrintTitle = typeof QUOTE_PRINT_TITLES[number]
-
-export function escapeHtml(value?: string | number | null) {
+function escapeHtml(value?: string | number | null) {
   return String(value ?? '')
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
@@ -18,17 +15,17 @@ export function escapeHtml(value?: string | number | null) {
     .replaceAll("'", '&#39;')
 }
 
-export function money(value?: number | string | null) {
+function money(value?: number | string | null) {
   return Number(value ?? 0).toLocaleString('ko-KR')
 }
 
-export function formatKoreanDate(s: string) {
+function formatKoreanDate(s: string) {
   const p = (s || '').split('-')
   if (p.length !== 3) return s
   return `${p[0]} 년 ${p[1]} 월 ${p[2]} 일`
 }
 
-export function toKoreanMoney(n: number): string {
+function toKoreanMoney(n: number): string {
   if (n === 0) return '영'
   const d = ['', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구']
   const g = (x: number): string => {
@@ -48,7 +45,7 @@ export function toKoreanMoney(n: number): string {
   return r
 }
 
-export function formatPrintTitle(label: string) {
+function formatPrintTitle(label: string) {
   return label.split('').join('   ')
 }
 
@@ -244,20 +241,11 @@ function wrapQuoteHtml(sheetsHtml: string, isStatement: boolean, docTitle: strin
 
 function openHtml(html: string, targetWindow?: Window | null) {
   if (targetWindow) {
-    targetWindow.document.write(html)
-    targetWindow.document.close()
+    writePrintHtml(html, targetWindow)
     return
   }
 
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const win = window.open(url, '_blank', 'width=820,height=1060')
-  if (!win) {
-    URL.revokeObjectURL(url)
-    toast.error('팝업 차단을 해제해주세요')
-    return
-  }
-  setTimeout(() => URL.revokeObjectURL(url), 60_000)
+  openPrintHtmlBlob(html, 'width=820,height=1060')
 }
 
 export function printQuoteDocument(

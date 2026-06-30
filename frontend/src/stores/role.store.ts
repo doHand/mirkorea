@@ -20,7 +20,7 @@ export const COLOR_OPTIONS: { label: string; color: string; badgeCls: string }[]
   { label: '회색',  color: 'text-gray-500 dark:text-gray-400',     badgeCls: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400' },
 ]
 
-export const DEFAULT_ROLES: RoleDef[] = [
+const DEFAULT_ROLES: RoleDef[] = [
   {
     id: 'ADMIN',
     name: '관리자',

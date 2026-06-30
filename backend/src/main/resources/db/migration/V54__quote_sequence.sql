@@ -1,0 +1,1 @@
+CREATE SEQUENCE quote_seq START 1;

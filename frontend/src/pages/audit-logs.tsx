@@ -105,8 +105,8 @@ export default function AuditLogsPage() {
     { headerName: '대상', width: 115, valueGetter: (p) => getTargetLabel(p.data?.targetType) },
     {
       headerName: '내용',
-      minWidth: 260,
-      flex: 1.4,
+      minWidth: 200,
+      flex: 1,
       valueGetter: (p) => p.data ? getReadableSummary(p.data) : '-',
       cellRenderer: (p: { data?: AuditLog }) => p.data ? (
         <div className="leading-tight">
@@ -117,7 +117,7 @@ export default function AuditLogsPage() {
         </div>
       ) : '-',
     },
-    { headerName: '작업자', width: 150, valueGetter: (p) => getActorLabel(p.data?.actor) },
+    { headerName: '작업자', width: 185, valueGetter: (p) => getActorLabel(p.data?.actor) },
     {
       headerName: '복원',
       width: 105,

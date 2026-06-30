@@ -2,7 +2,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { AgGridReact } from 'ag-grid-react'
-import { ClientSideRowModelModule, ModuleRegistry } from 'ag-grid-community'
 import type { ColDef, ICellRendererParams } from 'ag-grid-community'
 import { Minus, MoreHorizontal, Plus, RefreshCw, Save } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -11,8 +10,6 @@ import { ExportButton } from '@/components/ExportButton'
 import { ImportButton } from '@/components/ImportButton'
 import type { ImportConfig } from '@/components/ImportButton'
 import type { BarcodeUnitType } from '@/types/api.types'
-
-ModuleRegistry.registerModules([ClientSideRowModelModule])
 
 const TYPE_LABEL: Record<BarcodeUnitType, string> = {
   UNIT: '일반(UNIT)',

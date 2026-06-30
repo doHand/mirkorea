@@ -201,7 +201,6 @@ public class ProductService {
     public Barcode updateBarcode(UUID barcodeId, String barcodeValue, BarcodeUnitType type, int unitQty, boolean isPrimary) {
         Barcode barcode = barcodeRepo.findById(barcodeId)
             .orElseThrow(() -> new BusinessException(ErrorCode.BARCODE_NOT_FOUND));
-        Product product = findById(barcode.getProductId());
         if (barcodeValue != null && !barcodeValue.isBlank() && !barcodeValue.equals(barcode.getBarcode())) {
             if (barcodeRepo.existsByBarcode(barcodeValue)) {
                 throw new BusinessException(ErrorCode.BARCODE_DUPLICATE);

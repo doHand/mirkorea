@@ -165,6 +165,7 @@ function LowStockByClientCard({
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded bg-rose-50 dark:bg-rose-950/60 border border-rose-100 dark:border-rose-700/60 flex items-center justify-center">
+            <TrendingDown size={15} className="text-rose-500 dark:text-rose-300" />
           </div>
           <div>
             <h3 className="text-sm font-bold text-gray-950 dark:text-white">거래처별 안전재고 미달</h3>
@@ -284,7 +285,7 @@ export default function DashboardPage() {
     enabled:  !!warehouse?.id,
   })
 
-  const transactions: StockTransaction[] = txPage?.items ?? []
+  const transactions = useMemo<StockTransaction[]>(() => txPage?.items ?? [], [txPage?.items])
 
   const totalTransactions7 = useMemo(() => {
     const start = dayjs().subtract(6, 'day').startOf('day')
@@ -367,7 +368,7 @@ export default function DashboardPage() {
       value: summary?.totalSkus ?? 0,
       icon: Package,
       sub: '등록 상품 종류',
-      tone: 'text-white',
+      tone: 'text-blue-600',
       bg: 'bg-gradient-to-br from-blue-500 to-indigo-600',
       border: 'border-blue-300/30',
     },
@@ -376,7 +377,7 @@ export default function DashboardPage() {
       value: summary?.totalQty ?? 0,
       icon: Boxes,
       sub: '전체 보관 수량',
-      tone: 'text-white',
+      tone: 'text-cyan-600',
       bg: 'bg-gradient-to-br from-cyan-400 to-blue-500',
       border: 'border-cyan-200/40',
     },
@@ -385,7 +386,7 @@ export default function DashboardPage() {
       value: summary?.lowStockCount ?? 0,
       icon: TrendingDown,
       sub: '보충 필요 품목',
-      tone: 'text-white',
+      tone: 'text-rose-600',
       bg: 'bg-gradient-to-br from-rose-500 to-red-600',
       border: 'border-rose-200/40',
     },
@@ -394,7 +395,7 @@ export default function DashboardPage() {
       value: totalTransactions7,
       icon: Activity,
       sub: '입출고 트랜잭션',
-      tone: 'text-white',
+      tone: 'text-violet-600',
       bg: 'bg-gradient-to-br from-violet-500 to-fuchsia-500',
       border: 'border-violet-200/40',
     },
