@@ -23,7 +23,14 @@ public class JwtTokenProvider {
         @Value("${jwt.expiration}")          long   expiration,
         @Value("${jwt.refresh-expiration}")  long   refreshExpiration
     ) {
-        this.key              = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+        if (keyBytes.length < 32) {
+            // HMAC-SHA256은 최소 256비트(32바이트) 키 필요
+            // 생성: openssl rand -hex 32
+            throw new IllegalStateException(
+                "JWT_SECRET must be at least 32 bytes. Generate one with: openssl rand -hex 32");
+        }
+        this.key              = Keys.hmacShaKeyFor(keyBytes);
         this.expiration       = expiration * 1000L;
         this.refreshExpiration = refreshExpiration * 1000L;
     }

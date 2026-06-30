@@ -33,8 +33,8 @@ export default function ForgotPasswordPage() {
       toast.error('비밀번호가 일치하지 않습니다')
       return
     }
-    if (passwords.newPassword.length < 7 || !/[a-zA-Z]/.test(passwords.newPassword) || !/[0-9]/.test(passwords.newPassword)) {
-      toast.error('비밀번호는 영문·숫자 포함 7자 이상 입력해주세요')
+    if (passwords.newPassword.length < 8 || !/[a-zA-Z]/.test(passwords.newPassword) || !/[0-9]/.test(passwords.newPassword)) {
+      toast.error('비밀번호는 영문·숫자 포함 8자 이상 입력해주세요')
       return
     }
     setLoading(true)
@@ -149,7 +149,7 @@ export default function ForgotPasswordPage() {
                 autoComplete="new-password"
                 value={passwords.newPassword}
                 onChange={patchPasswords('newPassword')}
-                placeholder="영문·숫자 포함 7자 이상"
+                placeholder="영문·숫자 포함 8자 이상"
                 className={inputCls}
                 autoFocus
                 required

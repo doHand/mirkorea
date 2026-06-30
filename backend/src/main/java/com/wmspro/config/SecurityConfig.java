@@ -32,20 +32,28 @@ public class SecurityConfig {
     @Value("${cors.allowed-origins:http://localhost:3000}")
     private String allowedOrigins;
 
+    @Value("${springdoc.swagger-ui.enabled:false}")
+    private boolean swaggerEnabled;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsSource()))
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/auth/login", "/api/v1/auth/refresh",
-                                 "/api/v1/auth/register", "/api/v1/auth/reset-password").permitAll()
-                .requestMatchers("/api/docs/**", "/api/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/sse/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/warehouses/**").hasAnyRole("ADMIN", "MANAGER", "WORKER", "VIEWER")
-                .anyRequest().hasAnyRole("ADMIN", "MANAGER", "WORKER")
-            )
+            .authorizeHttpRequests(auth -> {
+                auth.requestMatchers("/api/v1/auth/login", "/api/v1/auth/refresh",
+                                     "/api/v1/auth/register", "/api/v1/auth/reset-password").permitAll();
+                // Swagger: SWAGGER_ENABLED=true 환경변수가 있을 때만 공개 (기본 비활성화)
+                if (swaggerEnabled) {
+                    auth.requestMatchers("/api/docs/**", "/api/swagger-ui/**", "/v3/api-docs/**").permitAll();
+                } else {
+                    auth.requestMatchers("/api/docs/**", "/api/swagger-ui/**", "/v3/api-docs/**").denyAll();
+                }
+                auth.requestMatchers(HttpMethod.GET, "/api/v1/sse/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/warehouses/**").hasAnyRole("ADMIN", "MANAGER", "WORKER", "VIEWER")
+                    .anyRequest().hasAnyRole("ADMIN", "MANAGER", "WORKER");
+            })
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -61,7 +69,10 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(allowedOrigins.split(",")));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+        config.setAllowedHeaders(List.of(
+            "Authorization", "Content-Type", "Accept",
+            "X-Requested-With", "Cache-Control", "Last-Event-ID"
+        ));
         config.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

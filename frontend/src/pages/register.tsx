@@ -18,18 +18,23 @@ export default function RegisterPage() {
     password:        '',
     confirmPassword: '',
   })
+  const [privacyConsent, setPrivacyConsent] = useState(false)
 
   const patch = (key: keyof typeof form) =>
     (e: React.ChangeEvent<HTMLInputElement>) => setForm((p) => ({ ...p, [key]: e.target.value }))
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!privacyConsent) {
+      toast.error('개인정보 수집 및 이용에 동의해주세요')
+      return
+    }
     if (form.password !== form.confirmPassword) {
       toast.error('비밀번호가 일치하지 않습니다')
       return
     }
-    if (form.password.length < 7 || !/[a-zA-Z]/.test(form.password) || !/[0-9]/.test(form.password)) {
-      toast.error('비밀번호는 영문·숫자 포함 7자 이상 입력해주세요')
+    if (form.password.length < 8 || !/[a-zA-Z]/.test(form.password) || !/[0-9]/.test(form.password)) {
+      toast.error('비밀번호는 영문·숫자 포함 8자 이상 입력해주세요')
       return
     }
     setLoading(true)
@@ -130,7 +135,7 @@ export default function RegisterPage() {
               autoComplete="new-password"
               value={form.password}
               onChange={patch('password')}
-              placeholder="영문·숫자 포함 7자 이상"
+              placeholder="영문·숫자 포함 8자 이상"
               className={inputCls}
               required
             />
@@ -152,9 +157,32 @@ export default function RegisterPage() {
             )}
           </div>
 
+          {/* 개인정보 수집 동의 (개인정보보호법 제15조) */}
+          <div className="flex items-start gap-2 pt-1">
+            <input
+              id="privacy-consent"
+              type="checkbox"
+              checked={privacyConsent}
+              onChange={(e) => setPrivacyConsent(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[var(--color-primary)] cursor-pointer"
+            />
+            <label htmlFor="privacy-consent" className="text-xs text-gray-600 dark:text-gray-400 cursor-pointer leading-relaxed">
+              <span className="text-red-500 font-medium">[필수]</span>{' '}
+              <strong>개인정보 수집 및 이용</strong>에 동의합니다.{' '}
+              수집 항목: 아이디, 이메일, 이름, 연락처 / 목적: 서비스 회원 관리 / 보유기간: 회원 탈퇴 후 30일.{' '}
+              <Link href="/privacy" target="_blank" className="text-[var(--color-primary)] hover:underline">
+                개인정보처리방침 전문 보기
+              </Link>
+            </label>
+          </div>
+
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            본 서비스는 만 14세 이상 이용 가능합니다.
+          </p>
+
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !privacyConsent}
             className="w-full py-2.5 mt-1 bg-[var(--color-primary)] text-white font-semibold rounded-lg hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-colors"
           >
             {loading ? '가입 중...' : '회원가입'}

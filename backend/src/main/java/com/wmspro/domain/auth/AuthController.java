@@ -46,7 +46,10 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public ApiResponse<Map<String, Object>> refresh(@RequestBody Map<String, String> body) {
-        return ApiResponse.ok(authService.refresh(body.get("refreshToken")));
+        String refreshToken = body.get("refreshToken");
+        if (refreshToken == null || refreshToken.isBlank())
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        return ApiResponse.ok(authService.refresh(refreshToken));
     }
 
     @GetMapping("/me")
@@ -75,7 +78,7 @@ public class AuthController {
         @NotBlank String fullName;
         String phone;
         @NotBlank
-        @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*\\d).{7,}$", message = "비밀번호는 영문·숫자 포함 7자 이상이어야 합니다")
+        @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*\\d).{8,}$", message = "비밀번호는 영문·숫자 포함 8자 이상이어야 합니다")
         String password;
     }
 
@@ -84,7 +87,7 @@ public class AuthController {
         @NotBlank String username;
         @NotBlank @Email String email;
         @NotBlank
-        @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*\\d).{7,}$", message = "비밀번호는 영문·숫자 포함 7자 이상이어야 합니다")
+        @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*\\d).{8,}$", message = "비밀번호는 영문·숫자 포함 8자 이상이어야 합니다")
         String newPassword;
     }
 }

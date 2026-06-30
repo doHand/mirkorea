@@ -1,0 +1,36 @@
+User-agent: *
+
+# 인증이 필요한 내부 경로 크롤링 차단
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /mypage/
+Disallow: /inbound/
+Disallow: /outbound/
+Disallow: /products/
+Disallow: /inventory/
+Disallow: /warehouse/
+Disallow: /clients/
+Disallow: /quotes/
+Disallow: /transactions/
+Disallow: /scan/
+Disallow: /alerts/
+Disallow: /users/
+Disallow: /settings/
+Disallow: /profile/
+Disallow: /barcodes/
+Disallow: /categories/
+Disallow: /units/
+Disallow: /supplier-settings/
+Disallow: /menu-permissions/
+Disallow: /picking-list/
+Disallow: /product-attrs/
+Disallow: /audit-logs/
+Disallow: /inventory-audit/
+
+# 공개 접근 허용
+Allow: /login
+Allow: /register
+Allow: /forgot-password
+
+Sitemap: /sitemap.xml
