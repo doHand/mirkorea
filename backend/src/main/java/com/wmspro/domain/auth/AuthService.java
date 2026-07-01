@@ -74,7 +74,7 @@ public class AuthService {
     public String getSecurityQuestion(String username) {
         return userRepo.findByUsernameOrEmail(username)
             .map(User::getSecurityQuestion)
-            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
     }
 
     @Transactional

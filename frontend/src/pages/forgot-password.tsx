@@ -28,7 +28,7 @@ export default function ForgotPasswordPage() {
       setQuestion(q)
       setStep('answer')
     } catch {
-      toast.error('등록된 아이디를 찾을 수 없습니다')
+      toast.error('아이디 또는 비밀번호를 확인해주세요')
     } finally {
       setLoading(false)
     }

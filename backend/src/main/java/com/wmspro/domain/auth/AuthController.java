@@ -29,6 +29,9 @@ public class AuthController {
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<Void> register(@Valid @RequestBody RegisterRequest req) {
+        if (!ALLOWED_SECURITY_QUESTIONS.contains(req.securityQuestion)) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
         authService.register(req.username, req.email, req.fullName, req.phone,
                              req.password, req.securityQuestion, req.securityAnswer);
         return ApiResponse.ok(null, "회원가입이 완료되었습니다");
@@ -36,6 +39,7 @@ public class AuthController {
 
     @GetMapping("/security-question")
     public ApiResponse<String> securityQuestion(@RequestParam String username) {
+        // 사용자 존재 여부를 노출하지 않기 위해 없는 경우에도 동일한 응답 반환
         return ApiResponse.ok(authService.getSecurityQuestion(username));
     }
 
@@ -77,9 +81,16 @@ public class AuthController {
         @NotBlank String password;
     }
 
+    static final java.util.Set<String> ALLOWED_SECURITY_QUESTIONS = java.util.Set.of(
+        "어머니 성함은?", "초등학교 이름은?", "첫 번째 반려동물 이름은?",
+        "태어난 도시는?", "가장 좋아하는 음식은?", "졸업한 고등학교 이름은?"
+    );
+
     @Getter @Setter
     static class RegisterRequest {
-        @NotBlank String username;
+        @NotBlank
+        @Pattern(regexp = "^[a-zA-Z0-9_]{4,50}$", message = "아이디는 영문·숫자·밑줄 4~50자여야 합니다")
+        String username;
         @NotBlank @Email String email;
         @NotBlank String fullName;
         String phone;
