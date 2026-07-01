@@ -1,0 +1,2 @@
+ALTER TABLE users ADD COLUMN IF NOT EXISTS security_question  VARCHAR(500);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS security_answer_hash VARCHAR(255);

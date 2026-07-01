@@ -50,8 +50,13 @@ frontend/.env.*
 .DS_Store
 Thumbs.db
 
+# Local scripts with secrets
+start-backend.bat
+start-*.bat
+
 # Local screenshots / QA artifacts
 screenshot*.png
+artifacts-*.png
 frontend/screenshot*.mjs
 
 # Spring Boot

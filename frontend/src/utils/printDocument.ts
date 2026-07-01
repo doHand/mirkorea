@@ -49,6 +49,12 @@ function formatPrintTitle(label: string) {
   return label.split('').join('   ')
 }
 
+function formatDocumentUnit(unit?: string | null) {
+  const value = (unit ?? '').trim().toUpperCase()
+  if (!value) return 'BOX'
+  return value
+}
+
 function buildQuoteSheet(
   doc: Quote,
   client: Client | null | undefined,
@@ -95,7 +101,7 @@ function buildQuoteSheet(
         <td>${escapeHtml(item.barcode)}</td>
         <td class="left">${escapeHtml(item.productName)}</td>
         <td>${escapeHtml(item.spec)}</td>
-        <td>${escapeHtml(item.unit || 'OUT')}</td>
+        <td>${escapeHtml(formatDocumentUnit(item.unit))}</td>
         <td class="right">${money(item.qty)}</td>
         <td class="right">${money(item.unitPrice)}</td>
         <td class="right">${money(item.amount)}</td>
@@ -105,7 +111,7 @@ function buildQuoteSheet(
     return `<tr>
       <td>${idx + 1}</td>
       <td class="left">${nameCell}</td>
-      <td>${escapeHtml(item.unit || 'Ea')}</td>
+      <td>${escapeHtml(formatDocumentUnit(item.unit))}</td>
       <td class="right">${money(item.qty)}</td>
       <td class="right">${money(item.unitPrice)}</td>
       <td class="right">${money(item.amount)}</td>

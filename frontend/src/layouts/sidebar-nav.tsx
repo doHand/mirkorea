@@ -35,7 +35,9 @@ export function SidebarNav({ onClose }: Props) {
 
   const handleLogout = () => {
     clearAuth()
-    router.push('/login')
+    fetch('/api/auth/logout', { method: 'POST' }).finally(() => {
+      router.push('/login')
+    })
   }
 
   const role = user?.role as UserRole | undefined

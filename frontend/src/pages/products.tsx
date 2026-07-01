@@ -719,17 +719,35 @@ const selectedClientLabel = selectedClient?.name
       return
     }
     const today = new Date().toISOString().slice(0, 10)
-    const items = selected.map((p, idx) => ({
-      id: String(idx),
-      productId: p.id,
-      productCode: p.code,
-      productName: p.name,
-      unit: p.unit ?? '',
-      qty: 1,
-      unitPrice: Number(p.sellPrice ?? 0),
-      amount: Number(p.sellPrice ?? 0),
-      sortOrder: idx,
-    }))
+    const unitOptions = units
+      .filter((unit) => unit.isActive !== false)
+      .map((unit) => unit.code.trim().toUpperCase())
+      .filter(Boolean)
+    const defaultUnit = unitOptions.find((unit) => unit.includes('OUT'))
+      ?? unitOptions.find((unit) => unit === 'BOX')
+      ?? unitOptions.find((unit) => unit.includes('IN'))
+      ?? unitOptions.find((unit) => unit === 'EA')
+      ?? unitOptions[0]
+      ?? 'BOX'
+    const items = selected.map((p, idx) => {
+      const qty = defaultUnit.includes('IN')
+        ? getPackageUnitQty(p, 'IN') ?? 1
+        : defaultUnit.includes('OUT') || defaultUnit === 'BOX'
+          ? getPackageUnitQty(p, 'OUT') ?? 1
+          : 1
+      const unitPrice = Number(p.sellPrice ?? 0)
+      return {
+        id: String(idx),
+        productId: p.id,
+        productCode: p.code,
+        productName: p.name,
+        unit: defaultUnit,
+        qty,
+        unitPrice,
+        amount: qty * unitPrice,
+        sortOrder: idx,
+      }
+    })
     const draftQuote = {
       id: '', docNo: '', docType,
       clientId: undefined, clientName: '',

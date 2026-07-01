@@ -6,7 +6,7 @@ services:
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     plan: free
-    healthCheckPath: /api/docs
+    healthCheckPath: /api/health
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
@@ -30,13 +30,17 @@ services:
         fromDatabase:
           name: mirkorea-db
           property: database
+      - key: DB_SSL_MODE
+        value: require
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_EXPIRATION
-        value: "86400"
+        value: "3600"
       - key: JWT_REFRESH_EXPIRATION
-        value: "2592000"
+        value: "604800"
       - key: CORS_ORIGINS
+        value: https://mirkorea-frontend.onrender.com
+      - key: APP_BASE_URL
         value: https://mirkorea-frontend.onrender.com
 
   # ─── 프론트엔드 (Next.js) ───────────────────────────────────────
@@ -50,6 +54,10 @@ services:
     envVars:
       - key: NEXT_PUBLIC_API_URL
         value: https://mirkorea-backend.onrender.com
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false
 
 # ─── PostgreSQL DB ─────────────────────────────────────────────
 databases:

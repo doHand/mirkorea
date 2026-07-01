@@ -42,7 +42,7 @@ export default function LoginPage() {
       } else {
         localStorage.removeItem(REMEMBER_KEY)
       }
-      setAuth(res.user, res.accessToken, res.refreshToken)
+      setAuth(res.user)
       router.push('/')
     } catch {
       toast.error('아이디 또는 비밀번호를 확인해주세요')

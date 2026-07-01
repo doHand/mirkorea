@@ -1130,6 +1130,15 @@
   border-color: var(--color-line) !important;
 }
 
+.dark .app-tabs {
+  background: color-mix(in srgb, var(--color-surface-muted) 72%, var(--color-surface)) !important;
+}
+
+.dark .app-tab-active {
+  background: color-mix(in srgb, var(--color-primary-soft) 54%, var(--color-surface)) !important;
+  border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-line)) !important;
+}
+
 .app-header-title,
 .app-sidebar-title,
 .wms-heading,
@@ -1164,6 +1173,24 @@
   color: var(--color-text-muted) !important;
 }
 
+.app-sidebar-user {
+  background: var(--color-surface-muted) !important;
+  border: 1px solid var(--color-line);
+  color: var(--color-text);
+}
+
+.dark .app-sidebar-user {
+  background: color-mix(in srgb, var(--color-surface-muted) 68%, var(--color-page)) !important;
+}
+
+.app-sidebar-user-name {
+  color: var(--color-text-strong) !important;
+}
+
+.dark .app-sidebar-link {
+  color: color-mix(in srgb, var(--color-text) 82%, var(--color-text-muted)) !important;
+}
+
 .app-sidebar-link-icon,
 .app-sidebar-section-icon {
   color: color-mix(in srgb, var(--color-text-muted) 72%, var(--color-surface)) !important;
@@ -1189,6 +1216,15 @@
   border-color: var(--color-primary) !important;
   color: #fff !important;
   box-shadow: none !important;
+}
+
+.dark .app-sidebar-link-active,
+.dark .app-sidebar-link-active:hover {
+  color: #0b1117 !important;
+}
+
+.dark .app-sidebar-link-active .app-sidebar-link-icon {
+  color: #0b1117 !important;
 }
 
 .btn-primary:hover,
@@ -1228,6 +1264,15 @@
   border-color: var(--color-line) !important;
   color: var(--color-text) !important;
   border-radius: var(--radius-sm) !important;
+}
+
+.dark .wms-input,
+.dark .search-input,
+.dark .wms-inline-input,
+.dark .wms-workspace input:not([type="checkbox"]):not([type="radio"]),
+.dark .wms-workspace select,
+.dark .wms-workspace textarea {
+  background: color-mix(in srgb, var(--color-surface-muted) 64%, var(--color-surface)) !important;
 }
 
 .wms-input:focus,
@@ -1430,6 +1475,151 @@
 .dark .ag-theme-wms .wms-master-box-total-cell {
   background: rgba(15, 118, 110, 0.22) !important;
   color: #99f6e4 !important;
+}
+
+/* Dark-mode AG Grid final pass. Earlier legacy blocks still exist above, so this
+   section intentionally sits last and normalizes every grid screen. */
+.dark .ag-theme-wms {
+  --ag-background-color: var(--color-surface);
+  --ag-foreground-color: var(--color-text);
+  --ag-data-color: var(--color-text);
+  --ag-secondary-foreground-color: var(--color-text-muted);
+  --ag-header-background-color: var(--color-grid-header);
+  --ag-header-foreground-color: var(--color-text-strong);
+  --ag-odd-row-background-color: color-mix(in srgb, var(--color-surface-muted) 38%, var(--color-surface));
+  --ag-row-hover-color: color-mix(in srgb, var(--color-primary-soft) 48%, var(--color-surface));
+  --ag-selected-row-background-color: color-mix(in srgb, var(--color-primary-soft) 74%, var(--color-surface));
+  --ag-border-color: var(--color-line);
+  --ag-row-border-color: var(--color-line);
+  --ag-cell-horizontal-border: solid var(--color-line);
+  --ag-header-column-separator-color: color-mix(in srgb, var(--color-primary) 34%, transparent);
+  --ag-input-background-color: color-mix(in srgb, var(--color-surface-muted) 70%, var(--color-surface));
+  --ag-input-border-color: var(--color-line);
+  --ag-modal-overlay-background-color: rgb(0 0 0 / 46%);
+  --ag-menu-background-color: var(--color-surface);
+  --ag-panel-background-color: var(--color-surface);
+  --ag-tooltip-background-color: var(--color-surface-muted);
+  --ag-tooltip-foreground-color: var(--color-text);
+  border-color: var(--color-line);
+}
+
+.dark .ag-theme-wms .ag-root-wrapper,
+.dark .ag-theme-wms .ag-root,
+.dark .ag-theme-wms .ag-body-viewport,
+.dark .ag-theme-wms .ag-center-cols-viewport,
+.dark .ag-theme-wms .ag-center-cols-container,
+.dark .ag-theme-wms .ag-pinned-left-cols-container,
+.dark .ag-theme-wms .ag-pinned-right-cols-container,
+.dark .ag-theme-wms .ag-floating-top,
+.dark .ag-theme-wms .ag-floating-bottom {
+  background: var(--color-surface) !important;
+}
+
+.dark .ag-theme-wms .ag-header,
+.dark .ag-theme-wms .ag-header-cell,
+.dark .ag-theme-wms .ag-header-group-cell {
+  background: var(--color-grid-header) !important;
+  border-color: var(--color-line) !important;
+  color: var(--color-text-strong) !important;
+}
+
+.dark .ag-theme-wms .ag-row,
+.dark .ag-theme-wms .ag-cell {
+  background-color: transparent !important;
+  border-color: var(--color-line) !important;
+  color: var(--color-text) !important;
+}
+
+.dark .ag-theme-wms .ag-row-odd {
+  background-color: color-mix(in srgb, var(--color-surface-muted) 38%, var(--color-surface)) !important;
+}
+
+.dark .ag-theme-wms .ag-row-hover,
+.dark .ag-theme-wms .ag-row:hover {
+  background-color: color-mix(in srgb, var(--color-primary-soft) 48%, var(--color-surface)) !important;
+}
+
+.dark .ag-theme-wms .ag-row-selected {
+  background-color: color-mix(in srgb, var(--color-primary-soft) 76%, var(--color-surface)) !important;
+}
+
+.dark .ag-theme-wms .ag-pinned-left-header,
+.dark .ag-theme-wms .ag-pinned-right-header,
+.dark .ag-theme-wms .ag-pinned-left-cols-container,
+.dark .ag-theme-wms .ag-pinned-right-cols-container {
+  border-color: color-mix(in srgb, var(--color-line) 82%, var(--color-primary)) !important;
+}
+
+.dark .ag-theme-wms .ag-paging-panel,
+.dark .ag-theme-wms .ag-overlay,
+.dark .ag-theme-wms .ag-status-bar,
+.dark .ag-theme-wms .ag-side-bar {
+  background: var(--color-surface) !important;
+  border-color: var(--color-line) !important;
+  color: var(--color-text-muted) !important;
+}
+
+.dark .ag-theme-wms .ag-menu,
+.dark .ag-theme-wms .ag-tabs,
+.dark .ag-theme-wms .ag-popup-child {
+  background: var(--color-surface) !important;
+  border-color: var(--color-line) !important;
+  color: var(--color-text) !important;
+  box-shadow: 0 16px 34px rgb(0 0 0 / 35%) !important;
+}
+
+.dark .ag-theme-wms input,
+.dark .ag-theme-wms select,
+.dark .ag-theme-wms textarea {
+  background: color-mix(in srgb, var(--color-surface-muted) 70%, var(--color-surface)) !important;
+  border-color: var(--color-line) !important;
+  color: var(--color-text) !important;
+}
+
+.dark .ag-theme-wms .ag-cell-focus,
+.dark .ag-theme-wms .ag-cell-inline-editing {
+  border-color: var(--color-primary) !important;
+  box-shadow: inset 0 0 0 1px var(--color-primary) !important;
+}
+
+.dark .product-inventory-grid .ag-row.row-status-active,
+.dark .product-inventory-grid .ag-pinned-left-cols-container .ag-row.row-status-active {
+  background-color: color-mix(in srgb, #14532d 34%, var(--color-surface)) !important;
+}
+
+.dark .product-inventory-grid .ag-row.row-status-inactive,
+.dark .product-inventory-grid .ag-pinned-left-cols-container .ag-row.row-status-inactive {
+  background-color: color-mix(in srgb, #334155 32%, var(--color-surface)) !important;
+  color: var(--color-text-muted) !important;
+}
+
+.dark .product-inventory-grid .ag-row.row-below-safety,
+.dark .product-inventory-grid .ag-pinned-left-cols-container .ag-row.row-below-safety {
+  background-color: color-mix(in srgb, #7f1d1d 26%, var(--color-surface)) !important;
+}
+
+.dark .product-inventory-grid .ag-row.row-pending-delete,
+.dark .product-inventory-grid .ag-pinned-left-cols-container .ag-row.row-pending-delete {
+  background-color: color-mix(in srgb, #334155 38%, var(--color-surface)) !important;
+  color: color-mix(in srgb, var(--color-text-muted) 72%, var(--color-surface)) !important;
+}
+
+.dark .product-inventory-grid .ag-row.row-new,
+.dark .product-inventory-grid .ag-pinned-left-cols-container .ag-row.row-new,
+.dark .wms-ag-grid .ag-row.row-new {
+  background-color: color-mix(in srgb, #065f46 30%, var(--color-surface)) !important;
+}
+
+.dark .product-inventory-grid .ag-row.row-modified,
+.dark .product-inventory-grid .ag-pinned-left-cols-container .ag-row.row-modified,
+.dark .wms-ag-grid .ag-row.row-modified {
+  background-color: color-mix(in srgb, #92400e 24%, var(--color-surface)) !important;
+}
+
+.dark .product-inventory-grid .ag-cell.cell-below-safety,
+.dark .product-inventory-grid .ag-cell.cell-required-input {
+  background-color: color-mix(in srgb, #7f1d1d 42%, var(--color-surface)) !important;
+  color: #fecaca !important;
 }
 
 @keyframes wms-detail-panel-enter {

@@ -1,11 +1,12 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { FileText, X, Pencil, Trash2, Plus, Search, Printer } from 'lucide-react'
 import { useRouter } from 'next/router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { clientApi } from '@/api/client.api'
-import { productApi } from '@/api/product.api'
+import { productApi, unitApi } from '@/api/product.api'
 import { quoteApi } from '@/api/quote.api'
 import { AppAgGrid } from '@/components/AppAgGrid'
 import { PurchaseOrdersContent } from '@/components/PurchaseOrdersContent'
@@ -14,6 +15,7 @@ import { ProductPickerModal } from '@/components/ProductPickerModal'
 import { useSupplierInfoStore } from '@/stores/supplier-info.store'
 import { useEscapeKey } from '@/hooks/useEscapeKey'
 import { formatNumber } from '@/utils/format'
+import { getPackageUnitQty } from '@/utils/unit-spec'
 import { cn } from '@/utils/cn'
 import * as ui from '@/styles/ui'
 import {
@@ -21,7 +23,7 @@ import {
   printQuoteDocument,
 } from '@/utils/printDocument'
 import { openBlankPrintWindow } from '@/utils/printWindow'
-import type { Client, Product, Quote } from '@/types/api.types'
+import type { Client, Product, ProductUnit, Quote } from '@/types/api.types'
 import type { ColDef } from 'ag-grid-community'
 
 const DOC_TYPE_LABEL: Record<string, string> = {
@@ -47,6 +49,9 @@ interface ItemRow {
   qty: number
   unitPrice: number
   amount: number
+  spec?: string
+  inUnitQty?: number
+  outUnitQty?: number
 }
 
 interface FormState {
@@ -59,8 +64,56 @@ interface FormState {
   printTitle: string
 }
 
+const OUTPUT_DOC_UNIT = 'BOX'
 const today = () => new Date().toISOString().slice(0, 10)
-const EMPTY_ITEM: ItemRow = { productName: '', unit: '', qty: 1, unitPrice: 0, amount: 0 }
+const EMPTY_ITEM: ItemRow = { productName: '', unit: OUTPUT_DOC_UNIT, qty: 1, unitPrice: 0, amount: 0 }
+
+type UnitSpecSource = Pick<Product, 'spec' | 'inUnitQty' | 'outUnitQty'>
+
+function normalizeOutputDocUnit(unit?: string | null, fallback = OUTPUT_DOC_UNIT) {
+  const value = (unit ?? '').trim().toUpperCase()
+  if (!value) return fallback
+  return value
+}
+
+function unitCodeOptions(units: ProductUnit[]) {
+  return units
+    .filter((unit) => unit.isActive !== false)
+    .map((unit) => unit.code.trim().toUpperCase())
+    .filter(Boolean)
+}
+
+function pickDefaultUnit(options: string[], preferred?: string | null) {
+  const preferredUnit = normalizeOutputDocUnit(preferred)
+  if (options.includes(preferredUnit)) return preferredUnit
+  const outUnit = options.find((option) => option.includes('OUT')) ?? options.find((option) => option === 'BOX')
+  if (outUnit) return outUnit
+  const inUnit = options.find((option) => option.includes('IN'))
+  if (inUnit) return inUnit
+  if (options.includes('EA')) return 'EA'
+  return options[0] ?? OUTPUT_DOC_UNIT
+}
+
+function getSpecQtyForUnit(source: UnitSpecSource | undefined, unit: string) {
+  if (!source) return 1
+  const normalized = normalizeOutputDocUnit(unit)
+  if (normalized.includes('IN')) {
+    return getPackageUnitQty(source, 'IN') ?? 1
+  }
+  if (normalized.includes('OUT') || normalized === 'BOX') {
+    return getPackageUnitQty(source, 'OUT') ?? 1
+  }
+  if (normalized === 'EA') return 1
+  const escaped = normalized.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const match = source.spec?.match(new RegExp(`(\\d+)\\s*${escaped}\\b`, 'i'))
+  const qty = match ? Number(match[1]) : 0
+  return qty > 0 ? qty : 1
+}
+
+function itemSpecSource(item: ItemRow): UnitSpecSource {
+  return { spec: item.spec, inUnitQty: item.inUnitQty, outUnitQty: item.outUnitQty }
+}
+
 const EMPTY_FORM: FormState = {
   docType: 'STATEMENT',
   clientId: '',
@@ -108,6 +161,12 @@ export default function QuotesPage() {
 
   const { data: clients } = useQuery({ queryKey: ['clients-all'], queryFn: clientApi.findAllActive })
   const { data: products } = useQuery({ queryKey: ['products-all'], queryFn: () => productApi.findAll({ limit: 999 }) })
+  const { data: units = [] } = useQuery<ProductUnit[]>({ queryKey: ['product-units'], queryFn: unitApi.findAll })
+  const unitOptions = useMemo(() => {
+    const options = unitCodeOptions(units)
+    return options.length ? options : [OUTPUT_DOC_UNIT]
+  }, [units])
+  const defaultUnit = useMemo(() => pickDefaultUnit(unitOptions), [unitOptions])
 
   const findClientForQuote = useCallback((quote: Quote) =>
     clients?.find((client) => client.id === quote.clientId)
@@ -126,7 +185,7 @@ export default function QuotesPage() {
       productId: it.productId,
       productCode: it.productCode,
       productName: it.productName,
-      unit: it.unit,
+      unit: normalizeOutputDocUnit(it.unit, defaultUnit),
       qty: it.qty,
       unitPrice: it.unitPrice,
     })),
@@ -171,10 +230,11 @@ export default function QuotesPage() {
         productId: it.productId,
         productCode: it.productCode,
         productName: it.productName ?? '',
-        unit: it.unit ?? '',
+        unit: normalizeOutputDocUnit(it.unit, defaultUnit),
         qty: it.qty,
         unitPrice: Number(it.unitPrice),
         amount: Number(it.amount),
+        spec: it.spec,
       })),
     })
     setShowModal(true)
@@ -186,17 +246,24 @@ export default function QuotesPage() {
       const ids = productIdsParam.split(',').filter(Boolean)
       const selectedProducts = await Promise.all(ids.map((id) => productApi.findById(id)))
       const docType: Quote['docType'] = docTypeParam === 'QUOTE' ? 'QUOTE' : 'STATEMENT'
-      const items = selectedProducts.map((product, index) => ({
-        id: String(index),
-        productId: product.id,
-        productCode: product.code,
-        productName: product.name,
-        unit: product.unit ?? '',
-        qty: 1,
-        unitPrice: Number(product.sellPrice ?? 0),
-        amount: Number(product.sellPrice ?? 0),
-        sortOrder: index,
-      }))
+      const items = selectedProducts.map((product, index) => {
+        const unit = pickDefaultUnit(unitOptions)
+        const unitPrice = Number(product.sellPrice ?? 0)
+        return {
+          id: String(index),
+          productId: product.id,
+          productCode: product.code,
+          productName: product.name,
+          unit,
+          qty: 1,
+          unitPrice,
+          amount: unitPrice,
+          sortOrder: index,
+          spec: product.spec,
+          inUnitQty: product.inUnitQty,
+          outUnitQty: product.outUnitQty,
+        }
+      })
       setEditing(null)
       setForm({ ...EMPTY_FORM, docType, docDate: today(), items })
       setShowModal(true)
@@ -212,7 +279,7 @@ export default function QuotesPage() {
       }
     }
     prefillProducts().catch(() => toast.error('상품 정보를 불러오지 못했습니다'))
-  }, [prefillKey, productIdsParam, docTypeParam, autoPrintParam, supplierInfo])
+  }, [prefillKey, productIdsParam, docTypeParam, autoPrintParam, supplierInfo, unitOptions])
 
   const updateItem = (idx: number, patch: Partial<ItemRow>) => {
     setForm((prev) => {
@@ -226,14 +293,22 @@ export default function QuotesPage() {
 
   const removeItem = (idx: number) => setForm((prev) => ({ ...prev, items: prev.items.filter((_, i) => i !== idx) }))
 
-  const selectProduct = (idx: number, product: Product) => updateItem(idx, {
-    productId: product.id,
-    productCode: product.code,
-    productName: product.name,
-    unit: product.unit ?? '',
-    unitPrice: Number(product.sellPrice ?? 0),
-    amount: Number(product.sellPrice ?? 0) * (form.items[idx]?.qty ?? 1),
-  })
+  const selectProduct = (idx: number, product: Product) => {
+    const unit = pickDefaultUnit(unitOptions)
+    const unitPrice = Number(product.sellPrice ?? 0)
+    updateItem(idx, {
+      productId: product.id,
+      productCode: product.code,
+      productName: product.name,
+      unit,
+      qty: 1,
+      unitPrice,
+      amount: unitPrice,
+      spec: product.spec,
+      inUnitQty: product.inUnitQty,
+      outUnitQty: product.outUnitQty,
+    })
+  }
 
   const onSelectClient = (client: Client | null) => {
     if (!client) return
@@ -247,15 +322,22 @@ export default function QuotesPage() {
   }
 
   const onAddProductsFromPicker = (selected: Product[]) => {
-    const newItems: ItemRow[] = selected.map((product) => ({
-      productId: product.id,
-      productCode: product.code,
-      productName: product.name,
-      unit: product.unit ?? '',
-      qty: 1,
-      unitPrice: Number(product.sellPrice ?? 0),
-      amount: Number(product.sellPrice ?? 0),
-    }))
+    const newItems: ItemRow[] = selected.map((product) => {
+      const unit = pickDefaultUnit(unitOptions)
+      const unitPrice = Number(product.sellPrice ?? 0)
+      return {
+        productId: product.id,
+        productCode: product.code,
+        productName: product.name,
+        unit,
+        qty: 1,
+        unitPrice,
+        amount: unitPrice,
+        spec: product.spec,
+        inUnitQty: product.inUnitQty,
+        outUnitQty: product.outUnitQty,
+      }
+    })
     setForm((p) => {
       const existing = p.items.filter((it) => it.productName.trim())
       return { ...p, items: [...existing, ...newItems] }
@@ -500,9 +582,16 @@ export default function QuotesPage() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-none flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-900 rounded shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700 flex flex-col">
             <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 dark:border-gray-700">
-              <div className="w-9 h-9 flex items-center justify-center shrink-0 bg-[#edf0ec]"><span className="text-[var(--color-primary)] text-xs font-bold">전표</span></div>
-              <div className="flex-1"><h3 className="font-semibold text-gray-900 dark:text-white">{editing ? '문서 수정' : '문서 작성'}</h3>{editing && <p className="text-xs text-gray-400 font-mono mt-0.5">{editing.docNo}</p>}</div>
-              <button onClick={closeModal} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400">닫기</button>
+              <div className="w-9 h-9 flex items-center justify-center shrink-0 rounded-lg bg-[#edf0ec] dark:bg-[#2a3a2d]">
+                <FileText className="w-5 h-5 text-[var(--color-primary)]" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900 dark:text-white">{editing ? '문서 수정' : '문서 작성'}</h3>
+                {editing && <p className="text-xs text-gray-400 font-mono mt-0.5">{editing.docNo}</p>}
+              </div>
+              <button onClick={closeModal} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors" title="닫기">
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
             <form onSubmit={(e) => { e.preventDefault(); submitForm() }} className="p-5 space-y-4 overflow-y-auto">
@@ -536,11 +625,11 @@ export default function QuotesPage() {
                           </p>
                         )}
                       </div>
-                      <button type="button" onClick={() => setShowClientPicker(true)} className="shrink-0 p-1 text-[var(--color-primary)] dark:text-[var(--color-primary)] hover:bg-[#d8ddd8] dark:hover:bg-gray-700" title="변경">
-                        수정
+                      <button type="button" onClick={() => setShowClientPicker(true)} className="shrink-0 p-1.5 rounded text-[var(--color-primary)] hover:bg-[#d8ddd8] dark:hover:bg-gray-700 transition-colors" title="거래처 변경">
+                        <Pencil className="w-3.5 h-3.5" />
                       </button>
-                      <button type="button" onClick={() => setForm((p) => ({ ...p, clientId: '', clientName: '' }))} className="shrink-0 p-1 text-gray-400 hover:text-red-500" title="삭제">
-                        닫기
+                      <button type="button" onClick={() => setForm((p) => ({ ...p, clientId: '', clientName: '' }))} className="shrink-0 p-1.5 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors" title="거래처 해제">
+                        <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   ) : (
@@ -571,7 +660,8 @@ export default function QuotesPage() {
                     품목
                     {form.items.length > 0 && <span className="ml-1.5 text-xs font-normal text-gray-400">{form.items.length}개</span>}
                   </span>
-                  <button type="button" onClick={() => setShowProductAdder(true)} className="flex items-center gap-1 px-2.5 py-1.5 text-xs bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]">
+                  <button type="button" onClick={() => setShowProductAdder(true)} className="flex items-center gap-1 px-2.5 py-1.5 text-xs bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] rounded transition-colors">
+                    <Plus className="w-3.5 h-3.5" />
                     상품 추가
                   </button>
                 </div>
@@ -585,11 +675,12 @@ export default function QuotesPage() {
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full min-w-[640px] text-sm">
+                    <table className="w-full min-w-[720px] text-sm">
                       <thead>
                         <tr className={cn(ui.thead, 'text-xs')}>
                           <th className="text-left px-3 py-2 font-semibold">상품</th>
-                          <th className="text-center px-2 py-2 w-20 font-semibold">단위</th>
+                          <th className="text-center px-2 py-2 w-28 font-semibold">단위</th>
+                          <th className="text-center px-2 py-2 w-20 font-semibold">낱개 단위</th>
                           <th className="text-center px-2 py-2 w-20 font-semibold">수량</th>
                           <th className="text-center px-2 py-2 w-28 font-semibold">단가</th>
                           <th className="text-center px-2 py-2 w-28 font-semibold">금액</th>
@@ -602,6 +693,7 @@ export default function QuotesPage() {
                             key={idx}
                             item={item}
                             tdInput={tdInput}
+                            unitOptions={unitOptions}
                             onChange={(patch) => updateItem(idx, patch)}
                             onReplacePicker={() => setProductPickerIdx(idx)}
                             onRemove={() => removeItem(idx)}
@@ -619,9 +711,17 @@ export default function QuotesPage() {
               </div>
 
               <div className="flex justify-end gap-2 pt-2">
-                <button type="button" onClick={closeModal} className="px-4 py-2 border border-gray-200 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800">취소</button>
-                <button type="button" onClick={() => submitForm(true)} disabled={createMutation.isPending || updateMutation.isPending} className="px-4 py-2 border border-[var(--color-primary)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)] dark:border-[#7ba885]/30 text-sm hover:bg-[#edf0ec] dark:hover:bg-gray-800/60 disabled:opacity-50">저장 후 인쇄</button>
-                <button type="submit" disabled={createMutation.isPending || updateMutation.isPending} className="px-5 py-2 bg-[var(--color-primary)] text-white text-sm font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50">{createMutation.isPending || updateMutation.isPending ? '저장 중...' : '저장'}</button>
+                <button type="button" onClick={closeModal} className="flex items-center gap-1.5 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  <X className="w-4 h-4" />
+                  취소
+                </button>
+                <button type="button" onClick={() => submitForm(true)} disabled={createMutation.isPending || updateMutation.isPending} className="flex items-center gap-1.5 px-4 py-2 border border-[var(--color-primary)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)] dark:border-[#7ba885]/30 rounded text-sm hover:bg-[#edf0ec] dark:hover:bg-gray-800/60 disabled:opacity-50 transition-colors">
+                  <Printer className="w-4 h-4" />
+                  저장 후 인쇄
+                </button>
+                <button type="submit" disabled={createMutation.isPending || updateMutation.isPending} className="flex items-center gap-1.5 px-5 py-2 bg-[var(--color-primary)] text-white rounded text-sm font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-colors">
+                  {createMutation.isPending || updateMutation.isPending ? '저장 중...' : '저장'}
+                </button>
               </div>
             </form>
           </div>
@@ -631,13 +731,21 @@ export default function QuotesPage() {
   )
 }
 
-function QuoteItemRow({ item, tdInput, onChange, onReplacePicker, onRemove }: {
+function QuoteItemRow({ item, tdInput, unitOptions, onChange, onReplacePicker, onRemove }: {
   item: ItemRow
   tdInput: string
+  unitOptions: string[]
   onChange: (patch: Partial<ItemRow>) => void
   onReplacePicker: () => void
   onRemove: () => void
 }) {
+  const options = unitOptions.length ? unitOptions : [OUTPUT_DOC_UNIT]
+  const unit = options.includes(normalizeOutputDocUnit(item.unit)) ? normalizeOutputDocUnit(item.unit) : pickDefaultUnit(options)
+  const handleUnitChange = (value: string) => {
+    const nextUnit = normalizeOutputDocUnit(value)
+    onChange({ unit: nextUnit })
+  }
+
   return (
     <tr>
       <td className="px-3 py-2">
@@ -652,16 +760,29 @@ function QuoteItemRow({ item, tdInput, onChange, onReplacePicker, onRemove }: {
               <p className="text-sm text-gray-400 italic">상품 미선택</p>
             )}
           </div>
-          <button type="button" onClick={onReplacePicker} className="shrink-0 p-1 text-gray-400 hover:text-[var(--color-primary)] border border-gray-200 dark:border-gray-700 hover:border-[var(--color-primary)]" title="상품 교체">
-            수정
+          <button type="button" onClick={onReplacePicker} className="shrink-0 p-1.5 rounded text-gray-400 hover:text-[var(--color-primary)] border border-gray-200 dark:border-gray-700 hover:border-[var(--color-primary)] transition-colors" title="상품 교체">
+            <Search className="w-3.5 h-3.5" />
           </button>
         </div>
       </td>
-      <td className="px-2 py-2"><input value={item.unit} onChange={(e) => onChange({ unit: e.target.value })} className={`${tdInput} text-center`} /></td>
+      <td className="px-2 py-2">
+        <select
+          value={unit}
+          onChange={(e) => handleUnitChange(e.target.value)}
+          className={`${tdInput} cursor-pointer text-center font-semibold`}
+        >
+          {options.map((value) => (
+            <option key={value} value={value}>{value}</option>
+          ))}
+        </select>
+      </td>
+      <td className="bg-gray-100 dark:bg-gray-800 text-center tabular-nums text-sm text-gray-500 dark:text-gray-400 select-none">
+        {(() => { const s = getSpecQtyForUnit(itemSpecSource(item), unit); return s > 1 ? s : '-' })()}
+      </td>
       <td className="px-2 py-2"><input type="number" min={0} value={item.qty} onChange={(e) => onChange({ qty: Number(e.target.value) || 0 })} className={`${tdInput} text-right`} /></td>
       <td className="px-2 py-2"><input type="number" min={0} value={item.unitPrice} onChange={(e) => onChange({ unitPrice: Number(e.target.value) || 0 })} className={`${tdInput} text-right`} /></td>
       <td className="px-2 py-2 text-right tabular-nums font-medium">￦{formatNumber(item.amount)}</td>
-      <td className="px-2 py-2 text-center"><button type="button" onClick={onRemove} className="p-1 rounded text-gray-400 hover:text-red-500">삭제</button></td>
+      <td className="px-2 py-2 text-center"><button type="button" onClick={onRemove} className="p-1.5 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors" title="삭제"><Trash2 className="w-3.5 h-3.5" /></button></td>
     </tr>
   )
 }

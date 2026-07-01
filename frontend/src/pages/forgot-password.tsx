@@ -1,65 +1,59 @@
-﻿'use client'
+'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/router'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
 import toast from 'react-hot-toast'
 import { authApi } from '@/api/auth.api'
 import { getApiErrorMessage } from '@/utils/error'
 
+type Step = 'username' | 'answer' | 'done'
+
 export default function ForgotPasswordPage() {
-  const router  = useRouter()
-  const [step, setStep]       = useState<1 | 2>(1)
-  const [loading, setLoading] = useState(false)
-  const [identity, setIdentity] = useState({ username: '', email: '' })
-  const [passwords, setPasswords] = useState({ newPassword: '', confirmPassword: '' })
+  const router = useRouter()
+  const [step, setStep]             = useState<Step>('username')
+  const [username, setUsername]     = useState('')
+  const [question, setQuestion]     = useState('')
+  const [answer, setAnswer]         = useState('')
+  const [newPassword, setNewPassword]         = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [loading, setLoading]       = useState(false)
 
-  const patchIdentity = (key: keyof typeof identity) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => setIdentity((p) => ({ ...p, [key]: e.target.value }))
-  const patchPasswords = (key: keyof typeof passwords) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => setPasswords((p) => ({ ...p, [key]: e.target.value }))
+  const inputCls = 'w-full px-3 py-2 border border-[#ede5d8] dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-sm'
 
-  const handleNext = (e: React.FormEvent) => {
+  const handleFetchQuestion = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!identity.username.trim() || !identity.email.trim()) {
-      toast.error('아이디와 이메일을 입력해주세요')
-      return
-    }
-    setStep(2)
-  }
-
-  const handleReset = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (passwords.newPassword !== passwords.confirmPassword) {
-      toast.error('비밀번호가 일치하지 않습니다')
-      return
-    }
-    if (passwords.newPassword.length < 8 || !/[a-zA-Z]/.test(passwords.newPassword) || !/[0-9]/.test(passwords.newPassword)) {
-      toast.error('비밀번호는 영문·숫자 포함 8자 이상 입력해주세요')
-      return
-    }
     setLoading(true)
     try {
-      await authApi.resetPassword({
-        username:    identity.username,
-        email:       identity.email,
-        newPassword: passwords.newPassword,
-      })
-      toast.success('비밀번호가 재설정되었습니다')
-      router.push('/login')
-    } catch (err: unknown) {
-      const msg = getApiErrorMessage(err, '비밀번호 재설정에 실패했습니다')
-      if (msg.includes('인증') || msg.includes('올바르지')) {
-        toast.error('아이디 또는 이메일이 일치하지 않습니다')
-        setStep(1)
-      } else {
-        toast.error(msg)
-      }
+      const q = await authApi.getSecurityQuestion(username.trim())
+      setQuestion(q)
+      setStep('answer')
+    } catch {
+      toast.error('등록된 아이디를 찾을 수 없습니다')
     } finally {
       setLoading(false)
     }
   }
 
-  const inputCls = 'w-full px-3 py-2 border border-[#ede5d8] dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-sm'
+  const handleReset = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (newPassword !== confirmPassword) {
+      toast.error('비밀번호가 일치하지 않습니다')
+      return
+    }
+    if (newPassword.length < 8 || !/[a-zA-Z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+      toast.error('비밀번호는 영문·숫자 포함 8자 이상 입력해주세요')
+      return
+    }
+    setLoading(true)
+    try {
+      await authApi.resetPasswordByAnswer({ username: username.trim(), answer: answer.trim(), newPassword })
+      setStep('done')
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, '답변이 올바르지 않습니다'))
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div
@@ -79,102 +73,84 @@ export default function ForgotPasswordPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">비밀번호 찾기</p>
         </div>
 
-        {/* 단계 표시 */}
-        <div className="flex items-center gap-2 mb-6">
-          {[1, 2].map((n) => (
-            <div key={n} className="flex items-center gap-2 flex-1">
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors ${
-                step >= n
-                  ? 'bg-[var(--color-primary)] text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
-              }`}>
-                {n}
-              </div>
-              <span className={`text-xs ${step >= n ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400'}`}>
-                {n === 1 ? '본인 확인' : '비밀번호 변경'}
-              </span>
-              {n < 2 && <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700 mx-1" />}
-            </div>
-          ))}
-        </div>
-
-        {/* 1단계: 본인 확인 */}
-        {step === 1 && (
-          <form onSubmit={handleNext} className="space-y-4">
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-              가입 시 등록한 아이디와 이메일을 입력하세요.
+        {step === 'username' && (
+          <form onSubmit={handleFetchQuestion} className="space-y-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              가입 시 등록한 아이디를 입력하면 보안 질문을 확인할 수 있습니다.
             </p>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">아이디</label>
               <input
                 type="text"
-                value={identity.username}
-                onChange={patchIdentity('username')}
+                autoComplete="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 placeholder="아이디를 입력하세요"
                 className={inputCls}
                 autoFocus
                 required
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">이메일</label>
-              <input
-                type="email"
-                value={identity.email}
-                onChange={patchIdentity('email')}
-                placeholder="가입 시 이메일을 입력하세요"
-                className={inputCls}
-                required
-              />
-            </div>
             <button
               type="submit"
-              className="w-full py-2.5 mt-1 bg-[var(--color-primary)] text-white font-semibold rounded-lg hover:bg-[var(--color-primary-hover)] transition-colors"
+              disabled={loading}
+              className="w-full py-2.5 mt-1 bg-[var(--color-primary)] text-white font-semibold rounded-lg hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-colors"
             >
-              다음
+              {loading ? '확인 중...' : '다음'}
             </button>
           </form>
         )}
 
-        {/* 2단계: 새 비밀번호 */}
-        {step === 2 && (
+        {step === 'answer' && (
           <form onSubmit={handleReset} className="space-y-4">
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-              사용할 새 비밀번호를 입력하세요.
-            </p>
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg px-4 py-3">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">보안 질문</p>
+              <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{question}</p>
+            </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">새 비밀번호</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">답변</label>
               <input
-                type="password"
-                autoComplete="new-password"
-                value={passwords.newPassword}
-                onChange={patchPasswords('newPassword')}
-                placeholder="영문·숫자 포함 8자 이상"
+                type="text"
+                value={answer}
+                onChange={(e) => setAnswer(e.target.value)}
+                placeholder="가입 시 등록한 답변을 입력하세요"
                 className={inputCls}
                 autoFocus
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">비밀번호 확인</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">새 비밀번호</label>
               <input
                 type="password"
                 autoComplete="new-password"
-                value={passwords.confirmPassword}
-                onChange={patchPasswords('confirmPassword')}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="영문·숫자 포함 8자 이상"
+                className={inputCls}
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">새 비밀번호 확인</label>
+              <input
+                type="password"
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="비밀번호를 다시 입력하세요"
                 className={inputCls}
                 required
               />
-              {passwords.confirmPassword && passwords.newPassword !== passwords.confirmPassword && (
+              {confirmPassword && newPassword !== confirmPassword && (
                 <p className="mt-1 text-xs text-red-500">비밀번호가 일치하지 않습니다</p>
               )}
             </div>
-            <div className="flex gap-2 mt-1">
+            <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => { setStep(1); setPasswords({ newPassword: '', confirmPassword: '' }) }}
-                className="flex-1 py-2.5 border border-[#ede5d8] dark:border-gray-600 text-gray-600 dark:text-gray-400 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-sm transition-colors"
+                onClick={() => setStep('username')}
+                className="flex-1 py-2.5 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm"
               >
                 이전
               </button>
@@ -183,17 +159,40 @@ export default function ForgotPasswordPage() {
                 disabled={loading}
                 className="flex-1 py-2.5 bg-[var(--color-primary)] text-white font-semibold rounded-lg hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-colors text-sm"
               >
-                {loading ? '처리 중...' : '비밀번호 재설정'}
+                {loading ? '변경 중...' : '비밀번호 변경'}
               </button>
             </div>
           </form>
         )}
 
-        <p className="mt-5 text-center text-sm text-gray-500 dark:text-gray-400">
-          <Link href="/login" className="text-[var(--color-primary)] hover:underline font-medium">
-            로그인으로 돌아가기
-          </Link>
-        </p>
+        {step === 'done' && (
+          <div className="text-center space-y-4 py-2">
+            <div className="w-14 h-14 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto">
+              <svg className="w-7 h-7 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">비밀번호가 변경되었습니다</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">새 비밀번호로 로그인해주세요</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => router.push('/login')}
+              className="w-full py-2.5 bg-[var(--color-primary)] text-white font-semibold rounded-lg hover:bg-[var(--color-primary-hover)] transition-colors text-sm"
+            >
+              로그인하러 가기
+            </button>
+          </div>
+        )}
+
+        {step !== 'done' && (
+          <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+            <Link href="/login" className="text-[var(--color-primary)] hover:underline font-medium">
+              로그인으로 돌아가기
+            </Link>
+          </p>
+        )}
       </div>
     </div>
   )

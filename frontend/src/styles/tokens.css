@@ -51,17 +51,19 @@
 
 /* ───── 다크 모드 오버라이드 ───── */
 .dark {
-  --color-page: #0f1713;
-  --color-surface: #18221d;
-  --color-surface-muted: #223129;
-  --color-primary: #6fb48f;
-  --color-primary-hover: #86c5a4;
-  --color-primary-soft: #1f3a2d;
+  --color-page: #0b1117;
+  --color-surface: #111a22;
+  --color-surface-muted: #18242d;
+  --color-primary: #74c69d;
+  --color-primary-hover: #95d5b2;
+  --color-primary-soft: #173426;
   --color-accent: #d89155;
   --color-accent-soft: #3f2b1f;
-  --color-text: #dbe7df;
-  --color-text-strong: #f5fbf7;
-  --color-text-muted: #98a69e;
-  --color-line: #2f4037;
-  --color-grid-header: #244936;
+  --color-text: #d7e1dc;
+  --color-text-strong: #f8fafc;
+  --color-text-muted: #91a1aa;
+  --color-line: #253540;
+  --color-grid-header: #153524;
+  --shadow-card: 0 12px 28px rgb(0 0 0 / 22%);
+  --shadow-primary: 0 8px 18px rgb(116 198 157 / 16%);
 }

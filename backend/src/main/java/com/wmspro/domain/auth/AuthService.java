@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -51,7 +52,8 @@ public class AuthService {
     }
 
     @Transactional
-    public void register(String username, String email, String fullName, String phone, String password) {
+    public void register(String username, String email, String fullName, String phone,
+                         String password, String securityQuestion, String securityAnswer) {
         String normalizedEmail = email.trim().toLowerCase();
         if (userRepo.existsByUsername(username))
             throw new BusinessException(ErrorCode.USER_DUPLICATE);
@@ -64,30 +66,49 @@ public class AuthService {
             .fullName(fullName)
             .phone(phone)
             .role(UserRole.WORKER)
+            .securityQuestion(securityQuestion)
+            .securityAnswerHash(passwordEncoder.encode(securityAnswer.trim().toLowerCase()))
             .build());
     }
 
+    public String getSecurityQuestion(String username) {
+        return userRepo.findByUsernameOrEmail(username)
+            .map(User::getSecurityQuestion)
+            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    }
+
     @Transactional
-    public void resetPassword(String username, String email, String newPassword) {
+    public void resetPasswordByAnswer(String username, String answer, String newPassword) {
         User user = userRepo.findByUsernameOrEmail(username)
             .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
-        if (!user.getEmail().equalsIgnoreCase(email))
+
+        if (user.getSecurityAnswerHash() == null
+                || !passwordEncoder.matches(answer.trim().toLowerCase(), user.getSecurityAnswerHash())) {
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
+        }
+
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         userRepo.save(user);
     }
 
+    @Transactional
     public Map<String, Object> refresh(String refreshToken) {
         if (!tokenProvider.validate(refreshToken)) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
-        String userId   = tokenProvider.getUserId(refreshToken);
-        String username = tokenProvider.getUsername(refreshToken);
-        String role     = tokenProvider.getRole(refreshToken);
+        String userId = tokenProvider.getUserId(refreshToken);
+
+        User user = userRepo.findById(UUID.fromString(userId))
+            .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
+        if (!user.isActive()) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+
+        String roleStr = user.getRole().name();
 
         return Map.of(
-            "accessToken",  tokenProvider.generateAccessToken(userId, username, role),
-            "refreshToken", tokenProvider.generateRefreshToken(userId, username, role)
+            "accessToken",  tokenProvider.generateAccessToken(userId, user.getUsername(), roleStr),
+            "refreshToken", tokenProvider.generateRefreshToken(userId, user.getUsername(), roleStr)
         );
     }
 }

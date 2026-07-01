@@ -49,6 +49,12 @@ public class User {
     @Builder.Default
     private boolean isActive = true;
 
+    @Column(name = "security_question", length = 500)
+    private String securityQuestion;
+
+    @Column(name = "security_answer_hash")
+    private String securityAnswerHash;
+
     @Column(name = "last_login_at")
     private Instant lastLoginAt;
 

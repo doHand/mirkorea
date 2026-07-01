@@ -1,14 +1,32 @@
 /** @type {import('next').NextConfig} */
 
+const isDev = process.env.NODE_ENV !== 'production'
+
+const scriptSrc = [
+  "'self'",
+  "'unsafe-inline'",
+  ...(isDev ? ["'unsafe-eval'"] : []),
+  'https://t1.daumcdn.net',
+  'https://www.googletagmanager.com',
+].join(' ')
+
+const connectSrc = [
+  "'self'",
+  ...(isDev ? ['http://localhost:*', 'ws://localhost:*'] : []),
+  'https://www.google-analytics.com',
+  'https://analytics.google.com',
+  'https://t1.daumcdn.net',
+].join(' ')
+
 const ContentSecurityPolicy = [
   "default-src 'self'",
   // Next.js Pages Router는 인라인 스크립트(__NEXT_DATA__ 등)를 사용하므로 unsafe-inline 필요
-  "script-src 'self' 'unsafe-inline' https://t1.daumcdn.net https://www.googletagmanager.com",
+  `script-src ${scriptSrc}`,
   "style-src 'self' 'unsafe-inline'",
   // 바코드 카메라 스캔(@zxing)이 blob: 을 사용
   "img-src 'self' data: blob: https://www.google-analytics.com https://www.googletagmanager.com",
   "font-src 'self' data:",
-  "connect-src 'self' https://www.google-analytics.com https://analytics.google.com https://t1.daumcdn.net",
+  `connect-src ${connectSrc}`,
   "media-src 'self' blob:",
   "worker-src 'self' blob:",
   "frame-src 'none'",

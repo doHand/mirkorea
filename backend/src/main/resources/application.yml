@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:wms_pro}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:wms_pro}?sslmode=${DB_SSL_MODE:prefer}
     username: ${DB_USER:wms_user}
-    password: ${DB_PASSWORD:wms_pass}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 20
@@ -53,6 +53,9 @@ springdoc:
 
 cors:
   allowed-origins: ${CORS_ORIGINS:http://localhost:3000}
+
+app:
+  base-url: ${APP_BASE_URL:http://localhost:3000}
 
 logging:
   level:

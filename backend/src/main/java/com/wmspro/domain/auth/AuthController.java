@@ -29,13 +29,19 @@ public class AuthController {
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<Void> register(@Valid @RequestBody RegisterRequest req) {
-        authService.register(req.username, req.email, req.fullName, req.phone, req.password);
+        authService.register(req.username, req.email, req.fullName, req.phone,
+                             req.password, req.securityQuestion, req.securityAnswer);
         return ApiResponse.ok(null, "회원가입이 완료되었습니다");
     }
 
-    @PostMapping("/reset-password")
-    public ApiResponse<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest req) {
-        authService.resetPassword(req.username, req.email, req.newPassword);
+    @GetMapping("/security-question")
+    public ApiResponse<String> securityQuestion(@RequestParam String username) {
+        return ApiResponse.ok(authService.getSecurityQuestion(username));
+    }
+
+    @PostMapping("/reset-password-by-answer")
+    public ApiResponse<Void> resetPasswordByAnswer(@Valid @RequestBody ResetByAnswerRequest req) {
+        authService.resetPasswordByAnswer(req.username, req.answer, req.newPassword);
         return ApiResponse.ok(null, "비밀번호가 재설정되었습니다");
     }
 
@@ -80,12 +86,14 @@ public class AuthController {
         @NotBlank
         @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*\\d).{8,}$", message = "비밀번호는 영문·숫자 포함 8자 이상이어야 합니다")
         String password;
+        @NotBlank String securityQuestion;
+        @NotBlank String securityAnswer;
     }
 
     @Getter @Setter
-    static class ResetPasswordRequest {
+    static class ResetByAnswerRequest {
         @NotBlank String username;
-        @NotBlank @Email String email;
+        @NotBlank String answer;
         @NotBlank
         @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*\\d).{8,}$", message = "비밀번호는 영문·숫자 포함 8자 이상이어야 합니다")
         String newPassword;

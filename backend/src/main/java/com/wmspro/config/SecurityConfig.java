@@ -42,8 +42,10 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsSource()))
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> {
+                auth.requestMatchers("/api/health").permitAll();
                 auth.requestMatchers("/api/v1/auth/login", "/api/v1/auth/refresh",
-                                     "/api/v1/auth/register", "/api/v1/auth/reset-password").permitAll();
+                                     "/api/v1/auth/register", "/api/v1/auth/security-question",
+                                     "/api/v1/auth/reset-password-by-answer").permitAll();
                 // Swagger: SWAGGER_ENABLED=true 환경변수가 있을 때만 공개 (기본 비활성화)
                 if (swaggerEnabled) {
                     auth.requestMatchers("/api/docs/**", "/api/swagger-ui/**", "/v3/api-docs/**").permitAll();
@@ -61,7 +63,7 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new BCryptPasswordEncoder(12);
     }
 
     @Bean

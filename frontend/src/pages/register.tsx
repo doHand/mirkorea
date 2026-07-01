@@ -10,13 +10,24 @@ import { getApiErrorMessage } from '@/utils/error'
 export default function RegisterPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const SECURITY_QUESTIONS = [
+    '어머니 성함은?',
+    '초등학교 이름은?',
+    '첫 번째 반려동물 이름은?',
+    '태어난 도시는?',
+    '가장 좋아하는 음식은?',
+    '졸업한 고등학교 이름은?',
+  ]
+
   const [form, setForm] = useState({
-    username:        '',
-    email:           '',
-    fullName:        '',
-    phone:           '',
-    password:        '',
-    confirmPassword: '',
+    username:         '',
+    email:            '',
+    fullName:         '',
+    phone:            '',
+    password:         '',
+    confirmPassword:  '',
+    securityQuestion: SECURITY_QUESTIONS[0],
+    securityAnswer:   '',
   })
   const [privacyConsent, setPrivacyConsent] = useState(false)
 
@@ -40,11 +51,13 @@ export default function RegisterPage() {
     setLoading(true)
     try {
       await authApi.register({
-        username: form.username,
-        email:    form.email,
-        fullName: form.fullName,
-        phone:    form.phone || undefined,
-        password: form.password,
+        username:         form.username,
+        email:            form.email,
+        fullName:         form.fullName,
+        phone:            form.phone || undefined,
+        password:         form.password,
+        securityQuestion: form.securityQuestion,
+        securityAnswer:   form.securityAnswer,
       })
       toast.success('가입이 완료되었습니다. 로그인해주세요')
       router.push('/login')
@@ -155,6 +168,32 @@ export default function RegisterPage() {
             {form.confirmPassword && form.password !== form.confirmPassword && (
               <p className="mt-1 text-xs text-red-500">비밀번호가 일치하지 않습니다</p>
             )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">비밀번호 찾기 질문</label>
+            <select
+              value={form.securityQuestion}
+              onChange={(e) => setForm((p) => ({ ...p, securityQuestion: e.target.value }))}
+              className={inputCls}
+              required
+            >
+              {SECURITY_QUESTIONS.map((q) => (
+                <option key={q} value={q}>{q}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">질문 답변</label>
+            <input
+              type="text"
+              value={form.securityAnswer}
+              onChange={patch('securityAnswer')}
+              placeholder="답변을 입력하세요"
+              className={inputCls}
+              required
+            />
           </div>
 
           {/* 개인정보 수집 동의 (개인정보보호법 제15조) */}

@@ -12,7 +12,7 @@ import '../styles/globals.css'
 import 'ag-grid-community/styles/ag-grid.css'
 import 'ag-grid-community/styles/ag-theme-quartz.css'
 
-const NO_LAYOUT_ROUTES = ['/login', '/register', '/forgot-password', '/404', '/500', '/privacy']
+const NO_LAYOUT_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password', '/404', '/500', '/privacy']
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID
 
 function SSEInitializer() {

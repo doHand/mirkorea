@@ -1,5 +1,4 @@
 import axios from 'axios'
-import { clearAuthTokens, getAccessToken, getRefreshToken, saveAuthTokens } from '@/utils/auth-token'
 
 const apiClient = axios.create({
   baseURL: '/api/v1',
@@ -7,23 +6,15 @@ const apiClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-// 요청 인터셉터: JWT 자동 첨부
-apiClient.interceptors.request.use((config) => {
-  const token = getAccessToken()
-  if (token) config.headers.Authorization = `Bearer ${token}`
-  return config
-})
-
-// 재발급 중복 방지
 let isRefreshing = false
-let pendingQueue: Array<(token: string) => void> = []
+let pendingQueue: Array<() => void> = []
 
-function flushQueue(token: string) {
-  pendingQueue.forEach((cb) => cb(token))
+function flushQueue() {
+  pendingQueue.forEach((cb) => cb())
   pendingQueue = []
 }
 
-// 응답 인터셉터: 401 → refresh 시도 → 실패 시 로그인 페이지
+// 401 → /api/auth/refresh (Next.js API 라우트) → 새 쿠키 발급 → 재시도
 apiClient.interceptors.response.use(
   (res) => res,
   async (error) => {
@@ -32,18 +23,9 @@ apiClient.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    const refreshToken = getRefreshToken()
-    if (!refreshToken) {
-      redirectToLogin()
-      return Promise.reject(error)
-    }
-
     if (isRefreshing) {
       return new Promise((resolve) => {
-        pendingQueue.push((newToken) => {
-          original.headers.Authorization = `Bearer ${newToken}`
-          resolve(apiClient(original))
-        })
+        pendingQueue.push(() => resolve(apiClient(original)))
       })
     }
 
@@ -51,13 +33,9 @@ apiClient.interceptors.response.use(
     isRefreshing = true
 
     try {
-      const res = await axios.post('/api/v1/auth/refresh', { refreshToken })
-      const { accessToken, refreshToken: newRefreshToken } = res.data.data
-      saveAuthTokens(accessToken, newRefreshToken)
-
-      apiClient.defaults.headers.common.Authorization = `Bearer ${accessToken}`
-      original.headers.Authorization = `Bearer ${accessToken}`
-      flushQueue(accessToken)
+      const res = await axios.post('/api/auth/refresh')
+      if (res.status !== 200) throw new Error()
+      flushQueue()
       return apiClient(original)
     } catch {
       redirectToLogin()
@@ -70,8 +48,11 @@ apiClient.interceptors.response.use(
 
 function redirectToLogin() {
   if (typeof window === 'undefined') return
-  clearAuthTokens()
-  window.location.href = '/login'
+  localStorage.removeItem('wms-auth')
+  localStorage.removeItem('wms-session-expiry')
+  fetch('/api/auth/logout', { method: 'POST' }).finally(() => {
+    window.location.href = '/login'
+  })
 }
 
 export default apiClient

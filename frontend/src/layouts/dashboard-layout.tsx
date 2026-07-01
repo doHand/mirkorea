@@ -12,7 +12,6 @@ import { QUERY_KEYS } from '@/constants/query-keys'
 import { SidebarNav } from '@/layouts/sidebar-nav'
 import { HeaderBar } from '@/layouts/header-bar'
 import { OpenTabsBar, SplitTabsBar } from '@/layouts/open-tabs-bar'
-import { getRefreshToken, saveAuthTokens } from '@/utils/auth-token'
 import type { UserRole } from '@/types/api.types'
 
 function findMenuForPath<T extends { href: string }>(pathname: string, menus: T[]) {
@@ -106,21 +105,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const { sessionExpiresAt, clearAuth, extendSession } = useAuthStore.getState()
 
     if (sessionExpiresAt && Date.now() > sessionExpiresAt) {
-      const refreshToken = getRefreshToken()
-      if (!refreshToken) {
-        clearAuth()
-        router.push('/login')
-        return
-      }
-      fetch('/api/v1/auth/refresh', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken }),
-      })
-        .then((r) => r.json())
-        .then((json) => {
-          if (json?.data?.accessToken) {
-            saveAuthTokens(json.data.accessToken, json.data.refreshToken)
+      fetch('/api/auth/refresh', { method: 'POST' })
+        .then((r) => {
+          if (r.ok) {
             extendSession()
           } else {
             clearAuth()
