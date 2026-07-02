@@ -217,7 +217,7 @@ export default function QuotesPage() {
     setShowModal(true)
   }
 
-  const openEdit = (quote: Quote) => {
+  const openEdit = useCallback((quote: Quote) => {
     setEditing(quote)
     setForm({
       docType: quote.docType,
@@ -238,7 +238,7 @@ export default function QuotesPage() {
       })),
     })
     setShowModal(true)
-  }
+  }, [defaultUnit])
 
   useEffect(() => {
     if (!productIdsParam || productIdsParam === prefillKey) return
@@ -462,7 +462,7 @@ export default function QuotesPage() {
         )
       },
     },
-  ], [deleteMutation, findClientForQuote, supplierInfo])
+  ], [deleteMutation, findClientForQuote, openEdit, supplierInfo])
 
   return (
     <div className="flex h-[calc(100vh-150px)] min-h-0 flex-col gap-4 overflow-hidden">

@@ -15,7 +15,7 @@ export default function PrivacyPage() {
           <section className="mb-8">
             <h2 className="text-base font-semibold mb-3 border-b pb-2">1. 개인정보의 처리 목적</h2>
             <p>
-              WMS Pro(이하 "서비스")는 다음의 목적으로 개인정보를 처리합니다.
+              WMS Pro(이하 &quot;서비스&quot;)는 다음의 목적으로 개인정보를 처리합니다.
               처리한 개인정보는 다음의 목적 이외의 용도로는 사용되지 않으며, 이용 목적이 변경될 시에는
               사전 동의를 받을 예정입니다.
             </p>
