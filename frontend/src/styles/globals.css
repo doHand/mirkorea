@@ -213,6 +213,16 @@
   font-weight: 700;
 }
 
+.wms-ag-grid .ag-cell.cell-required-input {
+  background-color: #fff1f2 !important;
+  color: #be123c !important;
+  font-weight: 700;
+}
+
+.wms-ag-grid .ag-row.row-invalid .ag-cell {
+  box-shadow: inset 0 -1px 0 #fb7185;
+}
+
 /* 바코드 관리 그리드 — 상품코드별 3색 순환 구분 */
 .wms-ag-grid .ag-row.barcode-group-0 { background-color: #eff6ff !important; } /* blue-50 */
 .wms-ag-grid .ag-row.barcode-group-1 { background-color: #f0fdf4 !important; } /* green-50 */
@@ -1617,7 +1627,8 @@
 }
 
 .dark .product-inventory-grid .ag-cell.cell-below-safety,
-.dark .product-inventory-grid .ag-cell.cell-required-input {
+.dark .product-inventory-grid .ag-cell.cell-required-input,
+.dark .wms-ag-grid .ag-cell.cell-required-input {
   background-color: color-mix(in srgb, #7f1d1d 42%, var(--color-surface)) !important;
   color: #fecaca !important;
 }

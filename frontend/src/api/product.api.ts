@@ -70,7 +70,7 @@ export const unitApi = {
 
 export const categoryApi = {
   findAll: () => get<ProductCategory[]>('/product-categories'),
-  create: (data: { name: string; description?: string; sortOrder?: number }) =>
+  create: (data: { name: string; description?: string; sortOrder?: number; isActive?: boolean }) =>
     post<ProductCategory>('/product-categories', data),
   update: (id: string, data: { name?: string; description?: string; sortOrder?: number; isActive?: boolean }) =>
     put<ProductCategory>(`/product-categories/${id}`, data),

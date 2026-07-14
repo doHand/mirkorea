@@ -245,18 +245,6 @@ export default function OutboundPage() {
   }
 
   const columns = useMemo<ColDef<OutboundLineRow>[]>(() => [
-    {
-      headerName: '',
-      width: 48,
-      minWidth: 48,
-      maxWidth: 48,
-      checkboxSelection: true,
-      headerCheckboxSelection: true,
-      pinned: 'left',
-      sortable: false,
-      filter: false,
-      resizable: false,
-    },
     { headerName: 'No', field: 'rowNo', width: 68, pinned: 'left', type: 'numericColumn' },
     { headerName: '출고일', field: 'date', width: 112 },
     { headerName: '전표번호', field: 'orderNo', width: 148, pinned: 'left', cellClass: 'wms-code font-mono font-semibold' },
@@ -523,8 +511,8 @@ export default function OutboundPage() {
                 suppressHeaderMenuButton: true,
                 minWidth: 70,
               }}
-              rowSelection="multiple"
-              suppressRowClickSelection
+              rowSelection={{ mode: 'multiRow', checkboxes: true, headerCheckbox: true, enableClickSelection: false }}
+              selectionColumnDef={{ width: 48, minWidth: 48, maxWidth: 48, pinned: 'left', sortable: false, resizable: false }}
               headerHeight={34}
               rowHeight={34}
               animateRows={false}
@@ -653,6 +641,7 @@ function DetailPanel({
   useEscapeKey(onClose)
   const derived = getDerivedStatus(order)
   const isInstructed = order.status === 'INSTRUCTED'
+  const isLocked = order.status === 'SHIPPED' || order.status === 'CANCELLED'
   const canPrint = !['COLLECTED', 'ON_HOLD', 'CANCELLED'].includes(order.status)
   const totalOuts = order.items.reduce((sum, item) => sum + item.boxCount, 0)
   const totalPicked = order.items.reduce((sum, item) => sum + item.pickedBoxCount, 0)
@@ -771,6 +760,11 @@ function DetailPanel({
           >
             출고 확정
           </button>
+        )}
+        {isLocked && (
+          <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
+            {order.status === 'SHIPPED' ? '출고완료 전표는 수정, 보류, 취소, 삭제할 수 없습니다.' : '취소된 전표는 추가 작업을 할 수 없습니다.'}
+          </div>
         )}
 
         <div className="flex gap-2">

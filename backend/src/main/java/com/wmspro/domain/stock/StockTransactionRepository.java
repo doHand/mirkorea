@@ -9,7 +9,6 @@ import org.springframework.lang.NonNull;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -39,18 +38,4 @@ public interface StockTransactionRepository
     @Query("SELECT t FROM StockTransaction t WHERE t.referenceId = :referenceId AND t.referenceType = :referenceType AND t.isCancelled = false AND t.txType = com.wmspro.domain.stock.TxType.OUTBOUND")
     java.util.List<StockTransaction> findActiveOutboundByReference(@Param("referenceId") UUID referenceId,
                                                                     @Param("referenceType") String referenceType);
-
-    @Modifying
-    @Query(value = """
-        DELETE FROM stock_transactions
-        WHERE warehouse_id = :warehouseId
-          AND id IN (
-            SELECT id
-            FROM stock_transactions
-            WHERE warehouse_id = :warehouseId
-            ORDER BY created_at DESC, id DESC
-            OFFSET :keepCount
-          )
-        """, nativeQuery = true)
-    int deleteOlderThanLatest(@Param("warehouseId") UUID warehouseId, @Param("keepCount") int keepCount);
 }

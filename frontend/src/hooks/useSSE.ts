@@ -20,8 +20,7 @@ export function useSSE() {
     if (AUTH_ROUTES.includes(router.pathname)) return
     if (typeof window === 'undefined') return
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
-    const es = new EventSource(`${apiUrl}/api/v1/sse/subscribe`)
+    const es = new EventSource('/api/v1/sse/subscribe')
 
     Object.entries(EVENT_QUERY_MAP).forEach(([eventName, queryKeys]) => {
       es.addEventListener(eventName, () => {

@@ -8,5 +8,5 @@ import org.springframework.stereotype.Component;
 public class AuditRetentionScheduler {
     private final AuditLogService auditLogService;
     @Scheduled(cron = "0 10 3 * * *")
-    public void purgeExpiredAuditLogs() { auditLogService.purgeExpired(); }
+    public void purgeOverflowAuditLogs() { auditLogService.purgeOverflow(); }
 }

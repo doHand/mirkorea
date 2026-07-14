@@ -1,12 +1,11 @@
 'use client'
-import { useRef, useState, useCallback, useEffect } from 'react'
+import { useRef, useState, useCallback, useEffect, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { useScanStore, ScanCartItem } from '@/stores/scan.store'
 import { useWarehouseStore } from '@/stores/warehouse.store'
 import { productApi } from '@/api/product.api'
 import { stockApi } from '@/api/stock.api'
-import type { StockTransaction } from '@/types/api.types'
 import { warehouseApi } from '@/api/warehouse.api'
 import { useBarcodeScanner } from '@/hooks/use-barcode-scanner'
 import { SCAN_MODE_LABEL, SCAN_MODES } from '@/constants/stock.constants'
@@ -15,7 +14,14 @@ import { formatDecimal, formatNumber } from '@/utils/format'
 import { cn } from '@/utils/cn'
 import { CameraScanner } from '@/components/CameraScanner'
 import { useMenuLabel } from '@/hooks/use-menu-label'
-import type { Barcode as ProductBarcode, BarcodeResolveResult, Zone, BarcodeUnitType } from '@/types/api.types'
+import type {
+  BarcodeResolveResult,
+  BarcodeUnitType,
+  Inventory,
+  Location,
+  StockTransaction,
+  Zone,
+} from '@/types/api.types'
 
 const UNIT_LABEL: Record<BarcodeUnitType, string> = {
   UNIT: '일반바코드', CXD: 'CXD낱개(IN)', CXD_OUT: 'CXD OUT',
@@ -25,15 +31,10 @@ const UNIT_CLS: Record<BarcodeUnitType, string> = {
   CXD:  'bg-violet-100 text-violet-700 dark:bg-violet-900/20 dark:text-violet-400',
   CXD_OUT: 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400',
 }
-const displayBarcodeStock = (stockQty: number | undefined, type: BarcodeUnitType, unitQty: number, barcodes: ProductBarcode[]) => {
+const displayBarcodeStock = (stockQty: number | undefined, type: BarcodeUnitType, unitQty: number) => {
   const stock = Number(stockQty ?? 0)
   if (type === 'CXD') return `${formatDecimal(stock / Math.max(1, unitQty))}IN`
-  if (type === 'CXD_OUT') {
-    const inoutUnitQty = barcodes.find((barcode) => barcode.type === 'CXD' && barcode.isPrimary)?.unitQty
-      ?? barcodes.find((barcode) => barcode.type === 'CXD')?.unitQty
-      ?? 1
-    return `${formatDecimal(stock / (Math.max(1, inoutUnitQty) * Math.max(1, unitQty)))}OUT`
-  }
+  if (type === 'CXD_OUT') return `${formatDecimal(stock / Math.max(1, unitQty))}OUT`
   return `${formatNumber(stock)}EA`
 }
 
@@ -44,6 +45,16 @@ interface PendingScan {
   locationId: string
   locationCode: string
   autoLocation: boolean
+}
+
+function getApiErrorCode(error: unknown) {
+  if (!error || typeof error !== 'object' || !('response' in error)) return undefined
+  const response = (error as { response?: unknown }).response
+  if (!response || typeof response !== 'object' || !('data' in response)) return undefined
+  const data = (response as { data?: unknown }).data
+  if (!data || typeof data !== 'object' || !('code' in data)) return undefined
+  const code = (data as { code?: unknown }).code
+  return typeof code === 'string' ? code : undefined
 }
 
 export default function ScanPage() {
@@ -62,12 +73,12 @@ export default function ScanPage() {
   const [notFoundBarcode, setNotFoundBarcode] = useState<string | null>(null)
   const [pendingScan,     setPendingScan]     = useState<PendingScan | null>(null)
 
-  const { data: locations = [] } = useQuery({
+  const { data: locations = [] } = useQuery<Location[]>({
     queryKey: QUERY_KEYS.locations(warehouse?.id ?? ''),
     queryFn: () => warehouseApi.findLocations(warehouse!.id),
     enabled: !!warehouse?.id,
   })
-  const { data: zones = [] } = useQuery({
+  const { data: zones = [] } = useQuery<Zone[]>({
     queryKey: QUERY_KEYS.zones(warehouse?.id ?? ''),
     queryFn: () => warehouseApi.findZones(warehouse!.id),
     enabled: !!warehouse?.id,
@@ -80,11 +91,16 @@ export default function ScanPage() {
     queryFn: () => productApi.findBarcodes(inquiryProductId),
     enabled: !!inquiryProductId,
   })
-  const { data: inquiryInventory = [] } = useQuery({
+  const { data: inquiryInventory = [], isFetched: isInquiryInventoryFetched } = useQuery<Inventory[]>({
     queryKey: ['inquiry-inventory', inquiryProductId, warehouse?.id],
     queryFn: () => stockApi.getInventoryByProduct(inquiryProductId, warehouse?.id),
     enabled: !!inquiryProductId && !!warehouse?.id,
   })
+  const inquiryStockQty = useMemo(() => (
+    isInquiryInventoryFetched
+      ? inquiryInventory.reduce((sum, inventory) => sum + Number(inventory.quantity ?? 0), 0)
+      : Number(lastResult?.product.stockQty ?? 0)
+  ), [inquiryInventory, isInquiryInventoryFetched, lastResult?.product.stockQty])
 
   useEffect(() => { setSelectedLocation(null) }, [warehouse?.id, setSelectedLocation])
 
@@ -146,8 +162,8 @@ export default function ScanPage() {
         try {
           const invList = await stockApi.getInventoryByProduct(result.product.id, warehouse.id)
           if (invList.length > 0) {
-            const topInv = [...invList].sort((a: any, b: any) => b.quantity - a.quantity)[0] as any
-            const loc = (locations as any[]).find((l: any) => l.id === topInv.locationId)
+            const topInv = [...invList].sort((a, b) => b.quantity - a.quantity)[0]
+            const loc = locations.find((l) => l.id === topInv.locationId)
             if (loc) {
               locationId   = loc.id
               locationCode = loc.code
@@ -176,7 +192,7 @@ export default function ScanPage() {
       } else if (mode === 'OUTBOUND') {
         const invList = await stockApi.getInventoryByProduct(result.product.id, warehouse.id)
         const boxQty = result.qtyPerScan
-        const firstInv = (invList as any[]).find((i: any) => i.quantity >= boxQty)
+        const firstInv = invList.find((i) => i.quantity >= boxQty)
         if (!firstInv) { toast.error('출고 가능 재고 없음'); return }
 
         setPendingScan({
@@ -189,8 +205,8 @@ export default function ScanPage() {
         })
         setTimeout(() => qtyRef.current?.focus(), 100)
       }
-    } catch (err: any) {
-      const code = err.response?.data?.code
+    } catch (err: unknown) {
+      const code = getApiErrorCode(err)
       if (code === 'BARCODE_NOT_FOUND') setNotFoundBarcode(barcode)
       else toast.error('스캔 처리 중 오류가 발생했습니다')
     } finally { setProcessing(false) }
@@ -259,16 +275,16 @@ export default function ScanPage() {
     <>
       <option value="">위치 선택 (스캔 시 자동)</option>
       {zones.length > 0
-        ? (zones as Zone[]).map((z) => {
-            const zoneLocs = (locations as any[]).filter((l: any) => l.zoneId === z.id)
+        ? zones.map((z) => {
+            const zoneLocs = locations.filter((l) => l.zoneId === z.id)
             if (zoneLocs.length === 0) return null
             return (
               <optgroup key={z.id} label={`[${z.code}] ${z.name}`}>
-                {zoneLocs.map((l: any) => <option key={l.id} value={l.id}>{l.code}</option>)}
+                {zoneLocs.map((l) => <option key={l.id} value={l.id}>{l.code}</option>)}
               </optgroup>
             )
           })
-        : (locations as any[]).map((l: any) => <option key={l.id} value={l.id}>{l.code}</option>)}
+        : locations.map((l) => <option key={l.id} value={l.id}>{l.code}</option>)}
     </>
   )
 
@@ -296,22 +312,23 @@ export default function ScanPage() {
               </button>
             ))}
           </div>
-          {mode !== 'INQUIRY' && (
-            <button
-              onClick={() => setInstantMode((v) => !v)}
-              className={cn(
-                'flex shrink-0 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors',
-                instantMode
-                  ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400'
-                  : 'border-gray-200 bg-white text-gray-500 dark:border-gray-700 dark:bg-gray-800',
-              )}
-            >
-              <span className={cn('relative h-4 w-7 rounded-full transition-colors', instantMode ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600')}>
-                <span className={cn('absolute top-0.5 h-3 w-3 rounded-full bg-white shadow transition-transform', instantMode ? 'left-3.5' : 'left-0.5')} />
-              </span>
-              즉시
-            </button>
-          )}
+          <button
+            type="button"
+            disabled={mode === 'INQUIRY'}
+            title={mode === 'INQUIRY' ? '재고조회에서는 즉시처리를 사용할 수 없습니다' : '즉시처리'}
+            onClick={() => setInstantMode((v) => !v)}
+            className={cn(
+              'flex shrink-0 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45',
+              instantMode
+                ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400'
+                : 'border-gray-200 bg-white text-gray-500 dark:border-gray-700 dark:bg-gray-800',
+            )}
+          >
+            <span className={cn('relative h-4 w-7 rounded-full transition-colors', instantMode ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600')}>
+              <span className={cn('absolute top-0.5 h-3 w-3 rounded-full bg-white shadow transition-transform', instantMode ? 'left-3.5' : 'left-0.5')} />
+            </span>
+            즉시
+          </button>
         </div>
 
         {/* 입고 위치 */}
@@ -321,7 +338,7 @@ export default function ScanPage() {
             <select
               value={selectedLocation?.id ?? ''}
               onChange={(e) => {
-                const loc = (locations as any[]).find((l: any) => l.id === e.target.value)
+                const loc = locations.find((l) => l.id === e.target.value)
                 setSelectedLocation(loc ?? null)
                 setTimeout(() => inputRef.current?.focus(), 0)
               }}
@@ -392,7 +409,7 @@ export default function ScanPage() {
                 </p>
               </div>
               <div className="shrink-0 text-right">
-                <p className="text-2xl font-bold tabular-nums text-gray-900 dark:text-white">{formatNumber(pendingScan.result.product.stockQty ?? 0)}</p>
+                <p className="text-2xl font-bold tabular-nums text-gray-900 dark:text-white">{formatNumber(inquiryStockQty)}</p>
                 <p className="text-[10px] text-gray-400">현재 재고</p>
               </div>
             </div>
@@ -405,23 +422,23 @@ export default function ScanPage() {
                   <select
                     value={pendingScan.locationId}
                     onChange={(e) => {
-                      const loc = (locations as any[]).find((l: any) => l.id === e.target.value)
+                      const loc = locations.find((l) => l.id === e.target.value)
                       if (loc) setPendingScan((prev) => prev ? { ...prev, locationId: loc.id, locationCode: loc.code, autoLocation: false } : null)
                     }}
                     className="flex-1 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-2 py-1 text-sm text-gray-900 dark:text-gray-100 focus:outline-none"
                   >
                     <option value="">위치 선택</option>
                     {zones.length > 0
-                      ? (zones as Zone[]).map((z) => {
-                          const zoneLocs = (locations as any[]).filter((l: any) => l.zoneId === z.id)
+                      ? zones.map((z) => {
+                          const zoneLocs = locations.filter((l) => l.zoneId === z.id)
                           if (zoneLocs.length === 0) return null
                           return (
                             <optgroup key={z.id} label={`[${z.code}] ${z.name}`}>
-                              {zoneLocs.map((l: any) => <option key={l.id} value={l.id}>{l.code}</option>)}
+                              {zoneLocs.map((l) => <option key={l.id} value={l.id}>{l.code}</option>)}
                             </optgroup>
                           )
                         })
-                      : (locations as any[]).map((l: any) => <option key={l.id} value={l.id}>{l.code}</option>)}
+                      : locations.map((l) => <option key={l.id} value={l.id}>{l.code}</option>)}
                   </select>
                 ) : (
                   <span className="flex-1 text-sm font-medium text-gray-700 dark:text-gray-300">{pendingScan.locationCode || '위치 없음'}</span>
@@ -495,7 +512,7 @@ export default function ScanPage() {
                 </div>
               </div>
               <div className="shrink-0 text-right">
-                <p className="text-2xl font-bold tabular-nums text-gray-900 dark:text-white">{formatNumber(lastResult.product.stockQty ?? 0)}</p>
+                <p className="text-2xl font-bold tabular-nums text-gray-900 dark:text-white">{formatNumber(inquiryStockQty)}</p>
                 <p className="text-[10px] text-gray-400">총 재고</p>
               </div>
             </div>
@@ -505,7 +522,7 @@ export default function ScanPage() {
               <div className="border-b border-gray-100 dark:border-gray-700">
                 <p className="px-4 pt-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">위치별 재고</p>
                 <div className="divide-y divide-gray-50 dark:divide-gray-800">
-                  {(inquiryInventory as any[]).map((inv: any) => (
+                  {inquiryInventory.map((inv) => (
                     <div key={inv.id} className="flex items-center gap-3 px-4 py-2">
                       <span className="flex-1 font-mono text-xs text-gray-600 dark:text-gray-300">{inv.location?.code ?? inv.locationId}</span>
                       <span className="font-bold tabular-nums text-sm text-gray-900 dark:text-gray-100">{formatNumber(inv.quantity)} EA</span>
@@ -525,9 +542,9 @@ export default function ScanPage() {
                       <span className="flex-1 font-mono text-sm text-gray-800 dark:text-gray-100">{bc.barcode}</span>
                       <span className={cn('shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold', UNIT_CLS[bc.type])}>{UNIT_LABEL[bc.type]}</span>
                       <span className="shrink-0 text-xs text-gray-400">
-                        {displayBarcodeStock(lastResult.product.stockQty, bc.type, bc.unitQty, inquiryBarcodes)}
+                        {displayBarcodeStock(inquiryStockQty, bc.type, bc.unitQty)}
                         {bc.type === 'CXD' && ` · ${formatNumber(bc.unitQty)}개`}
-                        {bc.type === 'CXD_OUT' && ` · IN${formatNumber(bc.unitQty)}`}
+                        {bc.type === 'CXD_OUT' && ` · ${formatNumber(bc.unitQty)}개`}
                       </span>
                       {bc.isPrimary && <span className="text-[11px] text-amber-400">★</span>}
                     </div>

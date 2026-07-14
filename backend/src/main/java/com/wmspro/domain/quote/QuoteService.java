@@ -24,10 +24,11 @@ public class QuoteService {
     private final QuoteRepository repo;
     private final JdbcTemplate    jdbcTemplate;
 
-    public PageResponse<Quote> findAll(String docType, String search, int page, int limit) {
+    public PageResponse<Quote> findAll(String docType, String search, String status, LocalDate dateFrom, LocalDate dateTo, int page, int limit) {
         String dt = (docType != null && !docType.isBlank()) ? docType : null;
         String q  = (search  != null && !search.isBlank())  ? search  : null;
-        Page<Quote> p = repo.search(dt, q, PageRequest.of(page - 1, limit));
+        String st = (status != null && !status.isBlank()) ? status : null;
+        Page<Quote> p = repo.search(dt, q, st, dateFrom, dateTo, PageRequest.of(page - 1, limit));
         return new PageResponse<>(p, limit);
     }
 
@@ -85,6 +86,11 @@ public class QuoteService {
                 .productId(ir.productId)
                 .productCode(ir.productCode)
                 .productName(ir.productName)
+                .category(ir.category)
+                .barcode(ir.barcode)
+                .spec(ir.spec)
+                .inUnitQty(ir.inUnitQty)
+                .outUnitQty(ir.outUnitQty)
                 .unit(ir.unit)
                 .qty(ir.qty)
                 .unitPrice(up)

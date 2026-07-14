@@ -24,8 +24,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class StockService {
-    private static final int MAX_TRANSACTIONS_PER_WAREHOUSE = 100;
-
     private final StockTransactionRepository txnRepo;
     private final InventoryRepository        invRepo;
     private final JdbcTemplate               jdbcTemplate;
@@ -379,9 +377,7 @@ public class StockService {
             throw new BusinessException(ErrorCode.STOCK_INTEGRITY_ERROR);
         }
         txn.setTxnNo(generateTxnNo());
-        StockTransaction saved = txnRepo.save(txn);
-        txnRepo.deleteOlderThanLatest(saved.getWarehouseId(), MAX_TRANSACTIONS_PER_WAREHOUSE);
-        return saved;
+        return txnRepo.save(txn);
     }
 
     private String generateTxnNo() {

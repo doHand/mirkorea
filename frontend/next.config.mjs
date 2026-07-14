@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 
 const isDev = process.env.NODE_ENV !== 'production'
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+const apiOrigin = new URL(apiUrl).origin
 
 const scriptSrc = [
   "'self'",
@@ -12,6 +14,7 @@ const scriptSrc = [
 
 const connectSrc = [
   "'self'",
+  apiOrigin,
   ...(isDev ? ['http://localhost:*', 'ws://localhost:*'] : []),
   'https://www.google-analytics.com',
   'https://analytics.google.com',
@@ -29,7 +32,8 @@ const ContentSecurityPolicy = [
   `connect-src ${connectSrc}`,
   "media-src 'self' blob:",
   "worker-src 'self' blob:",
-  "frame-src 'self'",
+  // 주소검색(다음 우편번호 서비스)이 postcode.map.kakao.com iframe을 팝업 안에서 로드함
+  "frame-src 'self' https://*.daum.net https://*.kakao.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -37,7 +41,7 @@ const ContentSecurityPolicy = [
 
 const securityHeaders = [
   { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
-  { key: 'X-Frame-Options',           value: 'DENY' },
+  { key: 'X-Frame-Options',           value: 'SAMEORIGIN' },
   { key: 'X-Content-Type-Options',    value: 'nosniff' },
   { key: 'Referrer-Policy',           value: 'strict-origin-when-cross-origin' },
   // camera는 @zxing 바코드 스캔 기능에 필요하므로 허용 유지
@@ -55,15 +59,6 @@ const nextConfig = {
       {
         source: '/(.*)',
         headers: securityHeaders,
-      },
-    ]
-  },
-
-  async rewrites() {
-    return [
-      {
-        source: '/api/v1/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/v1/:path*`,
       },
     ]
   },

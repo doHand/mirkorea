@@ -14,15 +14,10 @@ const TYPES: BarcodeUnitType[] = ['UNIT', 'CXD', 'CXD_OUT']
 const TYPE_ORDER: Record<BarcodeUnitType, number> = { UNIT: 0, CXD: 1, CXD_OUT: 2 }
 type BarcodeForm = { barcode: string; type: BarcodeUnitType; unitQty: number; isPrimary: boolean }
 const emptyForm = (): BarcodeForm => ({ barcode: '', type: 'UNIT', unitQty: 1, isPrimary: false })
-const stockForBarcode = (product: Product, barcode: Barcode, barcodes: Barcode[]) => {
+const stockForBarcode = (product: Product, barcode: Barcode) => {
   const stock = Number(product.stockQty ?? 0)
   if (barcode.type === 'CXD') return { qty: stock / Math.max(1, barcode.unitQty), unit: 'IN' }
-  if (barcode.type === 'CXD_OUT') {
-    const inoutUnitQty = barcodes.find((item) => item.type === 'CXD' && item.isPrimary)?.unitQty
-      ?? barcodes.find((item) => item.type === 'CXD')?.unitQty
-      ?? 1
-    return { qty: stock / (Math.max(1, inoutUnitQty) * Math.max(1, barcode.unitQty)), unit: 'OUT' }
-  }
+  if (barcode.type === 'CXD_OUT') return { qty: stock / Math.max(1, barcode.unitQty), unit: 'OUT' }
   return { qty: stock, unit: 'EA' }
 }
 
@@ -93,7 +88,7 @@ export function ProductBarcodeModal({ product, onClose }: { product: Product; on
         </label>
         {form.type === 'CXD' || form.type === 'CXD_OUT' ? (
           <label className="text-xs font-medium text-gray-600 dark:text-gray-300">
-            {form.type === 'CXD' ? 'IN SET 구성수량' : 'OUT 내 IN 수량'}
+            {form.type === 'CXD' ? 'IN 구성수량' : 'OUT 구성수량'}
             <input type="number" min={1} value={form.unitQty}
               onChange={(e) => setForm({ ...form, unitQty: Number(e.target.value) })}
               className="wms-input mt-1 rounded-md text-right dark:border-gray-700 dark:bg-gray-800" />
@@ -107,8 +102,8 @@ export function ProductBarcodeModal({ product, onClose }: { product: Product; on
         )}
       </div>
       <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-        <input type="checkOUT" checked={form.isPrimary} onChange={(e) => setForm({ ...form, isPrimary: e.target.checked })}
-          className="wms-checkOUT" />
+        <input type="checkbox" checked={form.isPrimary} onChange={(e) => setForm({ ...form, isPrimary: e.target.checked })}
+          className="wms-checkbox" />
         대표 바코드로 설정
       </label>
       <div className="flex gap-2">
@@ -125,7 +120,7 @@ export function ProductBarcodeModal({ product, onClose }: { product: Product; on
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="wms-modal-OUT w-full max-w-4xl overflow-hidden rounded-md dark:border-gray-700 dark:bg-gray-900">
+      <div className="wms-modal-box w-full max-w-4xl overflow-hidden rounded-md dark:border-gray-700 dark:bg-gray-900">
         <div className="wms-modal-header flex items-center gap-3 border-b px-5 py-4 dark:border-gray-700">
           <div className="wms-modal-mark flex h-9 w-9 items-center justify-center rounded-md">QR</div>
           <div className="min-w-0 flex-1">
@@ -145,14 +140,14 @@ export function ProductBarcodeModal({ product, onClose }: { product: Product; on
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="truncate font-mono text-sm">{barcode.barcode}</span>
                   <span className="shrink-0 whitespace-nowrap text-[11px] font-semibold text-gray-500 dark:text-gray-400">
-                    현재 재고 : <span className="text-gray-900 dark:text-gray-100">{formatDecimal(stockForBarcode(product, barcode, barcodes).qty)}</span> ({stockForBarcode(product, barcode, barcodes).unit})
+                    현재 재고 : <span className="text-gray-900 dark:text-gray-100">{formatDecimal(stockForBarcode(product, barcode).qty)}</span> ({stockForBarcode(product, barcode).unit})
                   </span>
                 </div>
                 <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                   <span className="wms-tag px-2 py-0.5 text-[10px] font-semibold">{TYPE_LABEL[barcode.type]}</span>
                   {(barcode.type === 'CXD' || barcode.type === 'CXD_OUT') && (
                     <span className="wms-tag-muted whitespace-nowrap px-2 py-0.5 text-[10px] font-semibold dark:text-emerald-300">
-                      {barcode.type === 'CXD' ? '낱개 구성' : 'IN 구성'} {formatNumber(barcode.unitQty)}개
+                      {barcode.type === 'CXD' ? 'IN 구성' : 'OUT 구성'} {formatNumber(barcode.unitQty)}개
                     </span>
                   )}
                 </div>

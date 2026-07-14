@@ -6,6 +6,7 @@ import com.wmspro.domain.stock.dto.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,6 +30,7 @@ public class StockController {
     }
 
     @PostMapping("/inbound/{txnId}/cancel")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ApiResponse<StockTransaction> cancelInbound(
         @PathVariable UUID txnId,
         @RequestBody Map<String, String> body,
@@ -50,6 +52,7 @@ public class StockController {
     }
 
     @PostMapping("/outbound/{txnId}/cancel")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ApiResponse<StockTransaction> cancelOutbound(
         @PathVariable UUID txnId,
         @RequestBody Map<String, String> body,
@@ -63,6 +66,7 @@ public class StockController {
 
     @PostMapping("/adjustment")
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ApiResponse<StockTransaction> adjust(
         @Valid @RequestBody AdjustRequest req,
         @AuthenticationPrincipal WmsPrincipal principal

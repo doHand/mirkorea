@@ -47,7 +47,7 @@ public class Product {
         "createdAt","updatedAt"})
     private Client client;
 
-    @jakarta.persistence.Transient
+    @Column(length = 20, nullable = false)
     @Builder.Default
     private String unit = "EA";       // EA, IN,OUT
 

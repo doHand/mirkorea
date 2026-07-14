@@ -86,9 +86,9 @@ export default function CategoriesPage() {
           continue
         }
         if (row._new) {
-          await categoryApi.create({ name: row.name.trim(), description: row.description ?? '', sortOrder: row.sortOrder })
+          await categoryApi.create({ name: row.name.trim(), description: row.description ?? '', sortOrder: row.sortOrder, isActive: row.isActive })
         } else if (row._dirty) {
-          await categoryApi.update(row.id, { name: row.name.trim(), description: row.description ?? '', sortOrder: row.sortOrder })
+          await categoryApi.update(row.id, { name: row.name.trim(), description: row.description ?? '', sortOrder: row.sortOrder, isActive: row.isActive })
         }
       }
       if (!hasError) toast.success('저장되었습니다')
@@ -117,8 +117,8 @@ export default function CategoriesPage() {
       headerName: '카테고리명',
       field: 'name',
       editable: true,
-      flex: 1,
-      minWidth: 160,
+      width: 200,
+      minWidth: 120,
       cellRenderer: (p: { data?: DraftCategory }) => {
         if (!p.data) return null
         if (!p.data.name) return <span className="text-gray-300 dark:text-gray-600 text-xs italic">카테고리명 입력</span>
@@ -141,10 +141,38 @@ export default function CategoriesPage() {
       headerName: '순서',
       field: 'sortOrder',
       editable: true,
-      width: 90,
+      width: 130,
+      minWidth: 120,
       type: 'numericColumn',
       sort: 'asc',
       valueParser: (p) => Number(p.newValue) || 0,
+    },
+    {
+      headerName: '활성',
+      field: 'isActive',
+      width: 96,
+      minWidth: 88,
+      sortable: true,
+      filter: false,
+      cellRenderer: (p: { data?: DraftCategory }) => {
+        if (!p.data) return null
+        return (
+          <label className="inline-flex h-full items-center justify-center gap-1.5 text-xs text-gray-500">
+            <input
+              type="checkbox"
+              className="wms-checkbox"
+              checked={p.data.isActive}
+              onChange={(event) => {
+                const checked = event.target.checked
+                setRows((curr) => curr.map((row) =>
+                  row.id === p.data!.id ? { ...row, isActive: checked, _dirty: true } : row,
+                ))
+              }}
+            />
+            {p.data.isActive ? '사용' : '중지'}
+          </label>
+        )
+      },
     },
   ], [])
 

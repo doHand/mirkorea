@@ -137,7 +137,6 @@ export default function UnitsPage() {
     },
     {
       headerName: '코드', field: 'code', width: 100,
-      sort: 'asc', sortIndex: 1,
       editable: true,
       valueParser: p => (p.newValue as string).toUpperCase(),
       onCellValueChanged: p => updateRow(p.data.id, { code: (p.newValue as string).toUpperCase() }),
@@ -154,7 +153,7 @@ export default function UnitsPage() {
     },
     {
       headerName: '순번', field: 'sortOrder', width: 110, minWidth: 100,
-      sort: 'asc', sortIndex: 0,
+      sort: 'asc',
       type: 'numericColumn',
       editable: true,
       cellEditor: 'agNumberCellEditor',

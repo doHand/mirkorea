@@ -27,6 +27,11 @@ public class QuoteRequest {
         public UUID       productId;
         public String     productCode;
         public String     productName;
+        public String     category;
+        public String     barcode;
+        public String     spec;
+        public Integer    inUnitQty;
+        public Integer    outUnitQty;
         public String     unit;
         public int        qty        = 1;
         public BigDecimal unitPrice  = BigDecimal.ZERO;

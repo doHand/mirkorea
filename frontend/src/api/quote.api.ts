@@ -4,6 +4,9 @@ import type { Quote, PageResponse } from '@/types/api.types'
 interface QuoteFilter {
   docType?: string
   search?: string
+  status?: string
+  dateFrom?: string
+  dateTo?: string
   page?: number
   limit?: number
 }
@@ -12,6 +15,11 @@ interface QuoteItemBody {
   productId?: string
   productCode?: string
   productName?: string
+  category?: string
+  barcode?: string
+  spec?: string
+  inUnitQty?: number
+  outUnitQty?: number
   unit?: string
   qty: number
   unitPrice: number

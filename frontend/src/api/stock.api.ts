@@ -45,6 +45,6 @@ export const stockApi = {
   // 거래 로그
   getTransactions: (filter?: {
     productId?: string; locationId?: string; warehouseId?: string
-    txType?: TxType; from?: string; to?: string; page?: number; limit?: number
+    txType?: TxType; search?: string; from?: string; to?: string; page?: number; limit?: number
   }) => get<PageResponse<StockTransaction>>('/transactions', filter),
 }

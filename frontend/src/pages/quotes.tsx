@@ -12,6 +12,7 @@ import { AppAgGrid } from '@/components/AppAgGrid'
 import { PurchaseOrdersContent } from '@/components/PurchaseOrdersContent'
 import { ClientPickerModal } from '@/components/ClientPickerModal'
 import { ProductPickerModal } from '@/components/ProductPickerModal'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { useSupplierInfoStore } from '@/stores/supplier-info.store'
 import { useEscapeKey } from '@/hooks/useEscapeKey'
 import { formatNumber } from '@/utils/format'
@@ -45,6 +46,8 @@ interface ItemRow {
   productId?: string
   productCode?: string
   productName: string
+  category?: string
+  barcode?: string
   unit: string
   qty: number
   unitPrice: number
@@ -114,6 +117,15 @@ function itemSpecSource(item: ItemRow): UnitSpecSource {
   return { spec: item.spec, inUnitQty: item.inUnitQty, outUnitQty: item.outUnitQty }
 }
 
+function primaryBarcode(product: Product) {
+  return product.barcodes?.find((barcode) => barcode.isPrimary)?.barcode
+    ?? product.barcodes?.[0]?.barcode
+}
+
+function quoteItemsForSave(items: ItemRow[]) {
+  return items.filter((item) => item.productName.trim() && item.qty > 0)
+}
+
 const EMPTY_FORM: FormState = {
   docType: 'STATEMENT',
   clientId: '',
@@ -129,8 +141,10 @@ export default function QuotesPage() {
   const router = useRouter()
   const q = router.query
   const supplierInfo = useSupplierInfoStore((state) => state.info)
-  const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
   const tabParam = (typeof q.tab === 'string' ? q.tab : '').toUpperCase()
   const [docTypeFilter, setDocTypeFilter] = useState(() => tabParam || 'STATEMENT')
   const [page, setPage] = useState(1)
@@ -143,6 +157,7 @@ export default function QuotesPage() {
   const [showClientPicker, setShowClientPicker] = useState(false)
   const [productPickerIdx, setProductPickerIdx] = useState<number | null>(null)
   const [showProductAdder, setShowProductAdder] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<Quote | null>(null)
   const productIdsParam = (typeof q.productIds === 'string' ? q.productIds : '')
   const docTypeParam = ((typeof q.docType === 'string' ? q.docType : '')).toUpperCase()
   const autoPrintParam = ['1', 'true'].includes(((typeof q.print === 'string' ? q.print : '')).toLowerCase())
@@ -154,8 +169,15 @@ export default function QuotesPage() {
   }, [tabParam])
 
   const { data, isLoading } = useQuery({
-    queryKey: ['quotes', { search, docTypeFilter, page }],
-    queryFn: () => quoteApi.findAll({ docType: docTypeFilter || undefined, search: search || undefined, page }),
+    queryKey: ['quotes', { search, docTypeFilter, statusFilter, dateFrom, dateTo, page }],
+    queryFn: () => quoteApi.findAll({
+      docType: docTypeFilter || undefined,
+      search: search || undefined,
+      status: statusFilter || undefined,
+      dateFrom: dateFrom || undefined,
+      dateTo: dateTo || undefined,
+      page,
+    }),
     placeholderData: (prev) => prev,
   })
 
@@ -181,10 +203,15 @@ export default function QuotesPage() {
     clientName: form.clientName || undefined,
     docDate: form.docDate,
     memo: form.memo || undefined,
-    items: form.items.map((it) => ({
+    items: quoteItemsForSave(form.items).map((it) => ({
       productId: it.productId,
       productCode: it.productCode,
       productName: it.productName,
+      category: it.category,
+      barcode: it.barcode,
+      spec: it.spec,
+      inUnitQty: it.inUnitQty,
+      outUnitQty: it.outUnitQty,
       unit: normalizeOutputDocUnit(it.unit, defaultUnit),
       qty: it.qty,
       unitPrice: it.unitPrice,
@@ -203,17 +230,26 @@ export default function QuotesPage() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => quoteApi.delete(id),
-    onSuccess: () => { toast.success('문서 삭제 완료'); qc.invalidateQueries({ queryKey: ['quotes'] }) },
+    onSuccess: () => { toast.success('문서 삭제 완료'); qc.invalidateQueries({ queryKey: ['quotes'] }); setDeleteTarget(null) },
   })
+  const isSaving = createMutation.isPending || updateMutation.isPending
 
   const closeModal = () => { setShowModal(false); setEditing(null); setForm({ ...EMPTY_FORM, docDate: today() }) }
-  const commitSearch = () => { setSearch(searchInput); setPage(1) }
+  const commitSearch = () => setPage(1)
+  const resetFilters = () => {
+    setSearch('')
+    setStatusFilter('')
+    setDateFrom('')
+    setDateTo('')
+    setPage(1)
+  }
   useEscapeKey(() => setListPrint(null), !!listPrint)
   useEscapeKey(closeModal, showModal && !listPrint && !showClientPicker && productPickerIdx === null && !showProductAdder)
 
   const openCreate = () => {
+    const docType = docTypeFilter === 'QUOTE' ? 'QUOTE' : 'STATEMENT'
     setEditing(null)
-    setForm({ ...EMPTY_FORM, docDate: today() })
+    setForm({ ...EMPTY_FORM, docType, docDate: today() })
     setShowModal(true)
   }
 
@@ -230,11 +266,15 @@ export default function QuotesPage() {
         productId: it.productId,
         productCode: it.productCode,
         productName: it.productName ?? '',
+        category: it.category,
+        barcode: it.barcode,
         unit: normalizeOutputDocUnit(it.unit, defaultUnit),
         qty: it.qty,
         unitPrice: Number(it.unitPrice),
         amount: Number(it.amount),
         spec: it.spec,
+        inUnitQty: it.inUnitQty,
+        outUnitQty: it.outUnitQty,
       })),
     })
     setShowModal(true)
@@ -254,6 +294,8 @@ export default function QuotesPage() {
           productId: product.id,
           productCode: product.code,
           productName: product.name,
+          category: product.category,
+          barcode: primaryBarcode(product),
           unit,
           qty: 1,
           unitPrice,
@@ -300,6 +342,8 @@ export default function QuotesPage() {
       productId: product.id,
       productCode: product.code,
       productName: product.name,
+      category: product.category,
+      barcode: primaryBarcode(product),
       unit,
       qty: 1,
       unitPrice,
@@ -322,13 +366,16 @@ export default function QuotesPage() {
   }
 
   const onAddProductsFromPicker = (selected: Product[]) => {
-    const newItems: ItemRow[] = selected.map((product) => {
+    const existingIds = new Set(form.items.map((item) => item.productId).filter(Boolean))
+    const newItems: ItemRow[] = selected.filter((product) => !existingIds.has(product.id)).map((product) => {
       const unit = pickDefaultUnit(unitOptions)
       const unitPrice = Number(product.sellPrice ?? 0)
       return {
         productId: product.id,
         productCode: product.code,
         productName: product.name,
+        category: product.category,
+        barcode: primaryBarcode(product),
         unit,
         qty: 1,
         unitPrice,
@@ -346,6 +393,15 @@ export default function QuotesPage() {
   }
 
   const submitForm = async (printAfterSave = false) => {
+    if (isSaving) return
+    if (!form.clientId && !form.clientName.trim()) {
+      toast.error('거래처를 선택하거나 입력해주세요')
+      return
+    }
+    if (quoteItemsForSave(form.items).length === 0) {
+      toast.error('저장할 품목을 1개 이상 추가해주세요')
+      return
+    }
     const printWindow = printAfterSave ? openBlankPrintWindow('width=820,height=1060') : null
     if (printAfterSave && !printWindow) return
     try {
@@ -452,7 +508,7 @@ export default function QuotesPage() {
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
-                if (confirm('삭제하시겠습니까?')) deleteMutation.mutate(quote.id)
+                setDeleteTarget(quote)
               }}
               className="rounded border border-rose-200 px-2 py-1 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:border-rose-900 dark:text-rose-300 dark:hover:bg-rose-950/40"
             >
@@ -462,7 +518,7 @@ export default function QuotesPage() {
         )
       },
     },
-  ], [deleteMutation, findClientForQuote, openEdit, supplierInfo])
+  ], [findClientForQuote, openEdit, supplierInfo])
 
   return (
     <div className="flex h-[calc(100vh-150px)] min-h-0 flex-col gap-4 overflow-hidden">
@@ -506,12 +562,53 @@ export default function QuotesPage() {
 
       {/* 거래명세서 / 견적서 탭 콘텐츠 */}
       {docTypeFilter !== 'PURCHASE' && (<>
-      <div className="shrink-0 rounded border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <div className="relative flex min-w-60 flex-1 gap-1.5">
-          <div className="relative flex-1">
-            <input value={searchInput} onChange={(e) => setSearchInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && commitSearch()} placeholder="문서번호, 거래처명 검색" className="wms-input w-full rounded dark:border-gray-700 dark:bg-gray-800" />
-          </div>
-          <button onClick={commitSearch} className="wms-primary-button h-9 rounded px-4 text-sm font-medium transition-colors">검색</button>
+      <div className="shrink-0 border border-[#d8ddd8] bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(event) => { setDateFrom(event.target.value); setPage(1) }}
+            className="border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-[var(--color-primary)] dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+          />
+          <span className="text-xs text-gray-400">~</span>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(event) => { setDateTo(event.target.value); setPage(1) }}
+            className="border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-[var(--color-primary)] dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+          />
+          <input
+            value={search}
+            onChange={(event) => { setSearch(event.target.value); setPage(1) }}
+            onKeyDown={(event) => { if (event.key === 'Enter') commitSearch() }}
+            placeholder="문서번호 또는 거래처명 검색"
+            className="min-w-48 flex-1 border border-gray-200 bg-white py-2 pl-3 pr-3 text-sm text-gray-900 outline-none focus:border-[var(--color-primary)] dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+          />
+          <select
+            value={statusFilter}
+            onChange={(event) => { setStatusFilter(event.target.value); setPage(1) }}
+            className="border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-[var(--color-primary)] dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+          >
+            <option value="">전체 상태</option>
+            {Object.entries(STATUS_LABEL).map(([key, value]) => (
+              <option key={key} value={key}>{value}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={commitSearch}
+            className="bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--color-primary-hover)]"
+          >
+            검색
+          </button>
+          <button
+            type="button"
+            onClick={resetFilters}
+            className="border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
+          >
+            초기화
+          </button>
+          <span className="self-center text-xs text-gray-400">총 {formatNumber(data?.total ?? 0)}건</span>
         </div>
       </div>
 
@@ -561,6 +658,18 @@ export default function QuotesPage() {
       {showClientPicker && (
         <ClientPickerModal clients={clients ?? []} onSelect={onSelectClient} onClose={() => setShowClientPicker(false)} />
       )}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="문서 삭제"
+        description={`${deleteTarget?.docNo ?? '선택한 문서'}를 삭제할까요? 삭제한 문서는 복구할 수 없습니다.`}
+        confirmLabel="삭제"
+        variant="danger"
+        isPending={deleteMutation.isPending}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => {
+          if (deleteTarget) deleteMutation.mutate(deleteTarget.id)
+        }}
+      />
       {productPickerIdx !== null && (
         <ProductPickerModal
           products={products?.items ?? []}
@@ -573,6 +682,7 @@ export default function QuotesPage() {
         <ProductPickerModal
           products={products?.items ?? []}
           multiSelect
+          existingIds={form.items.map((item) => item.productId).filter((id): id is string => Boolean(id))}
           onConfirm={onAddProductsFromPicker}
           onClose={() => setShowProductAdder(false)}
         />
@@ -715,12 +825,12 @@ export default function QuotesPage() {
                   <X className="w-4 h-4" />
                   취소
                 </button>
-                <button type="button" onClick={() => submitForm(true)} disabled={createMutation.isPending || updateMutation.isPending} className="flex items-center gap-1.5 px-4 py-2 border border-[var(--color-primary)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)] dark:border-[#7ba885]/30 rounded text-sm hover:bg-[#edf0ec] dark:hover:bg-gray-800/60 disabled:opacity-50 transition-colors">
+                <button type="button" onClick={() => submitForm(true)} disabled={isSaving} className="flex items-center gap-1.5 px-4 py-2 border border-[var(--color-primary)]/30 text-[var(--color-primary)] dark:text-[var(--color-primary)] dark:border-[#7ba885]/30 rounded text-sm hover:bg-[#edf0ec] dark:hover:bg-gray-800/60 disabled:opacity-50 transition-colors">
                   <Printer className="w-4 h-4" />
                   저장 후 인쇄
                 </button>
-                <button type="submit" disabled={createMutation.isPending || updateMutation.isPending} className="flex items-center gap-1.5 px-5 py-2 bg-[var(--color-primary)] text-white rounded text-sm font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-colors">
-                  {createMutation.isPending || updateMutation.isPending ? '저장 중...' : '저장'}
+                <button type="submit" disabled={isSaving} className="flex items-center gap-1.5 px-5 py-2 bg-[var(--color-primary)] text-white rounded text-sm font-semibold hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-colors">
+                  {isSaving ? '저장 중...' : '저장'}
                 </button>
               </div>
             </form>

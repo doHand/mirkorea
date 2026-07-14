@@ -7,9 +7,11 @@ import { productApi } from '@/api/product.api'
 import { warehouseApi } from '@/api/warehouse.api'
 import { stockApi } from '@/api/stock.api'
 import { useWarehouseStore } from '@/stores/warehouse.store'
+import { useAuthStore } from '@/stores/auth.store'
 import { SALE_STATUS_LABEL } from '@/constants/stock.constants'
 import { cn } from '@/utils/cn'
 import { formatNumber } from '@/utils/format'
+import { canAdjustStock, canManageMasterData } from '@/utils/permissions'
 import { ExportButton } from '@/components/ExportButton'
 import { ImportButton } from '@/components/ImportButton'
 import { productImportConfig } from '@/config/product-import-config'
@@ -112,6 +114,7 @@ export default function ProductMasterPage() {
   const qc = useQueryClient()
   const router = useRouter()
   const warehouse = useWarehouseStore((s) => s.selectedWarehouse)
+  const me = useAuthStore((s) => s.user)
   const [searchInput, setSearchInput]  = useState('')
   const [search, setSearch]           = useState('')
   const [showSafetyOnly, setShowSafetyOnly] = useState(false)
@@ -121,6 +124,8 @@ export default function ProductMasterPage() {
   const { data, isLoading, refetch: refetchProducts } = useQuery({
     queryKey: ['products', search],
     queryFn:  () => productApi.findAll({ search, limit: 200 }),
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
   })
 
   const { data: allLocations = [] } = useQuery<Location[]>({
@@ -135,6 +140,8 @@ export default function ProductMasterPage() {
     queryKey: ['inventory', 'product-master', warehouse?.id ?? ''],
     queryFn:  () => stockApi.getInventory(warehouse!.id),
     enabled:  !!warehouse?.id,
+    staleTime: 15_000,
+    refetchOnWindowFocus: false,
   })
 
   const products: Product[]        = useMemo(() => data?.items ?? [], [data?.items])
@@ -154,6 +161,8 @@ export default function ProductMasterPage() {
       : productsWithInventoryBase
     return rows
   }, [productsWithInventoryBase, showSafetyOnly])
+  const canManageProducts = canManageMasterData(me?.role)
+  const canAdjustProductStock = canAdjustStock(me?.role)
 
   const openQuoteScreen = () => {
     const ids = [...selectedIds]
@@ -216,6 +225,10 @@ export default function ProductMasterPage() {
 
       <ProductInventoryGrid
         products={productsWithInventory}
+        loading={isLoading}
+        canEditMasterData={canManageProducts}
+        canAdjustStock={canAdjustProductStock}
+        canManageBarcodes={canManageProducts}
         locations={allLocations}
         showMasterColumns
         onSelectionChange={(selected) => setSelectedIds(new Set(selected.map((product) => product.id)))}
@@ -226,9 +239,10 @@ export default function ProductMasterPage() {
           warehouseId: warehouse?.id,
           inventoryItems: inventory.filter((inv) => inv.productId === product.id),
         })}
-        onSaved={() => {
+        onSaved={(changes) => {
           qc.invalidateQueries({ queryKey: ['products'] })
-          qc.invalidateQueries({ queryKey: ['inventory'] })
+          if (changes?.stockChanged) qc.invalidateQueries({ queryKey: ['inventory'] })
+          if (changes?.barcodesChanged) qc.invalidateQueries({ queryKey: ['product-barcodes'] })
           setSelectedIds(new Set())
         }}
         onRefresh={async () => {
@@ -284,7 +298,7 @@ export default function ProductMasterPage() {
                 })
               }}
             />
-            <ImportButton config={productImportConfig} onImported={() => qc.invalidateQueries({ queryKey: ['products'] })} />
+            {canManageProducts && <ImportButton config={productImportConfig} onImported={() => qc.invalidateQueries({ queryKey: ['products'] })} />}
             <button
               onClick={openQuoteScreen}
               disabled={selectedIds.size === 0}

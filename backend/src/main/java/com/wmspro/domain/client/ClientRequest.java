@@ -1,6 +1,7 @@
 package com.wmspro.domain.client;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,14 +12,16 @@ import java.time.LocalDate;
 public class ClientRequest {
     @NotBlank
     public String name;
+    @NotBlank
+    public String customerType;
     public String businessNo;
     public String address;
     public String industry;
     public String sector;
+    @Pattern(regexp = "^$|^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$", message = "invalid email")
     public String email;
     public String phone;
     public String fax;
-    public String customerType;
     public String salesperson;
     public String mobile;
     public String ceoName;

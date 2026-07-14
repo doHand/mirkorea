@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { ColDef } from 'ag-grid-community'
-import { FileDown, Menu, RefreshCw, RotateCcw } from 'lucide-react'
+import { FileDown, Menu, RefreshCw, RotateCcw, Search } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { stockApi } from '@/api/stock.api'
 import { useWarehouseStore } from '@/stores/warehouse.store'
@@ -21,14 +21,16 @@ export default function TransactionsPage() {
   const menuRef = useRef<HTMLDivElement>(null)
   const [page, setPage] = useState(1)
   const [txType, setTxType] = useState<TxType | ''>('')
+  const [searchInput, setSearchInput] = useState('')
+  const [search, setSearch] = useState('')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
   const [exporting, setExporting] = useState(false)
 
   const { data, isFetching, isLoading, refetch } = useQuery({
-    queryKey: QUERY_KEYS.transactions({ warehouseId: warehouse?.id, txType: txType || undefined, from, to, page }),
-    queryFn: () => stockApi.getTransactions({ warehouseId: warehouse!.id, txType: txType || undefined, from: from || undefined, to: to || undefined, page, limit: 100 }),
+    queryKey: QUERY_KEYS.transactions({ warehouseId: warehouse?.id, txType: txType || undefined, search: search || undefined, from, to, page }),
+    queryFn: () => stockApi.getTransactions({ warehouseId: warehouse!.id, txType: txType || undefined, search: search || undefined, from: from || undefined, to: to || undefined, page, limit: 100 }),
     enabled: Boolean(warehouse?.id),
   })
 
@@ -42,6 +44,8 @@ export default function TransactionsPage() {
 
   const resetFilters = () => {
     setTxType('')
+    setSearchInput('')
+    setSearch('')
     setFrom('')
     setTo('')
     setPage(1)
@@ -54,6 +58,7 @@ export default function TransactionsPage() {
       const all = await stockApi.getTransactions({
         warehouseId: warehouse.id,
         txType: txType || undefined,
+        search: search || undefined,
         from: from || undefined,
         to: to || undefined,
         limit: 9999,
@@ -84,11 +89,12 @@ export default function TransactionsPage() {
     } finally {
       setExporting(false)
     }
-  }, [from, to, txType, warehouse?.id])
+  }, [from, search, to, txType, warehouse?.id])
 
   // Display-only transaction columns stay local; the shared grid owns generic behavior.
   const columns = useMemo<ColDef<StockTransaction>[]>(() => [
     { headerName: '일시', width: 165, valueGetter: (p) => p.data?.createdAt ? formatDateTime(p.data.createdAt) : '-' },
+    { headerName: '거래번호', width: 150, valueGetter: (p) => p.data?.txnNo ?? '-', cellClass: 'font-mono text-xs font-semibold text-[var(--color-primary)]' },
     { headerName: '유형', width: 132, valueGetter: (p) => p.data ? TX_TYPE_LABEL[p.data.txType] : '-', cellRenderer: (p: { data?: StockTransaction }) => {
       if (!p.data) return '-'
       return <span className={cn('inline-flex rounded px-2 py-0.5 text-xs font-semibold', TX_TYPE_COLOR[p.data.txType])}>{TX_TYPE_LABEL[p.data.txType]}</span>
@@ -100,6 +106,8 @@ export default function TransactionsPage() {
     { headerName: '변동', width: 100, type: 'numericColumn', valueGetter: (p) => p.data?.qty ?? 0, valueFormatter: (p) => formatQtyDelta(Number(p.value ?? 0)), cellClass: (p) => Number(p.value) > 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold' },
     { headerName: '이전', width: 100, type: 'numericColumn', valueGetter: (p) => p.data?.qtyBefore ?? 0, valueFormatter: (p) => formatNumber(Number(p.value ?? 0)) },
     { headerName: '이후', width: 100, type: 'numericColumn', valueGetter: (p) => p.data?.qtyAfter ?? 0, valueFormatter: (p) => formatNumber(Number(p.value ?? 0)) },
+    { headerName: '바코드', width: 135, valueGetter: (p) => p.data?.barcodeScanned ?? '-', cellClass: 'font-mono text-xs' },
+    { headerName: '참조', width: 145, valueGetter: (p) => [p.data?.referenceType, p.data?.referenceId].filter(Boolean).join(' · ') || '-' },
     { headerName: '사유/메모', minWidth: 180, flex: 1, valueGetter: (p) => [p.data?.reason, p.data?.memo].filter(Boolean).join(' · ') || '-' },
     { headerName: '상태', width: 90, valueGetter: (p) => p.data?.isCancelled ? '취소' : '정상', cellRenderer: (p: { data?: StockTransaction }) => (
       <span className={cn('inline-flex rounded px-2 py-0.5 text-xs font-semibold', p.data?.isCancelled ? 'bg-gray-100 text-gray-500' : 'bg-emerald-100 text-emerald-700')}>
@@ -180,6 +188,34 @@ export default function TransactionsPage() {
             />
           </div>
         </div>
+        <label className="min-w-72 flex-1 text-xs font-medium text-gray-500 dark:text-gray-400">
+          검색
+          <div className="mt-1 flex overflow-hidden rounded border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+            <input
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  setSearch(searchInput)
+                  setPage(1)
+                }
+              }}
+              placeholder="상품코드, 상품명, 거래번호, 사유, 바코드"
+              className="h-9 min-w-0 flex-1 border-0 bg-transparent px-3 text-sm text-gray-900 outline-none dark:text-white"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                setSearch(searchInput)
+                setPage(1)
+              }}
+              className="inline-flex h-9 items-center gap-1 border-l border-gray-200 px-3 text-xs font-semibold text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
+            >
+              <Search size={13} />
+              검색
+            </button>
+          </div>
+        </label>
         <button
           type="button"
           onClick={resetFilters}

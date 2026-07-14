@@ -195,7 +195,7 @@ public class InboundOrderService {
     @Transactional
     public InboundOrder cancel(UUID orderId) {
         InboundOrder order = findById(orderId);
-        if (order.getStatus() == InboundStatus.COMPLETED) {
+        if (order.getStatus() == InboundStatus.COMPLETED || order.getStatus() == InboundStatus.CANCELLED) {
             throw new BusinessException(ErrorCode.INBOUND_INVALID_STATUS);
         }
         order.setStatus(InboundStatus.CANCELLED);
@@ -208,6 +208,9 @@ public class InboundOrderService {
     @Transactional
     public void delete(UUID id) {
         InboundOrder order = findById(id);
+        if (order.getStatus() != InboundStatus.PENDING) {
+            throw new BusinessException(ErrorCode.INBOUND_INVALID_STATUS);
+        }
         orderRepo.delete(order);
         sseService.broadcast("inbound");
     }

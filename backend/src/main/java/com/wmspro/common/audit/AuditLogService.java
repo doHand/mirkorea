@@ -15,8 +15,6 @@ import com.wmspro.common.exception.ErrorCode;
 import com.wmspro.common.sse.SseService;
 import jakarta.persistence.criteria.Predicate;
 import java.util.UUID;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Locale;
 
@@ -92,7 +90,7 @@ public class AuditLogService {
     }
 
     @Transactional
-    public long purgeExpired() {
-        return repository.deleteByCreatedAtBefore(Instant.now().minus(30, ChronoUnit.DAYS));
+    public int purgeOverflow() {
+        return repository.deleteOlderThanLatest(MAX_AUDIT_LOGS);
     }
 }

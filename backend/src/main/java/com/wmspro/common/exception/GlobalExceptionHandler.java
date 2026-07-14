@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
@@ -52,6 +53,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Object>> handleIllegalArgument(IllegalArgumentException ex) {
         return ResponseEntity.badRequest()
             .body(ApiResponse.fail("INVALID_REQUEST", ex.getMessage() != null ? ex.getMessage() : "잘못된 요청입니다", null));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Object>> handleUnreadable(HttpMessageNotReadableException ex) {
+        return ResponseEntity.badRequest()
+            .body(ApiResponse.fail("INVALID_REQUEST", "요청 본문을 읽을 수 없습니다", null));
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)

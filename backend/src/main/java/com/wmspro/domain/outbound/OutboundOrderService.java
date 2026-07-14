@@ -218,7 +218,9 @@ public class OutboundOrderService {
     @Transactional
     public OutboundOrder cancel(UUID id, UUID userId) {
         OutboundOrder order = findById(id);
-        if (order.getStatus() == OutboundOrderStatus.CANCELLED) throw invalidStatus();
+        if (order.getStatus() == OutboundOrderStatus.CANCELLED || order.getStatus() == OutboundOrderStatus.SHIPPED) {
+            throw invalidStatus();
+        }
 
         if (order.getStatus() == OutboundOrderStatus.PICKED) {
             List<StockTransaction> txns = txnRepo.findActiveOutboundByReference(order.getId(), "OUTBOUND_ORDER");

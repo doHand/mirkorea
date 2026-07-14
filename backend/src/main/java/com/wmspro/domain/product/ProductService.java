@@ -23,6 +23,9 @@ public class ProductService {
         "^\\s*(\\d+)\\s*IN\\s*/\\s*(\\d+)\\s*OUT\\s*$",
         Pattern.CASE_INSENSITIVE
     );
+    private static final Pattern IN_UNIT_PATTERN = Pattern.compile("(\\d+)\\s*IN\\b", Pattern.CASE_INSENSITIVE);
+    private static final Pattern OUT_UNIT_PATTERN = Pattern.compile("(\\d+)\\s*OUT\\b", Pattern.CASE_INSENSITIVE);
+    private static final Pattern LEGACY_EA_BOX_PATTERN = Pattern.compile("^\\s*(\\d+)\\s*EA\\s*/\\s*BOX\\s*$", Pattern.CASE_INSENSITIVE);
 
     private final ProductRepository productRepo;
     private final BarcodeRepository barcodeRepo;
@@ -49,6 +52,12 @@ public class ProductService {
             throw new BusinessException(ErrorCode.PRODUCT_CODE_DUPLICATE);
         }
         PackageSpec packageSpec = parsePackageSpec(req.spec);
+        Integer outUnitQty = normalizeConversion(packageSpec.outUnitQty() != null ? packageSpec.outUnitQty() : (req.outUnitQty != null ? req.outUnitQty : req.boxQty));
+        Integer inUnitQty = normalizeConversion(packageSpec.inUnitQty() != null ? packageSpec.inUnitQty() : req.inUnitQty);
+        if (inUnitQty == null && outUnitQty != null) {
+            inUnitQty = 1;
+        }
+        validatePackageUnitOrder(inUnitQty, outUnitQty);
         Product product = Product.builder()
             .code(req.code)
             .name(req.name)
@@ -57,8 +66,8 @@ public class ProductService {
             .locationId(req.locationId)
             .unit(req.unit != null ? req.unit : "EA")
             .baseUnit(req.baseUnit != null ? req.baseUnit : UnitType.EA)
-            .inUnitQty(normalizeConversion(packageSpec.inUnitQty() != null ? packageSpec.inUnitQty() : req.inUnitQty))
-            .outUnitQty(normalizeConversion(packageSpec.outUnitQty() != null ? packageSpec.outUnitQty() : (req.outUnitQty != null ? req.outUnitQty : req.boxQty)))
+            .inUnitQty(inUnitQty)
+            .outUnitQty(outUnitQty)
             .optionName(req.optionName)
             .spec(req.spec)
             .materialNo(req.materialNo)
@@ -108,6 +117,10 @@ public class ProductService {
             if (packageSpec.inUnitQty() != null) product.setInUnitQty(packageSpec.inUnitQty());
             if (packageSpec.outUnitQty() != null) product.setOutUnitQty(packageSpec.outUnitQty());
         }
+        if (product.getInUnitQty() == null && product.getOutUnitQty() != null) {
+            product.setInUnitQty(1);
+        }
+        validatePackageUnitOrder(product.getInUnitQty(), product.getOutUnitQty());
         if (req.materialNo  != null) product.setMaterialNo(req.materialNo);
         if (req.boxQty      > 0)    product.setBoxQty(req.boxQty);
         if (req.safetyStock >= 0)   product.setSafetyStock(req.safetyStock);
@@ -123,7 +136,33 @@ public class ProductService {
         if (req.imageUrl    != null) product.setImageUrl(req.imageUrl);
         if (req.isLotManaged    != null) product.setLotManaged(req.isLotManaged);
         if (req.isExpiryManaged != null) product.setExpiryManaged(req.isExpiryManaged);
+        syncPackageBarcodeQuantities(product);
         return productRepo.save(product);
+    }
+
+    private void validatePackageUnitOrder(Integer inUnitQty, Integer outUnitQty) {
+        if (inUnitQty != null && outUnitQty != null && inUnitQty > outUnitQty) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+    }
+
+    private void syncPackageBarcodeQuantities(Product product) {
+        int inQty = product.getInUnitQty() != null && product.getInUnitQty() > 0 ? product.getInUnitQty() : 1;
+        int outQty = product.getOutUnitQty() != null && product.getOutUnitQty() > 0 ? product.getOutUnitQty() : product.getBoxQty();
+
+        for (Barcode barcode : barcodeRepo.findByProductIdOrderByIsPrimaryDesc(product.getId())) {
+            int nextQty = switch (barcode.getType()) {
+                case UNIT -> 1;
+                case CXD -> inQty;
+                case CXD_OUT -> Math.max(1, outQty);
+            };
+            if (barcode.getUnitQty() != nextQty) {
+                barcode.setUnitQty(nextQty);
+            }
+            if (!product.getCode().equals(barcode.getProductCode())) {
+                barcode.setProductCode(product.getCode());
+            }
+        }
     }
 
     private Integer normalizeConversion(Integer value) {
@@ -133,11 +172,28 @@ public class ProductService {
     private PackageSpec parsePackageSpec(String spec) {
         if (spec == null || spec.isBlank()) return new PackageSpec(null, null);
         Matcher matcher = PACKAGE_SPEC_PATTERN.matcher(spec);
-        if (!matcher.matches()) return new PackageSpec(null, null);
-        return new PackageSpec(
-            Integer.parseInt(matcher.group(1)),
-            Integer.parseInt(matcher.group(2))
-        );
+        if (matcher.matches()) {
+            return new PackageSpec(
+                Integer.parseInt(matcher.group(1)),
+                Integer.parseInt(matcher.group(2))
+            );
+        }
+
+        Integer inQty = firstMatchedNumber(IN_UNIT_PATTERN, spec);
+        Integer outQty = firstMatchedNumber(OUT_UNIT_PATTERN, spec);
+        if (outQty == null) {
+            outQty = firstMatchedNumber(LEGACY_EA_BOX_PATTERN, spec);
+        }
+        if (inQty == null && outQty != null) {
+            inQty = 1;
+        }
+        return new PackageSpec(inQty, outQty);
+    }
+
+    private Integer firstMatchedNumber(Pattern pattern, String value) {
+        Matcher matcher = pattern.matcher(value);
+        if (!matcher.find()) return null;
+        return Integer.parseInt(matcher.group(1));
     }
 
     private record PackageSpec(Integer inUnitQty, Integer outUnitQty) {}
@@ -184,38 +240,56 @@ public class ProductService {
     @Transactional
     public Barcode addBarcode(UUID productId, String barcodeValue, BarcodeUnitType type, int unitQty, boolean isPrimary) {
         Product product = findById(productId);
-        if (barcodeRepo.existsByBarcode(barcodeValue)) {
+        String normalizedBarcode = normalizeBarcodeValue(barcodeValue);
+        if (barcodeRepo.existsByBarcode(normalizedBarcode)) {
             throw new BusinessException(ErrorCode.BARCODE_DUPLICATE);
         }
-        return barcodeRepo.save(Barcode.builder()
+        if (isPrimary) {
+            barcodeRepo.clearPrimaryForProduct(productId);
+        }
+        Barcode saved = barcodeRepo.save(Barcode.builder()
             .productId(productId)
             .productCode(product.getCode())
-            .barcode(barcodeValue)
+            .barcode(normalizedBarcode)
             .type(type)
             .unitQty(normalizeBarcodeQty(type, unitQty))
             .isPrimary(isPrimary)
             .build());
+        if (saved.isPrimary()) {
+            barcodeRepo.clearPrimaryForOtherBarcodes(productId, saved.getId());
+        }
+        return saved;
     }
 
     @Transactional
-    public Barcode updateBarcode(UUID barcodeId, String barcodeValue, BarcodeUnitType type, int unitQty, boolean isPrimary) {
-        Barcode barcode = barcodeRepo.findById(barcodeId)
+    public Barcode updateBarcode(UUID productId, UUID barcodeId, String barcodeValue, BarcodeUnitType type, int unitQty, boolean isPrimary) {
+        Barcode barcode = barcodeRepo.findByIdAndProductId(barcodeId, productId)
             .orElseThrow(() -> new BusinessException(ErrorCode.BARCODE_NOT_FOUND));
-        if (barcodeValue != null && !barcodeValue.isBlank() && !barcodeValue.equals(barcode.getBarcode())) {
-            if (barcodeRepo.existsByBarcode(barcodeValue)) {
+        String normalizedBarcode = normalizeBarcodeValue(barcodeValue);
+        if (!normalizedBarcode.equals(barcode.getBarcode())) {
+            if (barcodeRepo.existsByBarcodeAndIdNot(normalizedBarcode, barcodeId)) {
                 throw new BusinessException(ErrorCode.BARCODE_DUPLICATE);
             }
-            barcode.setBarcode(barcodeValue.trim());
+            barcode.setBarcode(normalizedBarcode);
         }
         barcode.setType(type);
         barcode.setUnitQty(normalizeBarcodeQty(type, unitQty));
+        if (isPrimary) {
+            barcodeRepo.clearPrimaryForOtherBarcodes(barcode.getProductId(), barcode.getId());
+        }
         barcode.setPrimary(isPrimary);
-        return barcodeRepo.save(barcode);
+        Barcode saved = barcodeRepo.save(barcode);
+        if (saved.isPrimary()) {
+            barcodeRepo.clearPrimaryForOtherBarcodes(saved.getProductId(), saved.getId());
+        }
+        return saved;
     }
 
     @Transactional
-    public void deleteBarcode(UUID barcodeId) {
-        barcodeRepo.deleteById(barcodeId);
+    public void deleteBarcode(UUID productId, UUID barcodeId) {
+        Barcode barcode = barcodeRepo.findByIdAndProductId(barcodeId, productId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.BARCODE_NOT_FOUND));
+        barcodeRepo.delete(barcode);
     }
 
     public BarcodeResolveResult resolveBarcode(String barcodeValue) {
@@ -234,17 +308,16 @@ public class ProductService {
         return isSingleUnitBarcode(type) ? 1 : Math.max(1, unitQty);
     }
 
+    private String normalizeBarcodeValue(String barcodeValue) {
+        if (barcodeValue == null || barcodeValue.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+        return barcodeValue.trim();
+    }
+
     private int qtyPerScan(Barcode barcode) {
         if (isSingleUnitBarcode(barcode.getType())) {
             return 1;
-        }
-        if (barcode.getType() == BarcodeUnitType.CXD_OUT) {
-            int inoutUnitQty = barcodeRepo.findByProductIdOrderByIsPrimaryDesc(barcode.getProductId()).stream()
-                .filter(item -> item.getType() == BarcodeUnitType.CXD && item.isActive())
-                .mapToInt(Barcode::getUnitQty)
-                .findFirst()
-                .orElse(1);
-            return Math.max(1, inoutUnitQty) * Math.max(1, barcode.getUnitQty());
         }
         return Math.max(1, barcode.getUnitQty());
     }

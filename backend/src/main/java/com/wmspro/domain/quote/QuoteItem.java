@@ -32,6 +32,21 @@ public class QuoteItem {
     @Column(name = "product_name", length = 200)
     private String productName;
 
+    @Column(length = 100)
+    private String category;
+
+    @Column(length = 100)
+    private String barcode;
+
+    @Column(length = 200)
+    private String spec;
+
+    @Column(name = "in_unit_qty")
+    private Integer inUnitQty;
+
+    @Column(name = "out_unit_qty")
+    private Integer outUnitQty;
+
     @Column(length = 20)
     private String unit;
 

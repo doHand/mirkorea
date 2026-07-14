@@ -38,8 +38,9 @@ public class ClientService {
 
     @Transactional
     public Client create(ClientRequest req) {
+        validateRequired(req);
         return repo.save(Client.builder()
-            .name(req.name)
+            .name(req.name.trim())
             .businessNo(req.businessNo)
             .address(req.address)
             .industry(req.industry)
@@ -72,8 +73,9 @@ public class ClientService {
 
     @Transactional
     public Client update(UUID id, ClientRequest req) {
+        validateRequired(req);
         Client c = findById(id);
-        c.setName(req.name);
+        c.setName(req.name.trim());
         c.setBusinessNo(req.businessNo);
         c.setAddress(req.address);
         c.setIndustry(req.industry);
@@ -102,6 +104,17 @@ public class ClientService {
         c.setManagementNo(req.managementNo);
         c.setMemo(req.memo);
         return repo.save(c);
+    }
+
+    private void validateRequired(ClientRequest req) {
+        if (req.customerType == null || req.customerType.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+        String phone = req.phone != null ? req.phone.replaceAll("\\D", "") : "";
+        String mobile = req.mobile != null ? req.mobile.replaceAll("\\D", "") : "";
+        if (phone.isBlank() && mobile.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
     }
 
     @Transactional

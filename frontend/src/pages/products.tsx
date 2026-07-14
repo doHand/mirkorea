@@ -21,6 +21,7 @@ import { useMenuPermissionStore } from '@/stores/menu-permission.store'
 import { useSupplierInfoStore } from '@/stores/supplier-info.store'
 import { useWarehouseStore } from '@/stores/warehouse.store'
 import { printQuoteDocument } from '@/utils/printDocument'
+import { canAdjustStock, canManageMasterData } from '@/utils/permissions'
 import type { Product, SaleStatus, Barcode, ProductUnit, Client, Location, BarcodeUnitType, Inventory, UnitType } from '@/types/api.types'
 import { ProductBarcodeModal } from '@/components/ProductBarcodeModal'
 import { CategorySelect } from '@/components/CategorySelect'
@@ -267,6 +268,8 @@ export default function ProductsPage() {
     queryKey: QUERY_KEYS.products({ search, page: productPage, limit: productLimit }),
     queryFn:  () => productApi.findAll({ search: search || undefined, page: productPage, limit: productLimit }),
     placeholderData: (prev) => prev,
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
   })
 
   const { data: units = [] } = useQuery<ProductUnit[]>({
@@ -280,6 +283,8 @@ export default function ProductsPage() {
     queryFn:  () => productApi.findBarcodes(editing!.id),
     enabled:  !!editing?.id,
     placeholderData: [],
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
   })
 
   const addBarcodeMutation = useMutation({
@@ -317,6 +322,8 @@ export default function ProductsPage() {
     queryFn:  () => stockApi.getInventory(warehouse!.id),
     enabled:  !!warehouse?.id,
     placeholderData: [],
+    staleTime: 15_000,
+    refetchOnWindowFocus: false,
   })
 
   const filteredClients = useMemo(() => {
@@ -340,6 +347,8 @@ const selectedClientLabel = selectedClient?.name
     ?? ''
 
   const canAccessQuotes = Boolean(me?.role && menus.find((m) => m.menuId === 'quotes')?.roles.includes(me.role))
+  const canManageProducts = canManageMasterData(me?.role)
+  const canAdjustProductStock = canAdjustStock(me?.role)
   const inventorySummary = useMemo(() => buildInventorySummary(inventory), [inventory])
 
   const toggleSort = (key: ProductSortKey) => {
@@ -362,12 +371,15 @@ const selectedClientLabel = selectedClient?.name
     return [...filteredRows].sort((a, b) => compareSortValue(getProductSortValue(a, sort.key), getProductSortValue(b, sort.key), sort.direction))
   }, [data?.items, inventorySummary, showSafetyOnly, sort])
 
-  const invalidateAll = () => {
+  const invalidateProducts = () => {
     qc.invalidateQueries({ queryKey: ['products'] })
     qc.invalidateQueries({ queryKey: ['product'] })
+  }
+  const invalidateProductBarcodes = () => {
     qc.invalidateQueries({ queryKey: ['product-barcodes'] })
+  }
+  const invalidateInventory = () => {
     qc.invalidateQueries({ queryKey: ['inventory'] })
-    qc.invalidateQueries({ queryKey: ['products'] })
   }
 
   const createMutation = useMutation({
@@ -400,7 +412,9 @@ const selectedClientLabel = selectedClient?.name
     },
     onSuccess: () => {
       toast.success('상품이 등록되었습니다')
-      invalidateAll()
+      invalidateProducts()
+      if (form.initialStockEA > 0) invalidateInventory()
+      if (pendingBarcodes.length > 0) invalidateProductBarcodes()
       closeModal()
     },
     onError: () => toast.error('상품 등록에 실패했습니다'),
@@ -424,7 +438,8 @@ const selectedClientLabel = selectedClient?.name
     }),
     onSuccess: () => {
       toast.success('상품이 수정되었습니다')
-      invalidateAll()
+      invalidateProducts()
+      invalidateProductBarcodes()
       closeModal()
     },
     onError: () => toast.error('상품 수정에 실패했습니다'),
@@ -441,7 +456,7 @@ const selectedClientLabel = selectedClient?.name
     mutationFn: ({ id, patch }: { id: string; patch: Parameters<typeof productApi.update>[1] }) =>
       productApi.update(id, patch),
     onSuccess: () => {
-      invalidateAll()
+      invalidateProducts()
       toast.success('저장되었습니다')
     },
     onError: () => toast.error('저장 실패'),
@@ -500,8 +515,7 @@ const selectedClientLabel = selectedClient?.name
         inventoryItems: inventorySummary.get(cell.id)?.items ?? [],
       })
         .then(() => {
-          qc.invalidateQueries({ queryKey: ['inventory'] })
-          qc.invalidateQueries({ queryKey: ['products'] })
+          invalidateInventory()
           toast.success('재고수량이 조정되었습니다')
         })
         .catch((err) => toast.error(err instanceof Error ? err.message : '재고 조정 실패'))
@@ -520,8 +534,7 @@ const selectedClientLabel = selectedClient?.name
         inventoryItems: inventorySummary.get(cell.id)?.items ?? [],
       })
         .then(() => {
-          qc.invalidateQueries({ queryKey: ['inventory'] })
-          qc.invalidateQueries({ queryKey: ['products'] })
+          invalidateInventory()
           toast.success('재고수량이 조정되었습니다')
         })
         .catch((err) => toast.error(err instanceof Error ? err.message : '재고 조정 실패'))
@@ -543,8 +556,7 @@ const selectedClientLabel = selectedClient?.name
         inventoryItems: inventorySummary.get(cell.id)?.items ?? [],
       })
         .then(() => {
-          qc.invalidateQueries({ queryKey: ['inventory'] })
-          qc.invalidateQueries({ queryKey: ['products'] })
+          invalidateInventory()
           toast.success('재고수량이 조정되었습니다')
         })
         .catch((err) => toast.error(err instanceof Error ? err.message : '재고 조정 실패'))
@@ -565,8 +577,7 @@ const selectedClientLabel = selectedClient?.name
         inventoryItems: inventorySummary.get(cell.id)?.items ?? [],
       })
         .then(() => {
-          qc.invalidateQueries({ queryKey: ['inventory'] })
-          qc.invalidateQueries({ queryKey: ['products'] })
+          invalidateInventory()
           toast.success('재고수량이 조정되었습니다')
         })
         .catch((err) => toast.error(err instanceof Error ? err.message : '재고 조정 실패'))
@@ -824,6 +835,10 @@ const selectedClientLabel = selectedClient?.name
       {/* 테이블 */}
       <ProductInventoryGrid
         products={productRows}
+        loading={isLoading}
+        canEditMasterData={canManageProducts}
+        canAdjustStock={canAdjustProductStock}
+        canManageBarcodes={canManageProducts}
         onBarcodeClick={setBarcodeModal}
         locations={allLocations}
         onStockQtySave={(product, targetQty) => adjustBoxStockQty({
@@ -841,8 +856,10 @@ const selectedClientLabel = selectedClient?.name
             throw productsResult?.error ?? inventoryResult?.error
           }
         }}
-        onSaved={() => {
-          invalidateAll()
+        onSaved={(changes) => {
+          invalidateProducts()
+          if (changes?.stockChanged) invalidateInventory()
+          if (changes?.barcodesChanged) invalidateProductBarcodes()
           setSelectedIds(new Set())
         }}
         overflowActions={(
@@ -882,7 +899,7 @@ const selectedClientLabel = selectedClient?.name
                 }))
               }}
             />
-            <ImportButton config={productImportConfig} onImported={() => qc.invalidateQueries({ queryKey: ['products'] })} />
+            {canManageProducts && <ImportButton config={productImportConfig} onImported={() => qc.invalidateQueries({ queryKey: ['products'] })} />}
             {canAccessQuotes && (
               <button
                 onClick={openQuoteScreen}

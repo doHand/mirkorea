@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 @RestController
@@ -22,10 +23,13 @@ public class QuoteController {
     public ApiResponse<PageResponse<Quote>> findAll(
         @RequestParam(required = false) String docType,
         @RequestParam(required = false) String search,
+        @RequestParam(required = false) String status,
+        @RequestParam(required = false) LocalDate dateFrom,
+        @RequestParam(required = false) LocalDate dateTo,
         @RequestParam(defaultValue = "1")  int page,
         @RequestParam(defaultValue = "50") int limit
     ) {
-        return ApiResponse.ok(quoteService.findAll(docType, search, page, limit));
+        return ApiResponse.ok(quoteService.findAll(docType, search, status, dateFrom, dateTo, page, limit));
     }
 
     @GetMapping("/{id}")

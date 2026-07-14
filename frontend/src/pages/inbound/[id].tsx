@@ -56,12 +56,13 @@ export default function InboundDetailPage() {
   const qc      = useQueryClient()
   const compact = router.query.embed === '1'
 
-  const { data: order, isLoading, refetch } = useQuery({
+  const { data: order, isLoading, isFetching, refetch } = useQuery({
     queryKey: QUERY_KEYS.inboundOrder(id),
     queryFn:  () => inboundApi.findById(id),
+    enabled:  router.isReady && !!id,
   })
 
-  if (isLoading) {
+  if (!router.isReady || !id || isLoading || (isFetching && !order)) {
     return (
       <div className="flex items-center justify-center h-64 text-gray-400">
         로딩 중...

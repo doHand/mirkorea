@@ -9,6 +9,7 @@ import { clientApi } from '@/api/client.api'
 import { useEscapeKey } from '@/hooks/useEscapeKey'
 import { formatBusinessNoInput, formatNumber, formatPhoneInput } from '@/utils/format'
 import { cn } from '@/utils/cn'
+import { getApiErrorMessage } from '@/utils/error'
 import { AppAgGrid } from '@/components/AppAgGrid'
 import { GridPageLayout } from '@/components/grid/GridPageLayout'
 import type { Client } from '@/types/api.types'
@@ -65,6 +66,30 @@ function toNumber(value: unknown) {
 
 function toMoneyNumber(value: string) {
   return toNumber(value.replace(/[^\d.-]/g, ''))
+}
+
+function onlyDigits(value: string) {
+  return value.replace(/\D/g, '')
+}
+
+function validateClientForm(values: FormState) {
+  if (!values.name.trim()) return '거래처명을 입력해주세요'
+  if (!values.customerType.trim()) return '고객분류를 선택해주세요'
+
+  const phoneDigits = onlyDigits(values.phone)
+  const mobileDigits = onlyDigits(values.mobile)
+  if (!phoneDigits && !mobileDigits) return '대표전화 또는 휴대폰 중 하나를 입력해주세요'
+  if (phoneDigits && phoneDigits.length < 8) return '대표전화 번호를 확인해주세요'
+  if (mobileDigits && mobileDigits.length < 10) return '휴대폰 번호를 확인해주세요'
+
+  const businessNoDigits = onlyDigits(values.businessNo)
+  if (businessNoDigits && businessNoDigits.length !== 10) return '사업자번호는 10자리로 입력해주세요'
+
+  if (values.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) {
+    return '이메일 형식을 확인해주세요'
+  }
+
+  return null
 }
 
 function clientToForm(client: Client): FormState {
@@ -154,6 +179,7 @@ export default function ClientsPage() {
       qc.invalidateQueries({ queryKey: ['clients'] })
       closeModal()
     },
+    onError: (error) => toast.error(getApiErrorMessage(error, '거래처 등록에 실패했습니다')),
   })
 
   const deleteMutation = useMutation({
@@ -163,6 +189,7 @@ export default function ClientsPage() {
       setSelectedClient(null)
       qc.invalidateQueries({ queryKey: ['clients'] })
     },
+    onError: (error) => toast.error(getApiErrorMessage(error, '거래처 삭제에 실패했습니다')),
   })
 
   const commitSearch = () => { setSearch(searchInput); setPage(1) }
@@ -410,6 +437,11 @@ export default function ClientsPage() {
             <form
               onSubmit={(e) => {
                 e.preventDefault()
+                const validationError = validateClientForm(form)
+                if (validationError) {
+                  toast.error(validationError)
+                  return
+                }
                 createMutation.mutate()
               }}
               className="p-4 space-y-4"
@@ -428,17 +460,17 @@ export default function ClientsPage() {
                       placeholder="거래처명을 입력하세요"
                     />
                   </Field>
-                  <Field label="고객분류">
+                  <Field label="고객분류 *">
                     <CustomerTypeToggle value={form.customerType} onChange={(value) => set('customerType', value)} />
                   </Field>
-                  <Field label="대표전화">
-                    <input value={form.phone} onChange={(e) => set('phone', formatPhoneInput(e.target.value))} className={inputCls} placeholder="02-0000-0000" inputMode="numeric" />
+                  <Field label="대표전화 *">
+                    <input value={form.phone} onChange={(e) => set('phone', formatPhoneInput(e.target.value))} className={inputCls} placeholder="02-0000-0000" inputMode="numeric" aria-describedby="client-contact-required" />
                   </Field>
                   <Field label="영업사원">
                     <input value={form.salesperson} onChange={(e) => set('salesperson', e.target.value)} className={inputCls} />
                   </Field>
-                  <Field label="휴대폰">
-                    <input value={form.mobile} onChange={(e) => set('mobile', formatPhoneInput(e.target.value))} className={inputCls} placeholder="010-0000-0000" inputMode="numeric" />
+                  <Field label="휴대폰 *">
+                    <input value={form.mobile} onChange={(e) => set('mobile', formatPhoneInput(e.target.value))} className={inputCls} placeholder="010-0000-0000" inputMode="numeric" aria-describedby="client-contact-required" />
                   </Field>
                   <Field label="팩스번호">
                     <input value={form.fax} onChange={(e) => set('fax', formatPhoneInput(e.target.value))} className={inputCls} placeholder="02-0000-0000" inputMode="numeric" />
@@ -446,6 +478,7 @@ export default function ClientsPage() {
                   <Field label="참고사항" className="col-span-2">
                     <input value={form.managerTitle} onChange={(e) => set('managerTitle', e.target.value)} className={inputCls} />
                   </Field>
+                  <p id="client-contact-required" className="col-span-2 text-xs text-gray-400">대표전화와 휴대폰 중 하나는 필수입니다.</p>
                 </div>
               </section>
 
@@ -681,6 +714,7 @@ function ClientDetailPanel({
       qc.invalidateQueries({ queryKey: ['clients'] })
       onSaved(updated)
     },
+    onError: (error) => toast.error(getApiErrorMessage(error, '거래처 수정에 실패했습니다')),
   })
 
   const setEdit = <K extends keyof FormState>(key: K, value: FormState[K]) =>
@@ -838,8 +872,9 @@ function ClientDetailPanel({
           type="button"
           onClick={() => {
             if (editing) {
-              if (!editForm.name.trim()) {
-                toast.error('거래처명을 입력하세요')
+              const validationError = validateClientForm(editForm)
+              if (validationError) {
+                toast.error(validationError)
                 return
               }
               updatePanelMutation.mutate()

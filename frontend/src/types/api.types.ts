@@ -353,6 +353,8 @@ interface QuoteItem {
   category?: string
   barcode?: string
   spec?: string
+  inUnitQty?: number
+  outUnitQty?: number
   unit?: string
   qty: number
   unitPrice: number

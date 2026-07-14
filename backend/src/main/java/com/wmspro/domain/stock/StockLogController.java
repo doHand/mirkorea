@@ -10,6 +10,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
@@ -33,6 +34,7 @@ public class StockLogController {
         @RequestParam(required = false) UUID warehouseId,
         @RequestParam(required = false) TxType txType,
         @RequestParam(required = false) UUID performedBy,
+        @RequestParam(required = false) String search,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
         @RequestParam(defaultValue = "1")   int page,
@@ -45,6 +47,22 @@ public class StockLogController {
             if (warehouseId != null) predicates.add(cb.equal(root.get("warehouseId"), warehouseId));
             if (txType      != null) predicates.add(cb.equal(root.get("txType"),      txType));
             if (performedBy != null) predicates.add(cb.equal(root.get("createdBy"),   performedBy));
+            if (search != null && !search.isBlank()) {
+                String q = "%" + search.trim().toLowerCase() + "%";
+                var product = root.join("product", JoinType.LEFT);
+                var location = root.join("location", JoinType.LEFT);
+                predicates.add(cb.or(
+                    cb.like(cb.lower(root.get("txnNo")), q),
+                    cb.like(cb.lower(root.get("reason")), q),
+                    cb.like(cb.lower(root.get("memo")), q),
+                    cb.like(cb.lower(root.get("barcodeScanned")), q),
+                    cb.like(cb.lower(root.get("referenceType")), q),
+                    cb.like(cb.lower(product.get("code")), q),
+                    cb.like(cb.lower(product.get("name")), q),
+                    cb.like(cb.lower(product.get("materialNo")), q),
+                    cb.like(cb.lower(location.get("code")), q)
+                ));
+            }
             if (from != null) predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"),
                 from.atStartOfDay(ZoneId.of("Asia/Seoul")).toInstant()));
             if (to != null) predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"),

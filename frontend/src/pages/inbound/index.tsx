@@ -59,6 +59,24 @@ const STATUS_BADGE_VARIANT: Record<InboundStatus, 'blue' | 'amber' | 'purple' | 
   CANCELLED:  'gray',
 }
 
+const STATUS_SUMMARY_STYLE: Record<InboundStatus | 'ALL', string> = {
+  ALL:        'border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-gray-900 dark:text-slate-300',
+  PENDING:    'border-blue-100 bg-blue-50/70 text-blue-700 dark:border-blue-900/50 dark:bg-blue-950/20 dark:text-blue-300',
+  RECEIVING:  'border-amber-100 bg-amber-50/70 text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-300',
+  INSPECTING: 'border-purple-100 bg-purple-50/70 text-purple-700 dark:border-purple-900/50 dark:bg-purple-950/20 dark:text-purple-300',
+  COMPLETED:  'border-emerald-100 bg-emerald-50/70 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/20 dark:text-emerald-300',
+  CANCELLED:  'border-gray-200 bg-gray-50/80 text-gray-600 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-300',
+}
+
+const STATUS_DOT_STYLE: Record<InboundStatus | 'ALL', string> = {
+  ALL:        'bg-slate-400',
+  PENDING:    'bg-blue-500',
+  RECEIVING:  'bg-amber-500',
+  INSPECTING: 'bg-purple-500',
+  COMPLETED:  'bg-emerald-500',
+  CANCELLED:  'bg-gray-400',
+}
+
 function fmtDate(s?: string | null) {
   if (!s) return '-'
   return s.slice(0, 10)
@@ -98,6 +116,7 @@ export default function InboundPage() {
   const [detailOrderId, setDetailOrderId] = useState<string | null>(null)
   const [menuOpen,      setMenuOpen]      = useState(false)
   const [selectedRowCount, setSelectedRowCount] = useState(0)
+  const [selectedDeletableCount, setSelectedDeletableCount] = useState(0)
 
   useEffect(() => {
     const onMouseDown = (event: MouseEvent) => {
@@ -131,7 +150,15 @@ export default function InboundPage() {
   })
 
   const orders    = useMemo(() => page?.items ?? [], [page?.items])
-  const allOrders = allPage?.items ?? []
+  const allOrders = useMemo(() => allPage?.items ?? [], [allPage?.items])
+  const statusSummaryItems = useMemo(() => (
+    ['', 'PENDING', 'RECEIVING', 'INSPECTING', 'COMPLETED', 'CANCELLED'] as (InboundStatus | '')[]
+  ).map((value) => ({
+    value,
+    label: value === '' ? '전체' : STATUS_LABEL[value],
+    count: value === '' ? allOrders.length : allOrders.filter((order) => order.status === value).length,
+    styleKey: value === '' ? 'ALL' as const : value,
+  })), [allOrders])
 
   const filtered = useMemo(() => {
     let result = orders
@@ -201,11 +228,13 @@ export default function InboundPage() {
       toast.error('삭제할 전표를 선택해주세요')
       return
     }
+    const blockedOrders = ordersToDelete.filter((order) => order.status !== 'PENDING')
+    if (blockedOrders.length > 0) {
+      toast.error('입고 예정 상태의 전표만 삭제할 수 있습니다.')
+      return
+    }
 
-    const hasCompleted = ordersToDelete.some((order) => order.status === 'COMPLETED')
-    const message = hasCompleted
-      ? `${ordersToDelete.length}개 입고 전표를 삭제하시겠습니까?\n완료 전표는 이미 증가된 재고가 자동으로 되돌려지지 않습니다.`
-      : `${ordersToDelete.length}개 입고 전표를 삭제하시겠습니까?`
+    const message = `${ordersToDelete.length}개 입고 예정 전표를 삭제하시겠습니까?`
     if (!window.confirm(message)) return
 
     try {
@@ -216,6 +245,7 @@ export default function InboundPage() {
       refresh()
       gridRef.current?.api.deselectAll()
       setSelectedRowCount(0)
+      setSelectedDeletableCount(0)
     } catch {
       refresh()
     }
@@ -290,9 +320,11 @@ export default function InboundPage() {
     },
   ], [])
 
-  const activeOrder = selectedOrder && filtered.some((o) => o.id === selectedOrder.id)
-    ? selectedOrder
-    : filtered[0] ?? null
+  const activeOrder = detailOrderId
+    ? filtered.find((o) => o.id === detailOrderId) ?? selectedOrder ?? null
+    : selectedOrder && filtered.some((o) => o.id === selectedOrder.id)
+      ? selectedOrder
+      : filtered[0] ?? null
 
   const handleExcelDownload = async () => {
     if (!gridRows.length) {
@@ -454,21 +486,22 @@ export default function InboundPage() {
 
         {/* 하단 행: 상태 필터 버튼 */}
         <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
-          {(['', 'PENDING', 'RECEIVING', 'INSPECTING', 'COMPLETED'] as (InboundStatus | '')[]).map((value) => {
-            const count = value === '' ? allOrders.length : allOrders.filter((o) => o.status === value).length
-            const label = value === '' ? '전체' : STATUS_LABEL[value]
+          {statusSummaryItems.map((item) => {
+            const selected = statusFilter === item.value
             return (
               <button
-                key={value || 'all'}
-                onClick={() => setStatusFilter(value)}
+                key={item.value || 'all'}
+                type="button"
+                onClick={() => setStatusFilter(item.value)}
                 className={cn(
-                  'shrink-0 whitespace-nowrap rounded-lg border px-2.5 py-2 text-xs font-semibold transition-colors',
-                  statusFilter === value
-                    ? 'wms-table-header border-[var(--color-grid-header)]'
-                    : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200',
+                  'inline-flex h-7 shrink-0 items-center gap-1.5 rounded border px-2.5 text-xs font-semibold transition-colors',
+                  STATUS_SUMMARY_STYLE[item.styleKey],
+                  selected && 'border-[var(--color-primary)] bg-white ring-1 ring-[var(--color-primary)] dark:bg-gray-900',
                 )}
               >
-                {label} <span className="ml-1 tabular-nums">{formatNumber(count)}</span>
+                <span className={cn('h-2 w-2 rounded-full', STATUS_DOT_STYLE[item.styleKey])} />
+                <span>{item.label}</span>
+                <span className="tabular-nums opacity-80">{formatNumber(item.count)}</span>
               </button>
             )
           })}
@@ -606,8 +639,8 @@ export default function InboundPage() {
             <button
               type="button"
               onClick={() => { void handleDeleteSelected() }}
-              disabled={selectedRowCount === 0 || deleteMutation.isPending}
-              title="선택 전표 삭제"
+              disabled={selectedDeletableCount === 0 || deleteMutation.isPending}
+              title={selectedRowCount > 0 && selectedDeletableCount === 0 ? '입고 예정 상태만 삭제할 수 있습니다' : '선택 전표 삭제'}
               className="wms-toolbar-action inline-flex h-7 w-7 items-center justify-center rounded transition-colors disabled:opacity-40"
             >
               <Minus size={16} strokeWidth={2.5} />
@@ -685,7 +718,13 @@ export default function InboundPage() {
             overlayLoadingTemplate="<span class='ag-overlay-loading-center'>불러오는 중...</span>"
             overlayNoRowsTemplate="<span class='ag-overlay-no-rows-center'>조회된 입고 품목이 없습니다.</span>"
             getRowId={(params) => params.data.id}
-            onSelectionChanged={() => setSelectedRowCount(gridRef.current?.api.getSelectedRows().length ?? 0)}
+            onSelectionChanged={() => {
+              const selectedRows = gridRef.current?.api.getSelectedRows() ?? []
+              setSelectedRowCount(selectedRows.length)
+              setSelectedDeletableCount(new Set(selectedRows
+                .filter((row) => row.order.status === 'PENDING')
+                .map((row) => row.order.id)).size)
+            }}
             onRowClicked={(params) => {
               if (!params.data) return
               setSelectedOrder(params.data.order)

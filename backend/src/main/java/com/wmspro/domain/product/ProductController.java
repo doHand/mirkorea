@@ -45,6 +45,7 @@ public class ProductController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ApiResponse<Product> create(
         @Valid @RequestBody ProductCreateRequest req,
         @AuthenticationPrincipal WmsPrincipal principal
@@ -53,16 +54,19 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ApiResponse<Product> update(@PathVariable UUID id, @Valid @RequestBody ProductUpdateRequest req) {
         return ApiResponse.ok(productService.update(id, req));
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ApiResponse<Product> patch(@PathVariable UUID id, @Valid @RequestBody ProductUpdateRequest req) {
         return ApiResponse.ok(productService.update(id, req));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         productService.delete(id);
         return ApiResponse.ok(null, "상품 삭제 완료");
@@ -80,18 +84,20 @@ public class ProductController {
 
     @PostMapping("/{id}/barcodes")
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ApiResponse<Barcode> addBarcode(
         @PathVariable UUID id,
         @RequestBody Map<String, Object> body
     ) {
-        String barcodeValue = (String) body.get("barcode");
+        String barcodeValue = body.get("barcode") instanceof String s ? s : null;
         BarcodeUnitType type = BarcodeUnitType.from((String) body.getOrDefault("type", "UNIT"));
-        int unitQty     = (int) body.getOrDefault("unitQty", 1);
-        boolean primary = (boolean) body.getOrDefault("isPrimary", false);
+        int unitQty = asInt(body.get("unitQty"), 1);
+        boolean primary = body.get("isPrimary") instanceof Boolean b ? b : false;
         return ApiResponse.ok(productService.addBarcode(id, barcodeValue, type, unitQty, primary));
     }
 
     @PutMapping("/{productId}/barcodes/{barcodeId}")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ApiResponse<Barcode> updateBarcode(
         @PathVariable UUID productId,
         @PathVariable UUID barcodeId,
@@ -99,14 +105,27 @@ public class ProductController {
     ) {
         String barcodeValue = body.get("barcode") instanceof String s ? s : null;
         BarcodeUnitType type = BarcodeUnitType.from((String) body.getOrDefault("type", "UNIT"));
-        int unitQty = body.get("unitQty") instanceof Integer i ? i : 1;
+        int unitQty = asInt(body.get("unitQty"), 1);
         boolean isPrimary = body.get("isPrimary") instanceof Boolean b ? b : false;
-        return ApiResponse.ok(productService.updateBarcode(barcodeId, barcodeValue, type, unitQty, isPrimary));
+        return ApiResponse.ok(productService.updateBarcode(productId, barcodeId, barcodeValue, type, unitQty, isPrimary));
+    }
+
+    private int asInt(Object value, int fallback) {
+        if (value instanceof Number number) return number.intValue();
+        if (value instanceof String text && !text.isBlank()) {
+            try {
+                return Integer.parseInt(text);
+            } catch (NumberFormatException ignored) {
+                return fallback;
+            }
+        }
+        return fallback;
     }
 
     @DeleteMapping("/{productId}/barcodes/{barcodeId}")
-    public ApiResponse<Void> deleteBarcode(@PathVariable UUID barcodeId) {
-        productService.deleteBarcode(barcodeId);
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    public ApiResponse<Void> deleteBarcode(@PathVariable UUID productId, @PathVariable UUID barcodeId) {
+        productService.deleteBarcode(productId, barcodeId);
         return ApiResponse.ok(null);
     }
 

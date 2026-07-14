@@ -36,7 +36,7 @@ public class OutboundOrderController {
     }
 
     @DeleteMapping("/{id}") @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','WORKER')")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public void delete(@PathVariable UUID id) {
         service.delete(id);
     }

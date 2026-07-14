@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { AgGridReact } from 'ag-grid-react'
 import type { ColDef, ICellRendererParams } from 'ag-grid-community'
-import { Minus, MoreHorizontal, Plus, RefreshCw, Save } from 'lucide-react'
+import { Minus, MoreHorizontal, Plus, RefreshCw, Save, Search, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { productApi } from '@/api/product.api'
 import { ExportButton } from '@/components/ExportButton'
@@ -44,6 +44,42 @@ const blankRow = (): BarcodeRow => ({
   barcode: '', type: 'UNIT', unitQty: 1, isPrimary: false, isActive: true,
   _new: true,
 })
+
+const validateBarcodeRows = (rows: BarcodeRow[]) => {
+  const activeRows = rows.filter((row) => !row._deleted)
+  const changedRows = activeRows.filter((row) => row._new || row._dirty)
+  const blankChanged = changedRows.find((row) => !row.productCode.trim() || !row.barcode.trim())
+  if (blankChanged) return '상품코드와 바코드번호를 입력해주세요.'
+
+  const seen = new Set<string>()
+  for (const row of activeRows) {
+    const value = row.barcode.trim()
+    if (!value) continue
+    if (seen.has(value)) return `중복된 바코드가 있습니다: ${value}`
+    seen.add(value)
+  }
+
+  const primaryByProduct = new Map<string, number>()
+  for (const row of activeRows) {
+    if (!row.isPrimary || !row.productCode.trim()) continue
+    const key = row.productId || row.productCode.trim()
+    primaryByProduct.set(key, (primaryByProduct.get(key) ?? 0) + 1)
+  }
+  if ([...primaryByProduct.values()].some((count) => count > 1)) {
+    return '대표 바코드는 상품당 1개만 선택할 수 있습니다.'
+  }
+  return null
+}
+
+const getBarcodeRowIssue = (row: BarcodeRow | undefined, rows: BarcodeRow[]) => {
+  if (!row || row._deleted) return null
+  const productCode = row.productCode.trim()
+  const barcode = row.barcode.trim()
+  if ((row._new || row._dirty) && (!productCode || !barcode)) return !productCode ? 'productCode' : 'barcode'
+  if (barcode && rows.some((item) => item.id !== row.id && !item._deleted && item.barcode.trim() === barcode)) return 'duplicate'
+  if (row.isPrimary && productCode && rows.some((item) => item.id !== row.id && !item._deleted && item.isPrimary && (item.productId || item.productCode.trim()) === (row.productId || productCode))) return 'primary'
+  return null
+}
 
 function makeBarcodeImportConfig(refetchRows: () => Promise<void>): ImportConfig {
   return {
@@ -109,6 +145,7 @@ export default function BarcodesPage() {
   const [rows, setRows] = useState<BarcodeRow[]>([])
   const [saving, setSaving] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     if (!menuOpen) return
@@ -137,6 +174,21 @@ export default function BarcodesPage() {
   const barcodeImportConfig = useMemo(() => makeBarcodeImportConfig(refetchRows), [refetchRows])
 
   const visibleRows = useMemo(() => rows.filter(r => !r._deleted), [rows])
+  const filteredRows = useMemo(() => {
+    const query = searchQuery.trim().toLocaleLowerCase('ko-KR')
+    if (!query) return visibleRows
+    return visibleRows.filter((row) => {
+      if (row._new) return true
+      const searchableText = [
+        row.productCode,
+        row.productName,
+        row.barcode,
+        row.type,
+        TYPE_LABEL[row.type],
+      ].join(' ').toLocaleLowerCase('ko-KR')
+      return searchableText.includes(query)
+    })
+  }, [searchQuery, visibleRows])
   const hasChanges  = rows.some(r => r._new || r._dirty || r._deleted)
 
   const productColorMap = useMemo(() => {
@@ -170,6 +222,11 @@ export default function BarcodesPage() {
   }, [])
 
   const saveChanges = async () => {
+    const validationError = validateBarcodeRows(rows)
+    if (validationError) {
+      toast.error(validationError)
+      return
+    }
     setSaving(true)
     let ok = 0, fail = 0
     try {
@@ -209,17 +266,11 @@ export default function BarcodesPage() {
   /* ── Column defs ────────────────────────────────────────────── */
   const colDefs: ColDef<BarcodeRow>[] = useMemo(() => [
     {
-      headerName: '',
-      checkboxSelection: true,
-      headerCheckboxSelection: true,
-      width: 44,
-      minWidth: 44,
-      suppressMovable: true,
-      resizable: false,
-    },
-    {
       headerName: '상품코드', field: 'productCode', width: 120, sort: 'asc', sortIndex: 0,
       editable: p => !!p.data?._new,
+      cellClassRules: {
+        'cell-required-input': (p) => getBarcodeRowIssue(p.data, rows) === 'productCode',
+      },
       onCellValueChanged: p => updateRow(p.data.id, { productCode: p.newValue }),
     },
     {
@@ -229,6 +280,12 @@ export default function BarcodesPage() {
     {
       headerName: '바코드번호', field: 'barcode', flex: 1, minWidth: 160,
       editable: true,
+      cellClassRules: {
+        'cell-required-input': (p) => {
+          const issue = getBarcodeRowIssue(p.data, rows)
+          return issue === 'barcode' || issue === 'duplicate'
+        },
+      },
       onCellValueChanged: p => updateRow(p.data.id, { barcode: p.newValue }),
     },
     {
@@ -270,8 +327,11 @@ export default function BarcodesPage() {
           />
         </div>
       ),
+      cellClassRules: {
+        'cell-required-input': (p) => getBarcodeRowIssue(p.data, rows) === 'primary',
+      },
     },
-  ], [updateRow])
+  ], [rows, updateRow])
 
   return (
     <div className="flex h-[calc(100vh-118px)] min-h-0 flex-col gap-2 overflow-hidden">
@@ -284,7 +344,36 @@ export default function BarcodesPage() {
       {/* 그리드 + 툴바 */}
       <div className="app-surface flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden dark:border-gray-800 dark:bg-gray-900">
         {/* 툴바 */}
-        <div className="wms-grid-toolbar flex items-center justify-end gap-1.5 border-b px-2 py-1.5">
+        <div className="wms-grid-toolbar flex items-center gap-1.5 border-b px-2 py-1.5">
+          <div className="relative flex min-w-0 items-center">
+            <Search size={14} className="pointer-events-none absolute left-2 text-gray-400" />
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') setSearchQuery('')
+              }}
+              placeholder="상품코드, 상품명, 바코드 검색"
+              aria-label="바코드 목록 검색"
+              className="wms-inline-input h-7 w-[clamp(20rem,42vw,42rem)] max-w-full rounded border py-1 pl-7 pr-7 text-xs outline-none"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                title="검색어 지우기"
+                aria-label="검색어 지우기"
+                className="wms-icon-button absolute right-1 inline-flex h-5 w-5 items-center justify-center rounded"
+              >
+                <X size={12} />
+              </button>
+            )}
+          </div>
+          <span className="whitespace-nowrap text-[11px] text-gray-400">
+            {filteredRows.length} / {visibleRows.length}건
+          </span>
+          <div className="ml-auto flex items-center gap-1.5">
           <button
             onClick={addRow}
             title="행 추가"
@@ -349,6 +438,7 @@ export default function BarcodesPage() {
               </div>
             )}
           </div>
+          </div>
         </div>
 
         {/* 그리드 */}
@@ -358,16 +448,18 @@ export default function BarcodesPage() {
           ) : (
             <AgGridReact<BarcodeRow>
               ref={gridRef}
-              rowData={visibleRows}
+              rowData={filteredRows}
               columnDefs={colDefs}
               defaultColDef={{ resizable: true, suppressHeaderMenuButton: true }}
-              rowSelection="multiple"
+              rowSelection={{ mode: 'multiRow', checkboxes: true, headerCheckbox: true, enableClickSelection: false }}
+              selectionColumnDef={{ width: 44, minWidth: 44, maxWidth: 44, sortable: false, resizable: false }}
               rowClassRules={{
                 'barcode-group-0': p => !p.data?._new && productColorMap.get(p.data?.productCode ?? '') === 0,
                 'barcode-group-1': p => !p.data?._new && productColorMap.get(p.data?.productCode ?? '') === 1,
                 'barcode-group-2': p => !p.data?._new && productColorMap.get(p.data?.productCode ?? '') === 2,
                 'row-new':      p => !!p.data?._new,
                 'row-modified': p => !!p.data?._dirty && !p.data?._new,
+                'row-invalid':  p => Boolean(getBarcodeRowIssue(p.data, rows)),
               }}
               headerHeight={36}
               animateRows
