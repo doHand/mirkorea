@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:wms_pro}?sslmode=${DB_SSL_MODE:prefer}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:wms_pro_iizd}?sslmode=${DB_SSL_MODE:prefer}
     username: ${DB_USER:wms_user}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
