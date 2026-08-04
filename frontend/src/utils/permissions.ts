@@ -5,5 +5,3 @@ export const isAdminOrManager = (role?: UserRole | null) => role === 'ADMIN' || 
 export const canManageMasterData = isAdminOrManager
 
 export const canAdjustStock = isAdminOrManager
-
-export const canCancelDocuments = isAdminOrManager

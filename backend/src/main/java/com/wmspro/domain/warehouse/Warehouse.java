@@ -28,9 +28,6 @@ public class Warehouse {
     @Column(columnDefinition = "TEXT")
     private String address;
 
-    @Column(name = "manager_id")
-    private UUID managerId;
-
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private boolean isActive = true;
