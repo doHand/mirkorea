@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
-import { X, PanelRight } from 'lucide-react'
+import { X, PanelBottom } from 'lucide-react'
 import { useMenuPermissionStore } from '@/stores/menu-permission.store'
 import { useOpenTabsStore } from '@/stores/open-tabs.store'
 import { cn } from '@/utils/cn'
@@ -21,13 +21,14 @@ export function OpenTabsBar() {
   const addTab    = useOpenTabsStore((s) => s.addTab)
   const closeTab  = useOpenTabsStore((s) => s.closeTab)
   const clearTabs = useOpenTabsStore((s) => s.clearTabs)
+  const moveTab   = useOpenTabsStore((s) => s.moveTab)
   const splitTabs = useOpenTabsStore((s) => s.splitTabs)
   const splitHref = useOpenTabsStore((s) => s.splitHref)
-  const addSplitTab = useOpenTabsStore((s) => s.addSplitTab)
   const clearSplitTabs = useOpenTabsStore((s) => s.clearSplitTabs)
+  const draggingHref = useOpenTabsStore((s) => s.draggingHref)
+  const setDraggingHref = useOpenTabsStore((s) => s.setDraggingHref)
 
-  const [draggingHref, setDraggingHref] = useState<string | null>(null)
-  const [dropActive,   setDropActive]   = useState(false)
+  const [overHref, setOverHref] = useState<string | null>(null)
 
   useEffect(() => {
     const menu = findMenuForPath(pathname, menus)
@@ -37,8 +38,6 @@ export function OpenTabsBar() {
 
   const currentMenu = findMenuForPath(pathname, menus)
   if (!currentMenu) return null
-
-  const isSplitTarget = splitTabs.some((tab) => tab.href === draggingHref)
 
   const handleClose = (href: string) => {
     closeTab(href)
@@ -57,6 +56,7 @@ export function OpenTabsBar() {
 
         {tabs.map((tab) => {
           const active = tab.href === currentMenu.href
+          const isOverTarget = overHref === tab.href && draggingHref !== null && draggingHref !== tab.href
           return (
             <div
               key={tab.href}
@@ -64,15 +64,30 @@ export function OpenTabsBar() {
               onDragStart={(e) => {
                 setDraggingHref(tab.href)
                 e.dataTransfer.setData('tab-href', tab.href)
-                e.dataTransfer.effectAllowed = 'copy'
+                e.dataTransfer.effectAllowed = 'move'
               }}
-              onDragEnd={() => { setDraggingHref(null); setDropActive(false) }}
+              onDragEnd={() => { setDraggingHref(null); setOverHref(null) }}
+              onDragOver={(e) => {
+                if (!draggingHref || draggingHref === tab.href) return
+                e.preventDefault()
+                e.dataTransfer.dropEffect = 'move'
+                setOverHref(tab.href)
+              }}
+              onDragLeave={() => setOverHref((cur) => (cur === tab.href ? null : cur))}
+              onDrop={(e) => {
+                e.preventDefault()
+                const draggedHref = e.dataTransfer.getData('tab-href')
+                if (draggedHref && draggedHref !== tab.href) moveTab(draggedHref, tab.href)
+                setDraggingHref(null)
+                setOverHref(null)
+              }}
               className={cn(
                 'group relative h-[34px] -mb-px min-w-0 max-w-56 flex items-center rounded-t-lg text-[12px] font-medium transition-all shrink-0 cursor-grab active:cursor-grabbing select-none',
                 active
                   ? 'app-tab-active dark:bg-slate-950 dark:text-white border-t border-l border-r dark:border-slate-700 z-10'
                   : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 hover:bg-gray-100/80 dark:hover:bg-slate-800/50',
                 splitTabs.some((item) => item.href === tab.href) ? 'app-tab-split' : '',
+                isOverTarget ? 'app-tab-drop-active' : '',
               )}
             >
               <button
@@ -93,39 +108,13 @@ export function OpenTabsBar() {
           )
         })}
 
-        {/* 분리 드롭존 */}
-        <div
-          onDragOver={(e) => { e.preventDefault(); setDropActive(true) }}
-          onDragLeave={() => setDropActive(false)}
-          onDrop={(e) => {
-            e.preventDefault()
-            const href = e.dataTransfer.getData('tab-href')
-            const tab = tabs.find((item) => item.href === href)
-            if (tab) addSplitTab(tab)
-            setDraggingHref(null)
-            setDropActive(false)
-          }}
-          className={cn(
-            'flex items-center gap-1 px-2 h-7 mb-1 self-center rounded-lg border text-[10px] transition-all duration-150 shrink-0',
-            draggingHref
-              ? 'opacity-100 pointer-events-auto'
-              : 'opacity-0 pointer-events-none w-0 overflow-hidden px-0',
-            dropActive
-              ? 'app-tab-drop-active dark:bg-amber-900/20'
-              : 'bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-600 text-gray-400',
-          )}
-        >
-          <PanelRight size={11} />
-          <span className="whitespace-nowrap">{isSplitTarget ? '분리 닫기' : '분리 보기'}</span>
-        </div>
-
         {splitHref && !draggingHref && (
           <button
             onClick={clearSplitTabs}
             title="분리 닫기"
             className="app-header-accent shrink-0 p-1.5 mb-1 self-center rounded-lg hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
           >
-            <PanelRight size={13} />
+            <PanelBottom size={13} />
           </button>
         )}
 

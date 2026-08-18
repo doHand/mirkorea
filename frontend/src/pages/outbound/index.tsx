@@ -525,7 +525,10 @@ export default function OutboundPage() {
                 if (!params.data) return undefined
                 const isDark = document.documentElement.classList.contains('dark')
                 if (params.data.order.id === selectedOrder?.id) {
-                  return { backgroundColor: isDark ? 'rgba(194,120,35,0.20)' : 'rgba(255,237,213,0.90)' } as Record<string, string>
+                  return {
+                    backgroundColor: isDark ? 'rgba(45,212,191,0.16)' : 'rgba(204,251,241,0.72)',
+                    boxShadow: `inset 4px 0 0 ${isDark ? '#2dd4bf' : '#0f766e'}, inset 0 1px 0 ${isDark ? 'rgba(45,212,191,0.35)' : 'rgba(15,118,110,0.28)'}, inset 0 -1px 0 ${isDark ? 'rgba(45,212,191,0.35)' : 'rgba(15,118,110,0.28)'}`,
+                  } as Record<string, string>
                 }
                 switch (params.data.derived) {
                   case 'COLLECTED':  return { backgroundColor: isDark ? 'rgba(59,130,246,0.10)'   : 'rgba(219,234,254,0.60)' } as Record<string, string>

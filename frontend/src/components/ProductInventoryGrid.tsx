@@ -19,6 +19,7 @@ import type { Barcode, BarcodeUnitType, Location, Product, UnitType } from '@/ty
 type DraftProduct = Product & {
   reservedQty?: number
   availableQty?: number
+  returnQty?: number
   _new?: boolean
   _deleted?: boolean
   _dirty?: boolean
@@ -221,7 +222,7 @@ export function ProductInventoryGrid({
     document.addEventListener('mouseup', onUp)
   }
 
-  const { data: clients = [] } = useQuery({
+  const { data: clients = [], refetch: refetchClients } = useQuery({
     queryKey: ['clients-all'],
     queryFn: clientApi.findAllActive,
     staleTime: 60_000,
@@ -518,6 +519,15 @@ export function ProductInventoryGrid({
           editable: canEditMasterData,
           valueParser: (p) => Math.max(0, Number(p.newValue) || 0),
           cellClassRules: { 'cell-below-safety': (p) => isBelowSafety(p.data) },
+          width: 95,
+          type: 'numericColumn',
+        },
+        {
+          headerName: '반품/회수',
+          field: 'returnQty',
+          editable: false,
+          valueFormatter: (p) => formatDecimal(p.value ?? 0, 2),
+          cellClass: 'text-gray-400',
           width: 95,
           type: 'numericColumn',
         },
@@ -1003,6 +1013,7 @@ export function ProductInventoryGrid({
           clients={clients}
           onSelect={(client) => selectClient(client?.id)}
           onClose={() => setClientPickerRowId(null)}
+          onRefresh={refetchClients}
           allowClear
         />
       )}

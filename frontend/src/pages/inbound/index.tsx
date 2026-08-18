@@ -4,12 +4,13 @@ import { useRouter } from 'next/router'
 import { AgGridReact } from 'ag-grid-react'
 import type { ColDef } from 'ag-grid-community'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { FileDown, FileText, Menu, Minus, Plus, RefreshCw, RotateCcw, Search, X } from 'lucide-react'
+import { Check, FileDown, FileText, Menu, Minus, Plus, RefreshCw, RotateCcw, Search, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useWarehouseStore } from '@/stores/warehouse.store'
 import { inboundApi } from '@/api/inbound.api'
 import type { CreateInboundOrderRequest } from '@/api/inbound.api'
 import { productApi } from '@/api/product.api'
+import { clientApi } from '@/api/client.api'
 import { purchaseOrderApi } from '@/api/purchase-order.api'
 import { stockApi } from '@/api/stock.api'
 import { QUERY_KEYS } from '@/constants/query-keys'
@@ -18,9 +19,11 @@ import * as ui from '@/styles/ui'
 import { datedExcelFilename, writeRowsToExcel } from '@/utils/excel'
 import { formatNumber } from '@/utils/format'
 import { formatUnitSpec, getPackageUnitQty } from '@/utils/unit-spec'
-import type { InboundOrder, InboundOrderItem, InboundStatus, Product, UnitType } from '@/types/api.types'
+import type { Client, InboundOrder, InboundOrderItem, InboundStatus, Product, UnitType } from '@/types/api.types'
 import { StatusBadge } from '@/components/StatusBadge'
 import { ImportButton, type ImportConfig, type ImportRow } from '@/components/ImportButton'
+import { ClientPickerModal } from '@/components/ClientPickerModal'
+import { ReturnCollectionPanel } from '@/components/ReturnCollectionPanel'
 
 interface InboundLineRow {
   id: string
@@ -110,6 +113,14 @@ export default function InboundPage() {
   const [dateFrom,     setDateFrom]     = useState('')
   const [dateTo,       setDateTo]       = useState('')
 
+  // 탭 (입고 / 반품·회수)
+  const [tab, setTab] = useState<'INBOUND' | 'RETURNS'>('INBOUND')
+
+  useEffect(() => {
+    if (!router.isReady) return
+    setTab(router.query.tab === 'returns' ? 'RETURNS' : 'INBOUND')
+  }, [router.isReady, router.query.tab])
+
   // 모달 state
   const [createOpen,    setCreateOpen]    = useState(false)
   const [selectedOrder, setSelectedOrder] = useState<InboundOrder | null>(null)
@@ -117,6 +128,12 @@ export default function InboundPage() {
   const [menuOpen,      setMenuOpen]      = useState(false)
   const [selectedRowCount, setSelectedRowCount] = useState(0)
   const [selectedDeletableCount, setSelectedDeletableCount] = useState(0)
+
+  useEffect(() => {
+    if (!router.isReady) return
+    const detail = typeof router.query.detail === 'string' ? router.query.detail : ''
+    if (detail) setDetailOrderId(detail)
+  }, [router.isReady, router.query.detail])
 
   useEffect(() => {
     const onMouseDown = (event: MouseEvent) => {
@@ -223,7 +240,12 @@ export default function InboundPage() {
 
   const handleDeleteSelected = async () => {
     const selectedRows = gridRef.current?.api.getSelectedRows() ?? []
-    const ordersToDelete = [...new Map(selectedRows.map((row) => [row.order.id, row.order])).values()]
+    const checkboxOrders = [...new Map(selectedRows.map((row) => [row.order.id, row.order])).values()]
+    const ordersToDelete = checkboxOrders.length > 0
+      ? checkboxOrders
+      : selectedOrder
+        ? [selectedOrder]
+        : []
     if (!ordersToDelete.length) {
       toast.error('삭제할 전표를 선택해주세요')
       return
@@ -266,7 +288,7 @@ export default function InboundPage() {
     },
     { headerName: 'No', field: 'rowNo', width: 68, pinned: 'left', type: 'numericColumn' },
     { headerName: '입고예정일', field: 'expectedDate', width: 118 },
-    { headerName: '전표번호', field: 'orderNo', width: 148, pinned: 'left', cellClass: 'wms-code font-mono font-semibold' },
+    { headerName: '전표번호', field: 'orderNo', width: 170, pinned: 'left', cellClass: 'wms-code font-mono font-semibold' },
     { headerName: '공급업체', field: 'supplier', width: 150 },
     { headerName: '상품명', field: 'productName', minWidth: 190, flex: 1, tooltipField: 'productName' },
     { headerName: '상품코드', field: 'productCode', width: 126, cellClass: 'font-mono text-xs text-gray-500' },
@@ -472,6 +494,38 @@ export default function InboundPage() {
   return (
     <div className="flex h-[calc(100vh-128px)] min-h-0 flex-col gap-2 overflow-hidden">
 
+      {/* ── 탭 전환 ── */}
+      <div className="flex shrink-0 gap-1 border-b border-gray-200 dark:border-gray-800">
+        {(['INBOUND', 'RETURNS'] as const).map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => {
+              setTab(t)
+              void router.replace(
+                { pathname: router.pathname, query: t === 'RETURNS' ? { tab: 'returns' } : {} },
+                undefined,
+                { shallow: true },
+              )
+            }}
+            className={cn(
+              'border-b-2 px-3 py-1.5 text-sm font-semibold transition-colors',
+              tab === t
+                ? 'border-[var(--color-primary)] text-[var(--color-primary)]'
+                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200',
+            )}
+          >
+            {t === 'INBOUND' ? '입고' : '반품/회수'}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'RETURNS' ? (
+        <div className="min-h-0 flex-1 overflow-hidden">
+          <ReturnCollectionPanel warehouseId={warehouse.id} />
+        </div>
+      ) : (
+      <>
       {/* ── 페이지 헤더 ── */}
       <div className="flex flex-col gap-3">
         {/* 상단 행: 제목 + 액션 버튼 */}
@@ -493,15 +547,24 @@ export default function InboundPage() {
                 key={item.value || 'all'}
                 type="button"
                 onClick={() => setStatusFilter(item.value)}
+                aria-pressed={selected}
                 className={cn(
-                  'inline-flex h-7 shrink-0 items-center gap-1.5 rounded border px-2.5 text-xs font-semibold transition-colors',
+                  'inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-xs font-semibold transition-all',
                   STATUS_SUMMARY_STYLE[item.styleKey],
-                  selected && 'border-[var(--color-primary)] bg-white ring-1 ring-[var(--color-primary)] dark:bg-gray-900',
+                  selected
+                    ? 'shadow-sm ring-2 ring-current ring-offset-1 ring-offset-white dark:ring-offset-gray-950'
+                    : 'opacity-75 hover:opacity-100',
                 )}
               >
-                <span className={cn('h-2 w-2 rounded-full', STATUS_DOT_STYLE[item.styleKey])} />
+                <span className="grid h-3.5 w-3.5 place-items-center" aria-hidden="true">
+                  {selected
+                    ? <Check size={13} strokeWidth={3} />
+                    : <span className={cn('h-2 w-2 rounded-full', STATUS_DOT_STYLE[item.styleKey])} />}
+                </span>
                 <span>{item.label}</span>
-                <span className="tabular-nums opacity-80">{formatNumber(item.count)}</span>
+                <span className="rounded-full bg-black/5 px-1.5 py-0.5 tabular-nums dark:bg-white/10">
+                  {formatNumber(item.count)}
+                </span>
               </button>
             )
           })}
@@ -639,8 +702,8 @@ export default function InboundPage() {
             <button
               type="button"
               onClick={() => { void handleDeleteSelected() }}
-              disabled={selectedDeletableCount === 0 || deleteMutation.isPending}
-              title={selectedRowCount > 0 && selectedDeletableCount === 0 ? '입고 예정 상태만 삭제할 수 있습니다' : '선택 전표 삭제'}
+              disabled={(selectedDeletableCount === 0 && selectedOrder?.status !== 'PENDING') || deleteMutation.isPending}
+              title={(selectedRowCount > 0 || selectedOrder) && selectedDeletableCount === 0 && selectedOrder?.status !== 'PENDING' ? '입고 예정 상태만 삭제할 수 있습니다' : '선택하거나 상세로 연 전표 삭제'}
               className="wms-toolbar-action inline-flex h-7 w-7 items-center justify-center rounded transition-colors disabled:opacity-40"
             >
               <Minus size={16} strokeWidth={2.5} />
@@ -785,18 +848,19 @@ export default function InboundPage() {
       )}
       </div>
 
-      {/* ── 입고 예정 등록 모달 ── */}
       {createOpen && (
         <CreateModal
           warehouseId={warehouse.id}
           onClose={() => setCreateOpen(false)}
           onCreated={(id) => {
             setCreateOpen(false)
-            qc.invalidateQueries({ queryKey: ['inbound'] })
+            refresh()
             toast.success('입고 예정이 등록되었습니다')
-            router.push(`/inbound/${id}`)
+            setDetailOrderId(id)
           }}
         />
+      )}
+      </>
       )}
 
     </div>
@@ -830,6 +894,8 @@ function CreateModal({
   onCreated: (id: string) => void
 }) {
   const [supplier,     setSupplier]     = useState('')
+  const [supplierPickerOpen, setSupplierPickerOpen] = useState(false)
+  const [supplierModalOpen, setSupplierModalOpen] = useState(false)
   const [expectedDate, setExpectedDate] = useState('')
   const [memo,         setMemo]         = useState('')
   const [items, setItems] = useState<{
@@ -846,11 +912,23 @@ function CreateModal({
   const [poConfirmId, setPoConfirmId] = useState<string | null>(null)
 
   const supplierRef   = useRef<HTMLInputElement>(null)
+  const supplierPickerRef = useRef<HTMLDivElement>(null)
   const searchRef     = useRef<HTMLInputElement>(null)
   const dropdownRef   = useRef<HTMLDivElement>(null)
 
   // 모달 열리면 공급업체 포커스
   useEffect(() => { supplierRef.current?.focus() }, [])
+
+  useEffect(() => {
+    if (!supplierPickerOpen) return
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (!supplierPickerRef.current?.contains(event.target as Node)) {
+        setSupplierPickerOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
+  }, [supplierPickerOpen])
 
   // 검색어 바뀌면 드롭다운 선택 초기화
   useEffect(() => { setDropdownIdx(-1) }, [productSearch])
@@ -894,6 +972,23 @@ function CreateModal({
     queryFn:  () => productApi.findAll({ search: productSearch, limit: 20 }),
     enabled:  productSearch.length > 0,
   })
+
+  const { data: supplierPage, isFetching: supplierFetching, isError: supplierError } = useQuery({
+    queryKey: ['inbound-suppliers', supplier],
+    queryFn: () => clientApi.findAll({ search: supplier.trim(), limit: 20 }),
+    enabled: supplierPickerOpen,
+  })
+
+  const { data: supplierClients = [], refetch: refetchSupplierClients } = useQuery({
+    queryKey: ['clients-all'],
+    queryFn: clientApi.findAllActive,
+    enabled: supplierModalOpen,
+  })
+
+  const selectSupplier = (client: Client) => {
+    setSupplier(client.name)
+    setSupplierPickerOpen(false)
+  }
 
   const createMutation = useMutation({
     mutationFn: (req: CreateInboundOrderRequest) => inboundApi.create(req),
@@ -971,9 +1066,96 @@ function CreateModal({
   const updateQty = (idx: number, val: number) =>
     setItems((prev) => prev.map((i, j) => j === idx ? { ...i, expectedQty: Math.max(1, val) } : i))
 
+  const draftItemColumns = useMemo<ColDef<(typeof items)[number]>[]>(() => [
+    {
+      headerName: '상품명',
+      minWidth: 180,
+      flex: 1,
+      valueGetter: (params) => params.data?.product?.name ?? '-',
+      cellClass: '!bg-gray-100 text-gray-600 dark:!bg-gray-900/70 dark:text-gray-300',
+    },
+    {
+      headerName: '상품코드',
+      width: 125,
+      valueGetter: (params) => params.data?.product?.code ?? '-',
+      cellClass: '!bg-gray-100 font-mono text-xs text-gray-600 dark:!bg-gray-900/70 dark:text-gray-300',
+    },
+    {
+      headerName: '예정수량',
+      field: 'expectedQty',
+      width: 105,
+      editable: true,
+      type: 'numericColumn',
+      cellClass: '!bg-white dark:!bg-gray-800',
+      cellEditor: 'agNumberCellEditor',
+      valueParser: (params) => Math.max(1, Math.floor(Number(params.newValue) || 1)),
+    },
+    {
+      headerName: '단위',
+      field: 'inputUnit',
+      width: 115,
+      editable: (params) => Boolean(
+        params.data?.product && (
+          getPackageUnitQty(params.data.product, 'IN') || getPackageUnitQty(params.data.product, 'OUT')
+        ),
+      ),
+      cellClass: (params) => params.data?.product && (
+        getPackageUnitQty(params.data.product, 'IN') || getPackageUnitQty(params.data.product, 'OUT')
+      )
+        ? '!bg-white dark:!bg-gray-800'
+        : '!bg-gray-100 text-gray-500 dark:!bg-gray-900/70 dark:text-gray-400',
+      cellEditor: 'agSelectCellEditor',
+      cellEditorParams: (params: { data?: (typeof items)[number] }) => {
+        const values: UnitType[] = ['EA']
+        if (params.data?.product && getPackageUnitQty(params.data.product, 'IN')) values.push('IN')
+        if (params.data?.product && getPackageUnitQty(params.data.product, 'OUT')) values.push('OUT')
+        return { values }
+      },
+    },
+    {
+      headerName: 'EA 환산',
+      width: 105,
+      type: 'numericColumn',
+      valueGetter: (params) => {
+        const item = params.data
+        if (!item?.product) return 0
+        const factor = item.inputUnit === 'IN'
+          ? getPackageUnitQty(item.product, 'IN') ?? 1
+          : item.inputUnit === 'OUT'
+            ? getPackageUnitQty(item.product, 'OUT') ?? 1
+            : 1
+        return item.expectedQty * factor
+      },
+      valueFormatter: (params) => formatNumber(Number(params.value ?? 0)),
+      cellClass: '!bg-gray-100 text-gray-600 dark:!bg-gray-900/70 dark:text-gray-300',
+    },
+    {
+      headerName: '현재재고',
+      width: 105,
+      type: 'numericColumn',
+      valueGetter: (params) => inventoryMap[params.data?.productId ?? ''] ?? 0,
+      valueFormatter: (params) => formatNumber(Number(params.value ?? 0)),
+      cellClass: '!bg-gray-100 text-gray-600 dark:!bg-gray-900/70 dark:text-gray-300',
+    },
+    {
+      headerName: '',
+      width: 54,
+      minWidth: 54,
+      maxWidth: 54,
+      sortable: false,
+      filter: false,
+      cellClass: '!bg-gray-100 dark:!bg-gray-900/70',
+      cellRenderer: (params: { data?: (typeof items)[number] }) => params.data ? (
+        <button type="button" onClick={() => removeItem(params.data!.productId)} className="inline-flex h-6 w-6 items-center justify-center rounded text-gray-400 hover:bg-red-50 hover:text-red-500" title="행 삭제">
+          <X size={13} />
+        </button>
+      ) : null,
+    },
+  ], [inventoryMap])
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[88vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+      <div className="flex max-h-[88vh] w-full max-w-2xl flex-col rounded-xl bg-white shadow-2xl dark:bg-gray-800">
 
         {/* 헤더 */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 dark:border-gray-700 shrink-0">
@@ -1011,10 +1193,63 @@ function CreateModal({
 
           {/* 기본 정보 */}
           <div className="grid grid-cols-2 gap-3">
-            <div>
+            <div ref={supplierPickerRef} className="relative">
               <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">공급업체</label>
-              <input ref={supplierRef} value={supplier} onChange={(e) => setSupplier(e.target.value)}
-                className={ui.formInput} placeholder="공급업체명" />
+              <div className="relative">
+                <input
+                  ref={supplierRef}
+                  value={supplier}
+                  onFocus={() => setSupplierPickerOpen(true)}
+                  onChange={(e) => {
+                    setSupplier(e.target.value)
+                    setSupplierPickerOpen(true)
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') setSupplierPickerOpen(false)
+                    if (e.key === 'Enter' && supplierPage?.items[0]) {
+                      e.preventDefault()
+                      selectSupplier(supplierPage.items[0])
+                    }
+                  }}
+                  className={cn(ui.formInput, 'pr-9')}
+                  placeholder="공급업체명 검색"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSupplierPickerOpen(false)
+                    setSupplierModalOpen(true)
+                  }}
+                  className="absolute right-1 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded text-gray-400 hover:bg-gray-100 hover:text-emerald-600 dark:hover:bg-gray-700"
+                  aria-label="공급업체 전체 목록"
+                >
+                  <Search size={14} />
+                </button>
+              </div>
+              {supplierPickerOpen && (
+                <div className="absolute z-30 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white py-1 shadow-xl dark:border-gray-700 dark:bg-gray-800">
+                  {supplierFetching && !supplierPage ? (
+                    <p className="px-3 py-4 text-center text-xs text-gray-400">거래처 조회 중...</p>
+                  ) : supplierError ? (
+                    <p className="px-3 py-4 text-center text-xs text-red-500">거래처 목록을 불러오지 못했습니다.</p>
+                  ) : supplierPage?.items.length ? (
+                    supplierPage.items.map((client) => (
+                      <button
+                        key={client.id}
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => selectSupplier(client)}
+                        className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left hover:bg-emerald-50 dark:hover:bg-gray-700"
+                      >
+                        <span className="truncate text-sm font-medium text-gray-800 dark:text-gray-100">{client.name}</span>
+                        <span className="shrink-0 font-mono text-xs text-gray-400">{client.businessNo || client.phone || '-'}</span>
+                      </button>
+                    ))
+                  ) : (
+                    <p className="px-3 py-4 text-center text-xs text-gray-400">검색된 거래처가 없습니다.</p>
+                  )}
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">입고 예정일</label>
@@ -1115,7 +1350,21 @@ function CreateModal({
                 </span>
               )}
             </div>
-            <table className="w-full text-sm">
+            <div className="ag-theme-quartz ag-theme-wms wms-ag-grid h-[230px] w-full">
+              <AgGridReact<(typeof items)[number]>
+                rowData={items}
+                columnDefs={draftItemColumns}
+                defaultColDef={{ resizable: true, sortable: false, filter: false, suppressHeaderMenuButton: true }}
+                getRowId={(params) => params.data.productId}
+                headerHeight={34}
+                rowHeight={34}
+                singleClickEdit
+                stopEditingWhenCellsLoseFocus
+                onCellValueChanged={() => setItems((current) => [...current])}
+                overlayNoRowsTemplate="<span class='ag-overlay-no-rows-center'>상품을 검색해서 행을 추가하세요.</span>"
+              />
+            </div>
+            <table className="hidden w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 dark:border-gray-700">
                   <th className="px-3 py-1.5 text-left text-xs font-medium text-gray-400 w-36">상품명</th>
@@ -1225,6 +1474,17 @@ function CreateModal({
           )}
         </div>
       </div>
+      {supplierModalOpen && (
+        <ClientPickerModal
+          clients={supplierClients}
+          onSelect={(client) => {
+            if (client) selectSupplier(client)
+            setSupplierModalOpen(false)
+          }}
+          onClose={() => setSupplierModalOpen(false)}
+          onRefresh={refetchSupplierClients}
+        />
+      )}
     </div>
   )
 }

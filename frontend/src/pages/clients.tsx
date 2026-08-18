@@ -1,6 +1,7 @@
 ﻿'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useRouter } from 'next/router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { ColDef } from 'ag-grid-community'
 import { X } from 'lucide-react'
@@ -140,6 +141,7 @@ function Field({ label, children, className }: { label: string; children: React.
 
 export default function ClientsPage() {
   const qc = useQueryClient()
+  const router = useRouter()
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
@@ -213,6 +215,13 @@ export default function ClientsPage() {
     setShowModal(false)
     setForm({ ...EMPTY_FORM, registrationDate: today() })
   }
+
+  useEffect(() => {
+    if (!router.isReady || router.query.new !== '1') return
+    openCreate()
+    void router.replace('/clients', undefined, { shallow: true })
+  }, [router, router.isReady, router.query.new])
+
   useEscapeKey(closeModal, showModal)
 
   const resetSearch = () => {
@@ -230,20 +239,10 @@ export default function ClientsPage() {
     setForm((prev) => ({ ...prev, [key]: value }))
 
   const openAddressSearch = () => {
-    if (!window.daum?.Postcode) {
-      toast.error('주소검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.')
-      return
-    }
-    new window.daum.Postcode({
-      oncomplete: (data) => {
-        setForm((prev) => ({
-          ...prev,
-          postalCode: data.zonecode,
-          address: data.roadAddress || data.jibunAddress,
-          addressDetail: '',
-        }))
-      },
-    }).open()
+    if (!window.daum?.Postcode) return toast.error('주소검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.')
+    new window.daum.Postcode({ oncomplete: (data) => {
+      setForm((prev) => ({ ...prev, postalCode: data.zonecode, address: data.roadAddress || data.jibunAddress, addressDetail: '' }))
+    }}).open()
   }
 
   const columns = useMemo<ColDef<Client>[]>(() => [
@@ -721,20 +720,10 @@ function ClientDetailPanel({
     setEditForm((prev) => ({ ...prev, [key]: value }))
 
   const openPanelAddressSearch = () => {
-    if (!window.daum?.Postcode) {
-      toast.error('주소검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.')
-      return
-    }
-    new window.daum.Postcode({
-      oncomplete: (data) => {
-        setEditForm((prev) => ({
-          ...prev,
-          postalCode: data.zonecode,
-          address: data.roadAddress || data.jibunAddress,
-          addressDetail: '',
-        }))
-      },
-    }).open()
+    if (!window.daum?.Postcode) return toast.error('주소검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.')
+    new window.daum.Postcode({ oncomplete: (data) => {
+      setEditForm((prev) => ({ ...prev, postalCode: data.zonecode, address: data.roadAddress || data.jibunAddress, addressDetail: '' }))
+    }}).open()
   }
 
   return (

@@ -1,12 +1,18 @@
 package com.wmspro.domain.outbound;
 
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public interface OutboundOrderRepository extends JpaRepository<OutboundOrder, UUID> {
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT o FROM OutboundOrder o WHERE o.id = :id")
+    Optional<OutboundOrder> findByIdForUpdate(@Param("id") UUID id);
+
     @Query("""
         SELECT DISTINCT o FROM OutboundOrder o
         LEFT JOIN FETCH o.items oi

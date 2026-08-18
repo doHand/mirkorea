@@ -1,4 +1,4 @@
-import type { TxType } from '@/types/api.types'
+import type { TxType, ReturnCollectionType } from '@/types/api.types'
 
 export const TX_TYPE_LABEL: Record<TxType, string> = {
   INBOUND:         '입고',
@@ -34,6 +34,19 @@ export const SCAN_MODE_LABEL: Record<ScanMode, string> = {
   ADJUSTMENT: '재고조정',
   MOVE:       '위치이동',
 }
+
+export const RETURN_COLLECTION_TYPE_LABEL: Record<ReturnCollectionType, string> = {
+  RETURN: '반품',
+  RECALL: '회수',
+}
+
+export const RETURN_COLLECTION_TYPE_COLOR: Record<ReturnCollectionType, string> = {
+  RETURN: 'text-orange-700 bg-orange-100',
+  RECALL: 'text-purple-700 bg-purple-100',
+}
+
+export const RETURN_REASON_OPTIONS = ['불량/파손', '고객변심', '오배송', '유통기한임박', '수량착오', '기타']
+export const RECALL_REASON_OPTIONS = ['품질이슈/리콜', '유통기한임박', '유통기한경과', '기타']
 
 export const SALE_STATUS_LABEL = {
   ACTIVE:       '판매중',

@@ -1,5 +1,5 @@
 'use client'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { AgGridReact } from 'ag-grid-react'
 import type { ColDef } from 'ag-grid-community'
@@ -37,14 +37,14 @@ export default function UnitsPage() {
   const [rows, setRows] = useState<UnitRow[]>([])
   const [saving, setSaving] = useState(false)
 
-  const { isLoading } = useQuery({
+  const { data: queriedUnits, isLoading } = useQuery({
     queryKey: ['product-units'],
-    queryFn: async () => {
-      const data = await unitApi.findAll()
-      setRows(data.map(toRow))
-      return data
-    },
+    queryFn: unitApi.findAll,
   })
+
+  useEffect(() => {
+    if (queriedUnits) setRows(queriedUnits.map(toRow))
+  }, [queriedUnits])
 
   const refetchRows = useCallback(async () => {
     const data = await unitApi.findAll()

@@ -7,6 +7,7 @@ import { productApi, unitApi } from '@/api/product.api'
 import { clientApi } from '@/api/client.api'
 import { warehouseApi } from '@/api/warehouse.api'
 import { stockApi } from '@/api/stock.api'
+import { returnCollectionApi } from '@/api/return-collection.api'
 import { QUERY_KEYS } from '@/constants/query-keys'
 import { useEscapeKey } from '@/hooks/useEscapeKey'
 import { SALE_STATUS_LABEL } from '@/constants/stock.constants'
@@ -326,6 +327,15 @@ export default function ProductsPage() {
     refetchOnWindowFocus: false,
   })
 
+  const { data: returnSummary = {} } = useQuery<Record<string, number>>({
+    queryKey: QUERY_KEYS.returnCollectionSummary(warehouse?.id ?? ''),
+    queryFn:  () => returnCollectionApi.getSummary(warehouse!.id),
+    enabled:  !!warehouse?.id,
+    placeholderData: {},
+    staleTime: 15_000,
+    refetchOnWindowFocus: false,
+  })
+
   const filteredClients = useMemo(() => {
     const q = clientPickerSearch.trim().toLowerCase()
     if (!q) return clients.slice(0, 50)
@@ -365,11 +375,12 @@ const selectedClientLabel = selectedClient?.name
       stockQty: inventorySummary.get(product.id)?.stockQty ?? product.stockQty ?? 0,
       reservedQty: inventorySummary.get(product.id)?.reservedQty ?? 0,
       availableQty: inventorySummary.get(product.id)?.availableQty ?? inventorySummary.get(product.id)?.stockQty ?? product.stockQty ?? 0,
+      returnQty: returnSummary?.[product.id] ?? 0,
     }))
     const filteredRows = showSafetyOnly ? rows.filter((p) => getTotalEA(p) < p.safetyStock) : rows
     if (!sort) return filteredRows
     return [...filteredRows].sort((a, b) => compareSortValue(getProductSortValue(a, sort.key), getProductSortValue(b, sort.key), sort.direction))
-  }, [data?.items, inventorySummary, showSafetyOnly, sort])
+  }, [data?.items, inventorySummary, returnSummary, showSafetyOnly, sort])
 
   const invalidateProducts = () => {
     qc.invalidateQueries({ queryKey: ['products'] })

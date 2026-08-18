@@ -162,14 +162,14 @@ export default function BarcodesPage() {
     qc.invalidateQueries({ queryKey: ['product-barcodes'] })
   }, [qc])
 
-  const { isLoading } = useQuery({
+  const { data: queriedBarcodes, isLoading } = useQuery({
     queryKey: ['all-barcodes'],
-    queryFn: async () => {
-      const data = await productApi.findAllBarcodes()
-      setRows(data)
-      return data
-    },
+    queryFn: productApi.findAllBarcodes,
   })
+
+  useEffect(() => {
+    if (queriedBarcodes) setRows(queriedBarcodes)
+  }, [queriedBarcodes])
 
   const barcodeImportConfig = useMemo(() => makeBarcodeImportConfig(refetchRows), [refetchRows])
 

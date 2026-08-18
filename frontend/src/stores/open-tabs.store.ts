@@ -11,14 +11,17 @@ interface OpenTabsState {
   splitTabs: OpenTab[]
   splitHref: string | null
   splitRatio: number        // 20–80, 기본 50 (메인 패널 %)
+  draggingHref: string | null
   addTab: (tab: OpenTab) => void
   closeTab: (href: string) => void
   clearTabs: () => void
+  moveTab: (activeHref: string, overHref: string) => void
   addSplitTab: (tab: OpenTab) => void
   closeSplitTab: (href: string) => void
   clearSplitTabs: () => void
   setSplit: (href: string | null) => void
   setSplitRatio: (ratio: number) => void
+  setDraggingHref: (href: string | null) => void
 }
 
 const MAX_OPEN_TABS = 10
@@ -30,6 +33,7 @@ export const useOpenTabsStore = create<OpenTabsState>()(
       splitTabs: [],
       splitHref: null,
       splitRatio: 50,
+      draggingHref: null,
 
       addTab: (tab) =>
         set((state) => {
@@ -48,6 +52,20 @@ export const useOpenTabsStore = create<OpenTabsState>()(
         })),
 
       clearTabs: () => set({ tabs: [], splitTabs: [], splitHref: null }),
+
+      moveTab: (activeHref, overHref) =>
+        set((state) => {
+          if (activeHref === overHref) return state
+          const fromIndex = state.tabs.findIndex((t) => t.href === activeHref)
+          const toIndex = state.tabs.findIndex((t) => t.href === overHref)
+          if (fromIndex < 0 || toIndex < 0) return state
+          const tabs = [...state.tabs]
+          const [moved] = tabs.splice(fromIndex, 1)
+          tabs.splice(toIndex, 0, moved)
+          return { tabs }
+        }),
+
+      setDraggingHref: (href) => set({ draggingHref: href }),
 
       addSplitTab: (tab) =>
         set((state) => ({
@@ -76,6 +94,10 @@ export const useOpenTabsStore = create<OpenTabsState>()(
     {
       name: 'wms-open-tabs',
       version: 2,
+      partialize: (state) => {
+        const { draggingHref: _draggingHref, ...persisted } = state
+        return persisted
+      },
       migrate: (stored: unknown) => {
         const state = stored as Partial<OpenTabsState>
         const previousSplit = state.splitHref

@@ -182,7 +182,7 @@ function buildQuoteSheet(
   return { isStatement, title, sheetHtml }
 }
 
-function wrapQuoteHtml(sheetsHtml: string, isStatement: boolean, docTitle: string) {
+function wrapQuoteHtml(sheetsHtml: string, isStatement: boolean, docTitle: string, autoPrint = true) {
   return `<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -240,7 +240,25 @@ function wrapQuoteHtml(sheetsHtml: string, isStatement: boolean, docTitle: strin
 </head>
 <body>
   ${sheetsHtml}
-  <script>window.onload = function() { window.print(); }<\/script>
+  ${autoPrint
+    ? '<script>window.onload = function() { window.print(); }<\\/script>'
+    : `<script>
+      function fitPreview() {
+        document.body.style.zoom = '1';
+        document.body.style.width = 'auto';
+        document.documentElement.style.overflowX = 'hidden';
+        document.body.style.overflowX = 'hidden';
+        const sheet = document.querySelector('.sheet');
+        if (!sheet) return;
+        const available = document.documentElement.clientWidth - 16;
+        const width = sheet.getBoundingClientRect().width;
+        const scale = Math.min(1, available / width);
+        document.body.style.width = width + 'px';
+        document.body.style.zoom = String(scale);
+      }
+      window.addEventListener('load', fitPreview);
+      window.addEventListener('resize', fitPreview);
+    <\/script>`}
 </body>
 </html>`
 }
@@ -262,9 +280,20 @@ export function printQuoteDocument(
   printTitle?: string,
   printMode: 'DEFAULT' | 'OUTBOUND' = 'DEFAULT',
 ) {
-  const { isStatement, title, sheetHtml } = buildQuoteSheet(doc, client, supplier, printTitle, printMode)
-  const html = wrapQuoteHtml(sheetHtml, isStatement, `${title.replaceAll(' ', '')} - ${escapeHtml(doc.docNo)}`)
+  const html = buildQuotePrintHtml(doc, client, supplier, printTitle, printMode, true)
   openHtml(html, targetWindow)
+}
+
+export function buildQuotePrintHtml(
+  doc: Quote,
+  client?: Client | null,
+  supplier: SupplierInfo = DEFAULT_SUPPLIER_INFO,
+  printTitle?: string,
+  printMode: 'DEFAULT' | 'OUTBOUND' = 'DEFAULT',
+  autoPrint = false,
+) {
+  const { isStatement, title, sheetHtml } = buildQuoteSheet(doc, client, supplier, printTitle, printMode)
+  return wrapQuoteHtml(sheetHtml, isStatement, `${title.replaceAll(' ', '')} - ${escapeHtml(doc.docNo)}`, autoPrint)
 }
 
 export function printQuoteDocuments(

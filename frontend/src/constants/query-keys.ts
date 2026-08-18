@@ -20,4 +20,8 @@ export const QUERY_KEYS = {
   inboundOrder:  (id: string)       => ['inbound', id],
   purchaseOrders: (filters?: object) => ['purchase-orders', filters],
   outboundOrders: (filters?: object) => ['outbound-orders', filters],
+
+  returnCollections:       (filters?: object) => ['return-collections', filters],
+  returnCollectionSummary: (warehouseId: string) => ['return-collections', 'summary', warehouseId],
+  returnCollectionCountSummary: (warehouseId: string) => ['return-collections', 'summary', 'counts', warehouseId],
 } as const

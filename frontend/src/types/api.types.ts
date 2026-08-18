@@ -311,6 +311,31 @@ export interface OutboundOrder {
   items: OutboundOrderItem[]
 }
 
+export type ReturnCollectionType = 'RETURN' | 'RECALL'
+
+export interface ReturnCollection {
+  id: string
+  type: ReturnCollectionType
+  productId: string
+  warehouseId: string
+  locationId?: string
+  quantity: number
+  lotNumber?: string
+  outboundOrderId?: string
+  outboundOrderItemId?: string
+  clientId?: string
+  reason?: string
+  memo?: string
+  barcodeScanned?: string
+  createdBy: string
+  batchId?: string
+  batchNo?: string
+  createdAt: string
+  updatedAt: string
+  product?: Product
+  location?: Location
+}
+
 export interface Client {
   id: string
   name: string

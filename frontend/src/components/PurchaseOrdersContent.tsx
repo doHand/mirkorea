@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { X } from 'lucide-react'
 import { useRouter } from 'next/router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
@@ -13,7 +14,7 @@ import { useWarehouseStore } from '@/stores/warehouse.store'
 import { cn } from '@/utils/cn'
 import * as ui from '@/styles/ui'
 import type { Product, PurchaseOrder, PurchaseOrderStatus } from '@/types/api.types'
-import { printPurchaseOrder } from '@/utils/printPurchaseOrder'
+import { buildPurchaseOrderPrintHtml, printPurchaseOrder } from '@/utils/printPurchaseOrder'
 import { StatusBadge } from '@/components/StatusBadge'
 import { ActionDropdown } from '@/components/ActionDropdown'
 import { AppAgGrid } from '@/components/AppAgGrid'
@@ -46,6 +47,8 @@ export function PurchaseOrdersContent({ createTrigger }: Props) {
   const [dateFrom, setDateFrom]     = useState('')
   const [dateTo, setDateTo]         = useState('')
   const [editing, setEditing]       = useState<PurchaseOrder | null | undefined>(undefined)
+  const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null)
+  const [previewOrderId, setPreviewOrderId] = useState<string | null>(null)
   const [printByDateOpen, setPrintByDateOpen] = useState(false)
 
   useEffect(() => {
@@ -92,7 +95,7 @@ export function PurchaseOrdersContent({ createTrigger }: Props) {
     onSuccess: (order, vars) => {
       refresh()
       toast.success(vars.kind === 'ordered' ? '발주 완료로 처리했습니다' : '입고 예정으로 등록했습니다')
-      if (vars.kind === 'convert' && order.inboundOrderId) router.push(`/inbound/${order.inboundOrderId}`)
+      if (vars.kind === 'convert' && order.inboundOrderId) router.push(`/inbound?detail=${order.inboundOrderId}`)
     },
     onError: () => toast.error('처리에 실패했습니다'),
   })
@@ -163,10 +166,20 @@ export function PurchaseOrdersContent({ createTrigger }: Props) {
               <button
                 type="button"
                 title="수정"
-                onClick={(e) => { e.stopPropagation(); setEditing(order) }}
+                onClick={(e) => { e.stopPropagation(); setSelectedOrder(order); setEditing(order) }}
                 className="rounded border border-indigo-200 px-2 py-1 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-300 dark:hover:bg-indigo-950/40"
               >
                 수정
+              </button>
+            )}
+            {order.status !== 'DRAFT' && order.status !== 'ORDERED' && (
+              <button
+                type="button"
+                disabled
+                title="입고예정 등록 또는 취소된 발주서는 수정할 수 없습니다"
+                className="cursor-not-allowed rounded border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-400 opacity-60 dark:border-gray-700 dark:text-gray-500"
+              >
+                수정불가
               </button>
             )}
             {order.status === 'DRAFT' && (
@@ -295,18 +308,84 @@ export function PurchaseOrdersContent({ createTrigger }: Props) {
       </div>
 
       {/* 테이블 */}
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <div className="min-h-0 flex-1">
-          <AppAgGrid
-            rows={orders}
-            columns={orderColumns}
-            loading={isLoading}
-            onRowDoubleClicked={setEditing}
-          />
+      <div className="flex min-h-0 flex-1 gap-3 overflow-hidden">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="min-h-0 flex-1">
+            <AppAgGrid
+              rows={orders}
+              columns={orderColumns}
+              loading={isLoading}
+              onRowClicked={setSelectedOrder}
+              onRowDoubleClicked={(order) => { setSelectedOrder(order); setEditing(order) }}
+            />
+          </div>
         </div>
+
+        {selectedOrder && (editing?.id === selectedOrder.id ? (
+          <div className="flex w-[620px] shrink-0 overflow-hidden">
+            <OrderModal
+              embedded
+              warehouseId={warehouse.id}
+              order={editing}
+              onClose={() => setEditing(undefined)}
+              onSaved={() => { setEditing(undefined); refresh() }}
+            />
+          </div>
+        ) : (
+          <aside className="flex w-[380px] shrink-0 flex-col overflow-hidden rounded border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-800">
+              <div className="min-w-0"><p className="text-sm font-bold text-gray-900 dark:text-white">발주서 상세</p><p className="truncate font-mono text-xs text-gray-500">{selectedOrder.orderNo}</p></div>
+              <div className="flex items-center gap-1"><button type="button" onClick={() => setPreviewOrderId((id) => id === selectedOrder.id ? null : selectedOrder.id)} className="rounded border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600 hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] dark:border-gray-700 dark:text-gray-300">{previewOrderId === selectedOrder.id ? '상세정보' : '문서 미리보기'}</button><button type="button" onClick={() => { setPreviewOrderId(null); setSelectedOrder(null) }} className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200" title="상세 닫기"><X size={17} /></button></div>
+            </div>
+            {previewOrderId === selectedOrder.id ? (
+              <iframe
+                title="발주서 출력 미리보기"
+                srcDoc={buildPurchaseOrderPrintHtml(selectedOrder, clients.find((c) => c.id === selectedOrder.clientId) ?? clients.find((c) => c.name === selectedOrder.supplier))}
+                className="min-h-0 w-full flex-1 overflow-x-hidden border-0 bg-white"
+              />
+            ) : (<>
+            <div className="flex-1 overflow-y-auto p-4">
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                <div className="col-span-2"><dt className="text-xs text-gray-400">공급업체</dt><dd className="mt-0.5 font-semibold text-gray-800 dark:text-gray-100">{selectedOrder.supplier || '-'}</dd></div>
+                <div><dt className="text-xs text-gray-400">발주일</dt><dd className="mt-0.5 text-gray-700 dark:text-gray-200">{selectedOrder.orderDate}</dd></div>
+                <div><dt className="text-xs text-gray-400">납기예정일</dt><dd className="mt-0.5 text-gray-700 dark:text-gray-200">{selectedOrder.expectedDate || '-'}</dd></div>
+                <div><dt className="text-xs text-gray-400">상태</dt><dd className="mt-0.5"><StatusBadge label={STATUS[selectedOrder.status]} variant={STATUS_VARIANT[selectedOrder.status]} /></dd></div>
+                <div><dt className="text-xs text-gray-400">담당자</dt><dd className="mt-0.5 text-gray-700 dark:text-gray-200">{selectedOrder.manager || '-'}</dd></div>
+                <div className="col-span-2"><dt className="text-xs text-gray-400">메모</dt><dd className="mt-0.5 whitespace-pre-wrap text-gray-700 dark:text-gray-200">{selectedOrder.memo || '-'}</dd></div>
+              </dl>
+              <div className="mt-5 border-t border-gray-200 pt-4 dark:border-gray-800">
+                <p className="mb-2 text-xs font-semibold text-gray-500">품목</p>
+                <div className="space-y-2">
+                  {selectedOrder.items.map((item) => (
+                    <div key={item.id} className="rounded bg-gray-50 px-3 py-2 dark:bg-gray-800/70">
+                      <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-sm font-medium text-gray-800 dark:text-gray-100">{item.product?.name || '-'}</p><p className="truncate font-mono text-xs text-gray-400">{item.product?.code || item.capSize || '-'}</p></div><p className="shrink-0 text-sm font-semibold tabular-nums text-gray-700 dark:text-gray-200">{(Number(item.unitPrice || 0) * item.quantity).toLocaleString()}원</p></div>
+                      <p className="mt-1 text-right text-xs text-gray-400">OUT {item.boxCount ?? 0} · EA {item.quantity.toLocaleString()} · 단가 {Number(item.unitPrice || 0).toLocaleString()}원</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="border-t border-gray-200 p-4 dark:border-gray-800">
+              <div className="mb-3 flex items-center justify-between"><span className="text-sm text-gray-500">합계</span><strong className="text-lg tabular-nums text-[var(--color-primary)]">{calcTotal(selectedOrder).toLocaleString()}원</strong></div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditing(selectedOrder)}
+                  disabled={selectedOrder.status !== 'DRAFT' && selectedOrder.status !== 'ORDERED'}
+                  title={selectedOrder.status !== 'DRAFT' && selectedOrder.status !== 'ORDERED' ? '입고예정 등록 또는 취소된 발주서는 수정할 수 없습니다' : '발주서 수정'}
+                  className="border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                >
+                  {selectedOrder.status === 'DRAFT' || selectedOrder.status === 'ORDERED' ? '수정' : '수정불가'}
+                </button>
+                <button type="button" onClick={() => printPurchaseOrder(selectedOrder, clients.find((c) => c.id === selectedOrder.clientId) ?? clients.find((c) => c.name === selectedOrder.supplier))} className="bg-[var(--color-primary)] px-3 py-2 text-sm font-semibold text-white hover:bg-[var(--color-primary-hover)]">출력</button>
+              </div>
+            </div>
+            </>)}
+          </aside>
+        ))}
       </div>
 
-      {editing !== undefined && (
+      {editing === null && (
         <OrderModal
           warehouseId={warehouse.id}
           order={editing}
@@ -414,11 +493,12 @@ function PrintByDateModal({ orders, clients, onClose }: {
 
 // ── OrderModal ────────────────────────────────────────────────────────────────
 
-function OrderModal({ warehouseId, order, onClose, onSaved }: {
+function OrderModal({ warehouseId, order, onClose, onSaved, embedded = false }: {
   warehouseId: string
   order: PurchaseOrder | null
   onClose: () => void
   onSaved: () => void
+  embedded?: boolean
 }) {
   const [supplier, setSupplier]         = useState(order?.supplier ?? '')
   const [orderDate, setOrderDate]       = useState(order?.orderDate ?? today())
@@ -504,8 +584,8 @@ function OrderModal({ warehouseId, order, onClose, onSaved }: {
   )
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4">
-      <div className="flex max-h-[92vh] w-full max-w-4xl flex-col bg-white shadow-2xl dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+    <div className={embedded ? 'flex min-h-0 w-full' : 'fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4'}>
+      <div className={cn('flex w-full flex-col overflow-hidden bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700', embedded ? 'min-h-0 rounded shadow-sm' : 'max-h-[92vh] max-w-4xl shadow-2xl')}>
         {/* 헤더 */}
         <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 px-5 py-4 shrink-0">
           <h3 className="font-bold text-gray-900 dark:text-white">{order ? '발주서 수정' : '발주서 작성'}</h3>

@@ -19,7 +19,7 @@ apiClient.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config
-    if (error.response?.status !== 401 || original._retry) {
+    if (![401, 403].includes(error.response?.status) || original._retry) {
       return Promise.reject(error)
     }
 

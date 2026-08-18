@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import Link from 'next/link'
 import { useEscapeKey } from '@/hooks/useEscapeKey'
 import type { Location } from '@/types/api.types'
 
@@ -34,7 +35,16 @@ export function LocationPickerModal({ locations, onSelect, onClose, allowClear, 
             <h3 className="font-semibold text-gray-900 dark:text-white text-sm">위치 선택</h3>
             <p className="mt-0.5 text-xs text-gray-500">위치코드 또는 랙 정보로 검색합니다.</p>
           </div>
-          <button type="button" onClick={onClose} className="px-2 py-1 text-sm text-gray-500 hover:text-gray-900 dark:hover:text-gray-100">닫기</button>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/warehouse?newLocation=1"
+              onClick={onClose}
+              className="wms-primary-button inline-flex h-8 items-center rounded px-3 text-xs font-semibold"
+            >
+              위치 등록
+            </Link>
+            <button type="button" onClick={onClose} className="px-2 py-1 text-sm text-gray-500 hover:text-gray-900 dark:hover:text-gray-100">닫기</button>
+          </div>
         </div>
         <div className="border-b border-gray-100 p-3 dark:border-gray-800 shrink-0">
           <input

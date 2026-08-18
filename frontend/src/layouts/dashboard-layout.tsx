@@ -67,6 +67,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const mainPanelRef   = useRef<HTMLDivElement>(null)
   const splitPanelRef  = useRef<HTMLDivElement>(null)
   const [isResizing, setIsResizing] = useState(false)
+  const draggingTabHref = useOpenTabsStore((s) => s.draggingHref)
+  const setDraggingTabHref = useOpenTabsStore((s) => s.setDraggingHref)
+  const tabs           = useOpenTabsStore((s) => s.tabs)
+  const addSplitTab    = useOpenTabsStore((s) => s.addSplitTab)
+  const [workspaceDropActive, setWorkspaceDropActive] = useState(false)
 
   const startResize = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
@@ -76,15 +81,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     const onMove = (ev: MouseEvent) => {
       const rect = container.getBoundingClientRect()
-      const ratio = ((ev.clientX - rect.left) / rect.width) * 100
+      const ratio = ((ev.clientY - rect.top) / rect.height) * 100
       const clamped = Math.min(80, Math.max(20, ratio))
-      if (mainPanelRef.current)  mainPanelRef.current.style.width  = `${clamped}%`
-      if (splitPanelRef.current) splitPanelRef.current.style.width = `${100 - clamped}%`
+      if (mainPanelRef.current)  mainPanelRef.current.style.height  = `${clamped}%`
+      if (splitPanelRef.current) splitPanelRef.current.style.height = `${100 - clamped}%`
     }
 
     const onUp = (ev: MouseEvent) => {
       const rect = container.getBoundingClientRect()
-      const ratio = ((ev.clientX - rect.left) / rect.width) * 100
+      const ratio = ((ev.clientY - rect.top) / rect.height) * 100
       setSplitRatio(ratio)
       setIsResizing(false)
       window.removeEventListener('mousemove', onMove)
@@ -231,36 +236,58 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden app-surface border-0 rounded-none dark:bg-slate-950">
         <HeaderBar onMenuClick={() => setSidebarOpen(true)}>
-          <div className="wms-tabs-layout flex w-full min-w-0 items-end">
-            <div
-              className="wms-main-tabs flex min-w-0"
-              style={{ width: splitHref ? `${splitRatio}%` : '100%' }}
-            >
+          <div className="wms-tabs-layout flex w-full min-w-0 flex-col items-stretch">
+            <div className="wms-main-tabs flex min-w-0 w-full">
               <OpenTabsBar />
             </div>
             {splitHref && (
-              <>
-                <div className="w-1 shrink-0" />
-                <div
-                  className="wms-split-tabs flex min-w-0 border-l border-gray-200 pl-1 dark:border-slate-700"
-                  style={{ width: `${100 - splitRatio}%` }}
-                >
-                  <SplitTabsBar />
-                </div>
-              </>
+              <div className="wms-split-tabs flex min-w-0 w-full border-t border-gray-200 pt-1 dark:border-slate-700">
+                <SplitTabsBar />
+              </div>
             )}
           </div>
         </HeaderBar>
 
         <div
           ref={containerRef}
-          className="app-workspace wms-workspace flex-1 flex min-w-0 overflow-hidden dark:bg-slate-950"
-          style={{ cursor: isResizing ? 'col-resize' : undefined }}
+          className="app-workspace wms-workspace relative flex-1 flex flex-col min-w-0 overflow-hidden dark:bg-slate-950"
+          style={{ cursor: isResizing ? 'row-resize' : undefined }}
+          onDragOver={(e) => {
+            if (!draggingTabHref && !e.dataTransfer.types.includes('tab-href')) return
+            e.preventDefault()
+            e.dataTransfer.dropEffect = 'move'
+            setWorkspaceDropActive(true)
+          }}
+          onDragLeave={(e) => {
+            if (e.currentTarget.contains(e.relatedTarget as Node)) return
+            setWorkspaceDropActive(false)
+          }}
+          onDrop={(e) => {
+            e.preventDefault()
+            const href = e.dataTransfer.getData('tab-href')
+            const tab = tabs.find((t) => t.href === href)
+            if (tab) addSplitTab(tab)
+            setWorkspaceDropActive(false)
+            setDraggingTabHref(null)
+          }}
         >
+          {draggingTabHref && (
+            <div
+              className={[
+                'pointer-events-none absolute inset-x-4 bottom-4 z-20 flex h-1/3 items-center justify-center rounded-lg border-2 border-dashed text-xs font-medium transition-colors',
+                workspaceDropActive
+                  ? 'app-tab-drop-active dark:bg-amber-900/20'
+                  : 'border-gray-300 text-gray-400 dark:border-slate-600 dark:text-slate-500',
+              ].join(' ')}
+            >
+              여기에 놓으면 화면 아래로 분할됩니다
+            </div>
+          )}
+
           <div
             ref={mainPanelRef}
             className="wms-main-panel overflow-auto p-4 lg:p-5"
-            style={{ width: splitHref ? `${splitRatio}%` : '100%' }}
+            style={{ height: splitHref ? `${splitRatio}%` : '100%' }}
           >
             {children}
           </div>
@@ -269,13 +296,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <>
               <div
                 onMouseDown={startResize}
-                className="wms-split-divider w-1 shrink-0 cursor-col-resize wms-splitter transition-colors"
+                className="wms-split-divider h-1 w-full shrink-0 cursor-row-resize wms-splitter transition-colors"
               />
 
               <div
                 ref={splitPanelRef}
                 className="wms-split-panel flex flex-col bg-white dark:bg-slate-900 overflow-hidden"
-                style={{ width: `${100 - splitRatio}%` }}
+                style={{ height: `${100 - splitRatio}%` }}
               >
                 <div className="hidden">
                   {splitTabs.map((tab) => (

@@ -20,7 +20,7 @@ const formatNumber = (value?: number | null) => {
   return Number(value).toLocaleString('ko-KR')
 }
 
-export function printPurchaseOrder(order: PurchaseOrder, client?: Pick<Client, 'name' | 'phone' | 'mobile' | 'fax'> | null) {
+export function buildPurchaseOrderPrintHtml(order: PurchaseOrder, client?: Pick<Client, 'name' | 'phone' | 'mobile' | 'fax'> | null, autoPrint = false) {
   const company = useSupplierInfoStore.getState().info
   const supplierName = client?.name || order.supplier || ''
   const supplierPhone = client?.phone || client?.mobile || order.phone || ''
@@ -45,10 +45,7 @@ export function printPurchaseOrder(order: PurchaseOrder, client?: Pick<Client, '
     () => '<tr class="blank-row"><td></td><td></td><td></td><td></td><td></td></tr>',
   )
 
-  const win = openBlankPrintWindow('width=900,height=1100')
-  if (!win) return
-
-  writePrintHtml(`<!doctype html>
+  return `<!doctype html>
 <html lang="ko">
 <head>
   <meta charset="utf-8">
@@ -243,7 +240,32 @@ export function printPurchaseOrder(order: PurchaseOrder, client?: Pick<Client, '
       </div>
     </footer>
   </main>
-  <script>window.onload = () => window.print()<\/script>
+  ${autoPrint
+    ? '<script>window.onload = () => window.print()<\\/script>'
+    : `<script>
+      function fitPreview() {
+        document.body.style.zoom = '1';
+        document.body.style.width = 'auto';
+        document.body.style.padding = '8px';
+        document.documentElement.style.overflowX = 'hidden';
+        document.body.style.overflowX = 'hidden';
+        const sheet = document.querySelector('.sheet');
+        if (!sheet) return;
+        const available = document.documentElement.clientWidth - 16;
+        const width = sheet.getBoundingClientRect().width + 16;
+        const scale = Math.min(1, available / width);
+        document.body.style.width = width + 'px';
+        document.body.style.zoom = String(scale);
+      }
+      window.addEventListener('load', fitPreview);
+      window.addEventListener('resize', fitPreview);
+    <\/script>`}
 </body>
-</html>`, win)
+</html>`
+}
+
+export function printPurchaseOrder(order: PurchaseOrder, client?: Pick<Client, 'name' | 'phone' | 'mobile' | 'fax'> | null) {
+  const win = openBlankPrintWindow('width=900,height=1100')
+  if (!win) return
+  writePrintHtml(buildPurchaseOrderPrintHtml(order, client, true), win)
 }

@@ -63,6 +63,10 @@ public enum ErrorCode {
     ALREADY_CONFIRMED(HttpStatus.CONFLICT,           "이미 확정된 재고조사입니다"),
     CANNOT_DELETE_CONFIRMED(HttpStatus.CONFLICT,     "확정된 재고조사는 삭제할 수 없습니다"),
 
+    // Return / Recall
+    RETURN_COLLECTION_NOT_FOUND(HttpStatus.NOT_FOUND, "반품/회수 기록을 찾을 수 없습니다"),
+    RETURN_QUANTITY_EXCEEDED(HttpStatus.BAD_REQUEST,  "반품 수량이 출고 수량을 초과합니다"),
+
     // General
     NOT_FOUND(HttpStatus.NOT_FOUND,                 "항목을 찾을 수 없습니다"),
     INVALID_REQUEST(HttpStatus.BAD_REQUEST,         "잘못된 요청입니다"),

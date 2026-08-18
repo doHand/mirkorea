@@ -145,14 +145,14 @@ export const useMenuPermissionStore = create<MenuPermissionState>()(
     }),
     {
       name: 'wms-menu-permissions',
-      version: 23,
+      version: 25,
       migrate: (stored: unknown) => {
         const s = stored as Partial<MenuPermissionState>
         // Remove obsolete menus: product-codes/box-qty/lot merged into product-attrs,
         // pricing merged into inventory, role-management merged into users
         // Note: barcodes is now a standalone page — removed from obsolete list
         const purchaseOrderRoles = s.menus?.find((m) => m.menuId === 'purchase-orders')?.roles ?? []
-        const obsolete = new Set(['product-codes', 'box-qty', 'lot', 'pricing', 'role-management', 'inventory', 'purchase-orders', 'picking-list', 'permissions'])
+        const obsolete = new Set(['product-codes', 'box-qty', 'lot', 'pricing', 'role-management', 'inventory', 'purchase-orders', 'picking-list', 'permissions', 'returns'])
         let menus = (s.menus ?? []).filter((m) => !obsolete.has(m.menuId))
         // Rename product-attrs label to "상품 마스터"
         menus = menus.map((m) =>

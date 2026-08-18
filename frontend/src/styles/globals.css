@@ -234,6 +234,22 @@
 .wms-ag-grid .ag-row.row-new { background-color: #dcfce7 !important; }
 .wms-ag-grid .ag-row.row-modified { background-color: #fef9c3 !important; }
 
+/* 삭제 예정 행 — 모든 업무 그리드 공통 */
+.wms-ag-grid .ag-row.row-pending-delete,
+.wms-ag-grid .ag-pinned-left-cols-container .ag-row.row-pending-delete,
+.wms-ag-grid .ag-row.row-pending-delete .ag-cell {
+  background-color: #fee2e2 !important;
+  color: #b91c1c !important;
+  text-decoration: line-through;
+}
+
+.dark .wms-ag-grid .ag-row.row-pending-delete,
+.dark .wms-ag-grid .ag-pinned-left-cols-container .ag-row.row-pending-delete,
+.dark .wms-ag-grid .ag-row.row-pending-delete .ag-cell {
+  background-color: #450a0a !important;
+  color: #fca5a5 !important;
+}
+
 /* 바코드 그리드 — 삭제 예정 행 (반투명 + 취소선) */
 .barcode-pending-delete {
   opacity: 0.5;
@@ -757,9 +773,11 @@
 
 /* 활성 탭 */
 .app-tab-active {
-  background: var(--color-surface-muted);
-  color: var(--color-text-strong);
-  border-color: var(--color-line);
+  background: var(--color-primary-soft) !important;
+  color: var(--color-primary) !important;
+  border-color: color-mix(in srgb, var(--color-primary) 55%, var(--color-line)) !important;
+  box-shadow: inset 0 3px 0 var(--color-primary), 0 -1px 8px rgb(0 0 0 / 6%);
+  font-weight: 700;
 }
 /* 분할 탭 강조 테두리 */
 .app-tab-split { box-shadow: inset 0 0 0 1px var(--color-primary); }
@@ -1145,8 +1163,9 @@
 }
 
 .dark .app-tab-active {
-  background: color-mix(in srgb, var(--color-primary-soft) 54%, var(--color-surface)) !important;
-  border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-line)) !important;
+  background: color-mix(in srgb, var(--color-primary-soft) 76%, var(--color-surface)) !important;
+  color: color-mix(in srgb, var(--color-primary) 82%, white) !important;
+  border-color: color-mix(in srgb, var(--color-primary) 65%, var(--color-line)) !important;
 }
 
 .app-header-title,

@@ -1,5 +1,6 @@
 'use client'
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { useRouter } from 'next/router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { FileDown, Menu } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -51,6 +52,7 @@ const DEFAULT_BULK = {
 
 export default function WarehousePage() {
   const qc        = useQueryClient()
+  const router    = useRouter()
   const menuRef   = useRef<HTMLDivElement>(null)
   const warehouse = useWarehouseStore((s) => s.selectedWarehouse)
   const [selectedZone, setSelectedZone] = useState('')
@@ -108,6 +110,13 @@ export default function WarehousePage() {
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
+
+  useEffect(() => {
+    if (!router.isReady || router.query.newLocation !== '1') return
+    setLocForm({ zoneId: '', code: '', aisle: '', rack: '', shelf: '', bin: '' })
+    setShowLocModal(true)
+    void router.replace('/warehouse', undefined, { shallow: true })
+  }, [router, router.isReady, router.query.newLocation])
 
   const handleExportLocations = useCallback(async () => {
     setExporting(true)

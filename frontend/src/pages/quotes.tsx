@@ -20,6 +20,7 @@ import { getPackageUnitQty } from '@/utils/unit-spec'
 import { cn } from '@/utils/cn'
 import * as ui from '@/styles/ui'
 import {
+  buildQuotePrintHtml,
   QUOTE_PRINT_TITLES,
   printQuoteDocument,
 } from '@/utils/printDocument'
@@ -151,6 +152,8 @@ export default function QuotesPage() {
   const [purchaseCreateTrigger, setPurchaseCreateTrigger] = useState(0)
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Quote | null>(null)
+  const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null)
+  const [previewQuoteId, setPreviewQuoteId] = useState<string | null>(null)
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
   const [prefillKey, setPrefillKey] = useState('')
   const [listPrint, setListPrint] = useState<{ quote: Quote; title: string } | null>(null)
@@ -181,7 +184,7 @@ export default function QuotesPage() {
     placeholderData: (prev) => prev,
   })
 
-  const { data: clients } = useQuery({ queryKey: ['clients-all'], queryFn: clientApi.findAllActive })
+  const { data: clients, refetch: refetchClients } = useQuery({ queryKey: ['clients-all'], queryFn: clientApi.findAllActive })
   const { data: products } = useQuery({ queryKey: ['products-all'], queryFn: () => productApi.findAll({ limit: 999 }) })
   const { data: units = [] } = useQuery<ProductUnit[]>({ queryKey: ['product-units'], queryFn: unitApi.findAll })
   const unitOptions = useMemo(() => {
@@ -225,7 +228,7 @@ export default function QuotesPage() {
 
   const updateMutation = useMutation({
     mutationFn: () => quoteApi.update(editing!.id, buildPayload()),
-    onSuccess: () => { toast.success('문서 수정 완료'); qc.invalidateQueries({ queryKey: ['quotes'] }); closeModal() },
+    onSuccess: (saved) => { setSelectedQuote(saved); toast.success('문서 수정 완료'); qc.invalidateQueries({ queryKey: ['quotes'] }); closeModal() },
   })
 
   const deleteMutation = useMutation({
@@ -254,6 +257,7 @@ export default function QuotesPage() {
   }
 
   const openEdit = useCallback((quote: Quote) => {
+    setSelectedQuote(quote)
     setEditing(quote)
     setForm({
       docType: quote.docType,
@@ -612,15 +616,118 @@ export default function QuotesPage() {
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <div className="min-h-0 flex-1">
-          <AppAgGrid
-            rows={data?.items ?? []}
-            columns={quoteColumns}
-            loading={isLoading}
-            onRowDoubleClicked={openEdit}
-          />
+      <div className="flex min-h-0 flex-1 gap-3 overflow-hidden">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="min-h-0 flex-1">
+            <AppAgGrid
+              rows={data?.items ?? []}
+              columns={quoteColumns}
+              loading={isLoading}
+              onRowClicked={(quote) => {
+                if (editing && editing.id !== quote.id) closeModal()
+                setPreviewQuoteId(null)
+                setSelectedQuote(quote)
+              }}
+              onRowDoubleClicked={openEdit}
+            />
+          </div>
         </div>
+
+        {selectedQuote && (
+          <aside className="flex w-[380px] shrink-0 flex-col overflow-hidden rounded border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-800">
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-gray-900 dark:text-white">{DOC_TYPE_LABEL[selectedQuote.docType]} 상세</p>
+                <p className="truncate font-mono text-xs text-gray-500">{selectedQuote.docNo}</p>
+              </div>
+              <div className="flex items-center gap-1">
+                {editing?.id !== selectedQuote.id && <button type="button" onClick={() => setPreviewQuoteId((id) => id === selectedQuote.id ? null : selectedQuote.id)} className="rounded border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-600 hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] dark:border-gray-700 dark:text-gray-300">{previewQuoteId === selectedQuote.id ? '상세정보' : '문서 미리보기'}</button>}
+                <button type="button" onClick={() => { if (editing?.id === selectedQuote.id) closeModal(); setPreviewQuoteId(null); setSelectedQuote(null) }} className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200" title="상세 닫기"><X size={17} /></button>
+              </div>
+            </div>
+            {previewQuoteId === selectedQuote.id ? (
+              <iframe
+                title={`${DOC_TYPE_LABEL[selectedQuote.docType]} 출력 미리보기`}
+                srcDoc={buildQuotePrintHtml(selectedQuote, findClientForQuote(selectedQuote), supplierInfo)}
+                className="min-h-0 w-full flex-1 overflow-x-hidden border-0 bg-white"
+              />
+            ) : showModal && editing?.id === selectedQuote.id ? (
+              <form onSubmit={(event) => { event.preventDefault(); void submitForm() }} className="flex min-h-0 flex-1 flex-col">
+                <div className="flex-1 space-y-4 overflow-y-auto p-4">
+                  <label className="block text-xs font-medium text-gray-500">거래처
+                    <div className="mt-1 flex gap-1.5">
+                      <input value={form.clientName} onChange={(event) => setForm((prev) => ({ ...prev, clientId: '', clientName: event.target.value }))} className={inputCls} />
+                      <button type="button" onClick={() => setShowClientPicker(true)} className="shrink-0 border border-gray-200 px-2.5 text-xs font-semibold text-gray-600 hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] dark:border-gray-700 dark:text-gray-300">선택</button>
+                    </div>
+                  </label>
+                  <label className="block text-xs font-medium text-gray-500">작성일
+                    <input type="date" value={form.docDate} onChange={(event) => setForm((prev) => ({ ...prev, docDate: event.target.value }))} className={`${inputCls} mt-1`} />
+                  </label>
+                  <label className="block text-xs font-medium text-gray-500">메모
+                    <textarea value={form.memo} onChange={(event) => setForm((prev) => ({ ...prev, memo: event.target.value }))} rows={3} className={`${inputCls} mt-1 resize-none`} />
+                  </label>
+                  <div className="border-t border-gray-200 pt-4 dark:border-gray-800">
+                    <div className="mb-2 flex items-center justify-between">
+                      <p className="text-xs font-semibold text-gray-500">품목</p>
+                      <button type="button" onClick={() => setShowProductAdder(true)} className="rounded bg-[var(--color-primary)] px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-[var(--color-primary-hover)]">품목 추가</button>
+                    </div>
+                    <div className="space-y-2">
+                      {form.items.map((item, index) => (
+                        <div key={`${item.productId || item.productName}-${index}`} className="rounded bg-gray-50 p-3 dark:bg-gray-800/70">
+                          <div className="mb-2 flex items-center gap-2">
+                            <button type="button" onClick={() => setProductPickerIdx(index)} className="min-w-0 flex-1 truncate text-left text-sm font-medium text-gray-800 hover:text-[var(--color-primary)] dark:text-gray-100">{item.productName}</button>
+                            <button type="button" onClick={() => removeItem(index)} className="shrink-0 rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950/30" title="품목 삭제"><Trash2 size={14} /></button>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            <label className="text-[11px] text-gray-400">수량<input type="number" min={1} value={item.qty} onChange={(event) => updateItem(index, { qty: Math.max(1, Number(event.target.value)) })} className={`${tdInput} mt-1`} /></label>
+                            <label className="text-[11px] text-gray-400">단위<select value={item.unit} onChange={(event) => updateItem(index, { unit: event.target.value })} className={`${tdInput} mt-1`}>{unitOptions.map((unit) => <option key={unit} value={unit}>{unit}</option>)}</select></label>
+                            <label className="text-[11px] text-gray-400">단가<input type="number" min={0} value={item.unitPrice} onChange={(event) => updateItem(index, { unitPrice: Math.max(0, Number(event.target.value)) })} className={`${tdInput} mt-1`} /></label>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 border-t border-gray-200 p-4 dark:border-gray-800">
+                  <button type="button" onClick={closeModal} className="border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800">취소</button>
+                  <button type="submit" disabled={isSaving} className="bg-[var(--color-primary)] px-3 py-2 text-sm font-semibold text-white hover:bg-[var(--color-primary-hover)] disabled:opacity-50">{isSaving ? '저장 중...' : '저장'}</button>
+                </div>
+              </form>
+            ) : (<>
+            <div className="flex-1 overflow-y-auto p-4">
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                <div><dt className="text-xs text-gray-400">거래처</dt><dd className="mt-0.5 font-semibold text-gray-800 dark:text-gray-100">{selectedQuote.clientName || '-'}</dd></div>
+                <div><dt className="text-xs text-gray-400">작성일</dt><dd className="mt-0.5 text-gray-700 dark:text-gray-200">{selectedQuote.docDate}</dd></div>
+                <div><dt className="text-xs text-gray-400">상태</dt><dd className="mt-0.5"><span className={cn('inline-flex rounded px-2 py-0.5 text-xs font-semibold', STATUS_STYLE[selectedQuote.status])}>{STATUS_LABEL[selectedQuote.status]}</span></dd></div>
+                <div><dt className="text-xs text-gray-400">품목 수</dt><dd className="mt-0.5 text-gray-700 dark:text-gray-200">{formatNumber(selectedQuote.items.length)}개</dd></div>
+                <div className="col-span-2"><dt className="text-xs text-gray-400">메모</dt><dd className="mt-0.5 whitespace-pre-wrap text-gray-700 dark:text-gray-200">{selectedQuote.memo || '-'}</dd></div>
+              </dl>
+              <div className="mt-5 border-t border-gray-200 pt-4 dark:border-gray-800">
+                <p className="mb-2 text-xs font-semibold text-gray-500">품목</p>
+                <div className="space-y-2">
+                  {selectedQuote.items.map((item) => (
+                    <div key={item.id} className="rounded bg-gray-50 px-3 py-2 dark:bg-gray-800/70">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0"><p className="truncate text-sm font-medium text-gray-800 dark:text-gray-100">{item.productName || '-'}</p><p className="truncate font-mono text-xs text-gray-400">{item.productCode || item.spec || '-'}</p></div>
+                        <p className="shrink-0 text-sm font-semibold tabular-nums text-gray-700 dark:text-gray-200">{formatNumber(item.amount)}원</p>
+                      </div>
+                      <p className="mt-1 text-right text-xs text-gray-400">{formatNumber(item.qty)} {item.unit || ''} × {formatNumber(item.unitPrice)}원</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="border-t border-gray-200 p-4 dark:border-gray-800">
+              <div className="mb-3 flex items-center justify-between"><span className="text-sm text-gray-500">합계</span><strong className="text-lg tabular-nums text-[var(--color-primary)]">{formatNumber(selectedQuote.totalAmount)}원</strong></div>
+              <div className="grid grid-cols-3 gap-2">
+                <button type="button" onClick={() => openEdit(selectedQuote)} className="border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800">수정</button>
+                <button type="button" onClick={() => setPreviewQuoteId(selectedQuote.id)} className="border border-[var(--color-primary)] px-2 py-2 text-sm font-semibold text-[var(--color-primary)] hover:bg-emerald-50 dark:hover:bg-emerald-950/30">미리보기</button>
+                <button type="button" onClick={() => selectedQuote.docType === 'QUOTE' ? setListPrint({ quote: selectedQuote, title: QUOTE_PRINT_TITLES[0] ?? '견적서' }) : printQuoteDocument(selectedQuote, null, findClientForQuote(selectedQuote), supplierInfo)} className="bg-[var(--color-primary)] px-3 py-2 text-sm font-semibold text-white hover:bg-[var(--color-primary-hover)]">출력</button>
+              </div>
+            </div>
+            </>)}
+          </aside>
+        )}
       </div>
 
       {data && data.totalPages > 1 && (
@@ -656,7 +763,7 @@ export default function QuotesPage() {
       )}
 
       {showClientPicker && (
-        <ClientPickerModal clients={clients ?? []} onSelect={onSelectClient} onClose={() => setShowClientPicker(false)} />
+        <ClientPickerModal clients={clients ?? []} onSelect={onSelectClient} onClose={() => setShowClientPicker(false)} onRefresh={refetchClients} />
       )}
       <ConfirmDialog
         open={!!deleteTarget}
@@ -688,7 +795,7 @@ export default function QuotesPage() {
         />
       )}
 
-      {showModal && (
+      {showModal && !editing && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-none flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-900 rounded shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden border border-gray-200 dark:border-gray-700 flex flex-col">
             <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 dark:border-gray-700">
@@ -696,8 +803,7 @@ export default function QuotesPage() {
                 <FileText className="w-5 h-5 text-[var(--color-primary)]" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-gray-900 dark:text-white">{editing ? '문서 수정' : '문서 작성'}</h3>
-                {editing && <p className="text-xs text-gray-400 font-mono mt-0.5">{editing.docNo}</p>}
+                <h3 className="font-semibold text-gray-900 dark:text-white">문서 작성</h3>
               </div>
               <button onClick={closeModal} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors" title="닫기">
                 <X className="w-5 h-5" />

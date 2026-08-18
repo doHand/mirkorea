@@ -1,10 +1,10 @@
 ﻿'use client'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft, Truck, PackageCheck, ClipboardCheck, Check,
-  Ban, BarChart3, AlertTriangle, RefreshCw, Save,
+  Ban, BarChart3, AlertTriangle, RefreshCw, Save, Search,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { inboundApi } from '@/api/inbound.api'
@@ -14,7 +14,8 @@ import { QUERY_KEYS } from '@/constants/query-keys'
 import { cn } from '@/utils/cn'
 import * as ui from '@/styles/ui'
 import { formatNumber } from '@/utils/format'
-import type { InboundStatus, InboundOrder } from '@/types/api.types'
+import type { InboundStatus, InboundOrder, Location } from '@/types/api.types'
+import { LocationPickerModal } from '@/components/LocationPickerModal'
 
 // ── 상수 ──────────────────────────────────────────────────────────
 const STATUS_LABEL: Record<InboundStatus, string> = {
@@ -39,6 +40,130 @@ const STEPS: { status: InboundStatus; label: string; icon: React.ElementType }[]
   { status: 'COMPLETED',  label: '완료',       icon: Check },
 ]
 const STEP_ORDER: InboundStatus[] = ['PENDING', 'RECEIVING', 'INSPECTING', 'COMPLETED']
+
+function LocationSearchField({
+  locations,
+  value,
+  onChange,
+  compact = false,
+  invalid = false,
+}: {
+  locations: Location[]
+  value: string
+  onChange: (locationId: string) => void
+  compact?: boolean
+  invalid?: boolean
+}) {
+  const selected = locations.find((location) => location.id === value)
+  const [query, setQuery] = useState(selected?.code ?? '')
+  const [open, setOpen] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setQuery(selected?.code ?? '')
+  }, [selected?.code])
+
+  useEffect(() => {
+    if (!open) return
+    const closeOnOutside = (event: MouseEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', closeOnOutside)
+    return () => document.removeEventListener('mousedown', closeOnOutside)
+  }, [open])
+
+  const normalizedQuery = query.trim().toLowerCase()
+  const matches = normalizedQuery
+    ? locations.filter((location) =>
+        [location.code, location.zone?.name, location.zone?.code, location.aisle, location.rack, location.shelf, location.bin]
+          .filter(Boolean)
+          .some((field) => String(field).toLowerCase().includes(normalizedQuery)),
+      ).slice(0, 20)
+    : locations.slice(0, 20)
+
+  const selectLocation = (location: Location) => {
+    onChange(location.id)
+    setQuery(location.code)
+    setOpen(false)
+    setModalOpen(false)
+  }
+
+  return (
+    <div ref={rootRef} className="relative">
+      <div className="relative">
+        <input
+          value={query}
+          onFocus={() => setOpen(true)}
+          onChange={(event) => {
+            setQuery(event.target.value)
+            onChange('')
+            setOpen(true)
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') setOpen(false)
+            if (event.key === 'Enter' && matches[0]) {
+              event.preventDefault()
+              selectLocation(matches[0])
+            }
+          }}
+          placeholder="위치 코드 검색"
+          className={cn(
+            'w-full rounded border bg-white pr-9 text-sm text-gray-900 focus:outline-none focus:ring-2 dark:bg-gray-700 dark:text-gray-100',
+            compact ? 'py-1.5 pl-2 pr-9' : 'py-2 pl-3 pr-9',
+            invalid
+              ? 'border-red-200 focus:ring-red-400 dark:border-red-900/50'
+              : 'border-gray-200 focus:ring-amber-400 dark:border-gray-600',
+          )}
+        />
+        <button
+          type="button"
+          onClick={() => {
+            setOpen(false)
+            setModalOpen(true)
+          }}
+          className="absolute right-1 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded text-gray-400 hover:bg-gray-100 hover:text-indigo-600 dark:hover:bg-gray-600"
+          aria-label="전체 보관위치 목록"
+        >
+          <Search size={14} />
+        </button>
+      </div>
+      {open && (
+        <div className="absolute z-40 mt-1 max-h-52 w-full overflow-y-auto rounded border border-gray-200 bg-white py-1 shadow-xl dark:border-gray-600 dark:bg-gray-800">
+          {matches.length ? matches.map((location) => (
+            <button
+              key={location.id}
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => selectLocation(location)}
+              className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left hover:bg-indigo-50 dark:hover:bg-gray-700"
+            >
+              <span className="truncate font-mono text-sm font-medium">{location.code}</span>
+              <span className="shrink-0 truncate text-xs text-gray-400">{location.zone?.name || location.zone?.code || '-'}</span>
+            </button>
+          )) : (
+            <p className="px-3 py-4 text-center text-xs text-gray-400">일치하는 위치가 없습니다.</p>
+          )}
+        </div>
+      )}
+      {modalOpen && (
+        <LocationPickerModal
+          locations={locations}
+          onSelect={(location) => {
+            if (location) selectLocation(location)
+            else {
+              onChange('')
+              setQuery('')
+              setModalOpen(false)
+            }
+          }}
+          onClose={() => setModalOpen(false)}
+          allowClear
+        />
+      )}
+    </div>
+  )
+}
 
 function fmtDate(s?: string | null) {
   if (!s) return '-'
@@ -375,16 +500,12 @@ function ReceivePanel({ order, onDone, compact = false }: { order: InboundOrder;
               </div>
               <div className="flex-1 min-w-48">
                 <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">입고 위치</label>
-                <select
+                <LocationSearchField
+                  locations={receivingLocations}
                   value={state[item.id]?.locationId ?? ''}
-                  onChange={(e) => setState((p) => ({ ...p, [item.id]: { ...p[item.id], locationId: e.target.value } }))}
-                  className={cn('w-full rounded border border-gray-200 bg-white text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-400 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100', compact ? 'px-2 py-1.5' : 'px-3 py-2')}
-                >
-                  <option value="">위치 선택</option>
-                  {receivingLocations.map((l) => (
-                    <option key={l.id} value={l.id}>{l.code}</option>
-                  ))}
-                </select>
+                  onChange={(locationId) => setState((p) => ({ ...p, [item.id]: { ...p[item.id], locationId } }))}
+                  compact={compact}
+                />
               </div>
             </div>
           </div>
@@ -560,17 +681,13 @@ function InspectPanel({ order, onDone, compact = false }: { order: InboundOrder;
                 {defect > 0 && (
                   <div className="flex-1 min-w-48">
                     <label className="text-xs text-red-500 font-medium block mb-1">불량 보관 위치</label>
-                    <select
+                    <LocationSearchField
+                      locations={damagedLocations.length > 0 ? damagedLocations : locations}
                       value={s?.defectLoc ?? ''}
-                      onChange={(e) => setState((p) => ({ ...p, [item.id]: { ...p[item.id], defectLoc: e.target.value } }))}
-                      className={cn('w-full rounded border border-red-200 bg-white text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-400 dark:border-red-900/50 dark:bg-gray-700 dark:text-gray-100', compact ? 'px-2 py-1.5' : 'px-3 py-2')}
-                    >
-                      <option value="">위치 선택</option>
-                      {damagedLocations.length > 0
-                        ? damagedLocations.map((l) => <option key={l.id} value={l.id}>{l.code}</option>)
-                        : locations.map((l) => <option key={l.id} value={l.id}>{l.code}</option>)
-                      }
-                    </select>
+                      onChange={(defectLoc) => setState((p) => ({ ...p, [item.id]: { ...p[item.id], defectLoc } }))}
+                      compact={compact}
+                      invalid
+                    />
                   </div>
                 )}
               </div>
